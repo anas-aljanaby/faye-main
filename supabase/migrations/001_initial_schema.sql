@@ -505,17 +505,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to get current user ID (replaces auth.uid() for RLS)
 CREATE OR REPLACE FUNCTION get_current_user_id()
 RETURNS UUID AS $$
 DECLARE
-    current_user_uuid UUID;
+    v_headers JSON;
+    v_user_id TEXT;
 BEGIN
-    SELECT user_id INTO current_user_uuid
-    FROM user_sessions
-    WHERE pid = pg_backend_pid()
-    AND expires_at > NOW();
-    RETURN current_user_uuid;
+    -- Read the x-user-id value from the HTTP request headers set by the client.
+    BEGIN
+        v_headers := current_setting('request.headers', true)::json;
+        v_user_id := v_headers->>'x-user-id';
+    EXCEPTION
+        WHEN others THEN
+            -- If headers are not available for any reason, treat as anonymous.
+            RETURN NULL;
+    END;
+
+    IF v_user_id IS NULL OR v_user_id = '' THEN
+        RETURN NULL;
+    END IF;
+
+    RETURN v_user_id::UUID;
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 

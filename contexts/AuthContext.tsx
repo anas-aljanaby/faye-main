@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { authenticate, signOut as authSignOut, getSession, AuthSession, setCurrentUserId } from '../lib/auth';
 import { supabase } from '../lib/supabaseClient';
 import { cache } from '../utils/cache';
@@ -173,18 +173,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Helper functions for permission checks
-  const canEditOrphans = () => permissions?.can_edit_orphans || permissions?.is_manager || false;
-  const canEditSponsors = () => permissions?.can_edit_sponsors || permissions?.is_manager || false;
-  const canEditTransactions = () => permissions?.can_edit_transactions || permissions?.is_manager || false;
-  const canCreateExpense = () => permissions?.can_create_expense || permissions?.is_manager || false;
-  const canApproveExpense = () => permissions?.can_approve_expense || permissions?.is_manager || false;
-  const canViewFinancials = () => permissions?.can_view_financials || permissions?.is_manager || false;
-  const isManager = () => {
-    const result = permissions?.is_manager || false;
-    console.log('isManager check:', { permissions, result });
-    return result;
-  };
+  // Helper functions for permission checks (stable identities via useCallback)
+  const isManager = useCallback(() => {
+    return permissions?.is_manager || false;
+  }, [permissions]);
+
+  const canEditOrphans = useCallback(() => {
+    return permissions?.can_edit_orphans || permissions?.is_manager || false;
+  }, [permissions]);
+
+  const canEditSponsors = useCallback(() => {
+    return permissions?.can_edit_sponsors || permissions?.is_manager || false;
+  }, [permissions]);
+
+  const canEditTransactions = useCallback(() => {
+    return permissions?.can_edit_transactions || permissions?.is_manager || false;
+  }, [permissions]);
+
+  const canCreateExpense = useCallback(() => {
+    return permissions?.can_create_expense || permissions?.is_manager || false;
+  }, [permissions]);
+
+  const canApproveExpense = useCallback(() => {
+    return permissions?.can_approve_expense || permissions?.is_manager || false;
+  }, [permissions]);
+
+  const canViewFinancials = useCallback(() => {
+    return permissions?.can_view_financials || permissions?.is_manager || false;
+  }, [permissions]);
 
   const signIn = async (loginIdentifier: string, password: string) => {
     const { session: authSession, error } = await authenticate(loginIdentifier, password);
@@ -211,7 +227,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     cache.clear();
   };
 
-  const value = {
+  const value = useMemo(() => {
+    return {
+      user,
+      session,
+      userProfile,
+      permissions,
+      loading,
+      signIn,
+      signOut,
+      refreshPermissions,
+      canEditOrphans,
+      canEditSponsors,
+      canEditTransactions,
+      canCreateExpense,
+      canApproveExpense,
+      canViewFinancials,
+      isManager,
+    };
+  }, [
     user,
     session,
     userProfile,
@@ -227,7 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canApproveExpense,
     canViewFinancials,
     isManager,
-  };
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

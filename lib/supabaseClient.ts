@@ -1,23 +1,19 @@
-// Utility to ensure user ID is set before Supabase queries
-// This should be called before any query that needs RLS
 import { supabase } from './supabase';
-import { getSession } from './auth';
 
-// Set user ID for RLS before executing a query
+// With header-based user context, there is no need to issue
+// separate RPC calls before each query. These helpers are now
+// thin wrappers kept only for backwards compatibility.
+
 export const ensureUserContext = async (): Promise<void> => {
-  const session = getSession();
-  if (session) {
-    await supabase.rpc('set_current_user_id', { user_id: session.userProfileId });
-  }
+  // No-op: the current user ID is carried on every request
+  // via the x-user-id header configured in lib/auth.ts.
+  return;
 };
 
-// Wrapper for Supabase queries that automatically sets user context
-export const withUserContext = async <T>(
-  queryFn: () => Promise<T>
-): Promise<T> => {
-  await ensureUserContext();
+export const withUserContext = async <T>(queryFn: () => Promise<T>): Promise<T> => {
+  // Directly execute the query; user identity is already encoded
+  // in the Supabase client's headers.
   return queryFn();
 };
 
-// Export the original supabase client
 export { supabase };

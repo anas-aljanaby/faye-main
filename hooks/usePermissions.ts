@@ -26,7 +26,8 @@ export interface TeamMemberWithPermissions {
  * Used primarily in the Team page for viewing and managing permissions.
  */
 export const usePermissions = () => {
-  const { userProfile, isManager } = useAuth();
+  const { userProfile, permissions } = useAuth();
+  const isManagerFlag = permissions?.is_manager || false;
   const [teamMembers, setTeamMembers] = useState<TeamMemberWithPermissions[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,9 +89,7 @@ export const usePermissions = () => {
     userId: string,
     newPermissions: Partial<Omit<UserPermissions, 'id' | 'user_id'>>
   ): Promise<{ success: boolean; error?: string }> => {
-    console.log('updatePermissions called:', { userId, newPermissions, isManager: isManager() });
-    
-    if (!isManager()) {
+    if (!isManagerFlag) {
       console.warn('Permission denied: User is not a manager');
       return { success: false, error: 'ليس لديك صلاحية لتعديل الصلاحيات - يجب أن تكون مديراً' };
     }
@@ -162,7 +161,7 @@ export const usePermissions = () => {
     teamMembers,
     loading,
     error,
-    isManager: isManager(),
+    isManager: isManagerFlag,
     updatePermissions,
     togglePermission,
     refetch: fetchTeamMembersWithPermissions,

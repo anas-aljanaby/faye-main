@@ -1,5 +1,5 @@
 // Custom authentication utilities
-import { supabase } from './supabase';
+import { setSupabaseUserId, supabase } from './supabase';
 
 export interface AuthSession {
   userProfileId: string;
@@ -36,14 +36,10 @@ export const clearSession = () => {
   localStorage.removeItem(SESSION_KEY);
 };
 
-// Set current user ID in Supabase session for RLS
-// Note: This needs to be called before each query that uses RLS
+// Set current user ID for RLS via custom HTTP header.
+// This is called when the user signs in or signs out.
 export const setCurrentUserId = async (userId: string | null) => {
-  if (userId) {
-    await supabase.rpc('set_current_user_id', { user_id: userId });
-  } else {
-    await supabase.rpc('clear_current_user_id');
-  }
+  setSupabaseUserId(userId);
 };
 
 // Authenticate user with username or email
