@@ -400,11 +400,9 @@ const OrphanProfile: React.FC = () => {
   const navigate = useNavigate();
   const { orphans: orphansData, loading: orphansLoading } = useOrphans();
   const { sponsors: sponsorsData } = useSponsors();
-  const { teamMembers: teamMembersData } = useTeamMembers();
   
   const orphan = useMemo(() => findById(orphansData, id || ''), [orphansData, id]);
   const sponsor = useMemo(() => orphan ? findById(sponsorsData, orphan.sponsorId) : undefined, [orphan, sponsorsData]);
-  const teamMember = useMemo(() => orphan ? findById(teamMembersData, orphan.teamMemberId) : undefined, [orphan, teamMembersData]);
   const profileRef = useRef<HTMLDivElement>(null);
   
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -639,13 +637,6 @@ const OrphanProfile: React.FC = () => {
                 <p><strong>الكافل:</strong> غير محدد</p>
             )}
             <p><strong>نوع الكفالة:</strong> {orphan.sponsorshipType}</p>
-            {teamMember ? (
-                <p><strong>المتابع:</strong>{' '}
-                    <Link to={`/team/${teamMember.id}`} className="text-primary hover:underline">{teamMember.name}</Link>
-                </p>
-            ) : (
-                <p><strong>المتابع:</strong> غير محدد</p>
-            )}
         </InfoCard>
       </div>
 

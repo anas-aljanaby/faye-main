@@ -50,19 +50,10 @@ export const useTeamMembers = () => {
         return Math.abs(hash) % 1000000;
       };
 
-      // Fetch assigned orphans and tasks for each team member
+      // Fetch tasks for each team member
+      // Note: Team members don't have direct relationships with orphans - they can see all orphans
       const teamMembersWithData = await Promise.all(
         teamMembersData.map(async (member) => {
-          // Fetch assigned orphan IDs
-          const { data: assignedOrphansData } = await supabase
-            .from('team_member_orphans')
-            .select('orphan_id')
-            .eq('team_member_id', member.id);
-
-          const assignedOrphanIds = (assignedOrphansData || []).map(ao =>
-            uuidToNumber(ao.orphan_id)
-          );
-
           // Fetch tasks
           const { data: tasksData } = await supabase
             .from('tasks')
@@ -82,7 +73,7 @@ export const useTeamMembers = () => {
             id: uuidToNumber(member.id),
             name: member.name,
             avatarUrl: member.avatar_url || '',
-            assignedOrphanIds,
+            assignedOrphanIds: [], // Team members don't have direct relationships with orphans
             tasks,
           } as TeamMember;
         })
