@@ -2,10 +2,8 @@ import React, { useState, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { sponsors, orphans, financialTransactions } from '../data';
 import { PaymentStatus, TransactionType, Sponsor, Orphan } from '../types';
-
-// Declare types for CDN libraries
-declare const jspdf: any;
-declare const html2canvas: any;
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // A simple SendMessageModal for this component
 const SendMessageModal: React.FC<{
@@ -196,7 +194,6 @@ const SponsorPage: React.FC = () => {
                 if (mobileBar) (mobileBar as HTMLElement).style.display = 'grid';
 
                 const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = jspdf;
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;

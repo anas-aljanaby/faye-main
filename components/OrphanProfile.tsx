@@ -3,10 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { orphans, sponsors, financialTransactions, teamMembers } from '../data';
 import { Payment, PaymentStatus, Achievement, SpecialOccasion, Gift, TransactionType, Orphan, UpdateLog, ProgramParticipation } from '../types';
 import { GoogleGenAI } from "@google/genai";
-
-// Declare types for CDN libraries
-declare const jspdf: any;
-declare const html2canvas: any;
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const AddAchievementModal: React.FC<{
     isOpen: boolean;
@@ -592,12 +590,11 @@ const OrphanProfile: React.FC = () => {
         const button = input.querySelector('#export-button-desktop') as HTMLElement;
         if(button) button.style.display = 'none';
 
-        html2canvas(input, { scale: 2, useCORS: true }).then((canvas: any) => {
+        html2canvas(input, { scale: 2, useCORS: true }).then((canvas) => {
             if(button) button.style.display = 'flex';
             actionBars.forEach(bar => (bar as HTMLElement).style.display = 'flex');
 
             const imgData = canvas.toDataURL('image/png');
-            const { jsPDF } = jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
