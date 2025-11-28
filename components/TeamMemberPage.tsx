@@ -1,6 +1,8 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { teamMembers, orphans } from '../data';
+import { useTeamMembers } from '../hooks/useTeamMembers';
+import { useOrphans } from '../hooks/useOrphans';
+import { findById } from '../utils/idMapper';
 import { Task } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";
 
@@ -67,8 +69,10 @@ const AddTaskModal: React.FC<{
 const TeamMemberPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const member = teamMembers.find(m => m.id === parseInt(id || ''));
-  const [tasks, setTasks] = useState<Task[]>(member?.tasks || []);
+  const { teamMembers: teamMembersData, loading: teamMembersLoading } = useTeamMembers();
+  const { orphans: orphansData } = useOrphans();
+  const member = useMemo(() => findById(teamMembersData, id || ''), [teamMembersData, id]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,10 +83,20 @@ const TeamMemberPage: React.FC = () => {
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState('');
 
+  useEffect(() => {
+    if (member?.tasks) {
+      setTasks(member.tasks);
+    }
+  }, [member]);
 
   const assignedOrphans = useMemo(() => {
-    return orphans.filter(o => member?.assignedOrphanIds.includes(o.id));
-  }, [member]);
+    if (!member) return [];
+    return orphansData.filter(o => member.assignedOrphanIds.includes(o.id));
+  }, [member, orphansData]);
+
+  if (teamMembersLoading) {
+    return <div className="text-center py-8">جاري التحميل...</div>;
+  }
 
   if (!member) {
     return <div className="text-center text-red-500">لم يتم العثور على عضو الفريق.</div>;

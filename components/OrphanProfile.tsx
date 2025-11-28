@@ -1,6 +1,10 @@
 import React, { useRef, useMemo, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { orphans, sponsors, financialTransactions, teamMembers } from '../data';
+import { useOrphans } from '../hooks/useOrphans';
+import { useSponsors } from '../hooks/useSponsors';
+import { useTeamMembers } from '../hooks/useTeamMembers';
+import { findById } from '../utils/idMapper';
+import { financialTransactions } from '../data';
 import { Payment, PaymentStatus, Achievement, SpecialOccasion, Gift, TransactionType, Orphan, UpdateLog, ProgramParticipation } from '../types';
 import { GoogleGenAI } from "@google/genai";
 import { jsPDF } from 'jspdf';
@@ -394,11 +398,13 @@ const InteractiveCalendar: React.FC<{
 const OrphanProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const initialOrphan = useMemo(() => orphans.find(o => o.id === parseInt(id || '')), [id]);
+  const { orphans: orphansData, loading: orphansLoading } = useOrphans();
+  const { sponsors: sponsorsData } = useSponsors();
+  const { teamMembers: teamMembersData } = useTeamMembers();
   
-  const [orphan, setOrphan] = useState<Orphan | undefined>(initialOrphan);
-  const sponsor = useMemo(() => sponsors.find(s => s.id === orphan?.sponsorId), [orphan]);
-  const teamMember = useMemo(() => teamMembers.find(m => m.id === orphan?.teamMemberId), [orphan]);
+  const orphan = useMemo(() => findById(orphansData, id || ''), [orphansData, id]);
+  const sponsor = useMemo(() => orphan ? findById(sponsorsData, orphan.sponsorId) : undefined, [orphan, sponsorsData]);
+  const teamMember = useMemo(() => orphan ? findById(teamMembersData, orphan.teamMemberId) : undefined, [orphan, teamMembersData]);
   const profileRef = useRef<HTMLDivElement>(null);
   
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -416,40 +422,24 @@ const OrphanProfile: React.FC = () => {
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [selectedDateForEvent, setSelectedDateForEvent] = useState<Date | null>(null);
 
+  if (orphansLoading) {
+    return <div className="text-center py-8">جاري التحميل...</div>;
+  }
+
   if (!orphan) {
     return <div className="text-center text-red-500">لم يتم العثور على اليتيم.</div>;
   }
 
-  const handleAddAchievement = (newAchievementData: Omit<Achievement, 'id'>) => {
-    const achievementWithId: Achievement = {
-        ...newAchievementData,
-        id: `a${Date.now()}`
-    };
-
-    setOrphan(prevOrphan => {
-        if (!prevOrphan) return prevOrphan;
-        return {
-            ...prevOrphan,
-            achievements: [achievementWithId, ...prevOrphan.achievements]
-        };
-    });
+  const handleAddAchievement = async (newAchievementData: Omit<Achievement, 'id'>) => {
+    // TODO: Implement API call to save achievement to database
+    // For now, this is a placeholder
+    console.log('Adding achievement:', newAchievementData);
   };
   
-    const handleAddUpdateLog = (note: string) => {
-        const newLog: UpdateLog = {
-            id: `ul${Date.now()}`,
-            date: new Date(),
-            author: 'مدير النظام', // Hardcoded as the current user
-            note: note
-        };
-
-        setOrphan(prevOrphan => {
-            if (!prevOrphan) return prevOrphan;
-            return {
-                ...prevOrphan,
-                updateLogs: [newLog, ...prevOrphan.updateLogs]
-            };
-        });
+    const handleAddUpdateLog = async (note: string) => {
+        // TODO: Implement API call to save update log to database
+        // For now, this is a placeholder
+        console.log('Adding update log:', note);
         setIsAddLogModalOpen(false);
     };
 
@@ -458,24 +448,12 @@ const OrphanProfile: React.FC = () => {
         setIsAddEventModalOpen(true);
     };
 
-    const handleAddEvent = (title: string) => {
-        if (!selectedDateForEvent) return;
+    const handleAddEvent = async (title: string) => {
+        if (!selectedDateForEvent || !orphan) return;
 
-        const newOccasion: SpecialOccasion = {
-            id: `occ${Date.now()}`,
-            title,
-            date: selectedDateForEvent,
-        };
-
-        setOrphan(prevOrphan => {
-            if (!prevOrphan) return prevOrphan;
-            // Also sort occasions by date to keep the list clean
-            const updatedOccasions = [...prevOrphan.specialOccasions, newOccasion].sort((a,b) => a.date.getTime() - b.date.getTime());
-            return {
-                ...prevOrphan,
-                specialOccasions: updatedOccasions
-            };
-        });
+        // TODO: Implement API call to save special occasion to database
+        // For now, this is a placeholder
+        console.log('Adding special occasion:', { title, date: selectedDateForEvent, orphanId: orphan.id });
         setIsAddEventModalOpen(false);
         setSelectedDateForEvent(null);
     };

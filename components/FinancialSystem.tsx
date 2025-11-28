@@ -1,6 +1,8 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { financialTransactions, sponsors, orphans } from '../data';
+import { useSponsors } from '../hooks/useSponsors';
+import { useOrphans } from '../hooks/useOrphans';
+import { financialTransactions } from '../data';
 import { FinancialTransaction, TransactionStatus, TransactionType, Sponsor, Orphan } from '../types';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
@@ -507,7 +509,15 @@ const FinancialSystem: React.FC = () => {
     const navigate = useNavigate();
     const fromDateRef = useRef<HTMLInputElement>(null);
     const [transactions, setTransactions] = useState(financialTransactions);
-    const [sponsorsList, setSponsorsList] = useState(sponsors);
+    const { sponsors: sponsorsData } = useSponsors();
+    const { orphans: orphansData } = useOrphans();
+    const [sponsorsList, setSponsorsList] = useState(sponsorsData);
+    
+    useEffect(() => {
+        if (sponsorsData) {
+            setSponsorsList(sponsorsData);
+        }
+    }, [sponsorsData]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [receiptToShow, setReceiptToShow] = useState<FinancialTransaction | null>(null);
 
@@ -717,7 +727,7 @@ const FinancialSystem: React.FC = () => {
             onClose={() => setIsAddModalOpen(false)}
             onAdd={handleAddTransaction}
             sponsors={sponsorsList}
-            orphans={orphans}
+            orphans={orphansData}
             onAddSponsor={handleAddSponsor}
         />
         <ReceiptModal

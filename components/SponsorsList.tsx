@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { sponsors } from '../data';
+import { useSponsors } from '../hooks/useSponsors';
 import { Sponsor } from '../types';
 
 const AddSponsorModal: React.FC<{
@@ -153,7 +153,14 @@ const SortPopover: React.FC<{
 
 
 const SponsorsList: React.FC = () => {
-    const [sponsorList, setSponsorList] = useState(sponsors);
+    const { sponsors: sponsorsData, loading } = useSponsors();
+    const [sponsorList, setSponsorList] = useState<Sponsor[]>([]);
+    
+    useEffect(() => {
+        if (sponsorsData) {
+            setSponsorList(sponsorsData);
+        }
+    }, [sponsorsData]);
     const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);

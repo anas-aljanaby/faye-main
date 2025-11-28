@@ -1,6 +1,9 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { sponsors, orphans, financialTransactions } from '../data';
+import { useSponsors } from '../hooks/useSponsors';
+import { useOrphans } from '../hooks/useOrphans';
+import { findById } from '../utils/idMapper';
+import { financialTransactions } from '../data';
 import { PaymentStatus, TransactionType, Sponsor, Orphan } from '../types';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -164,16 +167,22 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 
 const SponsorPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const sponsor = useMemo(() => sponsors.find(s => s.id === parseInt(id || '')), [id]);
+    const { sponsors: sponsorsData, loading: sponsorsLoading } = useSponsors();
+    const { orphans: orphansData } = useOrphans();
+    const sponsor = useMemo(() => findById(sponsorsData, id || ''), [sponsorsData, id]);
     const sponsoredOrphans = useMemo(() => {
         if (!sponsor) return [];
-        return orphans.filter(o => sponsor.sponsoredOrphanIds.includes(o.id));
-    }, [sponsor]);
+        return orphansData.filter(o => sponsor.sponsoredOrphanIds.includes(o.id));
+    }, [sponsor, orphansData]);
 
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const receiptRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     const orphansSectionRef = useRef<HTMLDivElement>(null);
+
+    if (sponsorsLoading) {
+        return <div className="text-center py-8">جاري التحميل...</div>;
+    }
 
     if (!sponsor) {
         return <div className="text-center text-red-500">لم يتم العثور على الكافل.</div>;
