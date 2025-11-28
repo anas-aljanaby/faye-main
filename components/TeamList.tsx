@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { teamMembers } from '../data';
+import { useTeamMembers } from '../hooks/useTeamMembers';
 import { TeamMember } from '../types';
 
 const AddTeamMemberModal: React.FC<{
@@ -154,7 +154,14 @@ const SortPopover: React.FC<{
 
 
 const TeamList: React.FC = () => {
-    const [teamList, setTeamList] = useState(teamMembers);
+    const { teamMembers: teamMembersData, loading } = useTeamMembers();
+    const [teamList, setTeamList] = useState<TeamMember[]>([]);
+    
+    useEffect(() => {
+        if (teamMembersData) {
+            setTeamList(teamMembersData);
+        }
+    }, [teamMembersData]);
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);

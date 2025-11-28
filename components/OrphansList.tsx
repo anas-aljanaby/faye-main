@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { orphans } from '../data';
+import { useOrphans } from '../hooks/useOrphans';
 import { Orphan } from '../types';
 
 const AddOrphanModal: React.FC<{
@@ -138,7 +138,14 @@ const FilterSortPopover: React.FC<{
 
 
 const OrphansList: React.FC = () => {
-    const [orphanList, setOrphanList] = useState(orphans);
+    const { orphans: orphansData, loading } = useOrphans();
+    const [orphanList, setOrphanList] = useState<Orphan[]>([]);
+    
+    useEffect(() => {
+        if (orphansData) {
+            setOrphanList(orphansData);
+        }
+    }, [orphansData]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');

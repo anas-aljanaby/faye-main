@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { orphans, sponsors, teamMembers, financialTransactions } from '../data';
-import { TransactionStatus } from '../types';
+import { useOrphans } from '../hooks/useOrphans';
+import { useSponsors } from '../hooks/useSponsors';
+import { useTeamMembers } from '../hooks/useTeamMembers';
+import { financialTransactions } from '../data';
+import { TransactionStatus, Orphan } from '../types';
 import { GoogleGenAI } from "@google/genai";
 
 const WidgetCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode; }> = ({ title, icon, children }) => (
@@ -16,7 +19,7 @@ const WidgetCard: React.FC<{ title: string; icon: React.ReactNode; children: Rea
     </div>
 );
 
-const UpcomingOccasions = () => {
+const UpcomingOccasions: React.FC<{ orphans: Orphan[] }> = ({ orphans }) => {
     const today = new Date();
     const upcoming = orphans
         .flatMap(o => o.specialOccasions.map(occ => ({ ...occ, orphanName: o.name, orphanId: o.id })))
@@ -58,7 +61,7 @@ const PendingApprovals = () => {
     );
 };
 
-const LatestAchievements = () => {
+const LatestAchievements: React.FC<{ orphans: Orphan[] }> = ({ orphans }) => {
     const latest = orphans
         .flatMap(o => o.achievements.map(ach => ({ ...ach, orphanName: o.name, orphanId: o.id })))
         .sort((a, b) => b.date.getTime() - a.date.getTime())
@@ -84,6 +87,9 @@ const Dashboard: React.FC = () => {
     const [report, setReport] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
+    const { orphans: orphansData } = useOrphans();
+    const { sponsors: sponsorsData } = useSponsors();
+    const { teamMembers: teamMembersData } = useTeamMembers();
 
     const handleGenerateReport = async () => {
         setIsLoading(true);
@@ -94,16 +100,16 @@ const Dashboard: React.FC = () => {
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
             const dataSummary = {
-                totalOrphans: orphans.length,
-                totalSponsors: sponsors.length,
-                totalTeamMembers: teamMembers.length,
-                orphans: orphans.map(o => ({
+                totalOrphans: orphansData.length,
+                totalSponsors: sponsorsData.length,
+                totalTeamMembers: teamMembersData.length,
+                orphans: orphansData.map(o => ({
                     name: o.name,
                     age: o.age,
                     performance: o.performance,
                     payments: o.payments.map(p => ({ status: p.status, amount: p.amount, dueDate: p.dueDate.toISOString().split('T')[0] }))
                 })),
-                teamMembers: teamMembers.map(m => ({
+                teamMembers: teamMembersData.map(m => ({
                     name: m.name,
                     pendingTasks: m.tasks.filter(t => !t.completed).length,
                     totalTasks: m.tasks.length,
@@ -186,16 +192,16 @@ const Dashboard: React.FC = () => {
 
           <section>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <UpcomingOccasions />
+              <UpcomingOccasions orphans={orphansData} />
               <PendingApprovals />
-              <LatestAchievements />
+              <LatestAchievements orphans={orphansData} />
             </div>
           </section>
 
           <section>
             <h2 className="text-2xl font-bold text-gray-700 mb-4">الأيتام</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {orphans.slice(0, 4).map(orphan => (
+              {orphansData.slice(0, 4).map(orphan => (
                 <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="bg-bg-card rounded-lg shadow-md p-4 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
                   <img src={orphan.photoUrl} alt={orphan.name} className="w-24 h-24 rounded-full object-cover mb-4 border-4 border-gray-100" />
                   <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
@@ -208,7 +214,7 @@ const Dashboard: React.FC = () => {
           <section>
             <h2 className="text-2xl font-bold text-gray-700 mb-4">الكفلاء</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sponsors.map(sponsor => (
+              {sponsorsData.map(sponsor => (
                 <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="bg-bg-card rounded-lg shadow-md p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                   <div className="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-xl">
                     {sponsor.name.charAt(0)}
@@ -225,7 +231,7 @@ const Dashboard: React.FC = () => {
           <section>
             <h2 className="text-2xl font-bold text-gray-700 mb-4">فريق العمل</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {teamMembers.map(member => (
+              {teamMembersData.map(member => (
                 <Link to={`/team/${member.id}`} key={member.id} className="bg-bg-card rounded-lg shadow-md p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                   <img src={member.avatarUrl} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
                   <div>
