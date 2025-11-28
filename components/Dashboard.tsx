@@ -236,7 +236,7 @@ const Dashboard: React.FC = () => {
                   <img src={member.avatarUrl} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">{member.name}</h3>
-                    <p className="text-sm text-text-secondary">يتابع {member.assignedOrphanIds.length} أيتام</p>
+                    <p className="text-sm text-text-secondary">عضو فريق</p>
                   </div>
                 </Link>
               ))}

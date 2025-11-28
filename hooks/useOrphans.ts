@@ -32,6 +32,7 @@ export const useOrphans = () => {
         .eq('organization_id', userProfile.organization_id);
 
       // If user is a sponsor, only show their sponsored orphans
+      // Team members can see all orphans in their organization
       if (userProfile.role === 'sponsor') {
         const { data: sponsorOrphans } = await supabase
           .from('sponsor_orphans')
@@ -109,17 +110,10 @@ export const useOrphans = () => {
             .select('*')
             .eq('orphan_id', orphanId);
 
-          // Fetch sponsor and team member relationships
+          // Fetch sponsor relationship
           const { data: sponsorData } = await supabase
             .from('sponsor_orphans')
             .select('sponsor_id')
-            .eq('orphan_id', orphanId)
-            .limit(1)
-            .single();
-
-          const { data: teamMemberData } = await supabase
-            .from('team_member_orphans')
-            .select('team_member_id')
             .eq('orphan_id', orphanId)
             .limit(1)
             .single();
@@ -209,7 +203,7 @@ export const useOrphans = () => {
             guardian: orphan.guardian || '',
             sponsorId: sponsorData?.sponsor_id ? uuidToNumber(sponsorData.sponsor_id) : 0,
             sponsorshipType: orphan.sponsorship_type || '',
-            teamMemberId: teamMemberData?.team_member_id ? uuidToNumber(teamMemberData.team_member_id) : 0,
+            teamMemberId: 0, // Team members don't have direct relationships with orphans
             familyMembers,
             hobbies: [], // Not stored in DB yet
             needsAndWishes: [], // Not stored in DB yet

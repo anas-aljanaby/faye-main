@@ -89,9 +89,10 @@ const TeamMemberPage: React.FC = () => {
     }
   }, [member]);
 
+  // Team members can see all orphans in their organization
   const assignedOrphans = useMemo(() => {
     if (!member) return [];
-    return orphansData.filter(o => member.assignedOrphanIds.includes(o.id));
+    return orphansData;
   }, [member, orphansData]);
 
   if (teamMembersLoading) {

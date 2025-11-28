@@ -24,7 +24,7 @@ export const orphans: Orphan[] = [
     guardian: 'والدته',
     sponsorId: 1,
     sponsorshipType: 'كفالة شهرية شاملة',
-    teamMemberId: 1,
+    teamMemberId: 0, // Team members don't have direct relationships with orphans
     familyMembers: [
         { relationship: 'الأم', age: 35 },
         { relationship: 'أخت', age: 8 }
@@ -129,7 +129,7 @@ export const orphans: Orphan[] = [
     guardian: 'عمه',
     sponsorId: 1,
     sponsorshipType: 'كفالة شهرية شاملة',
-    teamMemberId: 1,
+    teamMemberId: 0, // Team members don't have direct relationships with orphans
     familyMembers: [
         { relationship: 'العم', age: 45 },
         { relationship: 'ابن العم', age: 14 }
@@ -168,7 +168,7 @@ export const teamMembers: TeamMember[] = [
     id: 1,
     name: 'خالد الغامدي',
     avatarUrl: 'https://picsum.photos/seed/khaled/100/100',
-    assignedOrphanIds: [1, 3],
+    assignedOrphanIds: [], // Team members don't have direct relationships with orphans
     tasks: [
       { id: 1, title: 'متابعة المستوى الدراسي لأحمد خالد', dueDate: new Date('2024-06-05'), completed: false, orphanId: 1 },
       { id: 2, title: 'زيارة منزل يوسف محمد', dueDate: new Date('2024-06-12'), completed: false, orphanId: 3 },
@@ -179,7 +179,7 @@ export const teamMembers: TeamMember[] = [
     id: 2,
     name: 'نورة السعد',
     avatarUrl: 'https://picsum.photos/seed/noura/100/100',
-    assignedOrphanIds: [2],
+    assignedOrphanIds: [], // Team members don't have direct relationships with orphans
     tasks: [
       { id: 4, title: 'توفير المستلزمات المدرسية لسارة', dueDate: new Date('2024-06-02'), completed: false, orphanId: 2 },
       { id: 5, title: 'متابعة الحالة الصحية لجدة سارة', dueDate: new Date('2024-06-18'), completed: false, orphanId: 2 },

@@ -132,17 +132,11 @@ VALUES
 ON CONFLICT (sponsor_id, orphan_id) DO NOTHING;
 
 -- ============================================================================
--- STEP 6: Link Team Members to Orphans (Assignments)
+-- STEP 6: NOTE - Team Members and Orphans
 -- ============================================================================
-
-INSERT INTO team_member_orphans (team_member_id, orphan_id)
-VALUES 
-    -- خالد الغامدي assigned to أحمد and يوسف
-    ('11111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
-    ('11111111-1111-1111-1111-111111111111', 'cccccccc-cccc-cccc-cccc-cccccccccccc'),
-    -- سارة أحمد assigned to مريم
-    ('22222222-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
-ON CONFLICT (team_member_id, orphan_id) DO NOTHING;
+-- Team members do not have direct relationships with orphans.
+-- Team members can view and manage all orphans in their organization.
+-- ============================================================================
 
 -- ============================================================================
 -- STEP 7: Add Sample Payments
@@ -323,11 +317,14 @@ FROM sponsor_orphans so
 JOIN user_profiles up ON up.id = so.sponsor_id
 JOIN orphans o ON o.id = so.orphan_id;
 
--- Check team member-orphan assignments
+-- Check team members (they can see all orphans in their organization)
 SELECT 
     up.name as team_member_name,
-    o.name as orphan_name
-FROM team_member_orphans tmo
-JOIN user_profiles up ON up.id = tmo.team_member_id
-JOIN orphans o ON o.id = tmo.orphan_id;
+    up.role,
+    COUNT(DISTINCT o.id) as total_orphans_in_org
+FROM user_profiles up
+CROSS JOIN orphans o
+WHERE up.role = 'team_member' 
+    AND up.organization_id = o.organization_id
+GROUP BY up.id, up.name, up.role;
 

@@ -126,14 +126,9 @@ BEGIN
     ON CONFLICT (sponsor_id, orphan_id) DO NOTHING;
 
     -- ============================================================================
-    -- LINK TEAM MEMBERS TO ORPHANS
+    -- NOTE: Team members do not have direct relationships with orphans
+    -- Team members can view and manage all orphans in their organization
     -- ============================================================================
-    INSERT INTO team_member_orphans (team_member_id, orphan_id)
-    VALUES 
-        (team_member_1_id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),  -- خالد assigned to أحمد
-        (team_member_1_id, 'cccccccc-cccc-cccc-cccc-cccccccccccc'),  -- خالد assigned to يوسف
-        (team_member_2_id, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')   -- سارة assigned to مريم
-    ON CONFLICT (team_member_id, orphan_id) DO NOTHING;
 
     -- ============================================================================
     -- ADD SAMPLE DATA

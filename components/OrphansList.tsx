@@ -245,7 +245,7 @@ const OrphansList: React.FC = () => {
             guardian: 'غير محدد',
             sponsorId: -1,
             sponsorshipType: 'غير محدد',
-            teamMemberId: -1,
+            teamMemberId: 0, // Team members don't have direct relationships with orphans
             familyMembers: [],
             hobbies: [],
             needsAndWishes: [],

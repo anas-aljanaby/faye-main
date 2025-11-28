@@ -135,10 +135,10 @@ const SortPopover: React.FC<{
                 <fieldset>
                     <legend className="text-sm font-semibold text-gray-600 mb-2">ترتيب حسب</legend>
                     <div className="space-y-2">
-                        {(['name-asc', 'orphans-desc'] as const).map(option => (
+                        {(['name-asc'] as const).map(option => (
                             <label key={option} className="flex items-center gap-2 cursor-pointer">
                                 <input type="radio" name="sort" value={option} checked={sortBy === option} onChange={e => setSortBy(e.target.value)} className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0"/>
-                                <span className="text-sm">{ { 'name-asc': 'الاسم', 'orphans-desc': 'عدد الأيتام (الأكثر)' }[option] }</span>
+                                <span className="text-sm">{ { 'name-asc': 'الاسم' }[option] }</span>
                             </label>
                         ))}
                     </div>
@@ -194,9 +194,6 @@ const TeamList: React.FC = () => {
         }
 
         switch (sortBy) {
-            case 'orphans-desc':
-                sortedAndFiltered.sort((a, b) => b.assignedOrphanIds.length - a.assignedOrphanIds.length);
-                break;
             case 'name-asc':
             default:
                 sortedAndFiltered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
@@ -231,10 +228,10 @@ const TeamList: React.FC = () => {
     };
 
     const handleExportExcel = () => {
-        const headers = ['id', 'name', 'assigned_orphans_count'];
+        const headers = ['id', 'name'];
         const csvRows = [
             headers.join(','),
-            ...filteredTeamMembers.map(m => [m.id, `"${m.name}"`, m.assignedOrphanIds.length].join(','))
+            ...filteredTeamMembers.map(m => [m.id, `"${m.name}"`].join(','))
         ];
         const csvContent = '\uFEFF' + csvRows.join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -257,7 +254,7 @@ const TeamList: React.FC = () => {
             id: Date.now(),
             name,
             avatarUrl: `https://picsum.photos/seed/${Date.now()}/100/100`,
-            assignedOrphanIds: [],
+            assignedOrphanIds: [], // Team members don't have direct relationships with orphans
             tasks: [],
         };
         setTeamList(prev => [newMember, ...prev]);
@@ -350,7 +347,7 @@ const TeamList: React.FC = () => {
                                 <img src={member.avatarUrl} alt={member.name} className="w-16 h-16 rounded-full object-cover" />
                                 <div className="flex-1">
                                     <h3 className="text-xl font-semibold text-gray-800">{member.name}</h3>
-                                    <p className="text-sm text-text-secondary">يتابع {member.assignedOrphanIds.length} {member.assignedOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
+                                    <p className="text-sm text-text-secondary">عضو فريق</p>
                                 </div>
                                 <div className="relative">
                                     <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(member.id === activeMenuId ? null : member.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${member.name}`}>
