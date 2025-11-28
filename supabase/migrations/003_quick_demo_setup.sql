@@ -13,10 +13,10 @@
 DO $$
 DECLARE
     -- REPLACE THESE WITH YOUR ACTUAL USER IDs FROM AUTH DASHBOARD
-    team_member_1_id UUID := '11111111-1111-1111-1111-111111111111';  -- REPLACE_ME
-    team_member_2_id UUID := '22222222-2222-2222-2222-222222222222';  -- REPLACE_ME
-    sponsor_1_id UUID := '33333333-3333-3333-3333-333333333333';      -- REPLACE_ME
-    sponsor_2_id UUID := '44444444-4444-4444-4444-444444444444';      -- REPLACE_ME
+    team_member_1_id UUID := '6a65d2a0-0525-48f2-827d-6a2de3aa024a';  -- REPLACE_ME
+    team_member_2_id UUID := '31983d90-75f3-454d-9226-6ed82509d8c8';  -- REPLACE_ME
+    sponsor_1_id UUID := 'a888c094-2bcb-4999-9ac5-b1df6c94fd1c';      -- REPLACE_ME
+    sponsor_2_id UUID := '659cfd87-e813-4a8a-ab69-6599d2d34854';      -- REPLACE_ME
     demo_org_id UUID := '00000000-0000-0000-0000-000000000001';
 BEGIN
     -- ============================================================================
