@@ -1,11 +1,23 @@
-import React, { useEffect, useRef, useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { financialTransactions, sponsors, orphans } from '../data';
 import { FinancialTransaction, TransactionStatus, TransactionType, Sponsor, Orphan } from '../types';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { Bar, Pie } from 'react-chartjs-2';
+import 'chartjs-adapter-date-fns';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
-declare const Chart: any;
-declare const jspdf: any;
-declare const html2canvas: any;
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
 
 const AddSponsorQuickModal: React.FC<{
     isOpen: boolean;
@@ -299,7 +311,6 @@ const ReceiptModal: React.FC<{ transaction: FinancialTransaction | null; onClose
         if(input) {
             html2canvas(input, { scale: 2, useCORS: true }).then((canvas) => {
                 const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = jspdf;
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
@@ -373,143 +384,107 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
 );
 
 const TrendsChart: React.FC = () => {
-    const chartRef = useRef<HTMLCanvasElement>(null);
-    const chartInstance = useRef<any>(null);
+    const data = {
+        labels: ['يناير', 'مارس', 'مايو', 'يوليو', 'سبتمبر', 'نوفمبر'],
+        datasets: [
+            {
+                label: 'إيرادات',
+                data: [1200, 1900, 3000, 5000, 2000, 3000].map(v => v * 1.5), // Example data
+                backgroundColor: '#10B981',
+                borderRadius: 6,
+            },
+            {
+                label: 'مصروفات',
+                data: [800, 1200, 2500, 4000, 1500, 2200].map(v => v * 1.2), // Example data
+                backgroundColor: '#EF4444',
+                borderRadius: 6,
+            },
+        ],
+    };
 
-    useEffect(() => {
-        if (chartRef.current) {
-            if (chartInstance.current) {
-                chartInstance.current.destroy();
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top' as const,
+                align: 'end' as const,
+                labels: {
+                    usePointStyle: true,
+                    boxWidth: 8,
+                    padding: 20,
+                    font: { family: 'Tajawal' }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context: any) {
+                        return `${context.dataset.label}: $${context.formattedValue}`;
+                    }
+                }
             }
-            const ctx = chartRef.current.getContext('2d');
-            chartInstance.current = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['يناير', 'مارس', 'مايو', 'يوليو', 'سبتمبر', 'نوفمبر'],
-                    datasets: [
-                        {
-                            label: 'إيرادات',
-                            data: [1200, 1900, 3000, 5000, 2000, 3000].map(v => v * 1.5), // Example data
-                            backgroundColor: '#10B981',
-                            borderRadius: 6,
-                        },
-                        {
-                            label: 'مصروفات',
-                            data: [800, 1200, 2500, 4000, 1500, 2200].map(v => v * 1.2), // Example data
-                            backgroundColor: '#EF4444',
-                            borderRadius: 6,
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            align: 'end',
-                            labels: {
-                                usePointStyle: true,
-                                boxWidth: 8,
-                                padding: 20,
-                                font: { family: 'Tajawal' }
-                            }
-                        },
-                         tooltip: {
-                            callbacks: {
-                                label: function(context: any) {
-                                    return `${context.dataset.label}: $${context.formattedValue}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { grid: { display: false } },
-                        y: { 
-                            beginAtZero: true, 
-                            grid: { color: '#e5e7eb' },
-                            ticks: {
-                                callback: function(value: any) {
-                                    return '$' + value;
-                                }
-                            }
-                        },
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'index',
-                    },
-                },
-            });
-        }
-        return () => {
-            if (chartInstance.current) {
-                chartInstance.current.destroy();
-            }
-        };
-    }, []);
+        },
+        scales: {
+            x: { grid: { display: false } },
+            y: { 
+                beginAtZero: true, 
+                grid: { color: '#e5e7eb' },
+                ticks: {
+                    callback: function(value: any) {
+                        return '$' + value;
+                    }
+                }
+            },
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index' as const,
+        },
+    };
 
     return (
         <div className="bg-bg-card p-6 rounded-lg shadow-sm h-[350px]">
             <h3 className="text-lg font-bold mb-4">توجهات الإيرادات والمصروفات</h3>
-            <canvas ref={chartRef}></canvas>
+            <Bar data={data} options={options} />
         </div>
     );
 };
 
 const IncomeSourceChart: React.FC = () => {
-    const chartRef = useRef<HTMLCanvasElement>(null);
-    const chartInstance = useRef<any>(null);
+    const data = {
+        labels: ['تبرعات الكفلاء', 'منظمات خارجية'],
+        datasets: [{
+            data: [1600, 1000],
+            backgroundColor: ['#8c1c3e', '#fbe9ef'],
+            borderColor: '#fff',
+            borderWidth: 2,
+        }]
+    };
 
-    useEffect(() => {
-        if (chartRef.current) {
-            if (chartInstance.current) {
-                chartInstance.current.destroy();
-            }
-            const ctx = chartRef.current.getContext('2d');
-            chartInstance.current = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['تبرعات الكفلاء', 'منظمات خارجية'],
-                    datasets: [{
-                        data: [1600, 1000],
-                        backgroundColor: ['#8c1c3e', '#fbe9ef'],
-                        borderColor: '#fff',
-                        borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                             labels: {
-                                font: { family: 'Tajawal' }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context: any) {
-                                    return `${context.label}: $${context.formattedValue}`;
-                                }
-                            }
-                        }
+    const options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom' as const,
+                labels: {
+                    font: { family: 'Tajawal' }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context: any) {
+                        return `${context.label}: $${context.formattedValue}`;
                     }
                 }
-            });
-        }
-        return () => {
-            if (chartInstance.current) {
-                chartInstance.current.destroy();
             }
-        };
-    }, []);
+        }
+    };
 
     return (
         <div className="bg-bg-card p-6 rounded-lg shadow-sm h-[350px]">
             <h3 className="text-lg font-bold mb-4">مصادر الإيرادات</h3>
-            <canvas ref={chartRef}></canvas>
+            <Pie data={data} options={options} />
         </div>
     );
 }
