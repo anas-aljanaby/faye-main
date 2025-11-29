@@ -459,31 +459,36 @@ const HumanResources: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-800">إدارة الموارد البشرية</h1>
-            <div className="flex flex-col md:flex-row gap-8">
-                <nav className="md:w-64 flex-shrink-0">
-                    <ul className="space-y-2">
+            <div className="flex flex-col gap-4">
+                <h1 className="text-3xl font-bold text-gray-800">إدارة الموارد البشرية</h1>
+                
+                {/* Horizontal Tab Navigation */}
+                <div className="border-b border-gray-200 overflow-x-auto">
+                    <nav className="flex gap-2 min-w-max" role="tablist">
                         {hrSections.map(section => (
-                            <li key={section.id}>
-                                <button
-                                    onClick={() => setActiveSection(section.id)}
-                                    className={`w-full flex items-center gap-3 p-3 rounded-lg text-right font-semibold transition-colors ${
-                                        activeSection === section.id
-                                            ? 'bg-primary text-white shadow'
-                                            : 'text-text-secondary hover:bg-primary-light hover:text-primary'
-                                    }`}
-                                >
-                                    {section.icon}
-                                    <span>{section.title}</span>
-                                </button>
-                            </li>
+                            <button
+                                key={section.id}
+                                onClick={() => setActiveSection(section.id)}
+                                role="tab"
+                                aria-selected={activeSection === section.id}
+                                className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all whitespace-nowrap border-b-2 ${
+                                    activeSection === section.id
+                                        ? 'border-primary text-primary bg-primary/5'
+                                        : 'border-transparent text-text-secondary hover:text-primary hover:border-gray-300'
+                                }`}
+                            >
+                                <span className="flex-shrink-0">{section.icon}</span>
+                                <span>{section.title}</span>
+                            </button>
                         ))}
-                    </ul>
-                </nav>
-                <main className="flex-1 bg-bg-card p-6 rounded-xl shadow-sm min-h-[400px]">
-                    {renderContent()}
-                </main>
+                    </nav>
+                </div>
             </div>
+            
+            {/* Main Content Area */}
+            <main className="bg-bg-card p-6 rounded-xl shadow-sm min-h-[400px]">
+                {renderContent()}
+            </main>
         </div>
     );
 };
