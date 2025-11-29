@@ -306,6 +306,28 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Helper function to check if an orphan belongs to user's organization (bypasses RLS to prevent recursion)
+CREATE OR REPLACE FUNCTION check_orphan_organization(orphan_uuid UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    user_org_id UUID;
+    orphan_org_id UUID;
+BEGIN
+    -- Get user's organization
+    SELECT organization_id INTO user_org_id
+    FROM user_profiles
+    WHERE id = auth.uid();
+    
+    -- Get orphan's organization (bypasses RLS due to SECURITY DEFINER)
+    SELECT organization_id INTO orphan_org_id
+    FROM orphans
+    WHERE id = orphan_uuid;
+    
+    -- Return true if they match
+    RETURN user_org_id IS NOT NULL AND orphan_org_id IS NOT NULL AND user_org_id = orphan_org_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Organizations policies
 CREATE POLICY "Users can view their own organization"
     ON organizations FOR SELECT
@@ -362,12 +384,8 @@ CREATE POLICY "Team members can delete orphans in their organization"
 CREATE POLICY "Team members can manage sponsor-orphan relationships"
     ON sponsor_orphans FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = sponsor_orphans.orphan_id
-            AND o.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_orphan_organization(sponsor_orphans.orphan_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view their own sponsor-orphan relationships"
@@ -379,10 +397,8 @@ CREATE POLICY "Team members can manage their own assignments"
     ON team_member_orphans FOR ALL
     USING (
         team_member_id = auth.uid() 
-        OR EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = team_member_orphans.orphan_id
-            AND o.organization_id = get_user_organization_id()
+        OR (
+            check_orphan_organization(team_member_orphans.orphan_id)
             AND is_team_member()
         )
     );
@@ -391,12 +407,8 @@ CREATE POLICY "Team members can manage their own assignments"
 CREATE POLICY "Team members can manage payments for orphans in their organization"
     ON payments FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = payments.orphan_id
-            AND o.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_orphan_organization(payments.orphan_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view payments for their sponsored orphans"
@@ -412,12 +424,8 @@ CREATE POLICY "Sponsors can view payments for their sponsored orphans"
 CREATE POLICY "Team members can manage achievements for orphans in their organization"
     ON achievements FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = achievements.orphan_id
-            AND o.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_orphan_organization(achievements.orphan_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view achievements for their sponsored orphans"
@@ -433,12 +441,8 @@ CREATE POLICY "Sponsors can view achievements for their sponsored orphans"
 CREATE POLICY "Team members can manage special occasions for orphans in their organization"
     ON special_occasions FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = special_occasions.orphan_id
-            AND o.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_orphan_organization(special_occasions.orphan_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view special occasions for their sponsored orphans"
@@ -454,12 +458,8 @@ CREATE POLICY "Sponsors can view special occasions for their sponsored orphans"
 CREATE POLICY "Team members can manage gifts for orphans in their organization"
     ON gifts FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = gifts.orphan_id
-            AND o.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_orphan_organization(gifts.orphan_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view gifts for their sponsored orphans"
@@ -475,12 +475,8 @@ CREATE POLICY "Sponsors can view gifts for their sponsored orphans"
 CREATE POLICY "Team members can manage update logs for orphans in their organization"
     ON update_logs FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = update_logs.orphan_id
-            AND o.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_orphan_organization(update_logs.orphan_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view update logs for their sponsored orphans"
@@ -496,12 +492,8 @@ CREATE POLICY "Sponsors can view update logs for their sponsored orphans"
 CREATE POLICY "Team members can manage family members for orphans in their organization"
     ON family_members FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = family_members.orphan_id
-            AND o.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_orphan_organization(family_members.orphan_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view family members for their sponsored orphans"
@@ -517,12 +509,8 @@ CREATE POLICY "Sponsors can view family members for their sponsored orphans"
 CREATE POLICY "Team members can manage program participations for orphans in their organization"
     ON program_participations FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM orphans o
-            WHERE o.id = program_participations.orphan_id
-            AND o.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_orphan_organization(program_participations.orphan_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view program participations for their sponsored orphans"
