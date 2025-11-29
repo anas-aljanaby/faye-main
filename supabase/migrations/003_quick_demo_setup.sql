@@ -32,8 +32,8 @@ BEGIN
     -- Team Members
     INSERT INTO user_profiles (id, organization_id, role, name, avatar_url)
     VALUES 
-        (team_member_1_id, demo_org_id, 'team_member', 'خالد الغامدي', 'https://ui-avatars.com/api/?name=خالد+الغامدي&background=8c1c3e&color=fff'),
-        (team_member_2_id, demo_org_id, 'team_member', 'سارة أحمد', 'https://ui-avatars.com/api/?name=سارة+أحمد&background=8c1c3e&color=fff')
+        (team_member_1_id, demo_org_id, 'team_member', 'خالد الغامدي', 'https://picsum.photos/seed/khaled/100/100'),
+        (team_member_2_id, demo_org_id, 'team_member', 'نورة السعد', 'https://picsum.photos/seed/noura/100/100')
     ON CONFLICT (id) DO UPDATE SET
         organization_id = EXCLUDED.organization_id,
         role = EXCLUDED.role,
@@ -43,8 +43,8 @@ BEGIN
     -- Sponsors
     INSERT INTO user_profiles (id, organization_id, role, name, avatar_url)
     VALUES 
-        (sponsor_1_id, demo_org_id, 'sponsor', 'عبدالله الراجحي', 'https://ui-avatars.com/api/?name=عبدالله+الراجحي&background=10b981&color=fff'),
-        (sponsor_2_id, demo_org_id, 'sponsor', 'فاطمة الأحمد', 'https://ui-avatars.com/api/?name=فاطمة+الأحمد&background=10b981&color=fff')
+        (sponsor_1_id, demo_org_id, 'sponsor', 'عبدالله الراجحي', 'https://picsum.photos/seed/abdullah/100/100'),
+        (sponsor_2_id, demo_org_id, 'sponsor', 'فاطمة الأحمد', 'https://picsum.photos/seed/fatima/100/100')
     ON CONFLICT (id) DO UPDATE SET
         organization_id = EXCLUDED.organization_id,
         role = EXCLUDED.role,
@@ -63,7 +63,7 @@ BEGIN
             'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
             demo_org_id,
             'أحمد خالد',
-            'https://ui-avatars.com/api/?name=أحمد+خالد&background=8c1c3e&color=fff',
+            'https://picsum.photos/seed/ahmad/200/200',
             '2010-05-15',
             'ذكر',
             'جيد',
@@ -80,8 +80,8 @@ BEGIN
         (
             'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
             demo_org_id,
-            'مريم علي',
-            'https://ui-avatars.com/api/?name=مريم+علي&background=8c1c3e&color=fff',
+            'سارة علي',
+            'https://picsum.photos/seed/sara/200/200',
             '2012-08-20',
             'أنثى',
             'جيد',
@@ -99,7 +99,7 @@ BEGIN
             'cccccccc-cccc-cccc-cccc-cccccccccccc',
             demo_org_id,
             'يوسف محمد',
-            'https://ui-avatars.com/api/?name=يوسف+محمد&background=8c1c3e&color=fff',
+            'https://picsum.photos/seed/yusuf/200/200',
             '2009-03-10',
             'ذكر',
             'ممتاز',
@@ -122,7 +122,7 @@ BEGIN
     VALUES 
         (sponsor_1_id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),  -- عبدالله sponsors أحمد
         (sponsor_1_id, 'cccccccc-cccc-cccc-cccc-cccccccccccc'),  -- عبدالله sponsors يوسف
-        (sponsor_2_id, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')   -- فاطمة sponsors مريم
+        (sponsor_2_id, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')   -- فاطمة sponsors سارة
     ON CONFLICT (sponsor_id, orphan_id) DO NOTHING;
 
     -- ============================================================================
@@ -200,7 +200,7 @@ BEGIN
     VALUES 
         (team_member_1_id, 'متابعة حالة الدفعة المتأخرة لأحمد', '2024-03-15', FALSE, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
         (team_member_1_id, 'زيارة منزلية ليوسف', '2024-03-20', FALSE, 'cccccccc-cccc-cccc-cccc-cccccccccccc'),
-        (team_member_2_id, 'التنسيق مع المدرسة لمريم', '2024-03-18', FALSE, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+        (team_member_2_id, 'التنسيق مع المدرسة لسارة', '2024-03-18', FALSE, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
         (team_member_1_id, 'تحديث ملف أحمد', '2024-03-10', TRUE, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
 
     -- Financial Transactions
