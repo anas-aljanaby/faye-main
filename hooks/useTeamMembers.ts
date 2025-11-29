@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { TeamMember, Task } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { cache, getCacheKey } from '../utils/cache';
 
 export const useTeamMembers = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -18,8 +19,22 @@ export const useTeamMembers = () => {
     fetchTeamMembers();
   }, [userProfile]);
 
-  const fetchTeamMembers = async () => {
+  const fetchTeamMembers = async (useCache = true) => {
     if (!userProfile) return;
+
+    const cacheKey = getCacheKey.teamMembers(userProfile.organization_id);
+    
+    // Check cache first
+    if (useCache) {
+      const cachedData = cache.get<TeamMember[]>(cacheKey);
+      if (cachedData) {
+        setTeamMembers(cachedData);
+        setLoading(false);
+        // Still fetch in background to update cache (stale-while-revalidate)
+        fetchTeamMembers(false).catch(() => {});
+        return;
+      }
+    }
 
     try {
       setLoading(true);
@@ -36,6 +51,7 @@ export const useTeamMembers = () => {
       if (!teamMembersData) {
         setTeamMembers([]);
         setLoading(false);
+        cache.set(cacheKey, [], 2 * 60 * 1000);
         return;
       }
 
@@ -50,37 +66,48 @@ export const useTeamMembers = () => {
         return Math.abs(hash) % 1000000;
       };
 
-      // Fetch tasks for each team member
-      // Note: Team members don't have direct relationships with orphans - they can see all orphans
-      const teamMembersWithData = await Promise.all(
-        teamMembersData.map(async (member) => {
-          // Fetch tasks
-          const { data: tasksData } = await supabase
-            .from('tasks')
-            .select('*')
-            .eq('team_member_id', member.id)
-            .order('due_date', { ascending: false });
+      const teamMemberIds = teamMembersData.map(m => m.id);
 
-          const tasks: Task[] = (tasksData || []).map(t => ({
-            id: uuidToNumber(t.id),
-            title: t.title,
-            dueDate: new Date(t.due_date),
-            completed: t.completed,
-            orphanId: t.orphan_id ? uuidToNumber(t.orphan_id) : undefined,
-          }));
+      // Batch fetch all tasks for all team members at once
+      const { data: allTasksData } = await supabase
+        .from('tasks')
+        .select('*')
+        .in('team_member_id', teamMemberIds)
+        .order('due_date', { ascending: false });
 
-          return {
-            id: uuidToNumber(member.id),
-            uuid: member.id, // Store UUID for database operations
-            name: member.name,
-            avatarUrl: member.avatar_url || '',
-            assignedOrphanIds: [], // Team members don't have direct relationships with orphans
-            tasks,
-          } as TeamMember;
-        })
-      );
+      // Group tasks by team member
+      const tasksByMember = new Map<string, any[]>();
+      (allTasksData || []).forEach(t => {
+        if (!tasksByMember.has(t.team_member_id)) {
+          tasksByMember.set(t.team_member_id, []);
+        }
+        tasksByMember.get(t.team_member_id)!.push(t);
+      });
+
+      // Build team members with their tasks
+      const teamMembersWithData = teamMembersData.map((member) => {
+        const memberTasks = tasksByMember.get(member.id) || [];
+        const tasks: Task[] = memberTasks.map(t => ({
+          id: uuidToNumber(t.id),
+          title: t.title,
+          dueDate: new Date(t.due_date),
+          completed: t.completed,
+          orphanId: t.orphan_id ? uuidToNumber(t.orphan_id) : undefined,
+        }));
+
+        return {
+          id: uuidToNumber(member.id),
+          uuid: member.id, // Store UUID for database operations
+          name: member.name,
+          avatarUrl: member.avatar_url || '',
+          assignedOrphanIds: [], // Team members don't have direct relationships with orphans
+          tasks,
+        } as TeamMember;
+      });
 
       setTeamMembers(teamMembersWithData);
+      // Cache the result for 5 minutes
+      cache.set(cacheKey, teamMembersWithData, 5 * 60 * 1000);
     } catch (err) {
       console.error('Error fetching team members:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch team members');
