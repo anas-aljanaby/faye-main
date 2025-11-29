@@ -28,7 +28,7 @@ export const useSponsors = () => {
       // Fetch sponsors from user_profiles
       const { data: sponsorsData, error: sponsorsError } = await supabase
         .from('user_profiles')
-        .select('id, name')
+        .select('id, name, avatar_url')
         .eq('organization_id', userProfile.organization_id)
         .eq('role', 'sponsor');
 
@@ -64,7 +64,9 @@ export const useSponsors = () => {
 
           return {
             id: uuidToNumber(sponsor.id),
+            uuid: sponsor.id, // Store UUID for database operations
             name: sponsor.name,
+            avatarUrl: sponsor.avatar_url || '',
             sponsoredOrphanIds,
           } as Sponsor;
         })

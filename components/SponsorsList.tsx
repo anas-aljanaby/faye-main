@@ -343,9 +343,13 @@ const SponsorsList: React.FC = () => {
                                     className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
                                     aria-label={`تحديد ${sponsor.name}`}
                                 />
-                                <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-2xl flex-shrink-0">
+                                {sponsor.avatarUrl ? (
+                                  <img src={sponsor.avatarUrl} alt={sponsor.name} className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
+                                ) : (
+                                  <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-2xl flex-shrink-0">
                                     {sponsor.name.charAt(0)}
-                                </div>
+                                  </div>
+                                )}
                                 <div className="flex-1">
                                     <h3 className="text-xl font-semibold text-gray-800">{sponsor.name}</h3>
                                     <p className="text-sm text-text-secondary">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>

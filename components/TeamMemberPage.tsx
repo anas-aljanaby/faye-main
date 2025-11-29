@@ -5,6 +5,7 @@ import { useOrphans } from '../hooks/useOrphans';
 import { findById } from '../utils/idMapper';
 import { Task } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";
+import { AvatarUpload } from './AvatarUpload';
 
 
 const BellIcon: React.FC<{ count: number }> = ({ count }) => (
@@ -264,7 +265,19 @@ const TeamMemberPage: React.FC = () => {
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
       <div className="lg:col-span-2 space-y-8">
         <div className="bg-bg-card p-6 rounded-xl shadow-md flex items-center gap-6">
-            <img src={member.avatarUrl} alt={member.name} className="w-20 h-20 rounded-full" />
+            {member.uuid ? (
+              <AvatarUpload
+                currentAvatarUrl={member.avatarUrl}
+                userId={member.uuid}
+                type="team_member"
+                onUploadComplete={(newUrl) => {
+                  // Refresh team members to get updated avatar
+                  window.location.reload();
+                }}
+              />
+            ) : (
+              <img src={member.avatarUrl} alt={member.name} className="w-20 h-20 rounded-full" />
+            )}
             <div>
                 <h1 className="text-3xl font-bold text-gray-800">{member.name}</h1>
                 <p className="text-text-secondary">عضو فريق العمل</p>

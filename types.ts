@@ -53,6 +53,7 @@ export interface PsychologicalSupport {
 
 export interface Orphan {
   id: number;
+  uuid?: string; // UUID from database for operations
   name: string;
   photoUrl: string;
   age: number;
@@ -87,7 +88,9 @@ export interface Orphan {
 
 export interface Sponsor {
   id: number;
+  uuid?: string; // UUID from database for operations
   name: string;
+  avatarUrl: string;
   sponsoredOrphanIds: number[];
 }
 
@@ -101,6 +104,7 @@ export interface Task {
 
 export interface TeamMember {
   id: number;
+  uuid?: string; // UUID from database for operations
   name: string;
   avatarUrl: string;
   assignedOrphanIds: number[];

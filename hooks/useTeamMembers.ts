@@ -71,6 +71,7 @@ export const useTeamMembers = () => {
 
           return {
             id: uuidToNumber(member.id),
+            uuid: member.id, // Store UUID for database operations
             name: member.name,
             avatarUrl: member.avatar_url || '',
             assignedOrphanIds: [], // Team members don't have direct relationships with orphans

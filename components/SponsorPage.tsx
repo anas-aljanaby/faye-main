@@ -7,6 +7,7 @@ import { financialTransactions } from '../data';
 import { PaymentStatus, TransactionType, Sponsor, Orphan } from '../types';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { AvatarUpload } from './AvatarUpload';
 
 // A simple SendMessageModal for this component
 const SendMessageModal: React.FC<{
@@ -230,9 +231,22 @@ const SponsorPage: React.FC = () => {
                 <div className="space-y-8" style={{ paddingBottom: '80px' }}>
                     {/* Sponsor Header */}
                     <div className="bg-bg-card p-6 rounded-xl shadow-md flex flex-col sm:flex-row items-center gap-6">
-                        <div className="w-24 h-24 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-4xl flex-shrink-0">
+                        {sponsor.uuid ? (
+                          <AvatarUpload
+                            currentAvatarUrl={sponsor.avatarUrl}
+                            userId={sponsor.uuid}
+                            type="sponsor"
+                            onUploadComplete={(newUrl) => {
+                              // Refresh sponsors to get updated avatar
+                              window.location.reload();
+                            }}
+                            size="md"
+                          />
+                        ) : (
+                          <div className="w-24 h-24 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-4xl flex-shrink-0">
                             {sponsor.name.charAt(0)}
-                        </div>
+                          </div>
+                        )}
                         <div className="text-center sm:text-right flex-grow">
                             <h1 className="text-3xl font-bold text-gray-800">{sponsor.name}</h1>
                             <p className="text-text-secondary">كافل مميز في فيء</p>

@@ -9,6 +9,7 @@ import { Payment, PaymentStatus, Achievement, SpecialOccasion, Gift, Transaction
 import { GoogleGenAI } from "@google/genai";
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { AvatarUpload } from './AvatarUpload';
 
 const AddAchievementModal: React.FC<{
     isOpen: boolean;
@@ -599,7 +600,20 @@ const OrphanProfile: React.FC = () => {
     <div ref={profileRef} className="bg-transparent p-4 sm:p-0" style={{paddingBottom: '100px'}}>
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="bg-bg-card p-8 rounded-xl shadow-sm flex flex-col md:flex-row items-center gap-8">
-        <img src={orphan.photoUrl} alt={orphan.name} className="w-32 h-32 rounded-full object-cover ring-4 ring-primary-light" />
+        {orphan.uuid ? (
+          <AvatarUpload
+            currentAvatarUrl={orphan.photoUrl}
+            userId={orphan.uuid}
+            type="orphan"
+            onUploadComplete={(newUrl) => {
+              // Refresh orphans to get updated avatar
+              window.location.reload();
+            }}
+            size="lg"
+          />
+        ) : (
+          <img src={orphan.photoUrl} alt={orphan.name} className="w-32 h-32 rounded-full object-cover ring-4 ring-primary-light" />
+        )}
         <div className="text-center md:text-right">
           <h1 className="text-4xl font-bold text-gray-800">{orphan.name}</h1>
           <p className="text-lg text-text-secondary">{orphan.age} سنوات - {orphan.governorate}, {orphan.country}</p>
