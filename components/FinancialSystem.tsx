@@ -544,6 +544,7 @@ const FinancialSystem: React.FC = () => {
         const newSponsor: Sponsor = {
             id: Date.now(),
             name,
+            avatarUrl: '',
             sponsoredOrphanIds: [],
         };
         setSponsorsList(prev => [newSponsor, ...prev]);
