@@ -187,6 +187,7 @@ export const useOrphans = () => {
 
           return {
             id: uuidToNumber(orphan.id), // Convert UUID to number for compatibility
+            uuid: orphan.id, // Store UUID for database operations
             name: orphan.name,
             photoUrl: orphan.photo_url || '',
             age: adjustedAge,
