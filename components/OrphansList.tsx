@@ -363,6 +363,17 @@ const OrphansList: React.FC = () => {
                                     className="absolute top-3 right-3 h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer"
                                     aria-label={`تحديد ${orphan.name}`}
                                 />
+                                <div className="absolute top-3 left-3">
+                                    <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(orphan.id === activeMenuId ? null : orphan.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${orphan.name}`}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                                    </button>
+                                    {activeMenuId === orphan.id && (
+                                        <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
+                                            <Link to={`/orphan/${orphan.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
+                                            <button onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="relative">
                                     <img src={orphan.photoUrl} alt={orphan.name} className="w-28 h-28 rounded-full object-cover mb-3 border-4 border-gray-100" />
                                      <div className="absolute bottom-4 -right-1">
@@ -371,17 +382,6 @@ const OrphansList: React.FC = () => {
                                 </div>
                                 <h3 className="text-xl font-semibold text-gray-800">{orphan.name}</h3>
                                 <p className="text-sm text-text-secondary">{orphan.age} سنوات - {orphan.country}</p>
-                                <div className="mt-3">
-                                    <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(orphan.id === activeMenuId ? null : orphan.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${orphan.name}`}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                    </button>
-                                    {activeMenuId === orphan.id && (
-                                        <div ref={menuRef} className="absolute bottom-full mb-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
-                                            <Link to={`/orphan/${orphan.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
-                                            <button onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
-                                        </div>
-                                    )}
-                                </div>
                             </div>
                         );
                     })}
