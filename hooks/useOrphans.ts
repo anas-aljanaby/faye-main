@@ -240,6 +240,42 @@ export const useOrphans = () => {
     }
   };
 
-  return { orphans, loading, error, refetch: fetchOrphans };
+  const updateOrphan = async (orphanId: string, updates: Partial<{
+    name: string;
+    date_of_birth: string;
+    gender: 'ذكر' | 'أنثى';
+    health_status: string;
+    grade: string;
+    country: string;
+    governorate: string;
+    attendance: string;
+    performance: string;
+    family_status: string;
+    housing_status: string;
+    guardian: string;
+    sponsorship_type: string;
+  }>) => {
+    if (!userProfile) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const { error: updateError } = await supabase
+        .from('orphans')
+        .update(updates)
+        .eq('id', orphanId)
+        .eq('organization_id', userProfile.organization_id);
+
+      if (updateError) throw updateError;
+
+      // Refetch orphans to get updated data
+      await fetchOrphans();
+    } catch (err) {
+      console.error('Error updating orphan:', err);
+      throw err;
+    }
+  };
+
+  return { orphans, loading, error, refetch: fetchOrphans, updateOrphan };
 };
 
