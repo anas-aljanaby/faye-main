@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useOrphans } from '../hooks/useOrphans';
 import { useSponsors } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
+import { useAuth } from '../contexts/AuthContext';
 import { findById } from '../utils/idMapper';
 import { financialTransactions } from '../data';
 import { Payment, PaymentStatus, Achievement, SpecialOccasion, Gift, TransactionType, Orphan, UpdateLog, ProgramParticipation } from '../types';
@@ -399,12 +400,32 @@ const InteractiveCalendar: React.FC<{
 const OrphanProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orphans: orphansData, loading: orphansLoading } = useOrphans();
+  const { orphans: orphansData, loading: orphansLoading, updateOrphan } = useOrphans();
   const { sponsors: sponsorsData } = useSponsors();
+  const { userProfile } = useAuth();
+  const isTeamMember = userProfile?.role === 'team_member';
   
   const orphan = useMemo(() => findById(orphansData, id || ''), [orphansData, id]);
   const sponsor = useMemo(() => orphan ? findById(sponsorsData, orphan.sponsorId) : undefined, [orphan, sponsorsData]);
   const profileRef = useRef<HTMLDivElement>(null);
+  
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    dateOfBirth: '',
+    gender: 'ذكر' as 'ذكر' | 'أنثى',
+    healthStatus: '',
+    grade: '',
+    country: '',
+    governorate: '',
+    attendance: '',
+    performance: '',
+    familyStatus: '',
+    housingStatus: '',
+    guardian: '',
+    sponsorshipType: '',
+  });
   
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryReport, setSummaryReport] = useState('');
@@ -421,6 +442,27 @@ const OrphanProfile: React.FC = () => {
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [selectedDateForEvent, setSelectedDateForEvent] = useState<Date | null>(null);
 
+  // Initialize edit form data when orphan loads or edit mode is enabled
+  React.useEffect(() => {
+    if (orphan && isEditMode) {
+      setEditFormData({
+        name: orphan.name,
+        dateOfBirth: orphan.dateOfBirth.toISOString().split('T')[0],
+        gender: orphan.gender,
+        healthStatus: orphan.healthStatus,
+        grade: orphan.grade,
+        country: orphan.country,
+        governorate: orphan.governorate,
+        attendance: orphan.attendance,
+        performance: orphan.performance,
+        familyStatus: orphan.familyStatus,
+        housingStatus: orphan.housingStatus,
+        guardian: orphan.guardian,
+        sponsorshipType: orphan.sponsorshipType,
+      });
+    }
+  }, [orphan, isEditMode]);
+
   if (orphansLoading) {
     return <div className="text-center py-8">جاري التحميل...</div>;
   }
@@ -428,6 +470,43 @@ const OrphanProfile: React.FC = () => {
   if (!orphan) {
     return <div className="text-center text-red-500">لم يتم العثور على اليتيم.</div>;
   }
+
+  const handleEdit = () => {
+    setIsEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!orphan?.uuid) return;
+    
+    setIsSaving(true);
+    try {
+      await updateOrphan(orphan.uuid, {
+        name: editFormData.name,
+        date_of_birth: editFormData.dateOfBirth,
+        gender: editFormData.gender,
+        health_status: editFormData.healthStatus,
+        grade: editFormData.grade,
+        country: editFormData.country,
+        governorate: editFormData.governorate,
+        attendance: editFormData.attendance,
+        performance: editFormData.performance,
+        family_status: editFormData.familyStatus,
+        housing_status: editFormData.housingStatus,
+        guardian: editFormData.guardian,
+        sponsorship_type: editFormData.sponsorshipType,
+      });
+      setIsEditMode(false);
+    } catch (error) {
+      console.error('Error saving orphan:', error);
+      alert('حدث خطأ أثناء حفظ التغييرات. يرجى المحاولة مرة أخرى.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleAddAchievement = async (newAchievementData: Omit<Achievement, 'id'>) => {
     // TODO: Implement API call to save achievement to database
@@ -614,43 +693,157 @@ const OrphanProfile: React.FC = () => {
         ) : (
           <img src={orphan.photoUrl} alt={orphan.name} className="w-32 h-32 rounded-full object-cover ring-4 ring-primary-light" />
         )}
-        <div className="text-center md:text-right">
-          <h1 className="text-4xl font-bold text-gray-800">{orphan.name}</h1>
+        <div className="text-center md:text-right flex-grow">
+          {isEditMode ? (
+            <input
+              type="text"
+              value={editFormData.name}
+              onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+              className="text-4xl font-bold text-gray-800 bg-white border-2 border-primary rounded-lg px-4 py-2 w-full md:w-auto"
+            />
+          ) : (
+            <h1 className="text-4xl font-bold text-gray-800">{orphan.name}</h1>
+          )}
           <p className="text-lg text-text-secondary">{orphan.age} سنوات - {orphan.governorate}, {orphan.country}</p>
         </div>
-        <div className="ms-auto hidden sm:block">
-            <button id="export-button-desktop" onClick={handleExportPDF} className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2">
-                {DownloadIcon}
-                تصدير PDF
-            </button>
+        <div className="ms-auto hidden sm:flex gap-2">
+          {isTeamMember && (
+            <>
+              {isEditMode ? (
+                <>
+                  <button onClick={handleCancelEdit} className="bg-gray-100 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-200 transition-colors">
+                    إلغاء
+                  </button>
+                  <button onClick={handleSaveEdit} disabled={isSaving} className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors disabled:bg-primary/70 disabled:cursor-not-allowed flex items-center gap-2">
+                    {isSaving ? 'جاري الحفظ...' : 'حفظ'}
+                  </button>
+                </>
+              ) : (
+                <button onClick={handleEdit} className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                  تعديل
+                </button>
+              )}
+            </>
+          )}
+          <button id="export-button-desktop" onClick={handleExportPDF} className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2">
+            {DownloadIcon}
+            تصدير PDF
+          </button>
         </div>
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
         <InfoCard title="البيانات الشخصية" icon={UserIcon}>
-            <p><strong>تاريخ الميلاد:</strong> {orphan.dateOfBirth.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-            <p><strong>الجنس:</strong> {orphan.gender}</p>
-            <p><strong>الحالة الصحية:</strong> {orphan.healthStatus}</p>
-            <p><strong>القائم بالرعاية:</strong> {orphan.guardian}</p>
+            {isEditMode ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">تاريخ الميلاد:</label>
+                  <input type="date" value={editFormData.dateOfBirth} onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">الجنس:</label>
+                  <select value={editFormData.gender} onChange={(e) => setEditFormData({ ...editFormData, gender: e.target.value as 'ذكر' | 'أنثى' })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                    <option value="ذكر">ذكر</option>
+                    <option value="أنثى">أنثى</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">الحالة الصحية:</label>
+                  <input type="text" value={editFormData.healthStatus} onChange={(e) => setEditFormData({ ...editFormData, healthStatus: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">القائم بالرعاية:</label>
+                  <input type="text" value={editFormData.guardian} onChange={(e) => setEditFormData({ ...editFormData, guardian: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <p><strong>تاريخ الميلاد:</strong> {orphan.dateOfBirth.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p><strong>الجنس:</strong> {orphan.gender}</p>
+                <p><strong>الحالة الصحية:</strong> {orphan.healthStatus}</p>
+                <p><strong>القائم بالرعاية:</strong> {orphan.guardian}</p>
+              </>
+            )}
         </InfoCard>
         <InfoCard title="البيانات الدراسية" icon={BookIcon}>
-            <p><strong>المرحلة:</strong> {orphan.grade}</p>
-            <p><strong>الانتظام:</strong> {orphan.attendance}</p>
-            <p><strong>المستوى:</strong> <span className="font-bold text-primary">{orphan.performance}</span></p>
+            {isEditMode ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">المرحلة:</label>
+                  <input type="text" value={editFormData.grade} onChange={(e) => setEditFormData({ ...editFormData, grade: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">الانتظام:</label>
+                  <input type="text" value={editFormData.attendance} onChange={(e) => setEditFormData({ ...editFormData, attendance: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">المستوى:</label>
+                  <input type="text" value={editFormData.performance} onChange={(e) => setEditFormData({ ...editFormData, performance: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <p><strong>المرحلة:</strong> {orphan.grade}</p>
+                <p><strong>الانتظام:</strong> {orphan.attendance}</p>
+                <p><strong>المستوى:</strong> <span className="font-bold text-primary">{orphan.performance}</span></p>
+              </>
+            )}
         </InfoCard>
         <InfoCard title="الحالة الاجتماعية والسكن" icon={HomeIcon}>
-            <p><strong>العائلة:</strong> {orphan.familyStatus}</p>
-            <p><strong>السكن:</strong> {orphan.housingStatus}</p>
+            {isEditMode ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">العائلة:</label>
+                  <input type="text" value={editFormData.familyStatus} onChange={(e) => setEditFormData({ ...editFormData, familyStatus: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">السكن:</label>
+                  <input type="text" value={editFormData.housingStatus} onChange={(e) => setEditFormData({ ...editFormData, housingStatus: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">البلد:</label>
+                  <input type="text" value={editFormData.country} onChange={(e) => setEditFormData({ ...editFormData, country: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">المحافظة:</label>
+                  <input type="text" value={editFormData.governorate} onChange={(e) => setEditFormData({ ...editFormData, governorate: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <p><strong>العائلة:</strong> {orphan.familyStatus}</p>
+                <p><strong>السكن:</strong> {orphan.housingStatus}</p>
+              </>
+            )}
         </InfoCard>
         <InfoCard title="الكفالة والمتابعة" icon={ShieldIcon}>
-            {sponsor ? (
-                <p><strong>الكافل:</strong>{' '}
+            {isEditMode ? (
+              <div className="space-y-3">
+                {sponsor ? (
+                  <p><strong>الكافل:</strong>{' '}
                     <Link to={`/sponsor/${sponsor.id}`} className="text-primary hover:underline">{sponsor.name}</Link>
-                </p>
+                  </p>
+                ) : (
+                  <p><strong>الكافل:</strong> غير محدد</p>
+                )}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">نوع الكفالة:</label>
+                  <input type="text" value={editFormData.sponsorshipType} onChange={(e) => setEditFormData({ ...editFormData, sponsorshipType: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
+                </div>
+              </div>
             ) : (
-                <p><strong>الكافل:</strong> غير محدد</p>
+              <>
+                {sponsor ? (
+                  <p><strong>الكافل:</strong>{' '}
+                    <Link to={`/sponsor/${sponsor.id}`} className="text-primary hover:underline">{sponsor.name}</Link>
+                  </p>
+                ) : (
+                  <p><strong>الكافل:</strong> غير محدد</p>
+                )}
+                <p><strong>نوع الكفالة:</strong> {orphan.sponsorshipType}</p>
+              </>
             )}
-            <p><strong>نوع الكفالة:</strong> {orphan.sponsorshipType}</p>
         </InfoCard>
       </div>
 
@@ -822,27 +1015,41 @@ const OrphanProfile: React.FC = () => {
     </div>
     
     {/* Mobile Action Bar */}
-    <div className="mobile-action-bar sm:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-2 grid grid-cols-5 gap-1 text-center">
+    <div className={`mobile-action-bar sm:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-2 grid gap-1 text-center ${isTeamMember && isEditMode ? 'grid-cols-6' : isTeamMember ? 'grid-cols-5' : 'grid-cols-4'}`}>
         <button onClick={() => navigate(-1)} className="flex flex-col items-center text-gray-600 hover:text-primary">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             <span className="text-xs">رجوع</span>
         </button>
-        <button onClick={handleExportPDF} className="flex flex-col items-center text-gray-600 hover:text-primary">
-            {DownloadIcon}
-            <span className="text-xs">PDF</span>
-        </button>
-        <button onClick={handleGenerateSummaryReport} className="flex flex-col items-center text-gray-600 hover:text-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h4"/><path d="M9 12h6"/><path d="M12 9v6"/><path d="M15 12h0"/></svg>
-            <span className="text-xs">موجز</span>
-        </button>
-        <button onClick={handleGenerateNeedsReport} className="flex flex-col items-center text-gray-600 hover:text-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15.09 16.05 19.5 20.5"/><path d="M6.12 6.12a9 9 0 0 0 11.76 11.76"/><path d="M17.88 17.88a9 9 0 0 0-11.76-11.76"/><path d="m3.5 7.5.01-.01"/><path d="m20.5 16.5.01-.01"/><path d="M12 2a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4v0a4 4 0 0 0-4-4Z"/><path d="M12 12a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4v0a4 4 0 0 0-4-4Z"/></svg>
-            <span className="text-xs">احتياجات</span>
-        </button>
-         <button onClick={() => {}} className="flex flex-col items-center text-gray-600 hover:text-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-            <span className="text-xs">تعديل</span>
-        </button>
+        {!isEditMode && (
+          <>
+            <button onClick={handleExportPDF} className="flex flex-col items-center text-gray-600 hover:text-primary">
+              {DownloadIcon}
+              <span className="text-xs">PDF</span>
+            </button>
+            <button onClick={handleGenerateSummaryReport} className="flex flex-col items-center text-gray-600 hover:text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h4"/><path d="M9 12h6"/><path d="M12 9v6"/><path d="M15 12h0"/></svg>
+              <span className="text-xs">موجز</span>
+            </button>
+            <button onClick={handleGenerateNeedsReport} className="flex flex-col items-center text-gray-600 hover:text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15.09 16.05 19.5 20.5"/><path d="M6.12 6.12a9 9 0 0 0 11.76 11.76"/><path d="M17.88 17.88a9 9 0 0 0-11.76-11.76"/><path d="m3.5 7.5.01-.01"/><path d="m20.5 16.5.01-.01"/><path d="M12 2a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4v0a4 4 0 0 0-4-4Z"/><path d="M12 12a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4v0a4 4 0 0 0-4-4Z"/></svg>
+              <span className="text-xs">احتياجات</span>
+            </button>
+          </>
+        )}
+        {isTeamMember && (
+          <>
+            <button onClick={isEditMode ? handleCancelEdit : handleEdit} className="flex flex-col items-center text-gray-600 hover:text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+              <span className="text-xs">{isEditMode ? 'إلغاء' : 'تعديل'}</span>
+            </button>
+            {isEditMode && (
+              <button onClick={handleSaveEdit} disabled={isSaving} className="flex flex-col items-center text-gray-600 hover:text-primary disabled:opacity-50">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                <span className="text-xs">{isSaving ? 'جاري...' : 'حفظ'}</span>
+              </button>
+            )}
+          </>
+        )}
     </div>
 
     {/* Summary Report Modal */}

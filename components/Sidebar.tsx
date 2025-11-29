@@ -19,11 +19,18 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-    const { signOut } = useAuth();
+    const { signOut, userProfile } = useAuth();
 
     const handleSignOut = async () => {
         await signOut();
     };
+
+    // Filter nav items based on user role
+    // Sponsors should not see: sponsors, team, human-resources, financial-system
+    const restrictedPaths = ['/sponsors', '/team', '/human-resources', '/financial-system'];
+    const visibleNavItems = userProfile?.role === 'team_member' 
+        ? navItems 
+        : navItems.filter(item => !restrictedPaths.includes(item.to));
 
     return (
     <>
@@ -35,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       />
       <aside className={`fixed inset-y-0 right-0 z-30 w-64 bg-bg-sidebar shadow-lg flex flex-col h-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:flex-shrink-0 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <nav className="flex-1 p-4 space-y-2 pt-8">
-            {navItems.map(item => (
+            {visibleNavItems.map(item => (
                 <NavLink
                     key={item.to}
                     to={item.to}
@@ -53,6 +60,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     <span>{item.text}</span>
                 </NavLink>
             ))}
+            {userProfile?.role === 'sponsor' && (
+                <NavLink
+                    to="/profile"
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      `flex items-center gap-4 p-3 rounded-lg text-lg transition-colors font-semibold ${
+                        isActive
+                          ? 'bg-primary text-white shadow'
+                          : 'text-text-secondary hover:bg-primary-light hover:text-primary'
+                      }`
+                    }
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span>ملفي الشخصي</span>
+                </NavLink>
+            )}
         </nav>
         <div className="p-4 border-t border-gray-200/50">
             <button 
