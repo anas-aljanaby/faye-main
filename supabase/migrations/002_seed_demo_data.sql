@@ -31,9 +31,9 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO user_profiles (id, organization_id, role, name, avatar_url)
 VALUES 
     -- Team Member 1 (replace with actual auth user ID)
-    ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000001', 'team_member', 'خالد الغامدي', 'https://ui-avatars.com/api/?name=خالد+الغامدي&background=8c1c3e&color=fff'),
+    ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000001', 'team_member', 'خالد الغامدي', 'https://picsum.photos/seed/khaled/100/100'),
     -- Team Member 2 (replace with actual auth user ID)
-    ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001', 'team_member', 'سارة أحمد', 'https://ui-avatars.com/api/?name=سارة+أحمد&background=8c1c3e&color=fff')
+    ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000001', 'team_member', 'نورة السعد', 'https://picsum.photos/seed/noura/100/100')
 ON CONFLICT (id) DO UPDATE SET
     organization_id = EXCLUDED.organization_id,
     role = EXCLUDED.role,
@@ -44,9 +44,9 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO user_profiles (id, organization_id, role, name, avatar_url)
 VALUES 
     -- Sponsor 1 (replace with actual auth user ID)
-    ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001', 'sponsor', 'عبدالله الراجحي', 'https://ui-avatars.com/api/?name=عبدالله+الراجحي&background=10b981&color=fff'),
+    ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000001', 'sponsor', 'عبدالله الراجحي', 'https://picsum.photos/seed/abdullah/100/100'),
     -- Sponsor 2 (replace with actual auth user ID)
-    ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000001', 'sponsor', 'فاطمة الأحمد', 'https://ui-avatars.com/api/?name=فاطمة+الأحمد&background=10b981&color=fff')
+    ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000001', 'sponsor', 'فاطمة الأحمد', 'https://picsum.photos/seed/fatima/100/100')
 ON CONFLICT (id) DO UPDATE SET
     organization_id = EXCLUDED.organization_id,
     role = EXCLUDED.role,
@@ -66,7 +66,7 @@ INSERT INTO orphans (
         'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
         '00000000-0000-0000-0000-000000000001',
         'أحمد خالد',
-        'https://ui-avatars.com/api/?name=أحمد+خالد&background=8c1c3e&color=fff',
+        'https://picsum.photos/seed/ahmad/200/200',
         '2010-05-15',
         'ذكر',
         'جيد',
@@ -83,8 +83,8 @@ INSERT INTO orphans (
     (
         'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
         '00000000-0000-0000-0000-000000000001',
-        'مريم علي',
-        'https://ui-avatars.com/api/?name=مريم+علي&background=8c1c3e&color=fff',
+        'سارة علي',
+        'https://picsum.photos/seed/sara/200/200',
         '2012-08-20',
         'أنثى',
         'جيد',
@@ -102,7 +102,7 @@ INSERT INTO orphans (
         'cccccccc-cccc-cccc-cccc-cccccccccccc',
         '00000000-0000-0000-0000-000000000001',
         'يوسف محمد',
-        'https://ui-avatars.com/api/?name=يوسف+محمد&background=8c1c3e&color=fff',
+        'https://picsum.photos/seed/yusuf/200/200',
         '2009-03-10',
         'ذكر',
         'ممتاز',
