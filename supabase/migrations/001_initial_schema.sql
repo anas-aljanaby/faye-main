@@ -601,4 +601,3 @@ CREATE POLICY "Team members can view tasks for orphans they're assigned to"
             )
         )
     );
-
