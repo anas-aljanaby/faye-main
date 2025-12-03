@@ -18,6 +18,14 @@ DECLARE
     sponsor_1_id UUID := 'a888c094-2bcb-4999-9ac5-b1df6c94fd1c';      -- REPLACE_ME
     sponsor_2_id UUID := '659cfd87-e813-4a8a-ab69-6599d2d34854';      -- REPLACE_ME
     demo_org_id UUID := '00000000-0000-0000-0000-000000000001';
+    -- Financial transaction IDs
+    tx1_id UUID;
+    tx2_id UUID;
+    tx3_id UUID;
+    tx4_id UUID;
+    tx5_id UUID;
+    tx6_id UUID;
+    receipt1_id UUID;
 BEGIN
     -- ============================================================================
     -- CREATE DEMO ORGANIZATION
@@ -204,14 +212,80 @@ BEGIN
         (team_member_1_id, 'تحديث ملف أحمد', '2024-03-10', TRUE, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
 
     -- Financial Transactions
+    -- Note: We'll insert transactions and then create receipts for income transactions
+    -- Using variables declared at the top to handle the transaction IDs
+    
+    -- Transaction 1: Expense - شراء وجبات طعام للرحلة (Rejected)
     INSERT INTO financial_transactions (
-        organization_id, description, created_by_id, amount, status, type
+        organization_id, description, created_by_id, amount, status, type, date
     )
+    VALUES (
+        demo_org_id, 'شراء وجبات طعام للرحلة', team_member_2_id, 80.00, 'مرفوضة', 'مصروفات', '2024-07-23'
+    )
+    RETURNING id INTO tx1_id;
+
+    -- Transaction 2: Income - [كفالة يتيم] - دفعة شهر يوليو (Completed with receipt)
+    INSERT INTO financial_transactions (
+        organization_id, description, created_by_id, amount, status, type, date
+    )
+    VALUES (
+        demo_org_id, '[كفالة يتيم] - دفعة شهر يوليو', team_member_1_id, 100.00, 'مكتملة', 'إيرادات', '2024-07-22'
+    )
+    RETURNING id INTO tx2_id;
+
+    -- Transaction 3: Expense - مصاريف صيانة السكن (Completed)
+    INSERT INTO financial_transactions (
+        organization_id, description, created_by_id, amount, status, type, date
+    )
+    VALUES (
+        demo_org_id, 'مصاريف صيانة السكن', team_member_1_id, 250.00, 'مكتملة', 'مصروفات', '2024-07-21'
+    )
+    RETURNING id INTO tx3_id;
+
+    -- Transaction 4: Expense - رسوم دراسية (Pending, linked to orphan)
+    INSERT INTO financial_transactions (
+        organization_id, description, created_by_id, amount, status, type, date, orphan_id
+    )
+    VALUES (
+        demo_org_id, 'رسوم دراسية', team_member_2_id, 400.00, 'قيد المراجعة', 'مصروفات', '2024-07-20', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    )
+    RETURNING id INTO tx4_id;
+
+    -- Transaction 5: Income - دعم من منظمة خارجية (Completed)
+    INSERT INTO financial_transactions (
+        organization_id, description, created_by_id, amount, status, type, date
+    )
+    VALUES (
+        demo_org_id, 'دعم من منظمة خارجية', team_member_1_id, 1000.00, 'مكتملة', 'إيرادات', '2024-07-19'
+    )
+    RETURNING id INTO tx5_id;
+
+    -- Transaction 6: Expense - شراء ملابس العيد (Pending, linked to orphan)
+    INSERT INTO financial_transactions (
+        organization_id, description, created_by_id, amount, status, type, date, orphan_id
+    )
+    VALUES (
+        demo_org_id, 'شراء ملابس العيد', team_member_2_id, 320.00, 'قيد المراجعة', 'مصروفات', '2024-07-18', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+    )
+    RETURNING id INTO tx6_id;
+
+    -- Create receipt for transaction 2 (Income with receipt)
+    INSERT INTO receipts (
+        transaction_id, sponsor_id, donation_category, amount, date, description
+    )
+    VALUES (
+        tx2_id, sponsor_1_id, 'كفالة يتيم', 100.00, '2024-07-22', 'دفعة شهر يوليو'
+    )
+    RETURNING id INTO receipt1_id;
+
+    -- Link orphans to receipt 1 (عبدالله sponsors أحمد and يوسف)
+    INSERT INTO receipt_orphans (receipt_id, orphan_id)
     VALUES 
-        (demo_org_id, '[كفالة يتيم] - كفالة شهرية لشهر يناير', team_member_1_id, 100.00, 'مكتملة', 'إيرادات'),
-        (demo_org_id, '[كفالة يتيم] - كفالة شهرية لشهر يناير', team_member_1_id, 50.00, 'مكتملة', 'إيرادات'),
-        (demo_org_id, '[تبرع عام] - تبرع للمشاريع التعليمية', team_member_1_id, 500.00, 'مكتملة', 'إيرادات'),
-        (demo_org_id, 'مصروفات طبية - فحوصات دورية', team_member_1_id, 150.00, 'مكتملة', 'مصروفات');
+        (receipt1_id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),  -- أحمد
+        (receipt1_id, 'cccccccc-cccc-cccc-cccc-cccccccccccc');  -- يوسف
+
+    -- Note: Transaction 5 (دعم من منظمة خارجية) doesn't have a receipt as it's a general donation
+    -- If you want to add a receipt for it, you would need a sponsor or create a system sponsor
 
     RAISE NOTICE 'Demo organization setup completed successfully!';
     RAISE NOTICE 'Created: 1 org, 2 team members, 2 sponsors, 3 orphans, and sample data';
