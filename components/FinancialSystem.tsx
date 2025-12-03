@@ -2,7 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSponsors } from '../hooks/useSponsors';
 import { useOrphans } from '../hooks/useOrphans';
-import { financialTransactions } from '../data';
+import { useFinancialTransactions } from '../hooks/useFinancialTransactions';
 import { FinancialTransaction, TransactionStatus, TransactionType, Sponsor, Orphan } from '../types';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
@@ -69,7 +69,7 @@ const AddTransactionModal: React.FC<{
     onAdd: (data: Omit<FinancialTransaction, 'id' | 'date' | 'status'>) => void;
     sponsors: Sponsor[];
     orphans: Orphan[];
-    onAddSponsor: (name: string) => Sponsor;
+    onAddSponsor: (name: string) => Promise<Sponsor>;
 }> = ({ isOpen, onClose, onAdd, sponsors, orphans, onAddSponsor }) => {
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
@@ -168,10 +168,15 @@ const AddTransactionModal: React.FC<{
         resetForm();
     };
     
-    const handleSaveNewSponsor = (name: string) => {
-        const newSponsor = onAddSponsor(name);
-        setIsQuickAddSponsorOpen(false);
-        setSelectedSponsorId(newSponsor.id.toString());
+    const handleSaveNewSponsor = async (name: string) => {
+        try {
+            const newSponsor = await onAddSponsor(name);
+            setIsQuickAddSponsorOpen(false);
+            setSelectedSponsorId(newSponsor.id.toString());
+        } catch (error) {
+            console.error('Error saving sponsor:', error);
+            alert('حدث خطأ أثناء إضافة الكافل. الرجاء المحاولة مرة أخرى.');
+        }
     };
 
     if (!isOpen) return null;
@@ -508,9 +513,9 @@ const StatusPill: React.FC<{ status: TransactionStatus }> = ({ status }) => {
 const FinancialSystem: React.FC = () => {
     const navigate = useNavigate();
     const fromDateRef = useRef<HTMLInputElement>(null);
-    const [transactions, setTransactions] = useState(financialTransactions);
-    const { sponsors: sponsorsData } = useSponsors();
+    const { sponsors: sponsorsData, refetch: refetchSponsors } = useSponsors();
     const { orphans: orphansData } = useOrphans();
+    const { transactions, loading: transactionsLoading, addTransaction: addTransactionToDB, addSponsor: addSponsorToDB, refetch: refetchTransactions } = useFinancialTransactions();
     const [sponsorsList, setSponsorsList] = useState(sponsorsData);
     
     useEffect(() => {
@@ -540,34 +545,56 @@ const FinancialSystem: React.FC = () => {
         };
     }, [transactions]);
 
-    const handleAddSponsor = (name: string): Sponsor => {
-        const newSponsor: Sponsor = {
-            id: Date.now(),
-            name,
-            avatarUrl: '',
-            sponsoredOrphanIds: [],
-        };
-        setSponsorsList(prev => [newSponsor, ...prev]);
-        return newSponsor;
+    const handleAddSponsor = async (name: string): Promise<Sponsor> => {
+        try {
+            const newSponsor = await addSponsorToDB(name);
+            // Refresh sponsors list
+            await refetchSponsors();
+            return newSponsor;
+        } catch (error) {
+            console.error('Error adding sponsor:', error);
+            // Fallback to local state if DB operation fails
+            const fallbackSponsor: Sponsor = {
+                id: Date.now(),
+                name,
+                avatarUrl: '',
+                sponsoredOrphanIds: [],
+            };
+            setSponsorsList(prev => [fallbackSponsor, ...prev]);
+            return fallbackSponsor;
+        }
     };
 
-    const handleAddTransaction = (data: Omit<FinancialTransaction, 'id' | 'date' | 'status'>) => {
-        const newTransaction: FinancialTransaction = {
-            id: `t${Date.now()}`,
-            date: new Date(),
-            status: TransactionStatus.Completed,
-            ...data,
-        };
-        
-        if (newTransaction.receipt) {
-            newTransaction.receipt.transactionId = newTransaction.id;
-        }
+    const handleAddTransaction = async (data: Omit<FinancialTransaction, 'id' | 'date' | 'status'>) => {
+        try {
+            const transactionId = await addTransactionToDB(data);
+            setIsAddModalOpen(false);
 
-        setTransactions(prev => [newTransaction, ...prev]);
-        setIsAddModalOpen(false);
-
-        if (newTransaction.type === TransactionType.Income) {
-            setReceiptToShow(newTransaction);
+            // Refresh transactions to get the new one with receipt
+            await refetchTransactions();
+            
+            // Find the newly added transaction to show receipt if it's income
+            if (data.type === TransactionType.Income && transactionId) {
+                // Use a small delay to ensure state is updated after refetch
+                setTimeout(() => {
+                    // Find the transaction by ID
+                    const newTransaction = transactions.find(tx => tx.id === transactionId);
+                    if (newTransaction && newTransaction.receipt) {
+                        setReceiptToShow(newTransaction);
+                    } else {
+                        // Fallback: find the most recent income transaction with receipt
+                        const latestIncome = transactions
+                            .filter(tx => tx.type === TransactionType.Income && tx.receipt)
+                            .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+                        if (latestIncome) {
+                            setReceiptToShow(latestIncome);
+                        }
+                    }
+                }, 500);
+            }
+        } catch (error) {
+            console.error('Error adding transaction:', error);
+            alert('حدث خطأ أثناء إضافة الحركة المالية. الرجاء المحاولة مرة أخرى.');
         }
     };
 
@@ -677,29 +704,43 @@ const FinancialSystem: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {transactions.map(tx => (
-                                <tr key={tx.id} className="border-b hover:bg-gray-50">
-                                    <td className="p-3">{tx.date.toLocaleDateString('en-CA')}</td>
-                                    <td className="p-3 font-semibold">
-                                        <div className="flex items-center gap-2">
-                                            <span>{tx.description}</span>
-                                            {tx.receipt && (
-                                                <button onClick={() => setReceiptToShow(tx)} title="عرض الإيصال" className="text-primary hover:text-primary-hover">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="p-3 text-text-secondary">{tx.createdBy}</td>
-                                    <td className={`p-3 font-bold ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>${tx.amount.toLocaleString()}</td>
-                                    <td className="p-3"><StatusPill status={tx.status} /></td>
-                                    <td className="p-3">
-                                        <button className="text-text-secondary">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                        </button>
+                            {transactionsLoading ? (
+                                <tr>
+                                    <td colSpan={6} className="p-8 text-center text-text-secondary">
+                                        جاري التحميل...
                                     </td>
                                 </tr>
-                            ))}
+                            ) : transactions.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="p-8 text-center text-text-secondary">
+                                        لا توجد حركات مالية
+                                    </td>
+                                </tr>
+                            ) : (
+                                transactions.map(tx => (
+                                    <tr key={tx.id} className="border-b hover:bg-gray-50">
+                                        <td className="p-3">{tx.date.toLocaleDateString('en-CA')}</td>
+                                        <td className="p-3 font-semibold">
+                                            <div className="flex items-center gap-2">
+                                                <span>{tx.description}</span>
+                                                {tx.receipt && (
+                                                    <button onClick={() => setReceiptToShow(tx)} title="عرض الإيصال" className="text-primary hover:text-primary-hover">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="p-3 text-text-secondary">{tx.createdBy}</td>
+                                        <td className={`p-3 font-bold ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>${tx.amount.toLocaleString()}</td>
+                                        <td className="p-3"><StatusPill status={tx.status} /></td>
+                                        <td className="p-3">
+                                            <button className="text-text-secondary">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
