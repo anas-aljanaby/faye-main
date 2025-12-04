@@ -328,6 +328,45 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Helper function to check if a receipt belongs to user's organization (bypasses RLS to prevent recursion)
+-- Drop existing function if it exists with different parameter name
+DROP FUNCTION IF EXISTS check_receipt_organization(UUID);
+CREATE OR REPLACE FUNCTION check_receipt_organization(receipt_transaction_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    user_org_id UUID;
+    transaction_org_id UUID;
+BEGIN
+    -- Get user's organization
+    SELECT organization_id INTO user_org_id
+    FROM user_profiles
+    WHERE id = auth.uid();
+    
+    -- Get transaction's organization (bypasses RLS due to SECURITY DEFINER)
+    SELECT organization_id INTO transaction_org_id
+    FROM financial_transactions
+    WHERE id = receipt_transaction_id;
+    
+    -- Return true if they match
+    RETURN user_org_id IS NOT NULL AND transaction_org_id IS NOT NULL AND user_org_id = transaction_org_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if a financial transaction has receipts for the current sponsor (bypasses RLS to prevent recursion)
+-- Drop existing function if it exists with different parameter name
+DROP FUNCTION IF EXISTS check_transaction_has_sponsor_receipts(UUID);
+CREATE OR REPLACE FUNCTION check_transaction_has_sponsor_receipts(transaction_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Check if transaction has receipts for current sponsor (bypasses RLS due to SECURITY DEFINER)
+    RETURN EXISTS (
+        SELECT 1 FROM receipts
+        WHERE transaction_id = transaction_uuid
+        AND sponsor_id = auth.uid()
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Organizations policies
 CREATE POLICY "Users can view their own organization"
     ON organizations FOR SELECT
@@ -536,10 +575,7 @@ CREATE POLICY "Sponsors can view their own financial transactions"
         organization_id = get_user_organization_id()
         AND (
             created_by_id = auth.uid()
-            OR id IN (
-                SELECT transaction_id FROM receipts 
-                WHERE sponsor_id = auth.uid()
-            )
+            OR check_transaction_has_sponsor_receipts(id)
         )
     );
 
@@ -547,12 +583,8 @@ CREATE POLICY "Sponsors can view their own financial transactions"
 CREATE POLICY "Team members can manage receipts in their organization"
     ON receipts FOR ALL
     USING (
-        EXISTS (
-            SELECT 1 FROM financial_transactions ft
-            WHERE ft.id = receipts.transaction_id
-            AND ft.organization_id = get_user_organization_id()
-            AND is_team_member()
-        )
+        check_receipt_organization(receipts.transaction_id)
+        AND is_team_member()
     );
 
 CREATE POLICY "Sponsors can view their own receipts"
@@ -565,9 +597,8 @@ CREATE POLICY "Team members can manage receipt orphans in their organization"
     USING (
         EXISTS (
             SELECT 1 FROM receipts r
-            JOIN financial_transactions ft ON ft.id = r.transaction_id
             WHERE r.id = receipt_orphans.receipt_id
-            AND ft.organization_id = get_user_organization_id()
+            AND check_receipt_organization(r.transaction_id)
             AND is_team_member()
         )
     );
