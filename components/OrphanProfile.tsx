@@ -402,8 +402,9 @@ const OrphanProfile: React.FC = () => {
   const navigate = useNavigate();
   const { orphans: orphansData, loading: orphansLoading, updateOrphan } = useOrphans();
   const { sponsors: sponsorsData } = useSponsors();
-  const { userProfile } = useAuth();
+  const { userProfile, canEditOrphans } = useAuth();
   const isTeamMember = userProfile?.role === 'team_member';
+  const hasEditPermission = isTeamMember && canEditOrphans();
   
   const orphan = useMemo(() => findById(orphansData, id || ''), [orphansData, id]);
   const sponsor = useMemo(() => orphan ? findById(sponsorsData, orphan.sponsorId) : undefined, [orphan, sponsorsData]);
@@ -707,7 +708,7 @@ const OrphanProfile: React.FC = () => {
           <p className="text-lg text-text-secondary">{orphan.age} سنوات - {orphan.governorate}, {orphan.country}</p>
         </div>
         <div className="ms-auto hidden sm:flex gap-2">
-          {isTeamMember && (
+          {hasEditPermission && (
             <>
               {isEditMode ? (
                 <>
@@ -1015,7 +1016,7 @@ const OrphanProfile: React.FC = () => {
     </div>
     
     {/* Mobile Action Bar */}
-    <div className={`mobile-action-bar sm:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-2 grid gap-1 text-center ${isTeamMember && isEditMode ? 'grid-cols-6' : isTeamMember ? 'grid-cols-5' : 'grid-cols-4'}`}>
+    <div className={`mobile-action-bar sm:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-2 grid gap-1 text-center ${hasEditPermission && isEditMode ? 'grid-cols-6' : hasEditPermission ? 'grid-cols-5' : 'grid-cols-4'}`}>
         <button onClick={() => navigate(-1)} className="flex flex-col items-center text-gray-600 hover:text-primary">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             <span className="text-xs">رجوع</span>
@@ -1036,7 +1037,7 @@ const OrphanProfile: React.FC = () => {
             </button>
           </>
         )}
-        {isTeamMember && (
+        {hasEditPermission && (
           <>
             <button onClick={isEditMode ? handleCancelEdit : handleEdit} className="flex flex-col items-center text-gray-600 hover:text-primary">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>

@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS payments CASCADE;
 DROP TABLE IF EXISTS team_member_orphans CASCADE;
 DROP TABLE IF EXISTS sponsor_orphans CASCADE;
 DROP TABLE IF EXISTS orphans CASCADE;
+DROP TABLE IF EXISTS user_permissions CASCADE;
 DROP TABLE IF EXISTS user_profiles CASCADE;
 DROP TABLE IF EXISTS organizations CASCADE;
 
@@ -37,6 +38,16 @@ DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
 DROP FUNCTION IF EXISTS get_user_organization_id() CASCADE;
 DROP FUNCTION IF EXISTS is_team_member() CASCADE;
 DROP FUNCTION IF EXISTS is_sponsor() CASCADE;
+DROP FUNCTION IF EXISTS is_manager() CASCADE;
+DROP FUNCTION IF EXISTS can_edit_orphans() CASCADE;
+DROP FUNCTION IF EXISTS can_edit_sponsors() CASCADE;
+DROP FUNCTION IF EXISTS can_edit_transactions() CASCADE;
+DROP FUNCTION IF EXISTS can_create_expense() CASCADE;
+DROP FUNCTION IF EXISTS can_approve_expense() CASCADE;
+DROP FUNCTION IF EXISTS can_view_financials() CASCADE;
+DROP FUNCTION IF EXISTS check_orphan_organization(UUID) CASCADE;
+DROP FUNCTION IF EXISTS check_receipt_organization(UUID) CASCADE;
+DROP FUNCTION IF EXISTS check_transaction_has_sponsor_receipts(UUID) CASCADE;
 
 -- ============================================================================
 -- DROP EXTENSIONS (optional - only if you want to remove UUID extension)

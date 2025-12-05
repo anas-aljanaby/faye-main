@@ -4,6 +4,13 @@ import { FinancialTransaction, TransactionType, TransactionStatus } from '../typ
 import { useAuth } from '../contexts/AuthContext';
 import { cache, getCacheKey } from '../utils/cache';
 
+// Extended transaction type with approval info
+export interface FinancialTransactionWithApproval extends FinancialTransaction {
+  approvedBy?: string;
+  rejectedBy?: string;
+  rejectionReason?: string;
+}
+
 // Helper function to convert UUID to numeric ID for compatibility
 const uuidToNumber = (uuid: string): number => {
   let hash = 0;
@@ -22,10 +29,10 @@ const numberToUuid = (num: number, uuidMap: Map<number, string>): string | undef
 };
 
 export const useFinancialTransactions = () => {
-  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+  const [transactions, setTransactions] = useState<FinancialTransactionWithApproval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { userProfile } = useAuth();
+  const { userProfile, canCreateExpense, canApproveExpense, canEditTransactions } = useAuth();
 
   useEffect(() => {
     if (!userProfile) {
@@ -57,12 +64,14 @@ export const useFinancialTransactions = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch transactions with related data
+      // Fetch transactions with related data including approval info
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('financial_transactions')
         .select(`
           *,
           created_by:user_profiles!financial_transactions_created_by_id_fkey(name),
+          approved_by:user_profiles!financial_transactions_approved_by_id_fkey(name),
+          rejected_by:user_profiles!financial_transactions_rejected_by_id_fkey(name),
           orphan:orphans(id)
         `)
         .eq('organization_id', userProfile.organization_id)
@@ -157,7 +166,11 @@ export const useFinancialTransactions = () => {
           type: tx.type as TransactionType,
           ...(tx.orphan_id && { orphanId: uuidToNumber(tx.orphan_id) }),
           ...(receiptData && { receipt: receiptData }),
-        } as FinancialTransaction;
+          // Approval info
+          ...(tx.approved_by && { approvedBy: (tx.approved_by as any)?.name }),
+          ...(tx.rejected_by && { rejectedBy: (tx.rejected_by as any)?.name }),
+          ...(tx.rejection_reason && { rejectionReason: tx.rejection_reason }),
+        } as FinancialTransactionWithApproval;
       });
 
       setTransactions(transactionsWithReceipts);
@@ -193,6 +206,16 @@ export const useFinancialTransactions = () => {
         }
       }
 
+      // Determine status based on transaction type and permissions
+      let status: string;
+      if (transactionData.type === TransactionType.Income) {
+        // Income transactions are always completed
+        status = 'مكتملة';
+      } else {
+        // Expense transactions: check if user can create expense directly
+        status = canCreateExpense() ? 'مكتملة' : 'قيد المراجعة';
+      }
+
       // Insert transaction
       const { data: newTransaction, error: txError } = await supabase
         .from('financial_transactions')
@@ -201,7 +224,7 @@ export const useFinancialTransactions = () => {
           description: transactionData.description,
           created_by_id: userProfile.id,
           amount: transactionData.amount,
-          status: 'مكتملة', // Default to completed
+          status: status,
           type: transactionData.type,
           orphan_id: orphanUuid,
           date: new Date(),
@@ -336,6 +359,76 @@ export const useFinancialTransactions = () => {
     }
   };
 
+  const approveTransaction = async (transactionId: string): Promise<{ success: boolean; error?: string }> => {
+    if (!userProfile) return { success: false, error: 'المستخدم غير مسجل الدخول' };
+    if (!canApproveExpense()) return { success: false, error: 'ليس لديك صلاحية للموافقة على المصروفات' };
+
+    try {
+      const { error } = await supabase
+        .from('financial_transactions')
+        .update({
+          status: 'مكتملة',
+          approved_by_id: userProfile.id,
+          rejected_by_id: null,
+          rejection_reason: null,
+        })
+        .eq('id', transactionId);
+
+      if (error) throw error;
+
+      await fetchTransactions(false);
+      return { success: true };
+    } catch (err) {
+      console.error('Error approving transaction:', err);
+      return { success: false, error: 'حدث خطأ أثناء الموافقة على المعاملة' };
+    }
+  };
+
+  const rejectTransaction = async (transactionId: string, reason: string): Promise<{ success: boolean; error?: string }> => {
+    if (!userProfile) return { success: false, error: 'المستخدم غير مسجل الدخول' };
+    if (!canApproveExpense()) return { success: false, error: 'ليس لديك صلاحية لرفض المصروفات' };
+
+    try {
+      const { error } = await supabase
+        .from('financial_transactions')
+        .update({
+          status: 'مرفوضة',
+          rejected_by_id: userProfile.id,
+          rejection_reason: reason,
+          approved_by_id: null,
+        })
+        .eq('id', transactionId);
+
+      if (error) throw error;
+
+      await fetchTransactions(false);
+      return { success: true };
+    } catch (err) {
+      console.error('Error rejecting transaction:', err);
+      return { success: false, error: 'حدث خطأ أثناء رفض المعاملة' };
+    }
+  };
+
+  const deleteTransaction = async (transactionId: string): Promise<{ success: boolean; error?: string }> => {
+    if (!userProfile) return { success: false, error: 'المستخدم غير مسجل الدخول' };
+    if (!canEditTransactions()) return { success: false, error: 'ليس لديك صلاحية لحذف المعاملات' };
+
+    try {
+      const { error } = await supabase
+        .from('financial_transactions')
+        .delete()
+        .eq('id', transactionId);
+
+      if (error) throw error;
+
+      await fetchTransactions(false);
+      return { success: true };
+    } catch (err) {
+      console.error('Error deleting transaction:', err);
+      return { success: false, error: 'حدث خطأ أثناء حذف المعاملة' };
+    }
+  };
+
   return { 
     transactions, 
     loading, 
@@ -343,6 +436,13 @@ export const useFinancialTransactions = () => {
     refetch: fetchTransactions,
     addTransaction,
     addSponsor,
+    approveTransaction,
+    rejectTransaction,
+    deleteTransaction,
+    // Expose permission checks for UI
+    canApproveExpense: canApproveExpense(),
+    canEditTransactions: canEditTransactions(),
+    canCreateExpenseDirectly: canCreateExpense(),
   };
 };
 

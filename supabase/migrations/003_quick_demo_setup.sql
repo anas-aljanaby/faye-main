@@ -60,6 +60,44 @@ BEGIN
         avatar_url = EXCLUDED.avatar_url;
 
     -- ============================================================================
+    -- CREATE USER PERMISSIONS
+    -- ============================================================================
+    -- Team Member 1 (خالد الغامدي) - Manager with all permissions
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (
+        team_member_1_id, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
+    )
+    ON CONFLICT (user_id) DO UPDATE SET
+        can_edit_orphans = EXCLUDED.can_edit_orphans,
+        can_edit_sponsors = EXCLUDED.can_edit_sponsors,
+        can_edit_transactions = EXCLUDED.can_edit_transactions,
+        can_create_expense = EXCLUDED.can_create_expense,
+        can_approve_expense = EXCLUDED.can_approve_expense,
+        can_view_financials = EXCLUDED.can_view_financials,
+        is_manager = EXCLUDED.is_manager;
+
+    -- Team Member 2 (نورة السعد) - Employee with limited permissions
+    -- Can view financials, edit orphans/sponsors, but cannot create/approve expenses directly
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (
+        team_member_2_id, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE
+    )
+    ON CONFLICT (user_id) DO UPDATE SET
+        can_edit_orphans = EXCLUDED.can_edit_orphans,
+        can_edit_sponsors = EXCLUDED.can_edit_sponsors,
+        can_edit_transactions = EXCLUDED.can_edit_transactions,
+        can_create_expense = EXCLUDED.can_create_expense,
+        can_approve_expense = EXCLUDED.can_approve_expense,
+        can_view_financials = EXCLUDED.can_view_financials,
+        is_manager = EXCLUDED.is_manager;
+
+    -- ============================================================================
     -- CREATE ORPHANS
     -- ============================================================================
     INSERT INTO orphans (
@@ -220,7 +258,7 @@ BEGIN
         organization_id, description, created_by_id, amount, status, type, date
     )
     VALUES (
-        demo_org_id, 'شراء وجبات طعام للرحلة', team_member_2_id, 80.00, 'مرفوضة', 'مصروفات', '2024-07-23'
+        demo_org_id, 'شراء وجبات طعام للرحلة', team_member_2_id, 80.00, 'مرفوضة', 'مصروفات', '2025-05-15'
     )
     RETURNING id INTO tx1_id;
 
@@ -229,7 +267,7 @@ BEGIN
         organization_id, description, created_by_id, amount, status, type, date
     )
     VALUES (
-        demo_org_id, '[كفالة يتيم] - دفعة شهر يوليو', team_member_1_id, 100.00, 'مكتملة', 'إيرادات', '2024-07-22'
+        demo_org_id, '[كفالة يتيم] - دفعة شهر يوليو', team_member_1_id, 100.00, 'مكتملة', 'إيرادات', '2025-07-20'
     )
     RETURNING id INTO tx2_id;
 
@@ -238,7 +276,7 @@ BEGIN
         organization_id, description, created_by_id, amount, status, type, date
     )
     VALUES (
-        demo_org_id, 'مصاريف صيانة السكن', team_member_1_id, 250.00, 'مكتملة', 'مصروفات', '2024-07-21'
+        demo_org_id, 'مصاريف صيانة السكن', team_member_1_id, 250.00, 'مكتملة', 'مصروفات', '2025-10-10'
     )
     RETURNING id INTO tx3_id;
 
@@ -247,7 +285,7 @@ BEGIN
         organization_id, description, created_by_id, amount, status, type, date, orphan_id
     )
     VALUES (
-        demo_org_id, 'رسوم دراسية', team_member_2_id, 400.00, 'قيد المراجعة', 'مصروفات', '2024-07-20', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+        demo_org_id, 'رسوم دراسية', team_member_2_id, 400.00, 'قيد المراجعة', 'مصروفات', '2025-9-15', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
     )
     RETURNING id INTO tx4_id;
 
@@ -256,7 +294,7 @@ BEGIN
         organization_id, description, created_by_id, amount, status, type, date
     )
     VALUES (
-        demo_org_id, 'دعم من منظمة خارجية', team_member_1_id, 1000.00, 'مكتملة', 'إيرادات', '2024-07-19'
+        demo_org_id, 'دعم من منظمة خارجية', team_member_1_id, 1000.00, 'مكتملة', 'إيرادات', '2025-12-01'
     )
     RETURNING id INTO tx5_id;
 
@@ -265,7 +303,7 @@ BEGIN
         organization_id, description, created_by_id, amount, status, type, date, orphan_id
     )
     VALUES (
-        demo_org_id, 'شراء ملابس العيد', team_member_2_id, 320.00, 'قيد المراجعة', 'مصروفات', '2024-07-18', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        demo_org_id, 'شراء ملابس العيد', team_member_2_id, 320.00, 'قيد المراجعة', 'مصروفات', '2025-11-10', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     )
     RETURNING id INTO tx6_id;
 
@@ -274,7 +312,7 @@ BEGIN
         transaction_id, sponsor_id, donation_category, amount, date, description
     )
     VALUES (
-        tx2_id, sponsor_1_id, 'كفالة يتيم', 100.00, '2024-07-22', 'دفعة شهر يوليو'
+        tx2_id, sponsor_1_id, 'كفالة يتيم', 100.00, '2025-10-20', 'دفعة شهر يوليو'
     )
     RETURNING id INTO receipt1_id;
 
