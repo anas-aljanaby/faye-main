@@ -2,13 +2,57 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSponsors } from '../hooks/useSponsors';
 import { useOrphans } from '../hooks/useOrphans';
-import { useFinancialTransactions } from '../hooks/useFinancialTransactions';
+import { useFinancialTransactions, FinancialTransactionWithApproval } from '../hooks/useFinancialTransactions';
 import { FinancialTransaction, TransactionStatus, TransactionType, Sponsor, Orphan } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+
+// Reject Transaction Modal
+const RejectTransactionModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onReject: (reason: string) => void;
+    transactionDescription: string;
+}> = ({ isOpen, onClose, onReject, transactionDescription }) => {
+    const [reason, setReason] = useState('');
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (reason.trim()) {
+            onReject(reason.trim());
+            setReason('');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-lg font-bold mb-2 text-red-600">رفض المعاملة</h3>
+                <p className="text-sm text-text-secondary mb-4">{transactionDescription}</p>
+                <form onSubmit={handleSubmit}>
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="سبب الرفض..."
+                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md mb-4 min-h-[100px]"
+                        required
+                        autoFocus
+                    />
+                    <div className="flex justify-end gap-3">
+                        <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
+                        <button type="submit" className="py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold">رفض</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
 
 // Register Chart.js components
 ChartJS.register(
@@ -513,18 +557,158 @@ const StatusPill: React.FC<{ status: TransactionStatus }> = ({ status }) => {
 const FinancialSystem: React.FC = () => {
     const navigate = useNavigate();
     const fromDateRef = useRef<HTMLInputElement>(null);
+    const toDateRef = useRef<HTMLInputElement>(null);
+    const { canCreateExpense } = useAuth();
     const { sponsors: sponsorsData, refetch: refetchSponsors } = useSponsors();
     const { orphans: orphansData } = useOrphans();
-    const { transactions, loading: transactionsLoading, addTransaction: addTransactionToDB, addSponsor: addSponsorToDB, refetch: refetchTransactions } = useFinancialTransactions();
+    const { 
+        transactions, 
+        loading: transactionsLoading, 
+        addTransaction: addTransactionToDB, 
+        addSponsor: addSponsorToDB, 
+        refetch: refetchTransactions,
+        approveTransaction,
+        rejectTransaction,
+        deleteTransaction,
+        canApproveExpense,
+        canEditTransactions,
+        canCreateExpenseDirectly,
+    } = useFinancialTransactions();
     const [sponsorsList, setSponsorsList] = useState(sponsorsData);
+    
+    // Filter states
+    const [fromDate, setFromDate] = useState<string>('');
+    const [toDate, setToDate] = useState<string>('');
+    const [typeFilter, setTypeFilter] = useState<string>('كل الأنواع');
+    const [statusFilter, setStatusFilter] = useState<string>('كل الحالات');
+    const [activeMonthFilter, setActiveMonthFilter] = useState<string>('هذا العام');
+    
+    // Modal states
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [receiptToShow, setReceiptToShow] = useState<FinancialTransaction | null>(null);
+    const [transactionToReject, setTransactionToReject] = useState<FinancialTransactionWithApproval | null>(null);
+    const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
     
     useEffect(() => {
         if (sponsorsData) {
             setSponsorsList(sponsorsData);
         }
     }, [sponsorsData]);
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [receiptToShow, setReceiptToShow] = useState<FinancialTransaction | null>(null);
+
+    // Initialize default month filter on mount
+    useEffect(() => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const from = new Date(year, 0, 1);
+        from.setHours(0, 0, 0, 0);
+        const to = new Date(today);
+        to.setHours(23, 59, 59, 999);
+        
+        setFromDate(from.toISOString().split('T')[0]);
+        setToDate(to.toISOString().split('T')[0]);
+    }, []);
+
+    // Close action menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => setActionMenuOpen(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    const handleApprove = async (transactionId: string) => {
+        const result = await approveTransaction(transactionId);
+        if (!result.success) {
+            alert(result.error || 'حدث خطأ أثناء الموافقة');
+        }
+        setActionMenuOpen(null);
+    };
+
+    const handleReject = async (reason: string) => {
+        if (!transactionToReject) return;
+        const result = await rejectTransaction(transactionToReject.id, reason);
+        if (!result.success) {
+            alert(result.error || 'حدث خطأ أثناء الرفض');
+        }
+        setTransactionToReject(null);
+        setActionMenuOpen(null);
+    };
+
+    const handleDelete = async (transactionId: string) => {
+        if (!confirm('هل أنت متأكد من حذف هذه المعاملة؟')) return;
+        const result = await deleteTransaction(transactionId);
+        if (!result.success) {
+            alert(result.error || 'حدث خطأ أثناء الحذف');
+        }
+        setActionMenuOpen(null);
+    };
+
+    // Month filter handlers
+    const handleMonthFilter = (filter: string) => {
+        setActiveMonthFilter(filter);
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        
+        let from: Date;
+        let to: Date = new Date(today);
+        to.setHours(23, 59, 59, 999);
+        
+        switch (filter) {
+            case 'هذا الشهر':
+                from = new Date(year, month, 1);
+                from.setHours(0, 0, 0, 0);
+                break;
+            case 'آخر 3 أشهر':
+                from = new Date(year, month - 2, 1);
+                from.setHours(0, 0, 0, 0);
+                break;
+            case 'هذا العام':
+            default:
+                from = new Date(year, 0, 1);
+                from.setHours(0, 0, 0, 0);
+                break;
+        }
+        
+        setFromDate(from.toISOString().split('T')[0]);
+        setToDate(to.toISOString().split('T')[0]);
+    };
+
+    // Filter transactions based on filter criteria
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter(tx => {
+            // Date filter
+            if (fromDate) {
+                const txDate = new Date(tx.date);
+                const from = new Date(fromDate);
+                from.setHours(0, 0, 0, 0);
+                if (txDate < from) return false;
+            }
+            if (toDate) {
+                const txDate = new Date(tx.date);
+                const to = new Date(toDate);
+                to.setHours(23, 59, 59, 999);
+                if (txDate > to) return false;
+            }
+            
+            // Type filter
+            if (typeFilter !== 'كل الأنواع') {
+                if (typeFilter === 'إيرادات' && tx.type !== TransactionType.Income) return false;
+                if (typeFilter === 'مصروفات' && tx.type !== TransactionType.Expense) return false;
+            }
+            
+            // Status filter
+            if (statusFilter !== 'كل الحالات') {
+                const statusMap: Record<string, TransactionStatus> = {
+                    'مكتملة': TransactionStatus.Completed,
+                    'قيد المراجعة': TransactionStatus.Pending,
+                    'مرفوضة': TransactionStatus.Rejected,
+                };
+                if (tx.status !== statusMap[statusFilter]) return false;
+            }
+            
+            return true;
+        });
+    }, [transactions, fromDate, toDate, typeFilter, statusFilter]);
 
     const { totalIncome, totalExpenses, balance, pendingCount } = useMemo(() => {
         const income = transactions
@@ -602,7 +786,7 @@ const FinancialSystem: React.FC = () => {
         const headers = ['id', 'date', 'description', 'createdBy', 'amount', 'status', 'type'];
         const csvRows = [
             headers.join(','),
-            ...transactions.map(tx => [
+            ...filteredTransactions.map(tx => [
                 tx.id,
                 tx.date.toISOString().split('T')[0],
                 `"${tx.description.replace(/"/g, '""')}"`,
@@ -659,9 +843,36 @@ const FinancialSystem: React.FC = () => {
                             إضافة حركة
                         </button>
                         <div className="flex items-center bg-gray-100 rounded-lg">
-                            <button className="py-2 px-4 text-sm font-semibold bg-primary text-white rounded-lg">هذا العام</button>
-                            <button className="py-2 px-4 text-sm text-text-secondary">آخر 3 أشهر</button>
-                            <button className="py-2 px-4 text-sm text-text-secondary">هذا الشهر</button>
+                            <button 
+                                onClick={() => handleMonthFilter('هذا العام')}
+                                className={`py-2 px-4 text-sm font-semibold rounded-lg transition-colors ${
+                                    activeMonthFilter === 'هذا العام' 
+                                        ? 'bg-primary text-white' 
+                                        : 'text-text-secondary hover:bg-gray-200'
+                                }`}
+                            >
+                                هذا العام
+                            </button>
+                            <button 
+                                onClick={() => handleMonthFilter('آخر 3 أشهر')}
+                                className={`py-2 px-4 text-sm font-semibold rounded-lg transition-colors ${
+                                    activeMonthFilter === 'آخر 3 أشهر' 
+                                        ? 'bg-primary text-white' 
+                                        : 'text-text-secondary hover:bg-gray-200'
+                                }`}
+                            >
+                                آخر 3 أشهر
+                            </button>
+                            <button 
+                                onClick={() => handleMonthFilter('هذا الشهر')}
+                                className={`py-2 px-4 text-sm font-semibold rounded-lg transition-colors ${
+                                    activeMonthFilter === 'هذا الشهر' 
+                                        ? 'bg-primary text-white' 
+                                        : 'text-text-secondary hover:bg-gray-200'
+                                }`}
+                            >
+                                هذا الشهر
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -669,18 +880,46 @@ const FinancialSystem: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-4 mb-4 pb-4 border-b">
                     <div className="flex items-center gap-2">
                         <label htmlFor="from-date" className="text-sm">من</label>
-                        <input type="date" id="from-date" ref={fromDateRef} className="bg-white border border-gray-300 rounded-lg p-2"/>
+                        <input 
+                            type="date" 
+                            id="from-date" 
+                            ref={fromDateRef}
+                            value={fromDate}
+                            onChange={(e) => {
+                                setFromDate(e.target.value);
+                                setActiveMonthFilter('');
+                            }}
+                            className="bg-white border border-gray-300 rounded-lg p-2"
+                        />
                     </div>
                     <div className="flex items-center gap-2">
                         <label htmlFor="to-date" className="text-sm">إلى</label>
-                        <input type="date" id="to-date" className="bg-white border border-gray-300 rounded-lg p-2"/>
+                        <input 
+                            type="date" 
+                            id="to-date" 
+                            ref={toDateRef}
+                            value={toDate}
+                            onChange={(e) => {
+                                setToDate(e.target.value);
+                                setActiveMonthFilter('');
+                            }}
+                            className="bg-white border border-gray-300 rounded-lg p-2"
+                        />
                     </div>
-                    <select className="bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary">
+                    <select 
+                        value={typeFilter}
+                        onChange={(e) => setTypeFilter(e.target.value)}
+                        className="bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary"
+                    >
                         <option>كل الأنواع</option>
                         <option>إيرادات</option>
                         <option>مصروفات</option>
                     </select>
-                     <select className="bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary">
+                    <select 
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary"
+                    >
                         <option>كل الحالات</option>
                         <option>مكتملة</option>
                         <option>قيد المراجعة</option>
@@ -710,36 +949,94 @@ const FinancialSystem: React.FC = () => {
                                         جاري التحميل...
                                     </td>
                                 </tr>
-                            ) : transactions.length === 0 ? (
+                            ) : filteredTransactions.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="p-8 text-center text-text-secondary">
-                                        لا توجد حركات مالية
+                                        {transactions.length === 0 ? 'لا توجد حركات مالية' : 'لا توجد نتائج تطابق الفلاتر المحددة'}
                                     </td>
                                 </tr>
                             ) : (
-                                transactions.map(tx => (
-                                    <tr key={tx.id} className="border-b hover:bg-gray-50">
-                                        <td className="p-3">{tx.date.toLocaleDateString('en-CA')}</td>
-                                        <td className="p-3 font-semibold">
-                                            <div className="flex items-center gap-2">
-                                                <span>{tx.description}</span>
-                                                {tx.receipt && (
-                                                    <button onClick={() => setReceiptToShow(tx)} title="عرض الإيصال" className="text-primary hover:text-primary-hover">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                                                    </button>
+                                filteredTransactions.map(tx => {
+                                    const txWithApproval = tx as FinancialTransactionWithApproval;
+                                    const isPending = tx.status === TransactionStatus.Pending;
+                                    const isRejected = tx.status === TransactionStatus.Rejected;
+                                    
+                                    return (
+                                        <tr key={tx.id} className="border-b hover:bg-gray-50">
+                                            <td className="p-3">{tx.date.toLocaleDateString('en-CA')}</td>
+                                            <td className="p-3 font-semibold">
+                                                <div className="flex items-center gap-2">
+                                                    <span>{tx.description}</span>
+                                                    {tx.receipt && (
+                                                        <button onClick={() => setReceiptToShow(tx)} title="عرض الإيصال" className="text-primary hover:text-primary-hover">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                                        </button>
+                                                    )}
+                                                    {isRejected && txWithApproval.rejectionReason && (
+                                                        <span title={`سبب الرفض: ${txWithApproval.rejectionReason}`} className="text-red-500 cursor-help">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {txWithApproval.approvedBy && (
+                                                    <div className="text-xs text-green-600 mt-1">وافق عليها: {txWithApproval.approvedBy}</div>
                                                 )}
-                                            </div>
-                                        </td>
-                                        <td className="p-3 text-text-secondary">{tx.createdBy}</td>
-                                        <td className={`p-3 font-bold ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>${tx.amount.toLocaleString()}</td>
-                                        <td className="p-3"><StatusPill status={tx.status} /></td>
-                                        <td className="p-3">
-                                            <button className="text-text-secondary">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
+                                                {txWithApproval.rejectedBy && (
+                                                    <div className="text-xs text-red-600 mt-1">رفضها: {txWithApproval.rejectedBy}</div>
+                                                )}
+                                            </td>
+                                            <td className="p-3 text-text-secondary">{tx.createdBy}</td>
+                                            <td className={`p-3 font-bold ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>${tx.amount.toLocaleString()}</td>
+                                            <td className="p-3"><StatusPill status={tx.status} /></td>
+                                            <td className="p-3 relative">
+                                                {/* Action buttons based on permissions */}
+                                                {isPending && canApproveExpense && tx.type === TransactionType.Expense && (
+                                                    <div className="flex items-center gap-1">
+                                                        <button 
+                                                            onClick={() => handleApprove(tx.id)}
+                                                            className="p-1 text-green-600 hover:bg-green-100 rounded"
+                                                            title="موافقة"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => setTransactionToReject(txWithApproval)}
+                                                            className="p-1 text-red-600 hover:bg-red-100 rounded"
+                                                            title="رفض"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                {/* Action menu for edit/delete */}
+                                                {canEditTransactions && (
+                                                    <div className="relative inline-block">
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setActionMenuOpen(actionMenuOpen === tx.id ? null : tx.id);
+                                                            }}
+                                                            className="text-text-secondary hover:text-primary p-1"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                                                        </button>
+                                                        {actionMenuOpen === tx.id && (
+                                                            <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                                                                <button 
+                                                                    onClick={() => handleDelete(tx.id)}
+                                                                    className="w-full px-4 py-2 text-right text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                                >
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                                                    حذف
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
@@ -775,6 +1072,12 @@ const FinancialSystem: React.FC = () => {
         <ReceiptModal
             transaction={receiptToShow}
             onClose={() => setReceiptToShow(null)}
+        />
+        <RejectTransactionModal
+            isOpen={!!transactionToReject}
+            onClose={() => setTransactionToReject(null)}
+            onReject={handleReject}
+            transactionDescription={transactionToReject?.description || ''}
         />
         </>
     );

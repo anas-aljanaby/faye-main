@@ -1,7 +1,117 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTeamMembers } from '../hooks/useTeamMembers';
+import { usePermissions, TeamMemberWithPermissions } from '../hooks/usePermissions';
+import { useAuth } from '../contexts/AuthContext';
 import { TeamMember } from '../types';
+
+// Permission labels for display
+const PERMISSION_LABELS: Record<string, string> = {
+    can_edit_orphans: 'تعديل الأيتام',
+    can_edit_sponsors: 'تعديل الكفلاء',
+    can_edit_transactions: 'تعديل المعاملات',
+    can_create_expense: 'إنشاء مصروفات',
+    can_approve_expense: 'الموافقة على المصروفات',
+    can_view_financials: 'عرض المالية',
+    is_manager: 'مدير',
+};
+
+// Permission management modal
+const PermissionsModal: React.FC<{
+    isOpen: boolean;
+    member: TeamMemberWithPermissions | null;
+    onClose: () => void;
+    onToggle: (userId: string, permissionKey: string) => Promise<void>;
+    isManager: boolean;
+}> = ({ isOpen, member, onClose, onToggle, isManager }) => {
+    const [loading, setLoading] = useState<string | null>(null);
+
+    if (!isOpen || !member) return null;
+
+    const permissions = member.permissions;
+    const permissionKeys = [
+        'can_edit_orphans',
+        'can_edit_sponsors', 
+        'can_view_financials',
+        'can_create_expense',
+        'can_approve_expense',
+        'can_edit_transactions',
+        'is_manager',
+    ];
+
+    const handleToggle = async (key: string) => {
+        if (!isManager) return;
+        setLoading(key);
+        await onToggle(member.id, key);
+        setLoading(null);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-3 mb-6">
+                    <img 
+                        src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`} 
+                        alt={member.name} 
+                        className="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div>
+                        <h3 className="text-xl font-bold">{member.name}</h3>
+                        <p className="text-sm text-text-secondary">إدارة الصلاحيات</p>
+                    </div>
+                </div>
+                
+                <div className="space-y-3">
+                    {permissionKeys.map(key => {
+                        const value = permissions?.[key as keyof typeof permissions] ?? false;
+                        const isLoading = loading === key;
+                        
+                        return (
+                            <div 
+                                key={key} 
+                                className={`flex items-center justify-between p-3 rounded-lg border ${
+                                    value ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                }`}
+                            >
+                                <span className="font-medium">{PERMISSION_LABELS[key]}</span>
+                                {isManager ? (
+                                    <button
+                                        onClick={() => handleToggle(key)}
+                                        disabled={isLoading}
+                                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                                            value ? 'bg-green-500' : 'bg-gray-300'
+                                        } ${isLoading ? 'opacity-50' : ''}`}
+                                    >
+                                        <span 
+                                            className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                                                value ? 'right-1' : 'left-1'
+                                            }`}
+                                        />
+                                    </button>
+                                ) : (
+                                    <span className={`px-2 py-1 rounded text-sm ${
+                                        value ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'
+                                    }`}>
+                                        {value ? 'مفعّل' : 'معطّل'}
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6">
+                    <button 
+                        onClick={onClose} 
+                        className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+                    >
+                        إغلاق
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const AddTeamMemberModal: React.FC<{
     isOpen: boolean;
@@ -155,6 +265,8 @@ const SortPopover: React.FC<{
 
 const TeamList: React.FC = () => {
     const { teamMembers: teamMembersData, loading } = useTeamMembers();
+    const { teamMembers: teamMembersWithPermissions, togglePermission, isManager, loading: permissionsLoading, refetch: refetchPermissions } = usePermissions();
+    const { isManager: checkIsManager } = useAuth();
     const [teamList, setTeamList] = useState<TeamMember[]>([]);
     
     useEffect(() => {
@@ -165,6 +277,7 @@ const TeamList: React.FC = () => {
     const [editingMember, setEditingMember] = useState<TeamMember | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+    const [permissionsMember, setPermissionsMember] = useState<TeamMemberWithPermissions | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
@@ -173,6 +286,22 @@ const TeamList: React.FC = () => {
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [sortBy, setSortBy] = useState('name-asc');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+    const handleTogglePermission = async (userId: string, permissionKey: string) => {
+        await togglePermission(userId, permissionKey as any);
+        // Refresh to get updated permissions
+        await refetchPermissions();
+    };
+
+    // Get permissions for a member by matching UUIDs
+    const getMemberPermissions = (memberId: number): TeamMemberWithPermissions | undefined => {
+        // Find by matching member in teamMembersWithPermissions
+        return teamMembersWithPermissions.find(m => {
+            // Try to match by name since IDs might be different formats
+            const teamMember = teamList.find(t => t.id === memberId);
+            return teamMember && m.name === teamMember.name;
+        });
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -347,16 +476,38 @@ const TeamList: React.FC = () => {
                                 <img src={member.avatarUrl} alt={member.name} className="w-16 h-16 rounded-full object-cover" />
                                 <div className="flex-1">
                                     <h3 className="text-xl font-semibold text-gray-800">{member.name}</h3>
-                                    <p className="text-sm text-text-secondary">عضو فريق</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-sm text-text-secondary">عضو فريق</p>
+                                        {(() => {
+                                            const memberPerms = getMemberPermissions(member.id);
+                                            if (memberPerms?.permissions?.is_manager) {
+                                                return <span className="text-xs px-2 py-0.5 bg-primary text-white rounded-full">مدير</span>;
+                                            }
+                                            return null;
+                                        })()}
+                                    </div>
                                 </div>
                                 <div className="relative">
                                     <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(member.id === activeMenuId ? null : member.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${member.name}`}>
                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                                     </button>
                                     {activeMenuId === member.id && (
-                                        <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
+                                        <div ref={menuRef} className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg shadow-xl z-10 border">
                                             <Link to={`/team/${member.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
                                             <button onClick={(e) => { e.stopPropagation(); setEditingMember(member); setActiveMenuId(null); }} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
+                                            <button 
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    const memberPerms = getMemberPermissions(member.id);
+                                                    if (memberPerms) {
+                                                        setPermissionsMember(memberPerms);
+                                                    }
+                                                    setActiveMenuId(null); 
+                                                }} 
+                                                className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                الصلاحيات
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -424,6 +575,13 @@ const TeamList: React.FC = () => {
             onClose={() => setIsMessageModalOpen(false)}
             onSend={handleSendMessage}
             title={`إرسال رسالة إلى ${selectedIds.size} من أعضاء الفريق`}
+        />
+        <PermissionsModal
+            isOpen={!!permissionsMember}
+            member={permissionsMember}
+            onClose={() => setPermissionsMember(null)}
+            onToggle={handleTogglePermission}
+            isManager={isManager}
         />
         </>
     );

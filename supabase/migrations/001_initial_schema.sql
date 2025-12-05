@@ -27,6 +27,21 @@ CREATE TABLE user_profiles (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- 2b. User permissions table (stores permission flags per user)
+CREATE TABLE user_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES user_profiles(id) ON DELETE CASCADE,
+    can_edit_orphans BOOLEAN DEFAULT FALSE NOT NULL,
+    can_edit_sponsors BOOLEAN DEFAULT FALSE NOT NULL,
+    can_edit_transactions BOOLEAN DEFAULT FALSE NOT NULL,
+    can_create_expense BOOLEAN DEFAULT FALSE NOT NULL,
+    can_approve_expense BOOLEAN DEFAULT FALSE NOT NULL,
+    can_view_financials BOOLEAN DEFAULT FALSE NOT NULL,
+    is_manager BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
 -- 3. Orphans table
 CREATE TABLE orphans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -159,6 +174,10 @@ CREATE TABLE financial_transactions (
     status TEXT NOT NULL CHECK (status IN ('مكتملة', 'قيد المراجعة', 'مرفوضة')),
     type TEXT NOT NULL CHECK (type IN ('إيرادات', 'مصروفات')),
     orphan_id UUID REFERENCES orphans(id) ON DELETE SET NULL,
+    -- Approval workflow columns
+    approved_by_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
+    rejected_by_id UUID REFERENCES user_profiles(id) ON DELETE SET NULL,
+    rejection_reason TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -206,6 +225,7 @@ CREATE TABLE tasks (
 
 CREATE INDEX idx_organizations_name ON organizations(name);
 CREATE INDEX idx_user_profiles_organization_role ON user_profiles(organization_id, role);
+CREATE INDEX idx_user_permissions_user ON user_permissions(user_id);
 CREATE INDEX idx_orphans_organization ON orphans(organization_id);
 CREATE INDEX idx_sponsor_orphans_sponsor ON sponsor_orphans(sponsor_id);
 CREATE INDEX idx_sponsor_orphans_orphan ON sponsor_orphans(orphan_id);
@@ -239,6 +259,9 @@ CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON organizations
 CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_user_permissions_updated_at BEFORE UPDATE ON user_permissions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_orphans_updated_at BEFORE UPDATE ON orphans
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -261,6 +284,7 @@ CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
 -- Enable RLS on all tables
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sponsor_orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_member_orphans ENABLE ROW LEVEL SECURITY;
@@ -302,6 +326,83 @@ BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_profiles 
         WHERE id = auth.uid() AND role = 'sponsor'
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user is a manager
+CREATE OR REPLACE FUNCTION is_manager()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM user_permissions 
+        WHERE user_id = auth.uid() AND is_manager = TRUE
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user can edit orphans
+CREATE OR REPLACE FUNCTION can_edit_orphans()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM user_permissions 
+        WHERE user_id = auth.uid() AND (can_edit_orphans = TRUE OR is_manager = TRUE)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user can edit sponsors
+CREATE OR REPLACE FUNCTION can_edit_sponsors()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM user_permissions 
+        WHERE user_id = auth.uid() AND (can_edit_sponsors = TRUE OR is_manager = TRUE)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user can edit transactions
+CREATE OR REPLACE FUNCTION can_edit_transactions()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM user_permissions 
+        WHERE user_id = auth.uid() AND (can_edit_transactions = TRUE OR is_manager = TRUE)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user can create expense directly (not as pending)
+CREATE OR REPLACE FUNCTION can_create_expense()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM user_permissions 
+        WHERE user_id = auth.uid() AND (can_create_expense = TRUE OR is_manager = TRUE)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user can approve expenses
+CREATE OR REPLACE FUNCTION can_approve_expense()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM user_permissions 
+        WHERE user_id = auth.uid() AND (can_approve_expense = TRUE OR is_manager = TRUE)
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if user can view financials
+CREATE OR REPLACE FUNCTION can_view_financials()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM user_permissions 
+        WHERE user_id = auth.uid() AND (can_view_financials = TRUE OR is_manager = TRUE)
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -381,6 +482,29 @@ CREATE POLICY "Users can update their own profile"
     ON user_profiles FOR UPDATE
     USING (id = auth.uid());
 
+-- User permissions policies
+CREATE POLICY "Users can view permissions in their organization"
+    ON user_permissions FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles up1
+            JOIN user_profiles up2 ON up1.organization_id = up2.organization_id
+            WHERE up1.id = auth.uid() AND up2.id = user_permissions.user_id
+        )
+    );
+
+CREATE POLICY "Managers can insert permissions"
+    ON user_permissions FOR INSERT
+    WITH CHECK (is_manager());
+
+CREATE POLICY "Managers can update permissions"
+    ON user_permissions FOR UPDATE
+    USING (is_manager());
+
+CREATE POLICY "Managers can delete permissions"
+    ON user_permissions FOR DELETE
+    USING (is_manager());
+
 -- Orphans policies
 CREATE POLICY "Team members can view all orphans in their organization"
     ON orphans FOR SELECT
@@ -398,33 +522,37 @@ CREATE POLICY "Sponsors can view their sponsored orphans"
         )
     );
 
-CREATE POLICY "Team members can insert orphans in their organization"
+CREATE POLICY "Team members with permission can insert orphans in their organization"
     ON orphans FOR INSERT
     WITH CHECK (
         organization_id = get_user_organization_id() 
         AND is_team_member()
+        AND can_edit_orphans()
     );
 
-CREATE POLICY "Team members can update orphans in their organization"
+CREATE POLICY "Team members with permission can update orphans in their organization"
     ON orphans FOR UPDATE
     USING (
         organization_id = get_user_organization_id() 
         AND is_team_member()
+        AND can_edit_orphans()
     );
 
-CREATE POLICY "Team members can delete orphans in their organization"
+CREATE POLICY "Team members with permission can delete orphans in their organization"
     ON orphans FOR DELETE
     USING (
         organization_id = get_user_organization_id() 
         AND is_team_member()
+        AND can_edit_orphans()
     );
 
 -- Sponsor-Orphan junction policies
-CREATE POLICY "Team members can manage sponsor-orphan relationships"
+CREATE POLICY "Team members with permission can manage sponsor-orphan relationships"
     ON sponsor_orphans FOR ALL
     USING (
         check_orphan_organization(sponsor_orphans.orphan_id)
         AND is_team_member()
+        AND can_edit_sponsors()
     );
 
 CREATE POLICY "Sponsors can view their own sponsor-orphan relationships"
@@ -562,11 +690,54 @@ CREATE POLICY "Sponsors can view program participations for their sponsored orph
     );
 
 -- Financial transactions policies
-CREATE POLICY "Team members can manage financial transactions in their organization"
-    ON financial_transactions FOR ALL
+-- Team members with view permission can see transactions
+CREATE POLICY "Team members with permission can view financial transactions"
+    ON financial_transactions FOR SELECT
     USING (
         organization_id = get_user_organization_id() 
         AND is_team_member()
+        AND can_view_financials()
+    );
+
+-- All team members can create income transactions
+-- For expenses: users with can_create_expense can create completed, others create as pending
+CREATE POLICY "Team members can insert financial transactions"
+    ON financial_transactions FOR INSERT
+    WITH CHECK (
+        organization_id = get_user_organization_id() 
+        AND is_team_member()
+        AND (
+            -- Income: anyone can create
+            type = 'إيرادات'
+            OR
+            -- Expense with can_create_expense: can create as completed
+            (type = 'مصروفات' AND can_create_expense() AND status IN ('مكتملة', 'قيد المراجعة'))
+            OR
+            -- Expense without permission: must be pending
+            (type = 'مصروفات' AND NOT can_create_expense() AND status = 'قيد المراجعة')
+        )
+    );
+
+-- Users with can_edit_transactions can update, or users with can_approve_expense can change status
+CREATE POLICY "Team members with permission can update financial transactions"
+    ON financial_transactions FOR UPDATE
+    USING (
+        organization_id = get_user_organization_id() 
+        AND is_team_member()
+        AND (
+            can_edit_transactions()
+            OR can_approve_expense()
+            OR created_by_id = auth.uid()
+        )
+    );
+
+-- Only users with can_edit_transactions can delete
+CREATE POLICY "Team members with permission can delete financial transactions"
+    ON financial_transactions FOR DELETE
+    USING (
+        organization_id = get_user_organization_id() 
+        AND is_team_member()
+        AND can_edit_transactions()
     );
 
 CREATE POLICY "Sponsors can view their own financial transactions"

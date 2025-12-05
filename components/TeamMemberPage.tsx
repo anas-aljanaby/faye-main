@@ -96,6 +96,30 @@ const TeamMemberPage: React.FC = () => {
     return orphansData;
   }, [member, orphansData]);
 
+  const pendingTasks = useMemo(() => tasks.filter(task => !task.completed), [tasks]);
+
+  const tasksByDay = useMemo(() => {
+      const map = new Map<number, Task[]>();
+      tasks.forEach(task => {
+          if (task.dueDate.getMonth() === currentDate.getMonth() && task.dueDate.getFullYear() === currentDate.getFullYear()) {
+              const day = task.dueDate.getDate();
+              if (!map.has(day)) map.set(day, []);
+              map.get(day)?.push(task);
+          }
+      });
+      return map;
+  }, [tasks, currentDate]);
+
+  const tasksForSelectedDay = useMemo(() => {
+    if (!selectedDate) return [];
+    return tasks.filter(task => 
+        task.dueDate.getFullYear() === selectedDate.getFullYear() &&
+        task.dueDate.getMonth() === selectedDate.getMonth() &&
+        task.dueDate.getDate() === selectedDate.getDate()
+    );
+  }, [tasks, selectedDate]);
+
+  // Early returns must come AFTER all hooks
   if (teamMembersLoading) {
     return <div className="text-center py-8">جاري التحميل...</div>;
   }
@@ -103,8 +127,6 @@ const TeamMemberPage: React.FC = () => {
   if (!member) {
     return <div className="text-center text-red-500">لم يتم العثور على عضو الفريق.</div>;
   }
-  
-  const pendingTasks = tasks.filter(task => !task.completed);
 
   const toggleTask = (taskId: number) => {
     setTasks(tasks.map(task => task.id === taskId ? { ...task, completed: !task.completed } : task));
@@ -219,27 +241,6 @@ const TeamMemberPage: React.FC = () => {
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   const monthName = currentDate.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
-
-  const tasksByDay = useMemo(() => {
-      const map = new Map<number, Task[]>();
-      tasks.forEach(task => {
-          if (task.dueDate.getMonth() === currentDate.getMonth() && task.dueDate.getFullYear() === currentDate.getFullYear()) {
-              const day = task.dueDate.getDate();
-              if (!map.has(day)) map.set(day, []);
-              map.get(day)?.push(task);
-          }
-      });
-      return map;
-  }, [tasks, currentDate]);
-
-  const tasksForSelectedDay = useMemo(() => {
-    if (!selectedDate) return [];
-    return tasks.filter(task => 
-        task.dueDate.getFullYear() === selectedDate.getFullYear() &&
-        task.dueDate.getMonth() === selectedDate.getMonth() &&
-        task.dueDate.getDate() === selectedDate.getDate()
-    );
-  }, [tasks, selectedDate]);
 
   const changeMonth = (offset: number) => {
       setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
