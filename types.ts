@@ -142,3 +142,39 @@ export interface FinancialTransaction {
     relatedOrphanIds?: number[];
   }
 }
+
+// Messaging System Types
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  read_at: Date | null;
+  created_at: Date;
+  sender?: {
+    id: string;
+    name: string;
+    avatar_url?: string;
+  };
+}
+
+export interface Conversation {
+  id: string;
+  user1_id: string;
+  user2_id: string;
+  organization_id: string;
+  last_message_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+  participant?: {
+    id: string;
+    name: string;
+    avatar_url?: string;
+    role: 'team_member' | 'sponsor';
+  };
+  unread_count?: number;
+  last_message?: {
+    content: string;
+    created_at: Date;
+  };
+}

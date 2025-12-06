@@ -12,6 +12,8 @@
 -- ============================================================================
 
 -- Drop tables that have foreign key dependencies first
+DROP TABLE IF EXISTS messages CASCADE;
+DROP TABLE IF EXISTS conversations CASCADE;
 DROP TABLE IF EXISTS receipt_orphans CASCADE;
 DROP TABLE IF EXISTS receipts CASCADE;
 DROP TABLE IF EXISTS financial_transactions CASCADE;
@@ -48,6 +50,8 @@ DROP FUNCTION IF EXISTS can_view_financials() CASCADE;
 DROP FUNCTION IF EXISTS check_orphan_organization(UUID) CASCADE;
 DROP FUNCTION IF EXISTS check_receipt_organization(UUID) CASCADE;
 DROP FUNCTION IF EXISTS check_transaction_has_sponsor_receipts(UUID) CASCADE;
+DROP FUNCTION IF EXISTS is_conversation_participant(UUID) CASCADE;
+DROP FUNCTION IF EXISTS update_conversation_last_message() CASCADE;
 
 -- ============================================================================
 -- DROP EXTENSIONS (optional - only if you want to remove UUID extension)

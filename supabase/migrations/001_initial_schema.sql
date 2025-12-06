@@ -1,6 +1,8 @@
 -- Faye Database Schema Migration
 -- This migration creates all tables, indexes, RLS policies, and triggers for the Faye orphan care management system
 
+-- Note: To enable real-time for messages table, run this in Supabase SQL Editor:
+-- ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -220,6 +222,33 @@ CREATE TABLE tasks (
 );
 
 -- ============================================================================
+-- MESSAGING SYSTEM TABLES
+-- ============================================================================
+
+-- 17. Conversations table
+CREATE TABLE conversations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user1_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    user2_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+    last_message_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE (user1_id, user2_id),
+    CHECK (user1_id != user2_id)
+);
+
+-- 18. Messages table
+CREATE TABLE messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    sender_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    read_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- ============================================================================
 -- INDEXES
 -- ============================================================================
 
@@ -238,6 +267,13 @@ CREATE INDEX idx_update_logs_orphan ON update_logs(orphan_id);
 CREATE INDEX idx_update_logs_author ON update_logs(author_id);
 CREATE INDEX idx_receipts_transaction ON receipts(transaction_id);
 CREATE INDEX idx_receipt_orphans_receipt ON receipt_orphans(receipt_id);
+CREATE INDEX idx_conversations_user1 ON conversations(user1_id);
+CREATE INDEX idx_conversations_user2 ON conversations(user2_id);
+CREATE INDEX idx_conversations_organization ON conversations(organization_id);
+CREATE INDEX idx_conversations_last_message_at ON conversations(last_message_at DESC);
+CREATE INDEX idx_messages_conversation ON messages(conversation_id);
+CREATE INDEX idx_messages_sender ON messages(sender_id);
+CREATE INDEX idx_messages_created_at ON messages(created_at);
 
 -- ============================================================================
 -- TRIGGERS FOR UPDATED_AT
@@ -277,6 +313,24 @@ CREATE TRIGGER update_financial_transactions_updated_at BEFORE UPDATE ON financi
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to update conversation's last_message_at when a new message is inserted
+CREATE OR REPLACE FUNCTION update_conversation_last_message()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE conversations
+    SET last_message_at = NEW.created_at
+    WHERE id = NEW.conversation_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_conversation_last_message_on_insert
+    AFTER INSERT ON messages
+    FOR EACH ROW EXECUTE FUNCTION update_conversation_last_message();
+
 -- ============================================================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================================================
@@ -299,6 +353,8 @@ ALTER TABLE financial_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE receipts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE receipt_orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to get user's organization_id
 CREATE OR REPLACE FUNCTION get_user_organization_id()
@@ -803,3 +859,66 @@ CREATE POLICY "Team members can view tasks for orphans they're assigned to"
             )
         )
     );
+
+-- ============================================================================
+-- MESSAGING SYSTEM POLICIES
+-- ============================================================================
+
+-- Helper function to check if user is part of a conversation
+CREATE OR REPLACE FUNCTION is_conversation_participant(conv_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM conversations
+        WHERE id = conv_id
+        AND (user1_id = auth.uid() OR user2_id = auth.uid())
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Conversations policies
+CREATE POLICY "Users can view conversations they're part of"
+    ON conversations FOR SELECT
+    USING (user1_id = auth.uid() OR user2_id = auth.uid());
+
+CREATE POLICY "Users can create conversations with users in their organization"
+    ON conversations FOR INSERT
+    WITH CHECK (
+        organization_id = get_user_organization_id()
+        AND (user1_id = auth.uid() OR user2_id = auth.uid())
+        AND EXISTS (
+            SELECT 1 FROM user_profiles
+            WHERE id IN (user1_id, user2_id)
+            AND organization_id = get_user_organization_id()
+        )
+    );
+
+CREATE POLICY "Users can update conversations they're part of"
+    ON conversations FOR UPDATE
+    USING (user1_id = auth.uid() OR user2_id = auth.uid());
+
+-- Messages policies
+CREATE POLICY "Users can view messages in conversations they're part of"
+    ON messages FOR SELECT
+    USING (is_conversation_participant(conversation_id));
+
+CREATE POLICY "Users can insert messages in conversations they're part of"
+    ON messages FOR INSERT
+    WITH CHECK (
+        is_conversation_participant(conversation_id)
+        AND sender_id = auth.uid()
+    );
+
+CREATE POLICY "Users can update read_at for messages they received"
+    ON messages FOR UPDATE
+    USING (
+        is_conversation_participant(conversation_id)
+        AND sender_id != auth.uid()
+    )
+    WITH CHECK (
+        is_conversation_participant(conversation_id)
+        AND sender_id != auth.uid()
+    );
+
+-- Note: To enable real-time for messages table, run this in Supabase SQL Editor:
+-- ALTER PUBLICATION supabase_realtime ADD TABLE messages;
