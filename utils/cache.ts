@@ -77,5 +77,7 @@ export const getCacheKey = {
   teamMembers: (orgId: string) => `teamMembers:${orgId}`,
   orphanDetails: (orphanId: string) => `orphanDetails:${orphanId}`,
   financialTransactions: (orgId: string) => `financialTransactions:${orgId}`,
+  conversations: (orgId: string, userId: string) => `conversations:${orgId}:${userId}`,
+  messages: (conversationId: string) => `messages:${conversationId}`,
 };
 
