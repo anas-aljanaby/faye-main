@@ -116,21 +116,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Fetch user permissions (only for team members)
         if (profileData.role === 'team_member') {
+          console.log('Fetching permissions for team member:', userId);
           const { data: permissionsData, error: permissionsError } = await supabase
             .from('user_permissions')
             .select('can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager')
             .eq('user_id', userId)
             .single();
 
+          console.log('Permissions result:', { permissionsData, permissionsError });
+
           if (permissionsError) {
             console.error('Error fetching user permissions:', permissionsError);
             // Use default permissions if no permissions found
             setPermissions(DEFAULT_PERMISSIONS);
           } else {
+            console.log('Setting permissions:', permissionsData);
             setPermissions(permissionsData as UserPermissions);
           }
         } else {
           // Sponsors don't need team member permissions
+          console.log('User is a sponsor, skipping permissions');
           setPermissions(null);
         }
       }
@@ -164,7 +169,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const canCreateExpense = () => permissions?.can_create_expense || permissions?.is_manager || false;
   const canApproveExpense = () => permissions?.can_approve_expense || permissions?.is_manager || false;
   const canViewFinancials = () => permissions?.can_view_financials || permissions?.is_manager || false;
-  const isManager = () => permissions?.is_manager || false;
+  const isManager = () => {
+    const result = permissions?.is_manager || false;
+    console.log('isManager check:', { permissions, result });
+    return result;
+  };
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({

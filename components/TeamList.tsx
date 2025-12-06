@@ -1,22 +1,284 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTeamMembers } from '../hooks/useTeamMembers';
-import { usePermissions, TeamMemberWithPermissions } from '../hooks/usePermissions';
+import { usePermissions, TeamMemberWithPermissions, UserPermissions } from '../hooks/usePermissions';
 import { useAuth } from '../contexts/AuthContext';
 import { TeamMember } from '../types';
 
-// Permission labels for display
-const PERMISSION_LABELS: Record<string, string> = {
-    can_edit_orphans: 'تعديل الأيتام',
-    can_edit_sponsors: 'تعديل الكفلاء',
-    can_edit_transactions: 'تعديل المعاملات',
-    can_create_expense: 'إنشاء مصروفات',
-    can_approve_expense: 'الموافقة على المصروفات',
-    can_view_financials: 'عرض المالية',
-    is_manager: 'مدير',
+// Permission labels and descriptions for display
+const PERMISSION_CONFIG: Record<string, { label: string; description: string; icon: JSX.Element }> = {
+    can_view_financials: { 
+        label: 'عرض المالية', 
+        description: 'عرض الحركات المالية والتقارير',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+    },
+    can_edit_orphans: { 
+        label: 'تعديل الأيتام', 
+        description: 'إضافة وتعديل وحذف بيانات الأيتام',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+    },
+    can_edit_sponsors: { 
+        label: 'تعديل الكفلاء', 
+        description: 'إضافة وتعديل بيانات الكفلاء',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    },
+    can_create_expense: { 
+        label: 'إنشاء مصروفات مباشرة', 
+        description: 'إنشاء مصروفات بدون الحاجة للموافقة',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+    },
+    can_approve_expense: { 
+        label: 'الموافقة على المصروفات', 
+        description: 'الموافقة أو رفض طلبات الصرف',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+    },
+    can_edit_transactions: { 
+        label: 'تعديل المعاملات', 
+        description: 'تعديل وحذف المعاملات المالية',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4Z"/></svg>
+    },
+    can_manage_permissions: { 
+        label: 'إدارة صلاحيات الفريق', 
+        description: 'يمكنه تعديل صلاحيات أعضاء الفريق الآخرين',
+        icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    },
 };
 
-// Permission management modal
+const PERMISSION_KEYS = [
+    'can_view_financials',
+    'can_edit_orphans',
+    'can_edit_sponsors', 
+    'can_create_expense',
+    'can_approve_expense',
+    'can_edit_transactions',
+    'can_manage_permissions', // Maps to is_manager in the database
+] as const;
+
+// Map display key to database key
+const PERMISSION_KEY_MAP: Record<string, string> = {
+    'can_manage_permissions': 'is_manager',
+};
+
+// Get the database key for a permission
+const getDbKey = (key: string): string => PERMISSION_KEY_MAP[key] || key;
+
+// Permission Toggle Switch Component
+const PermissionToggle: React.FC<{
+    enabled: boolean;
+    loading: boolean;
+    disabled: boolean;
+    onToggle: () => void;
+}> = ({ enabled, loading, disabled, onToggle }) => (
+    <button
+        onClick={onToggle}
+        disabled={disabled || loading}
+        className={`relative w-11 h-6 rounded-full transition-all duration-200 ${
+            enabled ? 'bg-green-500' : 'bg-gray-300'
+        } ${(disabled || loading) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}`}
+    >
+        <span 
+            className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
+                enabled ? 'right-0.5' : 'left-0.5'
+            } ${loading ? 'animate-pulse' : ''}`}
+        />
+    </button>
+);
+
+// Permissions Management Panel (shown for managers)
+const PermissionsPanel: React.FC<{
+    teamMembers: TeamMemberWithPermissions[];
+    loading: boolean;
+    onTogglePermission: (userId: string, permissionKey: string) => Promise<{ success: boolean; error?: string }>;
+}> = ({ teamMembers, loading, onTogglePermission }) => {
+    const [loadingState, setLoadingState] = useState<{userId: string; key: string} | null>(null);
+    const [selectedMember, setSelectedMember] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+    const handleToggle = async (userId: string, key: string) => {
+        setLoadingState({ userId, key });
+        setErrorMessage(null);
+        setSuccessMessage(null);
+        
+        const result = await onTogglePermission(userId, key);
+        
+        if (result.success) {
+            setSuccessMessage('تم تحديث الصلاحية بنجاح');
+            setTimeout(() => setSuccessMessage(null), 2000);
+        } else {
+            setErrorMessage(result.error || 'حدث خطأ أثناء تحديث الصلاحية');
+        }
+        
+        setLoadingState(null);
+    };
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="animate-pulse space-y-4">
+                    <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-32 bg-gray-100 rounded"></div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="bg-gradient-to-r from-primary to-primary-hover p-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-white">إدارة الصلاحيات</h2>
+                        <p className="text-white/80 text-sm">تحكم في صلاحيات أعضاء الفريق</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="p-4">
+                {/* Error/Success Messages */}
+                {errorMessage && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        {errorMessage}
+                        <button onClick={() => setErrorMessage(null)} className="mr-auto text-red-500 hover:text-red-700">×</button>
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        {successMessage}
+                    </div>
+                )}
+
+                {/* Member Selection */}
+                <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">اختر عضو الفريق</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                        {teamMembers.map(member => (
+                            <button
+                                key={member.id}
+                                onClick={() => setSelectedMember(selectedMember === member.id ? null : member.id)}
+                                className={`flex items-center gap-2 p-2 rounded-lg border-2 transition-all ${
+                                    selectedMember === member.id 
+                                        ? 'border-primary bg-primary-light' 
+                                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                                }`}
+                            >
+                                <img 
+                                    src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=32`}
+                                    alt={member.name}
+                                    className="w-8 h-8 rounded-full object-cover"
+                                />
+                                <div className="flex-1 text-right min-w-0">
+                                    <p className="font-medium text-sm truncate">{member.name}</p>
+                                    {member.permissions?.is_manager && (
+                                        <span className="text-xs text-primary">مدير</span>
+                                    )}
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Permissions Grid */}
+                {selectedMember && (
+                    <div className="border-t pt-4">
+                        {(() => {
+                            const member = teamMembers.find(m => m.id === selectedMember);
+                            if (!member) return null;
+                            
+                            // Check if this member is the actual manager (their permissions cannot be edited)
+                            const isActualManager = member.permissions?.is_manager === true;
+                            
+                            return (
+                                <>
+                                    <div className="flex items-center gap-3 mb-4 pb-4 border-b">
+                                        <img 
+                                            src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=48`}
+                                            alt={member.name}
+                                            className="w-12 h-12 rounded-full object-cover"
+                                        />
+                                        <div>
+                                            <h3 className="font-bold text-lg">{member.name}</h3>
+                                            <p className="text-sm text-text-secondary">
+                                                {isActualManager ? 'مدير - صلاحيات كاملة' : 'عضو فريق'}
+                                            </p>
+                                        </div>
+                                        {isActualManager && (
+                                            <span className="bg-primary text-white text-xs px-2 py-1 rounded-full mr-auto">
+                                                المدير الرئيسي
+                                            </span>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Warning for manager */}
+                                    {isActualManager && (
+                                        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                            لا يمكن تعديل صلاحيات المدير الرئيسي
+                                        </div>
+                                    )}
+                                    
+                                    <div className="grid gap-3">
+                                        {PERMISSION_KEYS.map(key => {
+                                            const config = PERMISSION_CONFIG[key];
+                                            // Get the database key for this permission
+                                            const dbKey = getDbKey(key);
+                                            const value = (member.permissions as any)?.[dbKey] ?? false;
+                                            const isLoading = loadingState?.userId === member.id && loadingState?.key === key;
+                                            
+                                            // Disable toggle if this is the manager
+                                            const isDisabled = isActualManager;
+                                            
+                                            return (
+                                                <div 
+                                                    key={key}
+                                                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                                        value ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                                    } ${isDisabled ? 'opacity-60' : ''}`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                                            value ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
+                                                        }`}>
+                                                            {config.icon}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-medium text-sm">{config.label}</p>
+                                                            <p className="text-xs text-text-secondary">{config.description}</p>
+                                                        </div>
+                                                    </div>
+                                                    <PermissionToggle
+                                                        enabled={value}
+                                                        loading={isLoading}
+                                                        disabled={isDisabled}
+                                                        onToggle={() => handleToggle(member.id, dbKey)}
+                                                    />
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </>
+                            );
+                        })()}
+                    </div>
+                )}
+
+                {!selectedMember && (
+                    <div className="text-center py-8 text-text-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 opacity-50"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <p>اختر عضو فريق لإدارة صلاحياته</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+// Permission management modal (for individual member view)
 const PermissionsModal: React.FC<{
     isOpen: boolean;
     member: TeamMemberWithPermissions | null;
@@ -29,81 +291,109 @@ const PermissionsModal: React.FC<{
     if (!isOpen || !member) return null;
 
     const permissions = member.permissions;
-    const permissionKeys = [
-        'can_edit_orphans',
-        'can_edit_sponsors', 
-        'can_view_financials',
-        'can_create_expense',
-        'can_approve_expense',
-        'can_edit_transactions',
-        'is_manager',
-    ];
+    // Check if this is the actual manager (cannot edit their permissions)
+    const isActualManager = permissions?.is_manager === true;
 
     const handleToggle = async (key: string) => {
-        if (!isManager) return;
+        if (!isManager || isActualManager) return;
         setLoading(key);
-        await onToggle(member.id, key);
+        const dbKey = getDbKey(key);
+        await onToggle(member.id, dbKey);
         setLoading(null);
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-3 mb-6">
-                    <img 
-                        src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random`} 
-                        alt={member.name} 
-                        className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div>
-                        <h3 className="text-xl font-bold">{member.name}</h3>
-                        <p className="text-sm text-text-secondary">إدارة الصلاحيات</p>
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                {/* Header */}
+                <div className="bg-gradient-to-r from-primary to-primary-hover p-4">
+                    <div className="flex items-center gap-3">
+                        <img 
+                            src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=48`} 
+                            alt={member.name} 
+                            className="w-12 h-12 rounded-full object-cover border-2 border-white/30"
+                        />
+                        <div>
+                            <h3 className="text-xl font-bold text-white">{member.name}</h3>
+                            <p className="text-white/80 text-sm">
+                                {isActualManager ? 'مدير - صلاحيات كاملة' : 'إدارة الصلاحيات'}
+                            </p>
+                        </div>
+                        {isActualManager && (
+                            <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full">
+                                المدير الرئيسي
+                            </span>
+                        )}
+                        <button 
+                            onClick={onClose}
+                            className="mr-auto text-white/80 hover:text-white transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
                     </div>
                 </div>
                 
-                <div className="space-y-3">
-                    {permissionKeys.map(key => {
-                        const value = permissions?.[key as keyof typeof permissions] ?? false;
-                        const isLoading = loading === key;
-                        
-                        return (
-                            <div 
-                                key={key} 
-                                className={`flex items-center justify-between p-3 rounded-lg border ${
-                                    value ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
-                                }`}
-                            >
-                                <span className="font-medium">{PERMISSION_LABELS[key]}</span>
-                                {isManager ? (
-                                    <button
-                                        onClick={() => handleToggle(key)}
-                                        disabled={isLoading}
-                                        className={`relative w-12 h-6 rounded-full transition-colors ${
-                                            value ? 'bg-green-500' : 'bg-gray-300'
-                                        } ${isLoading ? 'opacity-50' : ''}`}
-                                    >
-                                        <span 
-                                            className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                                                value ? 'right-1' : 'left-1'
-                                            }`}
+                {/* Warning for manager */}
+                {isActualManager && (
+                    <div className="mx-4 mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        لا يمكن تعديل صلاحيات المدير الرئيسي
+                    </div>
+                )}
+                
+                {/* Permissions List */}
+                <div className="p-4 overflow-y-auto max-h-[60vh]">
+                    <div className="space-y-3">
+                        {PERMISSION_KEYS.map(key => {
+                            const config = PERMISSION_CONFIG[key];
+                            const dbKey = getDbKey(key);
+                            const value = (permissions as any)?.[dbKey] ?? false;
+                            const isLoading = loading === key;
+                            const isDisabled = isActualManager;
+                            
+                            return (
+                                <div 
+                                    key={key} 
+                                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                        value ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                                    } ${isDisabled ? 'opacity-60' : ''}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                                            value ? 'bg-green-100 text-green-600' : 'bg-gray-200 text-gray-500'
+                                        }`}>
+                                            {config.icon}
+                                        </div>
+                                        <div>
+                                            <p className="font-medium">{config.label}</p>
+                                            <p className="text-xs text-text-secondary">{config.description}</p>
+                                        </div>
+                                    </div>
+                                    {isManager && !isDisabled ? (
+                                        <PermissionToggle
+                                            enabled={value}
+                                            loading={isLoading}
+                                            disabled={isDisabled}
+                                            onToggle={() => handleToggle(key)}
                                         />
-                                    </button>
-                                ) : (
-                                    <span className={`px-2 py-1 rounded text-sm ${
-                                        value ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'
-                                    }`}>
-                                        {value ? 'مفعّل' : 'معطّل'}
-                                    </span>
-                                )}
-                            </div>
-                        );
-                    })}
+                                    ) : (
+                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                            value ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
+                                        }`}>
+                                            {value ? 'مفعّل' : 'معطّل'}
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
 
-                <div className="flex justify-end gap-3 mt-6">
+                {/* Footer */}
+                <div className="border-t p-4 bg-gray-50">
                     <button 
                         onClick={onClose} 
-                        className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+                        className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
                     >
                         إغلاق
                     </button>
@@ -287,10 +577,13 @@ const TeamList: React.FC = () => {
     const [sortBy, setSortBy] = useState('name-asc');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-    const handleTogglePermission = async (userId: string, permissionKey: string) => {
-        await togglePermission(userId, permissionKey as any);
+    const handleTogglePermission = async (userId: string, permissionKey: string): Promise<{ success: boolean; error?: string }> => {
+        const result = await togglePermission(userId, permissionKey as any);
         // Refresh to get updated permissions
-        await refetchPermissions();
+        if (result.success) {
+            await refetchPermissions();
+        }
+        return result;
     };
 
     // Get permissions for a member by matching UUIDs
@@ -398,6 +691,15 @@ const TeamList: React.FC = () => {
     return (
         <>
         <div className="space-y-6 pb-24">
+            {/* Permissions Panel for Managers */}
+            {isManager && (
+                <PermissionsPanel
+                    teamMembers={teamMembersWithPermissions}
+                    loading={permissionsLoading}
+                    onTogglePermission={handleTogglePermission}
+                />
+            )}
+
             <header className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                     <h1 className="text-3xl font-bold text-gray-800">فريق العمل</h1>
@@ -476,14 +778,30 @@ const TeamList: React.FC = () => {
                                 <img src={member.avatarUrl} alt={member.name} className="w-16 h-16 rounded-full object-cover" />
                                 <div className="flex-1">
                                     <h3 className="text-xl font-semibold text-gray-800">{member.name}</h3>
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-sm text-text-secondary">عضو فريق</p>
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         {(() => {
                                             const memberPerms = getMemberPermissions(member.id);
-                                            if (memberPerms?.permissions?.is_manager) {
-                                                return <span className="text-xs px-2 py-0.5 bg-primary text-white rounded-full">مدير</span>;
+                                            if (!memberPerms?.permissions) {
+                                                return <p className="text-sm text-text-secondary">عضو فريق</p>;
                                             }
-                                            return null;
+                                            const p = memberPerms.permissions;
+                                            const badges = [];
+                                            
+                                            if (p.is_manager) {
+                                                badges.push(<span key="manager" className="text-xs px-2 py-0.5 bg-primary text-white rounded-full">مدير</span>);
+                                            } else {
+                                                if (p.can_approve_expense) {
+                                                    badges.push(<span key="approve" className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">موافقة</span>);
+                                                }
+                                                if (p.can_view_financials) {
+                                                    badges.push(<span key="finance" className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">مالية</span>);
+                                                }
+                                            }
+                                            
+                                            if (badges.length === 0) {
+                                                return <p className="text-sm text-text-secondary">عضو فريق</p>;
+                                            }
+                                            return badges;
                                         })()}
                                     </div>
                                 </div>
