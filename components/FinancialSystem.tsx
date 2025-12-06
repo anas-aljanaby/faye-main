@@ -962,32 +962,32 @@ const FinancialSystem: React.FC = () => {
                                     const isRejected = tx.status === TransactionStatus.Rejected;
                                     
                                     return (
-                                        <tr key={tx.id} className="border-b hover:bg-gray-50">
-                                            <td className="p-3">{tx.date.toLocaleDateString('en-CA')}</td>
-                                            <td className="p-3 font-semibold">
-                                                <div className="flex items-center gap-2">
-                                                    <span>{tx.description}</span>
-                                                    {tx.receipt && (
-                                                        <button onClick={() => setReceiptToShow(tx)} title="عرض الإيصال" className="text-primary hover:text-primary-hover">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                                                        </button>
-                                                    )}
+                                    <tr key={tx.id} className="border-b hover:bg-gray-50">
+                                        <td className="p-3">{tx.date.toLocaleDateString('en-CA')}</td>
+                                        <td className="p-3 font-semibold">
+                                            <div className="flex items-center gap-2">
+                                                <span>{tx.description}</span>
+                                                {tx.receipt && (
+                                                    <button onClick={() => setReceiptToShow(tx)} title="عرض الإيصال" className="text-primary hover:text-primary-hover">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                                    </button>
+                                                )}
                                                     {isRejected && txWithApproval.rejectionReason && (
                                                         <span title={`سبب الرفض: ${txWithApproval.rejectionReason}`} className="text-red-500 cursor-help">
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                                                         </span>
                                                     )}
-                                                </div>
+                                            </div>
                                                 {txWithApproval.approvedBy && (
                                                     <div className="text-xs text-green-600 mt-1">وافق عليها: {txWithApproval.approvedBy}</div>
                                                 )}
                                                 {txWithApproval.rejectedBy && (
                                                     <div className="text-xs text-red-600 mt-1">رفضها: {txWithApproval.rejectedBy}</div>
                                                 )}
-                                            </td>
-                                            <td className="p-3 text-text-secondary">{tx.createdBy}</td>
-                                            <td className={`p-3 font-bold ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>${tx.amount.toLocaleString()}</td>
-                                            <td className="p-3"><StatusPill status={tx.status} /></td>
+                                        </td>
+                                        <td className="p-3 text-text-secondary">{tx.createdBy}</td>
+                                        <td className={`p-3 font-bold ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>${tx.amount.toLocaleString()}</td>
+                                        <td className="p-3"><StatusPill status={tx.status} /></td>
                                             <td className="p-3 relative">
                                                 {/* Action buttons based on permissions */}
                                                 {isPending && canApproveExpense && tx.type === TransactionType.Expense && (
@@ -998,7 +998,7 @@ const FinancialSystem: React.FC = () => {
                                                             title="موافقة"
                                                         >
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                                        </button>
+                                            </button>
                                                         <button 
                                                             onClick={() => setTransactionToReject(txWithApproval)}
                                                             className="p-1 text-red-600 hover:bg-red-100 rounded"
@@ -1033,8 +1033,8 @@ const FinancialSystem: React.FC = () => {
                                                         )}
                                                     </div>
                                                 )}
-                                            </td>
-                                        </tr>
+                                        </td>
+                                    </tr>
                                     );
                                 })
                             )}

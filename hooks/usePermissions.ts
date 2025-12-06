@@ -87,29 +87,36 @@ export const usePermissions = () => {
     userId: string,
     newPermissions: Partial<Omit<UserPermissions, 'id' | 'user_id'>>
   ): Promise<{ success: boolean; error?: string }> => {
+    console.log('updatePermissions called:', { userId, newPermissions, isManager: isManager() });
+    
     if (!isManager()) {
-      return { success: false, error: 'ليس لديك صلاحية لتعديل الصلاحيات' };
+      console.warn('Permission denied: User is not a manager');
+      return { success: false, error: 'ليس لديك صلاحية لتعديل الصلاحيات - يجب أن تكون مديراً' };
     }
 
     try {
       // Check if permissions exist for this user
-      const { data: existingPermissions } = await supabase
+      const { data: existingPermissions, error: checkError } = await supabase
         .from('user_permissions')
         .select('id')
         .eq('user_id', userId)
         .single();
 
+      console.log('Existing permissions check:', { existingPermissions, checkError });
+
       if (existingPermissions) {
         // Update existing permissions
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from('user_permissions')
           .update(newPermissions)
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select();
 
+        console.log('Update result:', { error, data });
         if (error) throw error;
       } else {
         // Insert new permissions
-        const { error } = await supabase
+        const { error, data } = await supabase
           .from('user_permissions')
           .insert({
             user_id: userId,
@@ -121,17 +128,20 @@ export const usePermissions = () => {
             can_view_financials: false,
             is_manager: false,
             ...newPermissions,
-          });
+          })
+          .select();
 
+        console.log('Insert result:', { error, data });
         if (error) throw error;
       }
 
       // Refresh the list
       await fetchTeamMembersWithPermissions();
       return { success: true };
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating permissions:', err);
-      return { success: false, error: 'حدث خطأ أثناء تحديث الصلاحيات' };
+      const errorMessage = err?.message || err?.details || 'حدث خطأ أثناء تحديث الصلاحيات';
+      return { success: false, error: errorMessage };
     }
   };
 
