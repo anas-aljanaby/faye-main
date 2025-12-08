@@ -624,11 +624,11 @@ const TeamList: React.FC = () => {
             if (!aIsCurrentUser && bIsCurrentUser) return 1;
             
             // If both are current user or both are not, sort by name
-            switch (sortBy) {
-                case 'name-asc':
-                default:
+        switch (sortBy) {
+            case 'name-asc':
+            default:
                     return a.name.localeCompare(b.name, 'ar');
-            }
+        }
         });
 
         return sortedAndFiltered;

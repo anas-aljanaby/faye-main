@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSponsors } from '../hooks/useSponsors';
+import { useOrphans } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
 import { Sponsor } from '../types';
+import { supabase } from '../lib/supabase';
 
 const AddSponsorModal: React.FC<{
     isOpen: boolean;
@@ -154,9 +156,13 @@ const SortPopover: React.FC<{
 
 
 const SponsorsList: React.FC = () => {
-    const { sponsors: sponsorsData, loading } = useSponsors();
-    const { userProfile, canEditSponsors } = useAuth();
+    const { sponsors: sponsorsData, loading, refetch: refetchSponsors } = useSponsors();
+    const { orphans: orphansData, refetch: refetchOrphans } = useOrphans();
+    const { userProfile, canEditSponsors, canEditOrphans, isManager } = useAuth();
     const hasEditPermission = userProfile?.role === 'team_member' && canEditSponsors();
+    const canAssignOrphansToSponsors = useMemo(() => {
+        return (isManager() || (canEditOrphans() && canEditSponsors()));
+    }, [isManager, canEditOrphans, canEditSponsors]);
     const [sponsorList, setSponsorList] = useState<Sponsor[]>([]);
     
     useEffect(() => {
@@ -167,6 +173,9 @@ const SponsorsList: React.FC = () => {
     const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+    const [showAssignOrphansModal, setShowAssignOrphansModal] = useState(false);
+    const [selectedSponsorForAssignment, setSelectedSponsorForAssignment] = useState<Sponsor | null>(null);
+    const [sponsorAssignedOrphanIds, setSponsorAssignedOrphanIds] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
     const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
@@ -175,6 +184,33 @@ const SponsorsList: React.FC = () => {
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [sortBy, setSortBy] = useState('name-asc');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+    // Fetch assigned orphans for selected sponsor (when modal is open)
+    useEffect(() => {
+        const fetchSponsorAssignedOrphans = async () => {
+            if (!selectedSponsorForAssignment?.uuid) {
+                setSponsorAssignedOrphanIds([]);
+                return;
+            }
+
+            try {
+                const { data } = await supabase
+                    .from('sponsor_orphans')
+                    .select('orphan_id')
+                    .eq('sponsor_id', selectedSponsorForAssignment.uuid);
+
+                if (data) {
+                    setSponsorAssignedOrphanIds(data.map(item => item.orphan_id));
+                }
+            } catch (err) {
+                console.error('Error fetching sponsor assigned orphans:', err);
+            }
+        };
+
+        if (showAssignOrphansModal) {
+            fetchSponsorAssignedOrphans();
+        }
+    }, [selectedSponsorForAssignment, showAssignOrphansModal]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -294,8 +330,8 @@ const SponsorsList: React.FC = () => {
             </header>
             
             <div>
-                <div className="flex items-center justify-between border-b pb-3 mb-3">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3 mb-3">
+                    <div className="flex items-center gap-4 flex-wrap">
                         <div className="relative">
                            <button 
                                 onClick={() => setIsPopoverOpen(prev => !prev)}
@@ -328,6 +364,18 @@ const SponsorsList: React.FC = () => {
                                 تحديد الكل
                             </label>
                         </div>
+                        {canAssignOrphansToSponsors && (
+                            <>
+                                <div className="h-6 border-l border-gray-200"></div>
+                                <button
+                                    onClick={() => setShowAssignOrphansModal(true)}
+                                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold text-sm flex items-center gap-2"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                    <span>تعيين أيتام لكافل</span>
+                                </button>
+                            </>
+                        )}
                     </div>
                     <span className="text-sm text-text-secondary">
                         الإجمالي: {filteredSponsors.length}
@@ -437,6 +485,133 @@ const SponsorsList: React.FC = () => {
             onSend={handleSendMessage}
             title={`إرسال رسالة إلى ${selectedIds.size} من الكفلاء`}
         />
+
+        {/* Assign Orphans Modal */}
+        {showAssignOrphansModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => {
+                setShowAssignOrphansModal(false);
+                setSelectedSponsorForAssignment(null);
+            }}>
+                <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                    {!selectedSponsorForAssignment ? (
+                        <>
+                            <div className="flex justify-between items-center mb-4 border-b pb-3">
+                                <h3 className="text-xl font-bold">اختر كافل</h3>
+                                <button onClick={() => {
+                                    setShowAssignOrphansModal(false);
+                                    setSelectedSponsorForAssignment(null);
+                                }} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                            </div>
+                            <div className="overflow-y-auto space-y-2 flex-1">
+                                {filteredSponsors.map(sponsor => (
+                                    <button
+                                        key={sponsor.id}
+                                        onClick={() => setSelectedSponsorForAssignment(sponsor)}
+                                        className="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 text-right"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            {sponsor.avatarUrl ? (
+                                                <img src={sponsor.avatarUrl} alt={sponsor.name} className="w-10 h-10 rounded-full" />
+                                            ) : (
+                                                <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-bold">
+                                                    {sponsor.name.charAt(0)}
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="font-semibold">{sponsor.name}</p>
+                                                <p className="text-sm text-gray-500">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
+                                            </div>
+                                        </div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m9 18 6-6-6-6"/></svg>
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="flex justify-between items-center mb-4 border-b pb-3">
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => setSelectedSponsorForAssignment(null)}
+                                        className="p-1 hover:bg-gray-100 rounded-lg"
+                                        title="رجوع"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                    </button>
+                                    <h3 className="text-xl font-bold">تعيين أيتام لـ {selectedSponsorForAssignment.name}</h3>
+                                </div>
+                                <button onClick={() => {
+                                    setShowAssignOrphansModal(false);
+                                    setSelectedSponsorForAssignment(null);
+                                }} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                            </div>
+                            <div className="overflow-y-auto space-y-2 flex-1">
+                                {orphansData.map(orphan => {
+                                    const isAssigned = orphan.uuid && sponsorAssignedOrphanIds.includes(orphan.uuid);
+                                    return (
+                                        <div 
+                                            key={orphan.id}
+                                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full" />
+                                                <div>
+                                                    <p className="font-semibold">{orphan.name}</p>
+                                                    <p className="text-sm text-gray-500">{orphan.age} سنوات</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={async () => {
+                                                    if (!selectedSponsorForAssignment.uuid || !orphan.uuid) return;
+                                                    
+                                                    try {
+                                                        if (isAssigned) {
+                                                            // Remove assignment
+                                                            const { error } = await supabase
+                                                                .from('sponsor_orphans')
+                                                                .delete()
+                                                                .eq('sponsor_id', selectedSponsorForAssignment.uuid)
+                                                                .eq('orphan_id', orphan.uuid);
+                                                            
+                                                            if (!error) {
+                                                                setSponsorAssignedOrphanIds(prev => prev.filter(id => id !== orphan.uuid));
+                                                                refetchSponsors();
+                                                            }
+                                                        } else {
+                                                            // Add assignment
+                                                            const { error } = await supabase
+                                                                .from('sponsor_orphans')
+                                                                .insert({
+                                                                    sponsor_id: selectedSponsorForAssignment.uuid,
+                                                                    orphan_id: orphan.uuid
+                                                                });
+                                                            
+                                                            if (!error) {
+                                                                setSponsorAssignedOrphanIds(prev => [...prev, orphan.uuid!]);
+                                                                refetchSponsors();
+                                                            }
+                                                        }
+                                                    } catch (err) {
+                                                        console.error('Error updating orphan-to-sponsor assignment:', err);
+                                                    }
+                                                }}
+                                                className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                                                    isAssigned 
+                                                        ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                                        : 'bg-primary text-white hover:bg-primary-hover'
+                                                }`}
+                                            >
+                                                {isAssigned ? 'إلغاء التعيين' : 'تعيين'}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        )}
         </>
     );
 };

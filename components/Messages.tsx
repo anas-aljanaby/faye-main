@@ -92,7 +92,7 @@ const TemplatesModal: React.FC<{
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                             إضافة قالب جديد
                         </button>
-                        <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
                     </div>
                 </div>
                 <div className="overflow-y-auto space-y-3 flex-1">
@@ -144,7 +144,7 @@ const TemplatesModal: React.FC<{
                                     onClick={() => handleSelect(template.body)} 
                                     className="flex-1 cursor-pointer"
                                 >
-                                    <h4 className="font-bold text-primary">{template.title}</h4>
+                            <h4 className="font-bold text-primary">{template.title}</h4>
                                     <p className="text-sm text-gray-600 mt-1 line-clamp-3">{template.body}</p>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -190,7 +190,7 @@ const MessageComposer: React.FC<{
         try {
             await onSendMessage(messageText.trim());
             setMessageText('');
-            setError('');
+        setError('');
         } catch (err) {
             setError('حدث خطأ أثناء إرسال الرسالة.');
         }
@@ -204,9 +204,9 @@ const MessageComposer: React.FC<{
     return (
         <>
             <form onSubmit={handleSendMessage} className="space-y-3">
-                {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded-md">{error}</div>}
-                
-                <div className="flex items-center gap-2">
+                 {error && <div className="text-sm text-red-600 bg-red-50 p-2 rounded-md">{error}</div>}
+                 
+                    <div className="flex items-center gap-2">
                     <textarea
                         value={messageText}
                         onChange={(e) => setMessageText(e.target.value)}
@@ -214,14 +214,14 @@ const MessageComposer: React.FC<{
                         rows={3}
                         className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary resize-y"
                     />
-                    <button
-                        type="button"
-                        onClick={() => setIsTemplatesModalOpen(true)}
-                        title="استخدام قالب"
+                        <button
+                            type="button"
+                            onClick={() => setIsTemplatesModalOpen(true)}
+                            title="استخدام قالب"
                         className="p-2.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 flex-shrink-0"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                    </button>
+                        >
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        </button>
                     <button
                         type="submit"
                         disabled={!messageText.trim()}
@@ -229,8 +229,8 @@ const MessageComposer: React.FC<{
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
                         إرسال
-                    </button>
-                </div>
+                        </button>
+                    </div>
             </form>
             <TemplatesModal 
                 isOpen={isTemplatesModalOpen}
@@ -356,13 +356,13 @@ const Messages: React.FC = () => {
                             className="w-full bg-white pr-10 pl-4 py-2.5 border border-gray-300 rounded-lg"
                         />
                     </div>
-                    <button
+                        <button 
                         onClick={() => setShowNewConversationModal(true)}
                         className="p-2 bg-primary text-white rounded-lg hover:bg-primary-hover"
                         title="بدء محادثة جديدة"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                    </button>
+                        </button>
                 </div>
                 <div className="overflow-y-auto flex-1">
                     {conversationsLoading ? (
@@ -371,14 +371,14 @@ const Messages: React.FC = () => {
                         <div className="p-4 text-center text-gray-500">لا توجد محادثات</div>
                     ) : (
                         filteredConversations.map(conv => (
-                            <div 
-                                key={conv.id}
-                                onClick={() => setSelectedConversationId(conv.id)}
-                                className={`p-4 flex items-start gap-4 cursor-pointer border-b transition-colors ${selectedConversationId === conv.id ? 'bg-primary-light' : 'hover:bg-gray-50'}`}
-                            >
-                               {renderAvatar(conv)}
-                                <div className="flex-1 overflow-hidden">
-                                    <div className="flex justify-between items-center">
+                        <div 
+                            key={conv.id}
+                            onClick={() => setSelectedConversationId(conv.id)}
+                            className={`p-4 flex items-start gap-4 cursor-pointer border-b transition-colors ${selectedConversationId === conv.id ? 'bg-primary-light' : 'hover:bg-gray-50'}`}
+                        >
+                           {renderAvatar(conv)}
+                            <div className="flex-1 overflow-hidden">
+                                <div className="flex justify-between items-center">
                                         <h3 className="font-bold text-gray-800 truncate">{conv.participant?.name || 'مستخدم'}</h3>
                                         {conv.unread_count && conv.unread_count > 0 && (
                                             <span className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 ml-2">
@@ -442,8 +442,8 @@ const Messages: React.FC = () => {
                                                 <p className={`text-xs mt-2 opacity-70 ${isCurrentUser ? 'text-left' : 'text-right'}`}>
                                                     {formatTimestamp(msg.created_at)}
                                                 </p>
-                                            </div>
-                                        </div>
+                                    </div>
+                                </div>
                                     );
                                 })
                             )}

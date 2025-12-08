@@ -1,13 +1,15 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSponsors } from '../hooks/useSponsors';
 import { useOrphans } from '../hooks/useOrphans';
+import { useAuth } from '../contexts/AuthContext';
 import { findById } from '../utils/idMapper';
 import { financialTransactions } from '../data';
 import { PaymentStatus, TransactionType, Sponsor, Orphan } from '../types';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
+import { supabase } from '../lib/supabase';
 
 // A simple SendMessageModal for this component
 const SendMessageModal: React.FC<{
@@ -168,18 +170,52 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 
 const SponsorPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const { sponsors: sponsorsData, loading: sponsorsLoading } = useSponsors();
-    const { orphans: orphansData } = useOrphans();
+    const { sponsors: sponsorsData, loading: sponsorsLoading, refetch: refetchSponsors } = useSponsors();
+    const { orphans: orphansData, refetch: refetchOrphans } = useOrphans();
+    const { canEditOrphans, canEditSponsors, isManager } = useAuth();
     const sponsor = useMemo(() => findById(sponsorsData, id || ''), [sponsorsData, id]);
+    const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
+    const [showAssignOrphansModal, setShowAssignOrphansModal] = useState(false);
+    
     const sponsoredOrphans = useMemo(() => {
-        if (!sponsor) return [];
-        return orphansData.filter(o => sponsor.sponsoredOrphanIds.includes(o.id));
-    }, [sponsor, orphansData]);
+        if (!sponsor || assignedOrphanIds.length === 0) return [];
+        return orphansData.filter(o => o.uuid && assignedOrphanIds.includes(o.uuid));
+    }, [sponsor, orphansData, assignedOrphanIds]);
+
+    // Permission to assign orphans to sponsors (requires both permissions)
+    const canAssignOrphansToSponsors = useMemo(() => {
+        return (isManager() || (canEditOrphans() && canEditSponsors()));
+    }, [isManager, canEditOrphans, canEditSponsors]);
 
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const receiptRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     const orphansSectionRef = useRef<HTMLDivElement>(null);
+
+    // Fetch assigned orphans for this sponsor
+    useEffect(() => {
+        const fetchAssignedOrphans = async () => {
+            if (!sponsor?.uuid) {
+                setAssignedOrphanIds([]);
+                return;
+            }
+
+            try {
+                const { data } = await supabase
+                    .from('sponsor_orphans')
+                    .select('orphan_id')
+                    .eq('sponsor_id', sponsor.uuid);
+
+                if (data) {
+                    setAssignedOrphanIds(data.map(item => item.orphan_id));
+                }
+            } catch (err) {
+                console.error('Error fetching assigned orphans:', err);
+            }
+        };
+
+        fetchAssignedOrphans();
+    }, [sponsor]);
 
     if (sponsorsLoading) {
         return <div className="text-center py-8">جاري التحميل...</div>;
@@ -264,17 +300,32 @@ const SponsorPage: React.FC = () => {
                     </div>
 
                     <div ref={orphansSectionRef}>
-                        <h2 className="text-2xl font-bold text-gray-700 mb-4">الأيتام المكفولين ({sponsoredOrphans.length})</h2>
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-bold text-gray-700">الأيتام المكفولين ({sponsoredOrphans.length})</h2>
+                            {canAssignOrphansToSponsors && (
+                                <button
+                                    onClick={() => setShowAssignOrphansModal(true)}
+                                    className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold text-sm flex items-center gap-2"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                    تعيين أيتام
+                                </button>
+                            )}
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {sponsoredOrphans.map(orphan => (
-                                <Link key={orphan.id} to={`/orphan/${orphan.id}`} className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                    <img src={orphan.photoUrl} alt={orphan.name} className="w-16 h-16 rounded-full object-cover" />
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
-                                        <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
-                                    </div>
-                                </Link>
-                            ))}
+                            {sponsoredOrphans.length > 0 ? (
+                                sponsoredOrphans.map(orphan => (
+                                    <Link key={orphan.id} to={`/orphan/${orphan.id}`} className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                                        <img src={orphan.photoUrl} alt={orphan.name} className="w-16 h-16 rounded-full object-cover" />
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
+                                            <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
+                                        </div>
+                                    </Link>
+                                ))
+                            ) : (
+                                <p className="text-text-secondary text-center py-4 col-span-2">لا يوجد أيتام معينون لهذا الكافل</p>
+                            )}
                         </div>
                     </div>
 
@@ -332,6 +383,80 @@ const SponsorPage: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Assign Orphans Modal */}
+            {showAssignOrphansModal && sponsor && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAssignOrphansModal(false)}>
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4 border-b pb-3">
+                            <h3 className="text-xl font-bold">تعيين أيتام لـ {sponsor.name}</h3>
+                            <button onClick={() => setShowAssignOrphansModal(false)} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                        </div>
+                        <div className="overflow-y-auto space-y-2 flex-1">
+                            {orphansData.map(orphan => {
+                                const isAssigned = orphan.uuid && assignedOrphanIds.includes(orphan.uuid);
+                                return (
+                                    <div 
+                                        key={orphan.id}
+                                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full" />
+                                            <div>
+                                                <p className="font-semibold">{orphan.name}</p>
+                                                <p className="text-sm text-gray-500">{orphan.age} سنوات</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={async () => {
+                                                if (!sponsor.uuid || !orphan.uuid) return;
+                                                
+                                                try {
+                                                    if (isAssigned) {
+                                                        // Remove assignment
+                                                        const { error } = await supabase
+                                                            .from('sponsor_orphans')
+                                                            .delete()
+                                                            .eq('sponsor_id', sponsor.uuid)
+                                                            .eq('orphan_id', orphan.uuid);
+                                                        
+                                                        if (!error) {
+                                                            setAssignedOrphanIds(prev => prev.filter(id => id !== orphan.uuid));
+                                                            refetchSponsors();
+                                                        }
+                                                    } else {
+                                                        // Add assignment
+                                                        const { error } = await supabase
+                                                            .from('sponsor_orphans')
+                                                            .insert({
+                                                                sponsor_id: sponsor.uuid,
+                                                                orphan_id: orphan.uuid
+                                                            });
+                                                        
+                                                        if (!error) {
+                                                            setAssignedOrphanIds(prev => [...prev, orphan.uuid!]);
+                                                            refetchSponsors();
+                                                        }
+                                                    }
+                                                } catch (err) {
+                                                    console.error('Error updating orphan-to-sponsor assignment:', err);
+                                                }
+                                            }}
+                                            className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                                                isAssigned 
+                                                    ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                                    : 'bg-primary text-white hover:bg-primary-hover'
+                                            }`}
+                                        >
+                                            {isAssigned ? 'إلغاء التعيين' : 'تعيين'}
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
         </>
     );
 };
