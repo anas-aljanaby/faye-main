@@ -615,7 +615,15 @@ const Dashboard: React.FC = () => {
           <section>
             <h2 className="text-2xl font-bold text-gray-700 mb-4">فريق العمل</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {teamMembersData.map(member => (
+              {teamMembersData
+                .sort((a, b) => {
+                  const aIsCurrentUser = a.uuid === userProfile?.id;
+                  const bIsCurrentUser = b.uuid === userProfile?.id;
+                  if (aIsCurrentUser && !bIsCurrentUser) return -1;
+                  if (!aIsCurrentUser && bIsCurrentUser) return 1;
+                  return 0;
+                })
+                .map(member => (
                 <Link to={`/team/${member.id}`} key={member.id} className="bg-bg-card rounded-lg shadow-md p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                   <img src={member.avatarUrl} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
                   <div>

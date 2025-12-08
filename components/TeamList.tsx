@@ -556,7 +556,7 @@ const SortPopover: React.FC<{
 const TeamList: React.FC = () => {
     const { teamMembers: teamMembersData, loading } = useTeamMembers();
     const { teamMembers: teamMembersWithPermissions, togglePermission, isManager, loading: permissionsLoading, refetch: refetchPermissions } = usePermissions();
-    const { isManager: checkIsManager } = useAuth();
+    const { isManager: checkIsManager, userProfile } = useAuth();
     const [teamList, setTeamList] = useState<TeamMember[]>([]);
     
     useEffect(() => {
@@ -615,15 +615,24 @@ const TeamList: React.FC = () => {
             sortedAndFiltered = sortedAndFiltered.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
         }
 
-        switch (sortBy) {
-            case 'name-asc':
-            default:
-                sortedAndFiltered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-                break;
-        }
+        // Sort: current user first, then others
+        sortedAndFiltered.sort((a, b) => {
+            const aIsCurrentUser = a.uuid === userProfile?.id;
+            const bIsCurrentUser = b.uuid === userProfile?.id;
+            
+            if (aIsCurrentUser && !bIsCurrentUser) return -1;
+            if (!aIsCurrentUser && bIsCurrentUser) return 1;
+            
+            // If both are current user or both are not, sort by name
+            switch (sortBy) {
+                case 'name-asc':
+                default:
+                    return a.name.localeCompare(b.name, 'ar');
+            }
+        });
 
         return sortedAndFiltered;
-    }, [searchQuery, teamList, sortBy]);
+    }, [searchQuery, teamList, sortBy, userProfile]);
 
     const handleSelect = (id: number) => {
         const newSelectedIds = new Set(selectedIds);
