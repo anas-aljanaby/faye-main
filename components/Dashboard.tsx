@@ -212,6 +212,7 @@ const Dashboard: React.FC = () => {
     const orphansSectionRef = useRef<HTMLDivElement>(null);
     const [assignedTeamMembers, setAssignedTeamMembers] = useState<Array<{ id: string; name: string; avatar_url?: string }>>([]);
     const [manager, setManager] = useState<{ id: string; name: string; avatar_url?: string } | null>(null);
+    const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
 
     // Find the current sponsor based on user profile
     const sponsor = useMemo(() => {
@@ -220,13 +221,13 @@ const Dashboard: React.FC = () => {
     }, [userProfile, sponsorsData]);
 
     const sponsoredOrphans = useMemo(() => {
-        if (!sponsor) return [];
-        return orphansData.filter(o => sponsor.sponsoredOrphanIds.includes(o.id));
-    }, [sponsor, orphansData]);
+        if (!sponsor || assignedOrphanIds.length === 0) return [];
+        return orphansData.filter(o => o.uuid && assignedOrphanIds.includes(o.uuid));
+    }, [sponsor, orphansData, assignedOrphanIds]);
 
-    // Fetch assigned team members and manager for sponsor
+    // Fetch assigned team members, manager, and assigned orphans for sponsor
     useEffect(() => {
-        const fetchTeamMembersForSponsor = async () => {
+        const fetchSponsorData = async () => {
             if (!sponsor?.uuid || !userProfile) return;
 
             try {
@@ -244,6 +245,16 @@ const Dashboard: React.FC = () => {
                         .map(item => item.team_member)
                         .filter(Boolean) as Array<{ id: string; name: string; avatar_url?: string }>;
                     setAssignedTeamMembers(members);
+                }
+
+                // Fetch assigned orphans
+                const { data: orphanAssignments } = await supabase
+                    .from('sponsor_orphans')
+                    .select('orphan_id')
+                    .eq('sponsor_id', sponsor.uuid);
+
+                if (orphanAssignments) {
+                    setAssignedOrphanIds(orphanAssignments.map(item => item.orphan_id));
                 }
 
                 // Fetch manager from same organization
@@ -275,12 +286,12 @@ const Dashboard: React.FC = () => {
                     }
                 }
             } catch (err) {
-                console.error('Error fetching team members for sponsor:', err);
+                console.error('Error fetching sponsor data:', err);
             }
         };
 
         if (userProfile?.role === 'sponsor' && sponsor) {
-            fetchTeamMembersForSponsor();
+            fetchSponsorData();
         }
     }, [sponsor, userProfile]);
 

@@ -429,10 +429,10 @@ const TeamMemberPage: React.FC = () => {
             <div className="space-y-4">
                 {assignedOrphans.length > 0 ? (
                     assignedOrphans.map(orphan => (
-                        <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                            <img src={orphan.photoUrl} alt={orphan.name} className="w-12 h-12 rounded-full me-4"/>
-                            <p className="font-semibold text-gray-800">{orphan.name}</p>
-                        </Link>
+                    <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
+                        <img src={orphan.photoUrl} alt={orphan.name} className="w-12 h-12 rounded-full me-4"/>
+                        <p className="font-semibold text-gray-800">{orphan.name}</p>
+                    </Link>
                     ))
                 ) : (
                     <p className="text-text-secondary text-center py-4">لا يوجد أيتام معينون</p>
@@ -475,6 +475,7 @@ const TeamMemberPage: React.FC = () => {
                 </div>
             </div>
         )}
+
       </div>
       
       <div className="space-y-6">
