@@ -6,6 +6,7 @@ import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import OrphanProfile from './components/OrphanProfile';
 import SponsorPage from './components/SponsorPage';
+import SponsorPaymentsPage from './components/SponsorPaymentsPage';
 import TeamMemberPage from './components/TeamMemberPage';
 import FinancialSystem from './components/FinancialSystem';
 import OrphansList from './components/OrphansList';
@@ -39,6 +40,7 @@ function App() {
                         <Route path="/financial-system" element={<TeamMemberRoute><FinancialSystem /></TeamMemberRoute>} />
                         <Route path="/orphan/:id" element={<OrphanProfile />} />
                         <Route path="/sponsor/:id" element={<SponsorPage />} />
+                        <Route path="/payments" element={<SponsorPaymentsPage />} />
                         <Route path="/team/:id" element={<TeamMemberPage />} />
                         <Route path="/orphans" element={<OrphansList />} />
                         <Route path="/sponsors" element={<TeamMemberRoute><SponsorsList /></TeamMemberRoute>} />

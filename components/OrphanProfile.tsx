@@ -912,14 +912,6 @@ const OrphanProfile: React.FC = () => {
             </div>
         </InfoCard>
 
-       <div className="bg-bg-card p-6 rounded-xl shadow-sm">
-        <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-primary-light text-primary rounded-lg flex items-center justify-center">{CalendarIcon}</div>
-            <h3 className="text-xl font-bold text-gray-700">ملخص الدفعات السنوي ({new Date().getFullYear()})</h3>
-        </div>
-        <YearlyPaymentSummary payments={orphan.payments} />
-      </div>
-
       <FinancialRecordCard orphanId={orphan.id} />
       
       <InfoCard title="تحليلات الذكاء الاصطناعي" icon={SparklesIcon} className="md:col-span-2">

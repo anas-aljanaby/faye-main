@@ -2,6 +2,7 @@ export enum PaymentStatus {
   Paid = 'مدفوع',
   Due = 'مستحق',
   Overdue = 'متأخر',
+  Processing = 'قيد المعالجة',
 }
 
 export interface Payment {

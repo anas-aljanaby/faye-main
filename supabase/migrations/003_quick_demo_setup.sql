@@ -190,7 +190,70 @@ BEGIN
         ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 50.00, '2024-02-01', NULL, 'متأخر'),
         ('cccccccc-cccc-cccc-cccc-cccccccccccc', 50.00, '2024-01-01', '2024-01-01', 'مدفوع'),
         ('cccccccc-cccc-cccc-cccc-cccccccccccc', 50.00, '2024-02-01', '2024-02-01', 'مدفوع'),
-        ('cccccccc-cccc-cccc-cccc-cccccccccccc', 50.00, '2024-03-01', NULL, 'مستحق');
+        ('cccccccc-cccc-cccc-cccc-cccccccccccc', 50.00, '2024-03-01', NULL, 'مستحق')
+    ON CONFLICT DO NOTHING;
+
+    -- 2025 Payments for all orphans
+    -- August: paid (مدفوع), September: late (متأخر), October: due (مستحق), November: processing (قيد المعالجة)
+    INSERT INTO payments (orphan_id, amount, due_date, paid_date, status)
+    SELECT 
+        id as orphan_id,
+        50.00 as amount,
+        '2025-08-01'::DATE as due_date,
+        '2025-08-15'::DATE as paid_date,
+        'مدفوع' as status
+    FROM orphans
+    WHERE organization_id = demo_org_id
+    AND NOT EXISTS (
+        SELECT 1 FROM payments 
+        WHERE payments.orphan_id = orphans.id 
+        AND payments.due_date = '2025-08-01'::DATE
+    );
+
+    INSERT INTO payments (orphan_id, amount, due_date, paid_date, status)
+    SELECT 
+        id as orphan_id,
+        50.00 as amount,
+        '2025-09-01'::DATE as due_date,
+        NULL as paid_date,
+        'متأخر' as status
+    FROM orphans
+    WHERE organization_id = demo_org_id
+    AND NOT EXISTS (
+        SELECT 1 FROM payments 
+        WHERE payments.orphan_id = orphans.id 
+        AND payments.due_date = '2025-09-01'::DATE
+    );
+
+    INSERT INTO payments (orphan_id, amount, due_date, paid_date, status)
+    SELECT 
+        id as orphan_id,
+        50.00 as amount,
+        '2025-10-01'::DATE as due_date,
+        NULL as paid_date,
+        'مستحق' as status
+    FROM orphans
+    WHERE organization_id = demo_org_id
+    AND NOT EXISTS (
+        SELECT 1 FROM payments 
+        WHERE payments.orphan_id = orphans.id 
+        AND payments.due_date = '2025-10-01'::DATE
+    );
+
+    INSERT INTO payments (orphan_id, amount, due_date, paid_date, status)
+    SELECT 
+        id as orphan_id,
+        50.00 as amount,
+        '2025-11-01'::DATE as due_date,
+        NULL as paid_date,
+        'قيد المعالجة' as status
+    FROM orphans
+    WHERE organization_id = demo_org_id
+    AND NOT EXISTS (
+        SELECT 1 FROM payments 
+        WHERE payments.orphan_id = orphans.id 
+        AND payments.due_date = '2025-11-01'::DATE
+    );
 
     -- Achievements
     INSERT INTO achievements (orphan_id, title, description, date)
