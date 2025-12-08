@@ -125,30 +125,38 @@ const AddTransactionModal: React.FC<{
     const [isQuickAddSponsorOpen, setIsQuickAddSponsorOpen] = useState(false);
     const [orphanAmounts, setOrphanAmounts] = useState<Record<number, string>>({});
     const [sponsoredOrphans, setSponsoredOrphans] = useState<Orphan[]>([]);
+    const [selectedOrphans, setSelectedOrphans] = useState<number[]>([]);
+    const [orphanPaymentInfo, setOrphanPaymentInfo] = useState<Record<number, { 
+        amount: string; 
+        paymentType: 'month' | 'year' | null;
+        month?: number;
+        year: number;
+    }>>({});
     
     useEffect(() => {
         if (type === TransactionType.Income && selectedSponsorId) {
             const sponsorId = parseInt(selectedSponsorId);
             const relatedOrphans = orphans.filter(o => o.sponsorId === sponsorId);
             setSponsoredOrphans(relatedOrphans);
-            setOrphanAmounts({}); // Reset amounts when sponsor changes
+            setSelectedOrphans([]);
+            setOrphanPaymentInfo({});
         } else {
             setSponsoredOrphans([]);
+            setSelectedOrphans([]);
+            setOrphanPaymentInfo({});
         }
     }, [selectedSponsorId, type, orphans]);
 
     useEffect(() => {
         if (type === TransactionType.Income && donationCategory === 'كفالة يتيم') {
-            // FIX: Explicitly set the generic type for `reduce` to `number`.
-            // This resolves an issue where TypeScript infers the accumulator `sum` as `unknown`,
-            // causing downstream type errors.
-            const total = Object.values(orphanAmounts).reduce<number>((sum, currentAmount) => {
-                const amountAsNumber = Number(currentAmount);
+            // Calculate total from all orphan payment info
+            const total = Object.values(orphanPaymentInfo).reduce<number>((sum, info) => {
+                const amountAsNumber = Number(info.amount);
                 return sum + (isNaN(amountAsNumber) ? 0 : amountAsNumber);
             }, 0);
             setAmount(total > 0 ? total.toString() : '');
         }
-    }, [orphanAmounts, type, donationCategory]);
+    }, [orphanPaymentInfo, type, donationCategory]);
 
     const resetForm = () => {
         setDescription('');
@@ -159,6 +167,8 @@ const AddTransactionModal: React.FC<{
         setDonationCategory('');
         setOrphanAmounts({});
         setSponsoredOrphans([]);
+        setSelectedOrphans([]);
+        setOrphanPaymentInfo({});
         onClose();
     };
 
@@ -181,9 +191,42 @@ const AddTransactionModal: React.FC<{
                 alert('الرجاء اختيار تصنيف التبرع.');
                 return;
             }
+            
+            // Validate orphan payment info if category is كفالة يتيم
+            if (donationCategory === 'كفالة يتيم') {
+                const hasValidOrphanInfo = Object.keys(orphanPaymentInfo).some(orphanIdStr => {
+                    const info = orphanPaymentInfo[parseInt(orphanIdStr)];
+                    const amount = parseFloat(info.amount);
+                    return !isNaN(amount) && amount > 0;
+                });
+                
+                if (!hasValidOrphanInfo) {
+                    alert('الرجاء إضافة يتيم واحد على الأقل مع المبلغ.');
+                    return;
+                }
+            }
+            
             const sponsorName = sponsors.find(s => s.id === parseInt(selectedSponsorId))?.name || 'كافل غير محدد';
             const finalDescription = `[${donationCategory}] - ${description}`;
             
+            // Convert orphanPaymentInfo to the format needed
+            const orphanAmountsMap: Record<number, number> = {};
+            const orphanPaymentMonths: Record<number, { month?: number; year: number; isYear: boolean }> = {};
+            
+            Object.keys(orphanPaymentInfo).forEach(orphanIdStr => {
+                const orphanId = parseInt(orphanIdStr);
+                const info = orphanPaymentInfo[orphanId];
+                const amount = parseFloat(info.amount);
+                if (!isNaN(amount) && amount > 0) {
+                    orphanAmountsMap[orphanId] = amount;
+                    orphanPaymentMonths[orphanId] = {
+                        month: info.paymentType === 'month' ? info.month : undefined,
+                        year: info.year,
+                        isYear: info.paymentType === 'year'
+                    };
+                }
+            });
+
             transactionData = {
                 description: finalDescription,
                 amount: parseFloat(amount),
@@ -195,9 +238,11 @@ const AddTransactionModal: React.FC<{
                     amount: parseFloat(amount),
                     date: new Date(), // Will be overwritten by parent, but good to have
                     description: description, // Original description
-                    relatedOrphanIds: Object.keys(orphanAmounts).map(id => parseInt(id)),
+                    relatedOrphanIds: Object.keys(orphanAmountsMap).map(id => parseInt(id)),
+                    orphanAmounts: orphanAmountsMap,
                     transactionId: '', // Will be set in parent
-                }
+                    orphanPaymentMonths: orphanPaymentMonths,
+                } as any
             };
         } else { // Expense
             transactionData = {
@@ -288,29 +333,229 @@ const AddTransactionModal: React.FC<{
                                 </select>
                             </div>
                             {donationCategory === 'كفالة يتيم' && selectedSponsorId && (
-                                <div className="border-t pt-4 mt-4 space-y-3 max-h-40 overflow-y-auto pr-2">
-                                    <h4 className="text-md font-semibold text-gray-800">توزيع مبلغ الكفالة</h4>
-                                    {sponsoredOrphans.length > 0 ? (
-                                        sponsoredOrphans.map(orphan => (
-                                            <div key={orphan.id} className="flex items-center gap-2">
-                                                <span className="w-1/3 truncate text-sm">{orphan.name}</span>
-                                                <div className="flex-grow flex items-center gap-1">
-                                                    <input 
-                                                        type="number" 
-                                                        placeholder="المبلغ" 
-                                                        value={orphanAmounts[orphan.id] || ''}
-                                                        onChange={(e) => setOrphanAmounts(prev => ({ ...prev, [orphan.id]: e.target.value }))}
-                                                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md" 
-                                                    />
-                                                    <button type="button" onClick={() => setOrphanAmounts(prev => ({ ...prev, [orphan.id]: '50' }))} className="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300 flex-shrink-0">شهر</button>
-                                                    <button type="button" onClick={() => setOrphanAmounts(prev => ({ ...prev, [orphan.id]: '600' }))} className="text-xs px-2 py-1 bg-gray-200 rounded-md hover:bg-gray-300 flex-shrink-0">سنة</button>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-center text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
-                                            لم يتم العثور على أيتام مكفولين لهذا الكافل.
-                                        </p>
+                                <div className="border-t pt-4 mt-4 space-y-4">
+                                    <div>
+                                        <label className="text-sm font-medium text-gray-700 mb-2 block">اختر الأيتام</label>
+                                        {sponsoredOrphans.length > 0 ? (
+                                            <select
+                                                value=""
+                                                onChange={(e) => {
+                                                    const orphanId = parseInt(e.target.value);
+                                                    if (orphanId && !selectedOrphans.includes(orphanId)) {
+                                                        setSelectedOrphans(prev => [...prev, orphanId]);
+                                                        setOrphanPaymentInfo(prev => ({
+                                                            ...prev,
+                                                            [orphanId]: {
+                                                                amount: '',
+                                                                paymentType: null,
+                                                                year: new Date().getFullYear()
+                                                            }
+                                                        }));
+                                                    }
+                                                }}
+                                                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm"
+                                            >
+                                                <option value="">-- اختر يتيم --</option>
+                                                {sponsoredOrphans
+                                                    .filter(o => !selectedOrphans.includes(o.id))
+                                                    .map(orphan => (
+                                                        <option key={orphan.id} value={orphan.id}>
+                                                            {orphan.name}
+                                                        </option>
+                                                    ))}
+                                            </select>
+                                        ) : (
+                                            <p className="text-center text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
+                                                لم يتم العثور على أيتام مكفولين لهذا الكافل.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Selected Orphans with Amount and Payment Info */}
+                                    {selectedOrphans.length > 0 && (
+                                        <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                                            {selectedOrphans.map(orphanId => {
+                                                const orphan = sponsoredOrphans.find(o => o.id === orphanId);
+                                                if (!orphan) return null;
+                                                const paymentInfo = orphanPaymentInfo[orphanId] || {
+                                                    amount: '',
+                                                    paymentType: null,
+                                                    year: new Date().getFullYear()
+                                                };
+
+                                                return (
+                                                    <div key={orphanId} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <h5 className="font-semibold text-gray-800">{orphan.name}</h5>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedOrphans(prev => prev.filter(id => id !== orphanId));
+                                                                    setOrphanPaymentInfo(prev => {
+                                                                        const newInfo = { ...prev };
+                                                                        delete newInfo[orphanId];
+                                                                        return newInfo;
+                                                                    });
+                                                                }}
+                                                                className="text-red-500 hover:text-red-700 text-sm"
+                                                            >
+                                                                حذف
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Amount Section */}
+                                                        <div className="mb-3">
+                                                            <label className="text-xs font-medium text-gray-700 mb-1 block">المبلغ</label>
+                                                            <input
+                                                                type="number"
+                                                                step="0.01"
+                                                                min="0"
+                                                                placeholder="المبلغ"
+                                                                value={paymentInfo.amount}
+                                                                onChange={(e) => {
+                                                                    setOrphanPaymentInfo(prev => ({
+                                                                        ...prev,
+                                                                        [orphanId]: {
+                                                                            ...prev[orphanId],
+                                                                            amount: e.target.value
+                                                                        }
+                                                                    }));
+                                                                }}
+                                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                                                            />
+                                                        </div>
+
+                                                        {/* Payment Type Section */}
+                                                        <div className="space-y-2">
+                                                            <label className="text-xs font-medium text-gray-700 block">نوع الدفعة</label>
+                                                            <div className="flex gap-2 mb-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setOrphanPaymentInfo(prev => ({
+                                                                            ...prev,
+                                                                            [orphanId]: {
+                                                                                ...prev[orphanId],
+                                                                                paymentType: 'month',
+                                                                                month: new Date().getMonth()
+                                                                            }
+                                                                        }));
+                                                                    }}
+                                                                    className={`flex-1 px-3 py-1 text-xs rounded-md transition-colors ${
+                                                                        paymentInfo.paymentType === 'month'
+                                                                            ? 'bg-primary text-white'
+                                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                                    }`}
+                                                                >
+                                                    شهر واحد
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setOrphanPaymentInfo(prev => ({
+                                                                            ...prev,
+                                                                            [orphanId]: {
+                                                                                ...prev[orphanId],
+                                                                                paymentType: 'year'
+                                                                            }
+                                                                        }));
+                                                                    }}
+                                                                    className={`flex-1 px-3 py-1 text-xs rounded-md transition-colors ${
+                                                                        paymentInfo.paymentType === 'year'
+                                                                            ? 'bg-primary text-white'
+                                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                                    }`}
+                                                                >
+                                                    سنة كاملة
+                                                                </button>
+                                                            </div>
+
+                                                            {/* Month Selection */}
+                                                            {paymentInfo.paymentType === 'month' && (
+                                                                <div className="grid grid-cols-2 gap-2">
+                                                                    <select
+                                                                        value={paymentInfo.month !== undefined ? paymentInfo.month : ''}
+                                                                        onChange={(e) => {
+                                                                            setOrphanPaymentInfo(prev => ({
+                                                                                ...prev,
+                                                                                [orphanId]: {
+                                                                                    ...prev[orphanId],
+                                                                                    month: parseInt(e.target.value)
+                                                                                }
+                                                                            }));
+                                                                        }}
+                                                                        className="px-2 py-1 text-xs border border-gray-300 rounded-md bg-white"
+                                                                    >
+                                                                        <option value="">-- اختر الشهر --</option>
+                                                                        {Array.from({ length: 12 }, (_, i) => {
+                                                                            const date = new Date(2000, i, 1);
+                                                                            return (
+                                                                                <option key={i} value={i}>
+                                                                                    {date.toLocaleDateString('ar-EG', { month: 'long' })}
+                                                                                </option>
+                                                                            );
+                                                                        })}
+                                                                    </select>
+                                                                    <select
+                                                                        value={paymentInfo.year}
+                                                                        onChange={(e) => {
+                                                                            setOrphanPaymentInfo(prev => ({
+                                                                                ...prev,
+                                                                                [orphanId]: {
+                                                                                    ...prev[orphanId],
+                                                                                    year: parseInt(e.target.value)
+                                                                                }
+                                                                            }));
+                                                                        }}
+                                                                        className="px-2 py-1 text-xs border border-gray-300 rounded-md bg-white"
+                                                                    >
+                                                                        {Array.from({ length: 5 }, (_, i) => {
+                                                                            const year = new Date().getFullYear() - 2 + i;
+                                                                            return (
+                                                                                <option key={year} value={year}>
+                                                                                    {year}
+                                                                                </option>
+                                                                            );
+                                                                        })}
+                                                                    </select>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Year Selection */}
+                                                            {paymentInfo.paymentType === 'year' && (
+                                                                <div>
+                                                                    <select
+                                                                        value={paymentInfo.year}
+                                                                        onChange={(e) => {
+                                                                            setOrphanPaymentInfo(prev => ({
+                                                                                ...prev,
+                                                                                [orphanId]: {
+                                                                                    ...prev[orphanId],
+                                                                                    year: parseInt(e.target.value)
+                                                                                }
+                                                                            }));
+                                                                        }}
+                                                                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white"
+                                                                    >
+                                                                        {Array.from({ length: 5 }, (_, i) => {
+                                                                            const year = new Date().getFullYear() - 2 + i;
+                                                                            return (
+                                                                                <option key={year} value={year}>
+                                                                                    {year}
+                                                                                </option>
+                                                                            );
+                                                                        })}
+                                                                    </select>
+                                                                    <p className="text-xs text-gray-500 mt-1">
+                                                                        سيتم تقسيم المبلغ على 12 شهر وتمييزها كمدفوعة
+                                                                    </p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -835,8 +1080,128 @@ const FinancialSystem: React.FC = () => {
 
     const handleAddTransaction = async (data: Omit<FinancialTransaction, 'id' | 'date' | 'status'>) => {
         try {
+            console.log('Adding transaction:', data);
             const transactionId = await addTransactionToDB(data);
+            console.log('Transaction created with ID:', transactionId);
+            
+            // Refresh transactions first to ensure we have the latest data
+            await refetchTransactions();
             setIsAddModalOpen(false);
+
+            // If payment info is selected, mark payments as paid for related orphans
+            if (data.type === TransactionType.Income && 
+                data.receipt?.orphanPaymentMonths && 
+                data.receipt?.relatedOrphanIds && 
+                data.receipt.relatedOrphanIds.length > 0) {
+                
+                const paidDate = new Date().toISOString().split('T')[0];
+                
+                // Update payment status for each related orphan
+                for (const orphanId of data.receipt.relatedOrphanIds) {
+                    const orphan = orphansData.find(o => o.id === orphanId);
+                    if (!orphan || !orphan.uuid) {
+                        console.warn(`Orphan ${orphanId} not found or missing UUID`);
+                        continue;
+                    }
+
+                    const paymentInfo = data.receipt.orphanPaymentMonths[orphanId];
+                    if (!paymentInfo) {
+                        console.warn(`No payment info for orphan ${orphanId}`);
+                        continue;
+                    }
+
+                    const orphanAmount = data.receipt.orphanAmounts?.[orphanId] || 50.00;
+
+                    if (paymentInfo.isYear) {
+                        // Split amount across 12 months for the year
+                        const monthlyAmount = orphanAmount / 12;
+                        
+                        for (let month = 0; month < 12; month++) {
+                            const dueDate = new Date(paymentInfo.year, month, 1);
+                            const dueDateStr = dueDate.toISOString().split('T')[0];
+                            
+                            // Find existing payment for this month
+                            const existingPayment = orphan.payments.find(p => 
+                                p.dueDate.getFullYear() === paymentInfo.year &&
+                                p.dueDate.getMonth() === month
+                            );
+
+                            if (existingPayment) {
+                                // Update existing payment to paid
+                                const { error } = await supabase
+                                    .from('payments')
+                                    .update({
+                                        status: PaymentStatus.Paid,
+                                        amount: monthlyAmount,
+                                        paid_date: paidDate,
+                                    })
+                                    .eq('id', existingPayment.id);
+                                if (error) {
+                                    console.error(`Error updating payment for month ${month}:`, error);
+                                }
+                            } else {
+                                // Create new payment as paid
+                                const { error } = await supabase
+                                    .from('payments')
+                                    .insert({
+                                        orphan_id: orphan.uuid,
+                                        amount: monthlyAmount,
+                                        due_date: dueDateStr,
+                                        status: PaymentStatus.Paid,
+                                        paid_date: paidDate,
+                                    });
+                                if (error) {
+                                    console.error(`Error creating payment for month ${month}:`, error);
+                                }
+                            }
+                        }
+                    } else if (paymentInfo.month !== undefined) {
+                        // Single month payment
+                        const dueDate = new Date(paymentInfo.year, paymentInfo.month, 1);
+                        const dueDateStr = dueDate.toISOString().split('T')[0];
+                        
+                        // Find existing payment for this month
+                        const existingPayment = orphan.payments.find(p => 
+                            p.dueDate.getFullYear() === paymentInfo.year &&
+                            p.dueDate.getMonth() === paymentInfo.month
+                        );
+
+                        if (existingPayment) {
+                            // Update existing payment to paid
+                            const { error } = await supabase
+                                .from('payments')
+                                .update({
+                                    status: PaymentStatus.Paid,
+                                    amount: orphanAmount,
+                                    paid_date: paidDate,
+                                })
+                                .eq('id', existingPayment.id);
+                            if (error) {
+                                console.error('Error updating payment:', error);
+                            }
+                        } else {
+                            // Create new payment as paid
+                            const { error } = await supabase
+                                .from('payments')
+                                .insert({
+                                    orphan_id: orphan.uuid,
+                                    amount: orphanAmount,
+                                    due_date: dueDateStr,
+                                    status: PaymentStatus.Paid,
+                                    paid_date: paidDate,
+                                });
+                            if (error) {
+                                console.error('Error creating payment:', error);
+                            }
+                        }
+                    } else {
+                        console.warn(`No payment info for orphan ${orphanId} - paymentType not set`);
+                    }
+                }
+                
+                // Refresh orphans to get updated payments
+                await refetchOrphans();
+            }
 
             // Refresh transactions to get the new one with receipt
             await refetchTransactions();
@@ -862,7 +1227,8 @@ const FinancialSystem: React.FC = () => {
             }
         } catch (error) {
             console.error('Error adding transaction:', error);
-            alert('حدث خطأ أثناء إضافة الحركة المالية. الرجاء المحاولة مرة أخرى.');
+            const errorMessage = error instanceof Error ? error.message : 'حدث خطأ غير معروف';
+            alert(`حدث خطأ أثناء إضافة الحركة المالية: ${errorMessage}. الرجاء المحاولة مرة أخرى.`);
         }
     };
 
