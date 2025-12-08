@@ -84,6 +84,15 @@ CREATE TABLE team_member_orphans (
     UNIQUE (team_member_id, orphan_id)
 );
 
+-- 5b. Sponsor-Team Member junction table (many-to-many)
+CREATE TABLE sponsor_team_members (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sponsor_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    team_member_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE (sponsor_id, team_member_id)
+);
+
 -- ============================================================================
 -- ORPHAN-RELATED TABLES
 -- ============================================================================
@@ -260,6 +269,8 @@ CREATE INDEX idx_sponsor_orphans_sponsor ON sponsor_orphans(sponsor_id);
 CREATE INDEX idx_sponsor_orphans_orphan ON sponsor_orphans(orphan_id);
 CREATE INDEX idx_team_member_orphans_member ON team_member_orphans(team_member_id);
 CREATE INDEX idx_team_member_orphans_orphan ON team_member_orphans(orphan_id);
+CREATE INDEX idx_sponsor_team_members_sponsor ON sponsor_team_members(sponsor_id);
+CREATE INDEX idx_sponsor_team_members_team_member ON sponsor_team_members(team_member_id);
 CREATE INDEX idx_payments_orphan_status ON payments(orphan_id, status);
 CREATE INDEX idx_financial_transactions_org_date_type ON financial_transactions(organization_id, date, type);
 CREATE INDEX idx_tasks_member_completed_due ON tasks(team_member_id, completed, due_date);
@@ -342,6 +353,7 @@ ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sponsor_orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_member_orphans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sponsor_team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_occasions ENABLE ROW LEVEL SECURITY;
@@ -857,6 +869,34 @@ CREATE POLICY "Team members can view tasks for orphans they're assigned to"
                 SELECT orphan_id FROM team_member_orphans 
                 WHERE team_member_id = auth.uid()
             )
+        )
+    );
+
+-- Sponsor-Team Member junction policies
+CREATE POLICY "Team members can view sponsor-team member relationships in their organization"
+    ON sponsor_team_members FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM user_profiles up1
+            JOIN user_profiles up2 ON up1.organization_id = up2.organization_id
+            WHERE (up1.id = auth.uid() OR up2.id = auth.uid())
+            AND (up1.id = sponsor_team_members.sponsor_id OR up2.id = sponsor_team_members.team_member_id)
+        )
+    );
+
+CREATE POLICY "Managers and users with permission can manage sponsor-team member relationships"
+    ON sponsor_team_members FOR ALL
+    USING (
+        is_team_member()
+        AND (
+            is_manager()
+            OR can_edit_sponsors()
+        )
+        AND EXISTS (
+            SELECT 1 FROM user_profiles up1
+            JOIN user_profiles up2 ON up1.organization_id = up2.organization_id
+            WHERE up1.organization_id = get_user_organization_id()
+            AND (up1.id = sponsor_team_members.sponsor_id OR up2.id = sponsor_team_members.team_member_id)
         )
     );
 

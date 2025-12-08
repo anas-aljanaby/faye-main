@@ -16,7 +16,6 @@ import HumanResources from './components/HumanResources';
 import SignIn from './components/SignIn';
 import ProtectedRoute from './components/ProtectedRoute';
 import TeamMemberRoute from './components/TeamMemberRoute';
-import SponsorProfile from './components/SponsorProfile';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -46,7 +45,6 @@ function App() {
                         <Route path="/team" element={<TeamMemberRoute><TeamList /></TeamMemberRoute>} />
                         <Route path="/messages" element={<Messages />} />
                         <Route path="/human-resources" element={<TeamMemberRoute><HumanResources /></TeamMemberRoute>} />
-                        <Route path="/profile" element={<SponsorProfile />} />
                         <Route path="/policies" element={<div className="text-3xl font-bold">صفحة سياسات فيء</div>} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
