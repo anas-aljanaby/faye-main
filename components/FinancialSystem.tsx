@@ -158,6 +158,38 @@ const AddTransactionModal: React.FC<{
         }
     }, [orphanPaymentInfo, type, donationCategory]);
 
+    // Form validation
+    const isFormValid = useMemo(() => {
+        if (!description.trim() || !amount || parseFloat(amount) <= 0) {
+            return false;
+        }
+        
+        if (type === TransactionType.Income) {
+            if (!selectedSponsorId || !donationCategory) {
+                return false;
+            }
+            
+            if (donationCategory === 'كفالة يتيم') {
+                // Check if at least one orphan has valid amount and payment type
+                const hasValidOrphan = Object.values(orphanPaymentInfo).some(info => {
+                    const amount = parseFloat(info.amount);
+                    if (isNaN(amount) || amount <= 0) return false;
+                    
+                    if (info.paymentType === 'month') {
+                        return info.month !== undefined;
+                    } else if (info.paymentType === 'year') {
+                        return true;
+                    }
+                    return false;
+                });
+                
+                return hasValidOrphan;
+            }
+        }
+        
+        return true;
+    }, [description, amount, type, selectedSponsorId, donationCategory, orphanPaymentInfo]);
+
     const resetForm = () => {
         setDescription('');
         setAmount('');
@@ -437,7 +469,7 @@ const AddTransactionModal: React.FC<{
                                                                             [orphanId]: {
                                                                                 ...prev[orphanId],
                                                                                 paymentType: 'month',
-                                                                                month: new Date().getMonth()
+                                                                                month: undefined // Keep empty, user must select
                                                                             }
                                                                         }));
                                                                     }}
@@ -546,8 +578,8 @@ const AddTransactionModal: React.FC<{
                                                                             );
                                                                         })}
                                                                     </select>
-                                                                    <p className="text-xs text-gray-500 mt-1">
-                                                                        سيتم تقسيم المبلغ على 12 شهر وتمييزها كمدفوعة
+                                                                    <p className="text-xs text-gray-600 mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                                                                        <strong>ملاحظة:</strong> سيتم تقسيم المبلغ ({paymentInfo.amount ? `$${parseFloat(paymentInfo.amount).toLocaleString()}` : '$0'}) بالتساوي على 12 شهر ({paymentInfo.amount ? `$${(parseFloat(paymentInfo.amount) / 12).toFixed(2)}` : '$0'} لكل شهر) وتمييز جميع الأشهر كمدفوعة تلقائياً.
                                                                     </p>
                                                                 </div>
                                                             )}
@@ -579,7 +611,15 @@ const AddTransactionModal: React.FC<{
                     
                     <div className="flex justify-end gap-3 pt-4">
                         <button type="button" onClick={resetForm} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">
+                        <button 
+                            type="submit" 
+                            disabled={!isFormValid}
+                            className={`py-2 px-5 rounded-lg font-semibold transition-colors ${
+                                isFormValid 
+                                    ? 'bg-primary text-white hover:bg-primary-hover cursor-pointer' 
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                        >
                             {type === TransactionType.Income ? 'اصدار إيصال تبرع' : 'حفظ'}
                         </button>
                     </div>
@@ -942,10 +982,93 @@ const FinancialSystem: React.FC = () => {
 
     const handleDelete = async (transactionId: string) => {
         if (!confirm('هل أنت متأكد من حذف هذه المعاملة؟')) return;
+        
+        // Find the transaction to check if it has payment info
+        const transaction = transactions.find(tx => tx.id === transactionId);
+        
         const result = await deleteTransaction(transactionId);
         if (!result.success) {
             alert(result.error || 'حدث خطأ أثناء الحذف');
+            setActionMenuOpen(null);
+            return;
         }
+        
+        // If transaction had payment months, revert those payments
+        if (transaction && 
+            transaction.type === TransactionType.Income && 
+            transaction.receipt?.orphanPaymentMonths && 
+            transaction.receipt?.relatedOrphanIds) {
+            
+            const paidDate = new Date().toISOString().split('T')[0];
+            
+            for (const orphanId of transaction.receipt.relatedOrphanIds) {
+                const orphan = orphansData.find(o => o.id === orphanId);
+                if (!orphan || !orphan.uuid) continue;
+
+                const paymentInfo = transaction.receipt.orphanPaymentMonths[orphanId];
+                if (!paymentInfo) continue;
+
+                try {
+                    if (paymentInfo.isYear) {
+                        // Revert all 12 months for the year
+                        for (let month = 0; month < 12; month++) {
+                            const dueDate = new Date(paymentInfo.year, month, 1);
+                            const dueDateStr = dueDate.toISOString().split('T')[0];
+                            
+                            // Find payment for this month
+                            const existingPayment = orphan.payments.find(p => 
+                                p.dueDate.getFullYear() === paymentInfo.year &&
+                                p.dueDate.getMonth() === month &&
+                                p.status === PaymentStatus.Paid &&
+                                p.paidDate && 
+                                new Date(p.paidDate).toISOString().split('T')[0] === paidDate
+                            );
+
+                            if (existingPayment) {
+                                // Revert to Due status (or delete if it was created by this transaction)
+                                await supabase
+                                    .from('payments')
+                                    .update({
+                                        status: PaymentStatus.Due,
+                                        paid_date: null,
+                                    })
+                                    .eq('id', existingPayment.id);
+                            }
+                        }
+                    } else if (paymentInfo.month !== undefined) {
+                        // Revert single month payment
+                        const dueDate = new Date(paymentInfo.year, paymentInfo.month, 1);
+                        const dueDateStr = dueDate.toISOString().split('T')[0];
+                        
+                        // Find payment for this month
+                        const existingPayment = orphan.payments.find(p => 
+                            p.dueDate.getFullYear() === paymentInfo.year &&
+                            p.dueDate.getMonth() === paymentInfo.month &&
+                            p.status === PaymentStatus.Paid &&
+                            p.paidDate && 
+                            new Date(p.paidDate).toISOString().split('T')[0] === paidDate
+                        );
+
+                        if (existingPayment) {
+                            // Revert to Due status
+                            await supabase
+                                .from('payments')
+                                .update({
+                                    status: PaymentStatus.Due,
+                                    paid_date: null,
+                                })
+                                .eq('id', existingPayment.id);
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error reverting payments for orphan ${orphanId}:`, error);
+                }
+            }
+            
+            // Refresh orphans to get updated payments
+            await refetchOrphans();
+        }
+        
         setActionMenuOpen(null);
     };
 
