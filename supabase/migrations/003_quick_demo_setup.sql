@@ -369,7 +369,6 @@ BEGIN
         demo_org_id, 'شراء ملابس العيد', team_member_2_id, 320.00, 'قيد المراجعة', 'مصروفات', '2025-11-10', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
     )
     RETURNING id INTO tx6_id;
-
     -- Create receipt for transaction 2 (Income with receipt)
     INSERT INTO receipts (
         transaction_id, sponsor_id, donation_category, amount, date, description
