@@ -1,10 +1,11 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSponsors } from '../hooks/useSponsors';
 import { useOrphans } from '../hooks/useOrphans';
 import { useFinancialTransactions, FinancialTransactionWithApproval } from '../hooks/useFinancialTransactions';
-import { FinancialTransaction, TransactionStatus, TransactionType, Sponsor, Orphan } from '../types';
+import { FinancialTransaction, TransactionStatus, TransactionType, Sponsor, Orphan, PaymentStatus, Payment } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
@@ -558,9 +559,11 @@ const FinancialSystem: React.FC = () => {
     const navigate = useNavigate();
     const fromDateRef = useRef<HTMLInputElement>(null);
     const toDateRef = useRef<HTMLInputElement>(null);
-    const { canCreateExpense } = useAuth();
+    const transactionsSectionRef = useRef<HTMLDivElement>(null);
+    const orphanPaymentsSectionRef = useRef<HTMLDivElement>(null);
+    const { canCreateExpense, canViewFinancials, userProfile } = useAuth();
     const { sponsors: sponsorsData, refetch: refetchSponsors } = useSponsors();
-    const { orphans: orphansData } = useOrphans();
+    const { orphans: orphansData, refetch: refetchOrphans } = useOrphans();
     const { 
         transactions, 
         loading: transactionsLoading, 
@@ -589,6 +592,21 @@ const FinancialSystem: React.FC = () => {
     const [transactionToReject, setTransactionToReject] = useState<FinancialTransactionWithApproval | null>(null);
     const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
     
+    // Orphan payments states
+    const [expandedOrphans, setExpandedOrphans] = useState<Set<string>>(new Set());
+    const [selectedYear, setSelectedYear] = useState<number>(2025);
+    const [editingPayment, setEditingPayment] = useState<{ orphanId: string; month: number; year: number; amount: number; status?: PaymentStatus } | null>(null);
+    
+    // Navigation state
+    const [activeSection, setActiveSection] = useState<'transactions' | 'orphan-payments'>('transactions');
+    const [isScrolling, setIsScrolling] = useState(false);
+    
+    // Pagination state
+    const [showMoreClicked, setShowMoreClicked] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    const initialItemsToShow = 3;
+    
     useEffect(() => {
         if (sponsorsData) {
             setSponsorsList(sponsorsData);
@@ -614,6 +632,50 @@ const FinancialSystem: React.FC = () => {
         document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
+
+    // Intersection Observer for scroll detection
+    useEffect(() => {
+        const observerOptions = {
+            root: null,
+            rootMargin: '-100px 0px -60% 0px', // Account for sticky nav height
+            threshold: [0, 0.1, 0.5, 1]
+        };
+
+        const observerCallback = (entries: IntersectionObserverEntry[]) => {
+            if (isScrolling) return; // Don't update during programmatic scrolling
+            
+            // Find the most visible section
+            const visibleSections = entries
+                .filter(entry => entry.isIntersecting)
+                .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+            if (visibleSections.length > 0) {
+                const mostVisible = visibleSections[0];
+                if (mostVisible.target === transactionsSectionRef.current) {
+                    setActiveSection('transactions');
+                } else if (mostVisible.target === orphanPaymentsSectionRef.current) {
+                    setActiveSection('orphan-payments');
+                }
+            }
+        };
+
+        const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+        // Small delay to ensure refs are set
+        const timeoutId = setTimeout(() => {
+            if (transactionsSectionRef.current) {
+                observer.observe(transactionsSectionRef.current);
+            }
+            if (orphanPaymentsSectionRef.current) {
+                observer.observe(orphanPaymentsSectionRef.current);
+            }
+        }, 100);
+
+        return () => {
+            clearTimeout(timeoutId);
+            observer.disconnect();
+        };
+    }, [isScrolling]);
 
     const handleApprove = async (transactionId: string) => {
         const result = await approveTransaction(transactionId);
@@ -709,6 +771,28 @@ const FinancialSystem: React.FC = () => {
             return true;
         });
     }, [transactions, fromDate, toDate, typeFilter, statusFilter]);
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+        setShowMoreClicked(false);
+    }, [fromDate, toDate, typeFilter, statusFilter, activeMonthFilter]);
+
+    // Calculate paginated transactions
+    const paginatedTransactions = useMemo(() => {
+        if (!showMoreClicked) {
+            // Show only first 3 transactions initially
+            return filteredTransactions.slice(0, initialItemsToShow);
+        } else {
+            // Show 10 per page
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            return filteredTransactions.slice(startIndex, endIndex);
+        }
+    }, [filteredTransactions, showMoreClicked, currentPage]);
+
+    // Calculate total pages
+    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
     const { totalIncome, totalExpenses, balance, pendingCount } = useMemo(() => {
         const income = transactions
@@ -807,12 +891,147 @@ const FinancialSystem: React.FC = () => {
         document.body.removeChild(link);
     };
 
+    const toggleOrphanExpansion = (orphanId: string) => {
+        setExpandedOrphans(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(orphanId)) {
+                newSet.delete(orphanId);
+            } else {
+                newSet.add(orphanId);
+            }
+            return newSet;
+        });
+    };
+
+    const updatePaymentStatus = async (orphanId: string, month: number, year: number, newStatus: PaymentStatus, newAmount?: number) => {
+        if (!userProfile || !canViewFinancials()) {
+            alert('ليس لديك صلاحية لتعديل حالة الدفعات');
+            return;
+        }
+
+        try {
+            const dueDate = new Date(year, month, 1);
+            const dueDateStr = dueDate.toISOString().split('T')[0];
+
+            // Find existing payment for this month
+            const orphan = orphansData.find(o => (o.uuid || o.id.toString()) === orphanId);
+            if (!orphan || !orphan.uuid) {
+                alert('خطأ: لم يتم العثور على اليتيم');
+                return;
+            }
+
+            const existingPayment = orphan.payments.find(p => 
+                p.dueDate.getFullYear() === year &&
+                p.dueDate.getMonth() === month
+            );
+
+            const amountToUse = newAmount !== undefined ? newAmount : (existingPayment?.amount || 50.00);
+
+            if (existingPayment) {
+                // Update existing payment
+                const updateData: any = {
+                    status: newStatus,
+                    paid_date: newStatus === PaymentStatus.Paid ? new Date().toISOString().split('T')[0] : null,
+                };
+                
+                // Only update amount if it was provided
+                if (newAmount !== undefined) {
+                    updateData.amount = amountToUse;
+                }
+
+                const { error } = await supabase
+                    .from('payments')
+                    .update(updateData)
+                    .eq('id', existingPayment.id);
+
+                if (error) throw error;
+            } else {
+                // Create new payment
+                const { error } = await supabase
+                    .from('payments')
+                    .insert({
+                        orphan_id: orphan.uuid,
+                        amount: amountToUse,
+                        due_date: dueDateStr,
+                        status: newStatus,
+                        paid_date: newStatus === PaymentStatus.Paid ? new Date().toISOString().split('T')[0] : null,
+                    });
+
+                if (error) throw error;
+            }
+
+            // Refresh orphans to get updated payments
+            await refetchOrphans();
+            setEditingPayment(null);
+        } catch (error) {
+            console.error('Error updating payment status:', error);
+            alert('حدث خطأ أثناء تحديث حالة الدفعة');
+        }
+    };
+
+    const scrollToTransactions = () => {
+        setIsScrolling(true);
+        setActiveSection('transactions');
+        transactionsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => setIsScrolling(false), 1000);
+    };
+
+    const scrollToOrphanPayments = () => {
+        setIsScrolling(true);
+        setActiveSection('orphan-payments');
+        orphanPaymentsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => setIsScrolling(false), 1000);
+    };
+
+    const financialSections = [
+        {
+            id: 'transactions' as const,
+            title: 'سجل الحركات المالية',
+            icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg>
+        },
+        {
+            id: 'orphan-payments' as const,
+            title: 'دفعات الأيتام',
+            icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        }
+    ];
+
     return (
         <>
         <div className="space-y-6 pb-24 sm:pb-0">
             <div>
                 <h1 className="text-3xl font-bold">النظام المالي</h1>
                 <p className="text-text-secondary">عرض وإدارة جميع الحركات المالية.</p>
+            </div>
+
+            {/* Sticky Navigation Bar */}
+            <div className="sticky top-16 z-30 bg-white border-b border-gray-200 shadow-sm -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
+                <div className="border-b border-gray-200 overflow-x-auto">
+                    <nav className="flex gap-2 min-w-max" role="tablist">
+                        {financialSections.map(section => (
+                            <button
+                                key={section.id}
+                                onClick={() => {
+                                    if (section.id === 'transactions') {
+                                        scrollToTransactions();
+                                    } else {
+                                        scrollToOrphanPayments();
+                                    }
+                                }}
+                                role="tab"
+                                aria-selected={activeSection === section.id}
+                                className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all whitespace-nowrap border-b-2 ${
+                                    activeSection === section.id
+                                        ? 'border-primary text-primary bg-primary/5'
+                                        : 'border-transparent text-text-secondary hover:text-primary hover:border-gray-300'
+                                }`}
+                            >
+                                <span className="flex-shrink-0">{section.icon}</span>
+                                <span>{section.title}</span>
+                            </button>
+                        ))}
+                    </nav>
+                </div>
             </div>
 
             <div className="space-y-4">
@@ -834,7 +1053,7 @@ const FinancialSystem: React.FC = () => {
                 </div>
             </div>
             
-            <div className="bg-bg-card p-6 rounded-lg shadow-sm">
+            <div ref={transactionsSectionRef} className="bg-bg-card p-6 rounded-lg shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                     <h2 className="text-xl font-bold">سجل الحركات المالية</h2>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -956,7 +1175,7 @@ const FinancialSystem: React.FC = () => {
                                     </td>
                                 </tr>
                             ) : (
-                                filteredTransactions.map(tx => {
+                                paginatedTransactions.map(tx => {
                                     const txWithApproval = tx as FinancialTransactionWithApproval;
                                     const isPending = tx.status === TransactionStatus.Pending;
                                     const isRejected = tx.status === TransactionStatus.Rejected;
@@ -1041,6 +1260,389 @@ const FinancialSystem: React.FC = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Show More Button or Pagination Controls */}
+                {filteredTransactions.length > initialItemsToShow && (
+                    <div className="mt-4 flex flex-col items-center gap-4">
+                        {!showMoreClicked ? (
+                            <button
+                                onClick={() => {
+                                    setShowMoreClicked(true);
+                                    setCurrentPage(1);
+                                }}
+                                className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold transition-colors"
+                            >
+                                عرض المزيد
+                            </button>
+                        ) : (
+                            <div className="flex flex-col items-center gap-4 w-full">
+                                {/* Pagination Info */}
+                                <div className="text-sm text-text-secondary">
+                                    عرض {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredTransactions.length)} من {filteredTransactions.length}
+                                </div>
+                                
+                                {/* Pagination Controls */}
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                        disabled={currentPage === 1}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                            currentPage === 1
+                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                : 'bg-primary text-white hover:bg-primary-hover'
+                                        }`}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                                    </button>
+                                    
+                                    {/* Page Numbers */}
+                                    <div className="flex items-center gap-1">
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                            let pageNum: number;
+                                            if (totalPages <= 5) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage <= 3) {
+                                                pageNum = i + 1;
+                                            } else if (currentPage >= totalPages - 2) {
+                                                pageNum = totalPages - 4 + i;
+                                            } else {
+                                                pageNum = currentPage - 2 + i;
+                                            }
+                                            
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => setCurrentPage(pageNum)}
+                                                    className={`w-10 h-10 rounded-lg font-semibold transition-colors ${
+                                                        currentPage === pageNum
+                                                            ? 'bg-primary text-white'
+                                                            : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
+                                                    }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                            currentPage === totalPages
+                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                : 'bg-primary text-white hover:bg-primary-hover'
+                                        }`}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Orphan Payments Section */}
+            <div ref={orphanPaymentsSectionRef} className="bg-bg-card p-6 rounded-lg shadow-sm">
+                <h2 className="text-xl font-bold mb-4">دفعات الأيتام</h2>
+                
+                {orphansData.length === 0 ? (
+                    <div className="text-center text-text-secondary py-8">
+                        لا توجد أيتام مسجلة
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {orphansData.map(orphan => {
+                            const isExpanded = expandedOrphans.has(orphan.uuid || orphan.id.toString());
+                            const orphanPayments = orphan.payments;
+                            const paidCount = orphanPayments.filter(p => p.status === PaymentStatus.Paid).length;
+                            const dueCount = orphanPayments.filter(p => p.status === PaymentStatus.Due).length;
+                            const overdueCount = orphanPayments.filter(p => p.status === PaymentStatus.Overdue).length;
+                            const processingCount = orphanPayments.filter(p => p.status === PaymentStatus.Processing).length;
+                            const totalAmount = orphanPayments.reduce((sum, p) => sum + p.amount, 0);
+
+                            return (
+                                <div key={orphan.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+                                    {/* Orphan Header */}
+                                    <div
+                                        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                                        onClick={() => toggleOrphanExpansion(orphan.uuid || orphan.id.toString())}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4 flex-1">
+                                                <img
+                                                    src={orphan.photoUrl}
+                                                    alt={orphan.name}
+                                                    className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <h3 className="text-xl font-bold text-gray-800">{orphan.name}</h3>
+                                                        <Link
+                                                            to={`/orphan/${orphan.id}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="text-primary hover:text-primary-hover text-sm font-semibold"
+                                                        >
+                                                            عرض الملف الشخصي →
+                                                        </Link>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-4 mt-2">
+                                                        <span className="text-sm text-gray-600">
+                                                            إجمالي الدفعات: <strong>{orphanPayments.length}</strong>
+                                                        </span>
+                                                        <span className="text-sm text-gray-600">
+                                                            المبلغ الإجمالي: <strong>${totalAmount.toLocaleString()}</strong>
+                                                        </span>
+                                                        {paidCount > 0 && (
+                                                            <span className="text-sm text-green-600">
+                                                                مدفوع: <strong>{paidCount}</strong>
+                                                            </span>
+                                                        )}
+                                                        {dueCount > 0 && (
+                                                            <span className="text-sm text-yellow-600">
+                                                                مستحق: <strong>{dueCount}</strong>
+                                                            </span>
+                                                        )}
+                                                        {overdueCount > 0 && (
+                                                            <span className="text-sm text-red-600">
+                                                                متأخر: <strong>{overdueCount}</strong>
+                                                            </span>
+                                                        )}
+                                                        {processingCount > 0 && (
+                                                            <span className="text-sm text-blue-600">
+                                                                قيد المعالجة: <strong>{processingCount}</strong>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    width="24"
+                                                    height="24"
+                                                    viewBox="0 0 24 24"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="2"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                                >
+                                                    <polyline points="6 9 12 15 18 9" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 12-Month Calendar View */}
+                                    {isExpanded && (
+                                        <div className="border-t border-gray-200 p-4 bg-gray-50">
+                                            {orphanPayments.length === 0 ? (
+                                                <div className="p-3 text-center text-text-secondary text-sm">
+                                                    لا توجد دفعات مسجلة
+                                                </div>
+                                            ) : (
+                                                <div className="max-w-4xl mx-auto">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <h4 className="text-lg font-bold text-gray-800">
+                                                            تقويم الدفعات
+                                                        </h4>
+                                                        <select
+                                                            value={selectedYear}
+                                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm font-semibold bg-white shadow-sm"
+                                                        >
+                                                            {Array.from({ length: 10 }, (_, i) => {
+                                                                const year = 2020 + i;
+                                                                return (
+                                                                    <option key={year} value={year}>
+                                                                        {year}
+                                                                    </option>
+                                                                );
+                                                            })}
+                                                        </select>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                                        {Array.from({ length: 12 }, (_, i) => {
+                                                            const month = new Date(selectedYear, i, 1);
+                                                            const paymentForMonth = orphanPayments.find(p => 
+                                                                p.dueDate.getFullYear() === month.getFullYear() &&
+                                                                p.dueDate.getMonth() === month.getMonth()
+                                                            );
+
+                                                            const isEditing = editingPayment?.orphanId === orphan.uuid && 
+                                                                              editingPayment?.month === month.getMonth() &&
+                                                                              editingPayment?.year === selectedYear;
+
+                                                            const getStatusForMonth = () => {
+                                                                if (!paymentForMonth) {
+                                                                    return { 
+                                                                        status: 'لا يوجد', 
+                                                                        textColor: 'text-gray-500',
+                                                                        bgColor: 'bg-white',
+                                                                        amount: null
+                                                                    };
+                                                                }
+
+                                                                switch (paymentForMonth.status) {
+                                                                    case PaymentStatus.Paid:
+                                                                        return { 
+                                                                            status: 'مدفوع', 
+                                                                            textColor: 'text-green-700',
+                                                                            bgColor: 'bg-green-100',
+                                                                            amount: paymentForMonth.amount
+                                                                        };
+                                                                    case PaymentStatus.Due:
+                                                                        return { 
+                                                                            status: 'مستحق', 
+                                                                            textColor: 'text-yellow-700',
+                                                                            bgColor: 'bg-yellow-100',
+                                                                            amount: paymentForMonth.amount
+                                                                        };
+                                                                    case PaymentStatus.Overdue:
+                                                                        return { 
+                                                                            status: 'متأخر', 
+                                                                            textColor: 'text-red-700',
+                                                                            bgColor: 'bg-red-100',
+                                                                            amount: paymentForMonth.amount
+                                                                        };
+                                                                    case PaymentStatus.Processing:
+                                                                        return { 
+                                                                            status: 'قيد المعالجة', 
+                                                                            textColor: 'text-blue-700',
+                                                                            bgColor: 'bg-blue-100',
+                                                                            amount: paymentForMonth.amount
+                                                                        };
+                                                                    default:
+                                                                        return { 
+                                                                            status: 'غير معروف', 
+                                                                            textColor: 'text-gray-500',
+                                                                            bgColor: 'bg-white',
+                                                                            amount: null
+                                                                        };
+                                                                }
+                                                            };
+
+                                                            const { status, textColor, bgColor, amount } = getStatusForMonth();
+
+                                                            return (
+                                                                <div 
+                                                                    key={month.getMonth()} 
+                                                                    className={`${bgColor} p-3 rounded-lg text-center shadow-sm transition-all duration-200 relative ${
+                                                                        canViewFinancials() ? 'cursor-pointer hover:shadow-lg hover:scale-105' : ''
+                                                                    }`}
+                                                                    onClick={() => {
+                                                                        if (canViewFinancials() && !isEditing) {
+                                                                            setEditingPayment({
+                                                                                orphanId: orphan.uuid || orphan.id.toString(),
+                                                                                month: month.getMonth(),
+                                                                                year: selectedYear,
+                                                                                amount: paymentForMonth?.amount || 50.00,
+                                                                                status: paymentForMonth?.status || PaymentStatus.Due
+                                                                            });
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    {isEditing ? (
+                                                                        <div className="space-y-2">
+                                                                            <p className="font-semibold text-gray-800 mb-1 text-sm">
+                                                                                {month.toLocaleDateString('ar-EG', { month: 'long' })}
+                                                                            </p>
+                                                                            <input
+                                                                                type="number"
+                                                                                step="0.01"
+                                                                                min="0"
+                                                                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white text-center"
+                                                                                value={editingPayment.amount}
+                                                                                onChange={(e) => {
+                                                                                    const newAmount = parseFloat(e.target.value) || 0;
+                                                                                    setEditingPayment({
+                                                                                        ...editingPayment,
+                                                                                        amount: newAmount
+                                                                                    });
+                                                                                }}
+                                                                                onClick={(e) => e.stopPropagation()}
+                                                                                placeholder="المبلغ"
+                                                                                autoFocus
+                                                                            />
+                                                                            <select
+                                                                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white"
+                                                                                value={editingPayment.status || paymentForMonth?.status || PaymentStatus.Due}
+                                                                                onChange={(e) => {
+                                                                                    const newStatus = e.target.value as PaymentStatus;
+                                                                                    setEditingPayment({
+                                                                                        ...editingPayment,
+                                                                                        status: newStatus
+                                                                                    });
+                                                                                }}
+                                                                                onClick={(e) => e.stopPropagation()}
+                                                                            >
+                                                                                <option value={PaymentStatus.Paid}>مدفوع</option>
+                                                                                <option value={PaymentStatus.Due}>مستحق</option>
+                                                                                <option value={PaymentStatus.Overdue}>متأخر</option>
+                                                                                <option value={PaymentStatus.Processing}>قيد المعالجة</option>
+                                                                            </select>
+                                                                            <div className="flex gap-1">
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        const statusToSave = editingPayment.status || paymentForMonth?.status || PaymentStatus.Due;
+                                                                                        updatePaymentStatus(
+                                                                                            orphan.uuid || orphan.id.toString(),
+                                                                                            month.getMonth(),
+                                                                                            selectedYear,
+                                                                                            statusToSave,
+                                                                                            editingPayment.amount
+                                                                                        );
+                                                                                    }}
+                                                                                    className="flex-1 text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary-hover"
+                                                                                >
+                                                                                    حفظ
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={(e) => {
+                                                                                        e.stopPropagation();
+                                                                                        setEditingPayment(null);
+                                                                                    }}
+                                                                                    className="flex-1 text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                                                                                >
+                                                                                    إلغاء
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <p className="font-semibold text-gray-800 mb-1 text-sm">
+                                                                                {month.toLocaleDateString('ar-EG', { month: 'long' })}
+                                                                            </p>
+                                                                            <p className={`text-sm font-medium ${textColor} mb-1`}>
+                                                                                {status}
+                                                                            </p>
+                                                                            {amount !== null && (
+                                                                                <p className={`text-xs font-semibold ${textColor}`}>
+                                                                                    ${amount.toLocaleString()}
+                                                                                </p>
+                                                                            )}
+                                                                            {canViewFinancials() && (
+                                                                                <p className="text-xs text-gray-400 mt-1">انقر للتعديل</p>
+                                                                            )}
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
         </div>
         <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-2 flex justify-around items-center z-30">
