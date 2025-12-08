@@ -123,14 +123,28 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 
     return (
         <div className="bg-bg-card p-6 rounded-xl shadow-md">
-            <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-primary-light text-primary rounded-lg flex items-center justify-center flex-shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4Z"/></svg>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary-light text-primary rounded-lg flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4Z"/></svg>
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-700">السجل المالي الذكي</h2>
+                        <p className="text-text-secondary">نظرة شاملة على مساهماتك وتأثيرها</p>
+                    </div>
                 </div>
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-700">السجل المالي الذكي</h2>
-                    <p className="text-text-secondary">نظرة شاملة على مساهماتك وتأثيرها</p>
-                </div>
+                <Link
+                    to="/payments"
+                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold flex items-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="7" width="20" height="10" rx="2"/>
+                        <path d="M6 12h.01"/>
+                        <path d="M10 12h.01"/>
+                        <path d="M14 12h.01"/>
+                    </svg>
+                    عرض جميع الدفعات
+                </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

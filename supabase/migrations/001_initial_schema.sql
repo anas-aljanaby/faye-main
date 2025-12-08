@@ -104,7 +104,7 @@ CREATE TABLE payments (
     amount NUMERIC(10,2) NOT NULL,
     due_date DATE NOT NULL,
     paid_date DATE,
-    status TEXT NOT NULL CHECK (status IN ('مدفوع', 'مستحق', 'متأخر')),
+    status TEXT NOT NULL CHECK (status IN ('مدفوع', 'مستحق', 'متأخر', 'قيد المعالجة')),
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
