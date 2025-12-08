@@ -141,6 +141,8 @@ export interface FinancialTransaction {
     description: string; // The original description before prefix
     transactionId: string;
     relatedOrphanIds?: number[];
+    orphanAmounts?: Record<number, number>; // Map of orphan ID to amount
+    orphanPaymentMonths?: Record<number, { month?: number; year: number; isYear: boolean }>; // Map of orphan ID to payment info
   }
 }
 
