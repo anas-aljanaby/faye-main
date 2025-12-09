@@ -12,6 +12,192 @@ import 'chartjs-adapter-date-fns';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
+// Approve Transaction Modal
+const ApproveTransactionModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onApprove: () => void;
+    transaction: FinancialTransactionWithApproval | null;
+    orphans: Orphan[];
+}> = ({ isOpen, onClose, onApprove, transaction, orphans }) => {
+    if (!isOpen || !transaction) return null;
+
+    const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                {/* Header */}
+                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-t-xl">
+                    <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h2 className="text-2xl font-bold mb-1">الموافقة على المعاملة المالية</h2>
+                            <p className="text-green-100 text-sm">يرجى مراجعة تفاصيل المعاملة قبل الموافقة</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-6">
+                    {/* Transaction Details Card */}
+                    <div className="bg-gray-50 rounded-lg p-5 border-2 border-gray-200">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            تفاصيل المعاملة
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-sm text-gray-600 mb-1">البيان</p>
+                                <p className="font-semibold text-gray-800 text-lg">{transaction.description}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600 mb-1">المبلغ</p>
+                                <p className={`font-bold text-2xl ${transaction.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>
+                                    ${transaction.amount.toLocaleString()}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600 mb-1">النوع</p>
+                                <p className="font-semibold text-gray-800">{transaction.type}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600 mb-1">التاريخ</p>
+                                <p className="font-semibold text-gray-800">{transaction.date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600 mb-1">أنشئت بواسطة</p>
+                                <p className="font-semibold text-gray-800">{transaction.createdBy}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600 mb-1">الحالة الحالية</p>
+                                <StatusPill status={transaction.status} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Receipt/Orphan Information */}
+                    {transaction.receipt && (
+                        <div className="bg-blue-50 rounded-lg p-5 border-2 border-blue-200">
+                            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                                معلومات الإيصال
+                            </h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <p className="text-sm text-gray-600 mb-1">الكافل</p>
+                                    <p className="font-semibold text-gray-800">{transaction.receipt.sponsorName}</p>
+                                </div>
+                                {transaction.receipt.orphanPaymentMonths && transaction.receipt.relatedOrphanIds && transaction.receipt.relatedOrphanIds.length > 0 && (
+                                    <div>
+                                        <p className="text-sm text-gray-600 mb-2">الأيتام والدفعات</p>
+                                        <div className="space-y-2">
+                                            {transaction.receipt.relatedOrphanIds.map(orphanId => {
+                                                const orphan = orphans.find(o => o.id === orphanId);
+                                                const paymentInfo = transaction.receipt?.orphanPaymentMonths?.[orphanId];
+                                                if (!paymentInfo || !orphan) return null;
+                                                
+                                                let paymentText = '';
+                                                if (paymentInfo.isYear) {
+                                                    paymentText = `سنة ${paymentInfo.year} كاملة`;
+                                                } else if (paymentInfo.month !== undefined) {
+                                                    paymentText = `${monthNames[paymentInfo.month]} ${paymentInfo.year}`;
+                                                }
+                                                
+                                                return (
+                                                    <div key={orphanId} className="bg-white rounded p-3 border border-blue-200">
+                                                        <div className="flex items-center gap-3">
+                                                            <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full object-cover" />
+                                                            <div className="flex-1">
+                                                                <p className="font-semibold text-gray-800">{orphan.name}</p>
+                                                                <p className="text-sm text-gray-600">دفعة: {paymentText}</p>
+                                                            </div>
+                                                            {transaction.receipt.orphanAmounts?.[orphanId] && (
+                                                                <p className="font-bold text-blue-600">${transaction.receipt.orphanAmounts[orphanId].toLocaleString()}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {transaction.orphanId && (
+                        <div className="bg-purple-50 rounded-lg p-5 border-2 border-purple-200">
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">اليتيم المرتبط</h3>
+                            {(() => {
+                                const orphan = orphans.find(o => o.id === transaction.orphanId);
+                                return orphan ? (
+                                    <div className="flex items-center gap-3">
+                                        <img src={orphan.photoUrl} alt={orphan.name} className="w-12 h-12 rounded-full object-cover" />
+                                        <p className="font-semibold text-gray-800">{orphan.name}</p>
+                                    </div>
+                                ) : null;
+                            })()}
+                        </div>
+                    )}
+
+                    {/* Warning/Info Box */}
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                        <div className="flex items-start gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-600 flex-shrink-0 mt-0.5">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                            <div>
+                                <p className="font-semibold text-yellow-800 mb-1">تنبيه مهم</p>
+                                <p className="text-sm text-yellow-700">بعد الموافقة على هذه المعاملة، سيتم اعتمادها نهائياً في النظام المالي. تأكد من صحة جميع المعلومات قبل المتابعة.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="bg-gray-50 p-6 rounded-b-xl border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
+                    <button 
+                        onClick={onClose} 
+                        className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-colors flex items-center justify-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                        إلغاء
+                    </button>
+                    <button 
+                        onClick={onApprove} 
+                        className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        الموافقة على المعاملة
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Reject Transaction Modal
 const RejectTransactionModal: React.FC<{
     isOpen: boolean;
@@ -891,6 +1077,7 @@ const FinancialSystem: React.FC = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [receiptToShow, setReceiptToShow] = useState<FinancialTransaction | null>(null);
     const [transactionToReject, setTransactionToReject] = useState<FinancialTransactionWithApproval | null>(null);
+    const [transactionToApprove, setTransactionToApprove] = useState<FinancialTransactionWithApproval | null>(null);
     const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
     
     // Orphan payments states
@@ -978,12 +1165,14 @@ const FinancialSystem: React.FC = () => {
         };
     }, [isScrolling]);
 
-    const handleApprove = async (transactionId: string) => {
-        const result = await approveTransaction(transactionId);
+    const handleApprove = async () => {
+        if (!transactionToApprove) return;
+        const result = await approveTransaction(transactionToApprove.id);
         if (!result.success) {
             alert(result.error || 'حدث خطأ أثناء الموافقة');
+        } else {
+            setTransactionToApprove(null);
         }
-        setActionMenuOpen(null);
     };
 
     const handleReject = async (reason: string) => {
@@ -1797,20 +1986,22 @@ const FinancialSystem: React.FC = () => {
                                             <td className="p-3 relative">
                                                 {/* Action buttons based on permissions */}
                                                 {isPending && canApproveExpense && tx.type === TransactionType.Expense && (
-                                                    <div className="flex items-center gap-1">
+                                                    <div className="flex items-center gap-2">
                                                         <button 
-                                                            onClick={() => handleApprove(tx.id)}
-                                                            className="p-1 text-green-600 hover:bg-green-100 rounded"
+                                                            onClick={() => setTransactionToApprove(txWithApproval)}
+                                                            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-semibold flex items-center gap-2 transition-colors shadow-md hover:shadow-lg"
                                                             title="موافقة"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                            </button>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                                            موافقة
+                                                        </button>
                                                         <button 
                                                             onClick={() => setTransactionToReject(txWithApproval)}
-                                                            className="p-1 text-red-600 hover:bg-red-100 rounded"
+                                                            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold flex items-center gap-2 transition-colors shadow-md hover:shadow-lg"
                                                             title="رفض"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                            رفض
                                                         </button>
                                                     </div>
                                                 )}
@@ -2261,6 +2452,13 @@ const FinancialSystem: React.FC = () => {
         <ReceiptModal
             transaction={receiptToShow}
             onClose={() => setReceiptToShow(null)}
+        />
+        <ApproveTransactionModal
+            isOpen={!!transactionToApprove}
+            onClose={() => setTransactionToApprove(null)}
+            onApprove={handleApprove}
+            transaction={transactionToApprove}
+            orphans={orphansData}
         />
         <RejectTransactionModal
             isOpen={!!transactionToReject}

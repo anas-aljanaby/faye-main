@@ -49,7 +49,7 @@ const SendMessageModal: React.FC<{
     );
 };
 
-const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orphan[] }> = ({ sponsor, sponsoredOrphans }) => {
+const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orphan[]; isViewingOwnPage?: boolean }> = ({ sponsor, sponsoredOrphans, isViewingOwnPage = false }) => {
     const sponsorTransactions = useMemo(() => {
         return financialTransactions.filter(
             tx => tx.type === TransactionType.Income && tx.receipt?.sponsorName === sponsor.name
@@ -131,7 +131,11 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
                     }
 
                     return (
-                        <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <Link 
+                            to={isViewingOwnPage ? '/payments' : `/orphan/${orphan.id}`} 
+                            key={orphan.id} 
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        >
                             <div className="flex items-center gap-3">
                                 <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full object-cover" />
                                 <span className="font-semibold text-gray-800">{orphan.name}</span>
@@ -172,8 +176,12 @@ const SponsorPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { sponsors: sponsorsData, loading: sponsorsLoading, refetch: refetchSponsors } = useSponsors();
     const { orphans: orphansData, refetch: refetchOrphans } = useOrphans();
-    const { canEditOrphans, canEditSponsors, isManager } = useAuth();
+    const { canEditOrphans, canEditSponsors, isManager, userProfile } = useAuth();
     const sponsor = useMemo(() => findById(sponsorsData, id || ''), [sponsorsData, id]);
+    // Check if current user is viewing their own sponsor page
+    const isViewingOwnPage = useMemo(() => {
+        return userProfile?.role === 'sponsor' && userProfile?.id === sponsor?.uuid;
+    }, [userProfile, sponsor]);
     const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
     const [showAssignOrphansModal, setShowAssignOrphansModal] = useState(false);
     
@@ -315,7 +323,11 @@ const SponsorPage: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {sponsoredOrphans.length > 0 ? (
                                 sponsoredOrphans.map(orphan => (
-                                    <Link key={orphan.id} to={`/orphan/${orphan.id}`} className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                                    <Link 
+                                        key={orphan.id} 
+                                        to={isViewingOwnPage ? '/payments' : `/orphan/${orphan.id}`} 
+                                        className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                                    >
                                         <img src={orphan.photoUrl} alt={orphan.name} className="w-16 h-16 rounded-full object-cover" />
                                         <div>
                                             <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
@@ -329,7 +341,7 @@ const SponsorPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <SponsorFinancialRecord sponsor={sponsor} sponsoredOrphans={sponsoredOrphans} />
+                    <SponsorFinancialRecord sponsor={sponsor} sponsoredOrphans={sponsoredOrphans} isViewingOwnPage={isViewingOwnPage} />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="bg-yellow-50 p-6 rounded-lg shadow-md flex flex-col items-center text-center transform -rotate-2 hover:rotate-0 hover:scale-105 transition-transform duration-300">

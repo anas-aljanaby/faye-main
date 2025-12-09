@@ -48,6 +48,7 @@ BEGIN
     DELETE FROM sponsor_team_members;
     DELETE FROM team_member_orphans;
     DELETE FROM sponsor_orphans;
+    DELETE FROM sponsor_notes;
     DELETE FROM orphans;
     DELETE FROM user_permissions;
     DELETE FROM user_profiles;
