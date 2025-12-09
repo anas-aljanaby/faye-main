@@ -204,13 +204,22 @@ const AddTransactionModal: React.FC<{
         onClose();
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (isSubmitting) {
+            console.log('Form already submitting, ignoring duplicate submit');
+            return;
+        }
         
         if (!description.trim() || !amount) {
             alert('الرجاء ملء جميع الحقول المطلوبة.');
             return;
         }
+        
+        setIsSubmitting(true);
 
         let transactionData: Omit<FinancialTransaction, 'id' | 'date' | 'status'>;
 
@@ -286,8 +295,15 @@ const AddTransactionModal: React.FC<{
             };
         }
         
-        onAdd(transactionData);
-        resetForm();
+        try {
+            await onAdd(transactionData);
+            resetForm();
+        } catch (error) {
+            console.error('Error in handleSubmit:', error);
+            // Error is already handled in handleAddTransaction
+        } finally {
+            setIsSubmitting(false);
+        }
     };
     
     const handleSaveNewSponsor = async (name: string) => {
@@ -613,14 +629,14 @@ const AddTransactionModal: React.FC<{
                         <button type="button" onClick={resetForm} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
                         <button 
                             type="submit" 
-                            disabled={!isFormValid}
+                            disabled={!isFormValid || isSubmitting}
                             className={`py-2 px-5 rounded-lg font-semibold transition-colors ${
-                                isFormValid 
+                                isFormValid && !isSubmitting
                                     ? 'bg-primary text-white hover:bg-primary-hover cursor-pointer' 
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }`}
                         >
-                            {type === TransactionType.Income ? 'اصدار إيصال تبرع' : 'حفظ'}
+                            {isSubmitting ? 'جاري الحفظ...' : (type === TransactionType.Income ? 'اصدار إيصال تبرع' : 'حفظ')}
                         </button>
                     </div>
                 </form>
@@ -993,71 +1009,100 @@ const FinancialSystem: React.FC = () => {
             return;
         }
         
+        // Refresh transactions to update the UI
+        await refetchTransactions(false);
+        
         // If transaction had payment months, revert those payments
         if (transaction && 
             transaction.type === TransactionType.Income && 
             transaction.receipt?.orphanPaymentMonths && 
             transaction.receipt?.relatedOrphanIds) {
             
-            const paidDate = new Date().toISOString().split('T')[0];
+            // Use the transaction's date to match payments that were marked as paid by this transaction
+            const transactionDate = transaction.date.toISOString().split('T')[0];
             
             for (const orphanId of transaction.receipt.relatedOrphanIds) {
                 const orphan = orphansData.find(o => o.id === orphanId);
-                if (!orphan || !orphan.uuid) continue;
+                if (!orphan || !orphan.uuid) {
+                    console.warn(`Orphan ${orphanId} not found or missing UUID`);
+                    continue;
+                }
 
                 const paymentInfo = transaction.receipt.orphanPaymentMonths[orphanId];
-                if (!paymentInfo) continue;
+                if (!paymentInfo) {
+                    console.warn(`No payment info for orphan ${orphanId}`);
+                    continue;
+                }
 
                 try {
                     if (paymentInfo.isYear) {
                         // Revert all 12 months for the year
                         for (let month = 0; month < 12; month++) {
                             const dueDate = new Date(paymentInfo.year, month, 1);
-                            const dueDateStr = dueDate.toISOString().split('T')[0];
                             
-                            // Find payment for this month
-                            const existingPayment = orphan.payments.find(p => 
-                                p.dueDate.getFullYear() === paymentInfo.year &&
-                                p.dueDate.getMonth() === month &&
-                                p.status === PaymentStatus.Paid &&
-                                p.paidDate && 
-                                new Date(p.paidDate).toISOString().split('T')[0] === paidDate
-                            );
+                            // Find payment for this month that was marked as paid on the transaction date
+                            // We match by month/year and check if it was paid on the transaction date
+                            const existingPayment = orphan.payments.find(p => {
+                                const pYear = p.dueDate.getFullYear();
+                                const pMonth = p.dueDate.getMonth();
+                                const pPaidDate = p.paidDate ? new Date(p.paidDate).toISOString().split('T')[0] : null;
+                                
+                                return pYear === paymentInfo.year &&
+                                       pMonth === month &&
+                                       p.status === PaymentStatus.Paid &&
+                                       pPaidDate === transactionDate;
+                            });
 
                             if (existingPayment) {
-                                // Revert to Due status (or delete if it was created by this transaction)
-                                await supabase
+                                // Revert to Due status and clear paid_date
+                                const { error } = await supabase
                                     .from('payments')
                                     .update({
                                         status: PaymentStatus.Due,
                                         paid_date: null,
                                     })
                                     .eq('id', existingPayment.id);
+                                
+                                if (error) {
+                                    console.error(`Error reverting payment for orphan ${orphanId}, month ${month}:`, error);
+                                } else {
+                                    console.log(`Reverted payment for orphan ${orphanId}, month ${month} to Due`);
+                                }
                             }
                         }
                     } else if (paymentInfo.month !== undefined) {
                         // Revert single month payment
                         const dueDate = new Date(paymentInfo.year, paymentInfo.month, 1);
-                        const dueDateStr = dueDate.toISOString().split('T')[0];
                         
-                        // Find payment for this month
-                        const existingPayment = orphan.payments.find(p => 
-                            p.dueDate.getFullYear() === paymentInfo.year &&
-                            p.dueDate.getMonth() === paymentInfo.month &&
-                            p.status === PaymentStatus.Paid &&
-                            p.paidDate && 
-                            new Date(p.paidDate).toISOString().split('T')[0] === paidDate
-                        );
+                        // Find payment for this month that was marked as paid on the transaction date
+                        const existingPayment = orphan.payments.find(p => {
+                            const pYear = p.dueDate.getFullYear();
+                            const pMonth = p.dueDate.getMonth();
+                            const pPaidDate = p.paidDate ? new Date(p.paidDate).toISOString().split('T')[0] : null;
+                            
+                            return pYear === paymentInfo.year &&
+                                   pMonth === paymentInfo.month &&
+                                   p.status === PaymentStatus.Paid &&
+                                   pPaidDate === transactionDate;
+                        });
 
                         if (existingPayment) {
-                            // Revert to Due status
-                            await supabase
+                            // Revert to Due status and clear paid_date
+                            const { error } = await supabase
                                 .from('payments')
                                 .update({
                                     status: PaymentStatus.Due,
                                     paid_date: null,
                                 })
                                 .eq('id', existingPayment.id);
+                            
+                            if (error) {
+                                console.error(`Error reverting payment for orphan ${orphanId}, month ${paymentInfo.month}:`, error);
+                            } else {
+                                console.log(`Reverted payment for orphan ${orphanId}, month ${paymentInfo.month} to Due`);
+                            }
+                        } else {
+                            console.warn(`No matching payment found for orphan ${orphanId}, month ${paymentInfo.month}, transaction date ${transactionDate}`);
                         }
                     }
                 } catch (error) {
@@ -1065,8 +1110,9 @@ const FinancialSystem: React.FC = () => {
                 }
             }
             
-            // Refresh orphans to get updated payments
+            // Refresh orphans to get updated payments (this will also update sponsor view)
             await refetchOrphans();
+            console.log('Orphan payments refreshed after transaction deletion');
         }
         
         setActionMenuOpen(null);
@@ -1204,12 +1250,30 @@ const FinancialSystem: React.FC = () => {
     const handleAddTransaction = async (data: Omit<FinancialTransaction, 'id' | 'date' | 'status'>) => {
         try {
             console.log('Adding transaction:', data);
-            const transactionId = await addTransactionToDB(data);
-            console.log('Transaction created with ID:', transactionId);
+            console.log('Receipt data:', data.receipt);
+            console.log('Orphan payment months:', data.receipt?.orphanPaymentMonths);
+            console.log('Related orphan IDs:', data.receipt?.relatedOrphanIds);
             
-            // Refresh transactions first to ensure we have the latest data
-            await refetchTransactions();
+            let transactionId: string | undefined;
+            try {
+                transactionId = await addTransactionToDB(data);
+                console.log('Transaction created with ID:', transactionId);
+            } catch (dbError) {
+                console.error('Database error in addTransactionToDB:', dbError);
+                throw dbError;
+            }
+            
+            if (!transactionId) {
+                throw new Error('Transaction was not created - no ID returned');
+            }
+            
             setIsAddModalOpen(false);
+            
+            // Refresh transactions after closing modal to show the new transaction
+            // Use false to bypass cache and force fresh fetch
+            console.log('Refreshing transactions to show new transaction...');
+            await refetchTransactions(false);
+            console.log('Transactions refreshed');
 
             // If payment info is selected, mark payments as paid for related orphans
             if (data.type === TransactionType.Income && 
@@ -1217,7 +1281,8 @@ const FinancialSystem: React.FC = () => {
                 data.receipt?.relatedOrphanIds && 
                 data.receipt.relatedOrphanIds.length > 0) {
                 
-                const paidDate = new Date().toISOString().split('T')[0];
+                // Use the receipt date (transaction date) for paid_date to match when deleting
+                const paidDate = data.receipt.date.toISOString().split('T')[0];
                 
                 // Update payment status for each related orphan
                 for (const orphanId of data.receipt.relatedOrphanIds) {
@@ -1327,7 +1392,8 @@ const FinancialSystem: React.FC = () => {
             }
 
             // Refresh transactions to get the new one with receipt
-            await refetchTransactions();
+            // Use false to bypass cache and force fresh fetch
+            await refetchTransactions(false);
             
             // Find the newly added transaction to show receipt if it's income
             if (data.type === TransactionType.Income && transactionId) {
@@ -1350,8 +1416,14 @@ const FinancialSystem: React.FC = () => {
             }
         } catch (error) {
             console.error('Error adding transaction:', error);
+            console.error('Error details:', {
+                message: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                data: data
+            });
             const errorMessage = error instanceof Error ? error.message : 'حدث خطأ غير معروف';
             alert(`حدث خطأ أثناء إضافة الحركة المالية: ${errorMessage}. الرجاء المحاولة مرة أخرى.`);
+            setIsAddModalOpen(false); // Close modal even on error
         }
     };
 
@@ -1686,6 +1758,32 @@ const FinancialSystem: React.FC = () => {
                                                         </span>
                                                     )}
                                             </div>
+                                            {/* Display payment info for orphan sponsorship payments */}
+                                            {tx.receipt && tx.receipt.orphanPaymentMonths && tx.receipt.relatedOrphanIds && tx.receipt.relatedOrphanIds.length > 0 && (
+                                                <div className="text-xs text-blue-600 mt-1 space-y-1">
+                                                    <div className="font-semibold">الكافل: {tx.receipt.sponsorName}</div>
+                                                    {tx.receipt.relatedOrphanIds.map(orphanId => {
+                                                        const orphan = orphansData.find(o => o.id === orphanId);
+                                                        const paymentInfo = tx.receipt?.orphanPaymentMonths?.[orphanId];
+                                                        if (!paymentInfo || !orphan) return null;
+                                                        
+                                                        const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+                                                        
+                                                        let paymentText = '';
+                                                        if (paymentInfo.isYear) {
+                                                            paymentText = `سنة ${paymentInfo.year} كاملة`;
+                                                        } else if (paymentInfo.month !== undefined) {
+                                                            paymentText = `${monthNames[paymentInfo.month]} ${paymentInfo.year}`;
+                                                        }
+                                                        
+                                                        return (
+                                                            <div key={orphanId} className="text-gray-600">
+                                                                <span className="font-medium">{orphan.name}</span>: {paymentText}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                                 {txWithApproval.approvedBy && (
                                                     <div className="text-xs text-green-600 mt-1">وافق عليها: {txWithApproval.approvedBy}</div>
                                                 )}

@@ -92,6 +92,7 @@ export const useFinancialTransactions = () => {
 
       let receiptsData: any[] = [];
       let receiptOrphansData: any[] = [];
+      let paymentsData: any[] = [];
 
       if (incomeTransactionIds.length > 0) {
         const { data: receipts } = await supabase
@@ -112,6 +113,25 @@ export const useFinancialTransactions = () => {
             .in('receipt_id', receiptIds);
 
           receiptOrphansData = receiptOrphans || [];
+          
+          // Fetch payments that were marked as paid by these transactions
+          // We match by paid_date matching transaction date and orphan_id matching receipt_orphans
+          const transactionDates = transactionsData
+            .filter(tx => incomeTransactionIds.includes(tx.id))
+            .map(tx => new Date(tx.date).toISOString().split('T')[0]);
+          
+          const orphanIdsFromReceipts = receiptOrphansData.map(ro => ro.orphan_id);
+          
+          if (orphanIdsFromReceipts.length > 0 && transactionDates.length > 0) {
+            const { data: payments } = await supabase
+              .from('payments')
+              .select('*')
+              .in('orphan_id', orphanIdsFromReceipts)
+              .in('paid_date', transactionDates)
+              .eq('status', 'مدفوع');
+            
+            paymentsData = payments || [];
+          }
         }
       }
 
@@ -131,6 +151,12 @@ export const useFinancialTransactions = () => {
           orphanUuidMap.set(tx.orphan_id, uuidToNumber(tx.orphan_id));
         }
       });
+      // Also add orphans from receipt_orphans
+      receiptOrphansData.forEach(ro => {
+        if (!orphanUuidMap.has(ro.orphan_id)) {
+          orphanUuidMap.set(ro.orphan_id, uuidToNumber(ro.orphan_id));
+        }
+      });
 
       // Build transactions with receipts
       const transactionsWithReceipts = transactionsData.map((tx) => {
@@ -145,6 +171,67 @@ export const useFinancialTransactions = () => {
               return numId !== undefined ? numId : uuidToNumber(ro.orphan_id);
             });
 
+          // Build orphanPaymentMonths from payments table
+          // Match payments by: orphan_id from receipt_orphans AND paid_date matching transaction date
+          const transactionDateStr = new Date(tx.date).toISOString().split('T')[0];
+          const orphanPaymentMonths: Record<number, { month?: number; year: number; isYear: boolean }> = {};
+          const orphanAmounts: Record<number, number> = {};
+          
+          receiptOrphans.forEach(ro => {
+            const numId = orphanUuidMap.get(ro.orphan_id);
+            const orphanId = numId !== undefined ? numId : uuidToNumber(ro.orphan_id);
+            
+            // Find payments for this orphan that were paid on this transaction date
+            const relatedPayments = paymentsData.filter(p => 
+              p.orphan_id === ro.orphan_id && 
+              p.paid_date === transactionDateStr
+            );
+            
+            if (relatedPayments.length > 0) {
+              // Group payments by year to determine if it's a full year payment
+              const paymentsByYear = new Map<number, any[]>();
+              relatedPayments.forEach(p => {
+                const dueDate = new Date(p.due_date);
+                const year = dueDate.getFullYear();
+                if (!paymentsByYear.has(year)) {
+                  paymentsByYear.set(year, []);
+                }
+                paymentsByYear.get(year)!.push(p);
+              });
+              
+              // For each year, check if it's a full year (12 months) or specific month(s)
+              paymentsByYear.forEach((payments, year) => {
+                if (payments.length === 12) {
+                  // Full year payment
+                  orphanPaymentMonths[orphanId] = {
+                    year,
+                    isYear: true,
+                  };
+                } else if (payments.length === 1) {
+                  // Single month payment
+                  const dueDate = new Date(payments[0].due_date);
+                  orphanPaymentMonths[orphanId] = {
+                    month: dueDate.getMonth(),
+                    year,
+                    isYear: false,
+                  };
+                } else {
+                  // Multiple months but not full year - use the first month as reference
+                  const dueDate = new Date(payments[0].due_date);
+                  orphanPaymentMonths[orphanId] = {
+                    month: dueDate.getMonth(),
+                    year,
+                    isYear: false,
+                  };
+                }
+              });
+            }
+            
+            if (ro.amount !== null && ro.amount !== undefined) {
+              orphanAmounts[orphanId] = parseFloat(ro.amount.toString());
+            }
+          });
+
           receiptData = {
             sponsorName: receipt.sponsor?.name || '',
             donationCategory: receipt.donation_category,
@@ -153,6 +240,8 @@ export const useFinancialTransactions = () => {
             description: receipt.description || '',
             transactionId: tx.id,
             relatedOrphanIds,
+            orphanPaymentMonths: Object.keys(orphanPaymentMonths).length > 0 ? orphanPaymentMonths : undefined,
+            orphanAmounts: Object.keys(orphanAmounts).length > 0 ? orphanAmounts : undefined,
           };
         }
 
@@ -217,30 +306,93 @@ export const useFinancialTransactions = () => {
       }
 
       // Insert transaction
-      const { data: newTransaction, error: txError } = await supabase
-        .from('financial_transactions')
-        .insert({
-          organization_id: userProfile.organization_id,
-          description: transactionData.description,
-          created_by_id: userProfile.id,
-          amount: transactionData.amount,
-          status: status,
-          type: transactionData.type,
-          orphan_id: orphanUuid,
-          date: new Date(),
-        })
-        .select()
-        .single();
+      console.log('Inserting transaction with data:', {
+        organization_id: userProfile.organization_id,
+        description: transactionData.description,
+        created_by_id: userProfile.id,
+        amount: transactionData.amount,
+        status: status,
+        type: transactionData.type,
+        orphan_id: orphanUuid,
+      });
+      
+      // Use current timestamp for date
+      const now = new Date();
+      const insertData = {
+        organization_id: userProfile.organization_id,
+        description: transactionData.description,
+        created_by_id: userProfile.id,
+        amount: transactionData.amount,
+        status: status,
+        type: transactionData.type,
+        orphan_id: orphanUuid || null,
+        // Don't set date - let database use DEFAULT NOW()
+        // date: now.toISOString(),
+      };
+      
+      console.log('Insert data prepared (date will use DB default):', insertData);
+      
+      console.log('About to insert transaction with:', insertData);
+      console.log('Supabase client check:', !!supabase);
+      console.log('User profile check:', !!userProfile);
+      
+      let newTransaction;
+      let txError;
+      
+      try {
+        console.log('Creating insert promise...');
+        // Direct insert without timeout - let Supabase handle it
+        const { data: newTransactionData, error: txErrorData } = await supabase
+          .from('financial_transactions')
+          .insert(insertData)
+          .select()
+          .single();
+        
+        newTransaction = newTransactionData;
+        txError = txErrorData;
+        
+        console.log('Insert result received:', { 
+          hasData: !!newTransaction, 
+          hasError: !!txError,
+          transactionId: newTransaction?.id,
+          errorMessage: txError?.message 
+        });
+      } catch (insertErr) {
+        console.error('Exception during insert:', insertErr);
+        console.error('Exception type:', insertErr instanceof Error ? insertErr.constructor.name : typeof insertErr);
+        console.error('Exception message:', insertErr instanceof Error ? insertErr.message : String(insertErr));
+        throw insertErr;
+      }
 
-      if (txError) throw txError;
+      if (txError) {
+        console.error('Error inserting transaction:', txError);
+        console.error('Error details:', {
+          message: txError.message,
+          details: txError.details,
+          hint: txError.hint,
+          code: txError.code
+        });
+        throw txError;
+      }
+      
+      if (!newTransaction) {
+        console.error('Transaction insert returned no data');
+        throw new Error('Transaction insert returned no data');
+      }
+      
+      console.log('Transaction inserted successfully:', newTransaction.id);
+      console.log('New transaction data:', newTransaction);
 
       // If it's an income transaction with a receipt, create the receipt
       if (transactionData.type === TransactionType.Income && transactionData.receipt) {
+        console.log('Creating receipt for transaction:', newTransaction.id);
+        console.log('Receipt data:', transactionData.receipt);
+        
         // Find sponsor UUID by name or ID
         let sponsorUuid: string | undefined = undefined;
         
         // Try to find sponsor by name first
-        const { data: sponsors } = await supabase
+        const { data: sponsors, error: sponsorError } = await supabase
           .from('user_profiles')
           .select('id')
           .eq('organization_id', userProfile.organization_id)
@@ -248,16 +400,32 @@ export const useFinancialTransactions = () => {
           .ilike('name', `%${transactionData.receipt.sponsorName}%`)
           .limit(1);
 
+        if (sponsorError) {
+          console.error('Error finding sponsor:', sponsorError);
+          throw sponsorError;
+        }
+
         if (sponsors && sponsors.length > 0) {
           sponsorUuid = sponsors[0].id;
+          console.log('Found sponsor UUID:', sponsorUuid);
         }
 
         if (!sponsorUuid) {
-          throw new Error('Sponsor not found');
+          console.error('Sponsor not found for name:', transactionData.receipt.sponsorName);
+          throw new Error(`Sponsor not found: ${transactionData.receipt.sponsorName}`);
         }
 
         // Create receipt (use transaction date for consistency)
         const transactionDate = new Date(newTransaction.date);
+        console.log('Inserting receipt with data:', {
+          transaction_id: newTransaction.id,
+          sponsor_id: sponsorUuid,
+          donation_category: transactionData.receipt.donationCategory,
+          amount: transactionData.receipt.amount,
+          date: transactionDate.toISOString().split('T')[0],
+          description: transactionData.receipt.description,
+        });
+        
         const { data: receipt, error: receiptError } = await supabase
           .from('receipts')
           .insert({
@@ -271,7 +439,12 @@ export const useFinancialTransactions = () => {
           .select()
           .single();
 
-        if (receiptError) throw receiptError;
+        if (receiptError) {
+          console.error('Error creating receipt:', receiptError);
+          throw receiptError;
+        }
+        
+        console.log('Receipt created successfully:', receipt.id);
 
         // Create receipt_orphans entries if there are related orphans
         if (transactionData.receipt.relatedOrphanIds && transactionData.receipt.relatedOrphanIds.length > 0) {
@@ -282,19 +455,20 @@ export const useFinancialTransactions = () => {
             .eq('organization_id', userProfile.organization_id);
 
           if (allOrphans) {
-            const orphanUuids = transactionData.receipt.relatedOrphanIds
+            const receiptOrphans = transactionData.receipt.relatedOrphanIds
               .map(numId => {
                 const orphan = allOrphans.find(o => uuidToNumber(o.id) === numId);
-                return orphan?.id;
+                if (!orphan) return null;
+                
+                return {
+                  receipt_id: receipt.id,
+                  orphan_id: orphan.id,
+                  amount: transactionData.receipt.orphanAmounts?.[numId] || null,
+                };
               })
-              .filter((id): id is string => id !== undefined);
+              .filter((item): item is NonNullable<typeof item> => item !== null);
 
-            if (orphanUuids.length > 0) {
-              const receiptOrphans = orphanUuids.map(orphanId => ({
-                receipt_id: receipt.id,
-                orphan_id: orphanId,
-              }));
-
+            if (receiptOrphans.length > 0) {
               const { error: receiptOrphansError } = await supabase
                 .from('receipt_orphans')
                 .insert(receiptOrphans);
@@ -305,13 +479,13 @@ export const useFinancialTransactions = () => {
         }
       }
 
-      // Refresh transactions to get the full transaction with receipt
-      await fetchTransactions(false);
-      
-      // Return the transaction ID so the component can find it after refetch
+      // Don't refresh here - let the component handle it to avoid double refresh
+      // This also prevents hanging if fetchTransactions has issues
+      console.log('Transaction creation complete, returning ID:', newTransaction.id);
       return newTransaction.id;
     } catch (err) {
       console.error('Error adding transaction:', err);
+      console.error('Error stack:', err instanceof Error ? err.stack : 'No stack');
       throw err;
     }
   };
