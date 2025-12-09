@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useOrphans } from '../hooks/useOrphans';
 import { useSponsors } from '../hooks/useSponsors';
@@ -11,6 +11,7 @@ import { GoogleGenAI } from "@google/genai";
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
+import { supabase } from '../lib/supabase';
 
 const AddAchievementModal: React.FC<{
     isOpen: boolean;
@@ -442,6 +443,12 @@ const OrphanProfile: React.FC = () => {
   const [isAddLogModalOpen, setIsAddLogModalOpen] = useState(false);
   const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
   const [selectedDateForEvent, setSelectedDateForEvent] = useState<Date | null>(null);
+  
+  // Sponsor note states
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [sponsorNote, setSponsorNote] = useState<string>('');
+  const [isNoteLoading, setIsNoteLoading] = useState(false);
+  const [isSponsorOfOrphan, setIsSponsorOfOrphan] = useState(false);
 
   // Initialize edit form data when orphan loads or edit mode is enabled
   React.useEffect(() => {
@@ -463,6 +470,130 @@ const OrphanProfile: React.FC = () => {
       });
     }
   }, [orphan, isEditMode]);
+
+  // Check if current user is sponsor of this orphan and fetch note
+  useEffect(() => {
+    const checkSponsorAndFetchNote = async () => {
+      if (!userProfile || !orphan?.uuid || userProfile.role !== 'sponsor') {
+        setIsSponsorOfOrphan(false);
+        return;
+      }
+
+      try {
+        // Check if user sponsors this orphan
+        const { data: sponsorOrphan } = await supabase
+          .from('sponsor_orphans')
+          .select('orphan_id')
+          .eq('sponsor_id', userProfile.id)
+          .eq('orphan_id', orphan.uuid)
+          .single();
+
+        if (sponsorOrphan) {
+          setIsSponsorOfOrphan(true);
+          
+          // Fetch existing note
+          const { data: noteData } = await supabase
+            .from('sponsor_notes')
+            .select('note')
+            .eq('sponsor_id', userProfile.id)
+            .eq('orphan_id', orphan.uuid)
+            .single();
+
+          if (noteData) {
+            setSponsorNote(noteData.note);
+          }
+        } else {
+          setIsSponsorOfOrphan(false);
+        }
+      } catch (err) {
+        console.error('Error checking sponsor relationship:', err);
+        setIsSponsorOfOrphan(false);
+      }
+    };
+
+    checkSponsorAndFetchNote();
+  }, [userProfile, orphan]);
+
+  // Fetch note for team members (to display)
+  const [displayNote, setDisplayNote] = useState<{ note: string; sponsorName: string; updatedAt: Date } | null>(null);
+  
+  useEffect(() => {
+    const fetchDisplayNote = async () => {
+      if (!orphan?.uuid || !userProfile) return;
+
+      try {
+        const { data: noteData } = await supabase
+          .from('sponsor_notes')
+          .select(`
+            note,
+            updated_at,
+            sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
+          `)
+          .eq('orphan_id', orphan.uuid)
+          .single();
+
+        if (noteData) {
+          setDisplayNote({
+            note: noteData.note,
+            sponsorName: (noteData.sponsor as any)?.name || 'كافل',
+            updatedAt: new Date(noteData.updated_at),
+          });
+        } else {
+          setDisplayNote(null);
+        }
+      } catch (err) {
+        // No note found or error - that's okay
+        setDisplayNote(null);
+      }
+    };
+
+    fetchDisplayNote();
+  }, [orphan, userProfile]);
+
+  const handleSaveNote = async () => {
+    if (!userProfile || !orphan?.uuid || !isSponsorOfOrphan) return;
+
+    setIsNoteLoading(true);
+    try {
+      const { error } = await supabase
+        .from('sponsor_notes')
+        .upsert({
+          orphan_id: orphan.uuid,
+          sponsor_id: userProfile.id,
+          note: sponsorNote,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'orphan_id,sponsor_id'
+        });
+
+      if (error) throw error;
+
+      setIsNoteModalOpen(false);
+      // Refresh display note
+      const { data: noteData } = await supabase
+        .from('sponsor_notes')
+        .select(`
+          note,
+          updated_at,
+          sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
+        `)
+        .eq('orphan_id', orphan.uuid)
+        .single();
+
+      if (noteData) {
+        setDisplayNote({
+          note: noteData.note,
+          sponsorName: (noteData.sponsor as any)?.name || 'كافل',
+          updatedAt: new Date(noteData.updated_at),
+        });
+      }
+    } catch (err) {
+      console.error('Error saving note:', err);
+      alert('حدث خطأ أثناء حفظ الملاحظة');
+    } finally {
+      setIsNoteLoading(false);
+    }
+  };
 
   if (orphansLoading) {
     return <div className="text-center py-8">جاري التحميل...</div>;
@@ -727,6 +858,21 @@ const OrphanProfile: React.FC = () => {
               )}
             </>
           )}
+          {isSponsorOfOrphan && (
+            <button 
+              onClick={() => setIsNoteModalOpen(true)} 
+              className="bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 2v6h6"/>
+                <path d="M16 13H8"/>
+                <path d="M16 17H8"/>
+                <path d="M10 9H8"/>
+              </svg>
+              ملاحظة
+            </button>
+          )}
           <button id="export-button-desktop" onClick={handleExportPDF} className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2">
             {DownloadIcon}
             تصدير PDF
@@ -937,6 +1083,25 @@ const OrphanProfile: React.FC = () => {
           <InteractiveCalendar orphan={orphan} onDayClick={handleDayClickForEvent} />
         </InfoCard>
 
+      {/* Sponsor Note Display (visible to team members and sponsors) */}
+      {displayNote && (
+        <InfoCard
+          title="ملاحظة الكافل"
+          icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>}
+          className="md:col-span-2 bg-blue-50 border-2 border-blue-200"
+        >
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <p className="text-sm text-gray-600">من: <span className="font-semibold text-gray-800">{displayNote.sponsorName}</span></p>
+              <p className="text-xs text-gray-500">آخر تحديث: {displayNote.updatedAt.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+            </div>
+            <div className="bg-white p-4 rounded-lg border border-blue-200">
+              <p className="text-gray-800 whitespace-pre-wrap">{displayNote.note}</p>
+            </div>
+          </div>
+        </InfoCard>
+      )}
+
       <InfoCard
         title="سجل التحديثات"
         icon={FileTextIcon}
@@ -1015,6 +1180,21 @@ const OrphanProfile: React.FC = () => {
         </button>
         {!isEditMode && (
           <>
+            {isSponsorOfOrphan && (
+              <button 
+                onClick={() => setIsNoteModalOpen(true)} 
+                className="flex flex-col items-center text-gray-600 hover:text-primary"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <path d="M14 2v6h6"/>
+                  <path d="M16 13H8"/>
+                  <path d="M16 17H8"/>
+                  <path d="M10 9H8"/>
+                </svg>
+                <span className="text-xs">ملاحظة</span>
+              </button>
+            )}
             <button onClick={handleExportPDF} className="flex flex-col items-center text-gray-600 hover:text-primary">
               {DownloadIcon}
               <span className="text-xs">PDF</span>
@@ -1096,6 +1276,60 @@ const OrphanProfile: React.FC = () => {
         onSave={handleAddEvent}
         date={selectedDateForEvent}
     />
+
+    {/* Sponsor Note Modal */}
+    {isNoteModalOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4" onClick={() => setIsNoteModalOpen(false)}>
+        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+          <h3 className="text-xl font-bold mb-4 text-blue-600 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 2v6h6"/>
+              <path d="M16 13H8"/>
+              <path d="M16 17H8"/>
+              <path d="M10 9H8"/>
+            </svg>
+            ملاحظة شخصية
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            يمكنك إضافة ملاحظة شخصية عن {orphan.name}. هذه الملاحظة ستكون مرئية لك وللفريق.
+          </p>
+          <textarea
+            value={sponsorNote}
+            onChange={(e) => setSponsorNote(e.target.value)}
+            placeholder="اكتب ملاحظتك هنا..."
+            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md mb-4 min-h-[200px] resize-y"
+            autoFocus
+          />
+          <div className="flex justify-end gap-3">
+            <button 
+              type="button" 
+              onClick={() => setIsNoteModalOpen(false)} 
+              className="py-2 px-4 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold"
+            >
+              إلغاء
+            </button>
+            <button 
+              onClick={handleSaveNote}
+              disabled={isNoteLoading}
+              className="py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isNoteLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  جاري الحفظ...
+                </>
+              ) : (
+                'حفظ الملاحظة'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   );
 };

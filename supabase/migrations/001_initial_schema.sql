@@ -214,6 +214,17 @@ CREATE TABLE receipt_orphans (
     UNIQUE (receipt_id, orphan_id)
 );
 
+-- 15b. Sponsor notes table
+CREATE TABLE sponsor_notes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    orphan_id UUID NOT NULL REFERENCES orphans(id) ON DELETE CASCADE,
+    sponsor_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    note TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE (orphan_id, sponsor_id)
+);
+
 -- ============================================================================
 -- TEAM MEMBER TABLES
 -- ============================================================================
@@ -278,6 +289,8 @@ CREATE INDEX idx_update_logs_orphan ON update_logs(orphan_id);
 CREATE INDEX idx_update_logs_author ON update_logs(author_id);
 CREATE INDEX idx_receipts_transaction ON receipts(transaction_id);
 CREATE INDEX idx_receipt_orphans_receipt ON receipt_orphans(receipt_id);
+CREATE INDEX idx_sponsor_notes_orphan ON sponsor_notes(orphan_id);
+CREATE INDEX idx_sponsor_notes_sponsor ON sponsor_notes(sponsor_id);
 CREATE INDEX idx_conversations_user1 ON conversations(user1_id);
 CREATE INDEX idx_conversations_user2 ON conversations(user2_id);
 CREATE INDEX idx_conversations_organization ON conversations(organization_id);
@@ -319,6 +332,9 @@ CREATE TRIGGER update_program_participations_updated_at BEFORE UPDATE ON program
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_financial_transactions_updated_at BEFORE UPDATE ON financial_transactions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_sponsor_notes_updated_at BEFORE UPDATE ON sponsor_notes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
@@ -364,6 +380,7 @@ ALTER TABLE program_participations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE financial_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE receipts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE receipt_orphans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sponsor_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
@@ -848,6 +865,42 @@ CREATE POLICY "Sponsors can view receipt orphans for their receipts"
         receipt_id IN (
             SELECT id FROM receipts 
             WHERE sponsor_id = auth.uid()
+        )
+    );
+
+-- Sponsor notes policies
+CREATE POLICY "Sponsors can view their own notes"
+    ON sponsor_notes FOR SELECT
+    USING (sponsor_id = auth.uid());
+
+CREATE POLICY "Sponsors can insert their own notes"
+    ON sponsor_notes FOR INSERT
+    WITH CHECK (
+        sponsor_id = auth.uid()
+        AND orphan_id IN (
+            SELECT orphan_id FROM sponsor_orphans 
+            WHERE sponsor_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Sponsors can update their own notes"
+    ON sponsor_notes FOR UPDATE
+    USING (sponsor_id = auth.uid())
+    WITH CHECK (sponsor_id = auth.uid());
+
+CREATE POLICY "Sponsors can delete their own notes"
+    ON sponsor_notes FOR DELETE
+    USING (sponsor_id = auth.uid());
+
+CREATE POLICY "Team members can view sponsor notes"
+    ON sponsor_notes FOR SELECT
+    USING (
+        EXISTS (
+            SELECT 1 FROM orphans o
+            JOIN user_profiles up ON up.organization_id = o.organization_id
+            WHERE o.id = sponsor_notes.orphan_id
+            AND up.id = auth.uid()
+            AND up.role = 'team_member'
         )
     );
 
