@@ -28,11 +28,38 @@ DECLARE
     receipt1_id UUID;
 BEGIN
     -- ============================================================================
+    -- CLEAR ALL EXISTING DATA (in reverse dependency order)
+    -- ============================================================================
+    RAISE NOTICE 'Clearing all existing data...';
+    
+    DELETE FROM messages;
+    DELETE FROM conversations;
+    DELETE FROM receipt_orphans;
+    DELETE FROM receipts;
+    DELETE FROM financial_transactions;
+    DELETE FROM tasks;
+    DELETE FROM program_participations;
+    DELETE FROM family_members;
+    DELETE FROM update_logs;
+    DELETE FROM gifts;
+    DELETE FROM special_occasions;
+    DELETE FROM achievements;
+    DELETE FROM payments;
+    DELETE FROM sponsor_team_members;
+    DELETE FROM team_member_orphans;
+    DELETE FROM sponsor_orphans;
+    DELETE FROM orphans;
+    DELETE FROM user_permissions;
+    DELETE FROM user_profiles;
+    DELETE FROM organizations;
+    
+    RAISE NOTICE 'All existing data cleared. Starting fresh insert...';
+    
+    -- ============================================================================
     -- CREATE DEMO ORGANIZATION
     -- ============================================================================
     INSERT INTO organizations (id, name) 
-    VALUES (demo_org_id, 'منظمة فيء - Demo')
-    ON CONFLICT (id) DO NOTHING;
+    VALUES (demo_org_id, 'منظمة فيء - Demo');
 
     -- ============================================================================
     -- CREATE USER PROFILES
@@ -41,23 +68,13 @@ BEGIN
     INSERT INTO user_profiles (id, organization_id, role, name, avatar_url)
     VALUES 
         (team_member_1_id, demo_org_id, 'team_member', 'خالد الغامدي', 'https://picsum.photos/seed/khaled/100/100'),
-        (team_member_2_id, demo_org_id, 'team_member', 'نورة السعد', 'https://picsum.photos/seed/noura/100/100')
-    ON CONFLICT (id) DO UPDATE SET
-        organization_id = EXCLUDED.organization_id,
-        role = EXCLUDED.role,
-        name = EXCLUDED.name,
-        avatar_url = EXCLUDED.avatar_url;
+        (team_member_2_id, demo_org_id, 'team_member', 'نورة السعد', 'https://picsum.photos/seed/noura/100/100');
 
     -- Sponsors
     INSERT INTO user_profiles (id, organization_id, role, name, avatar_url)
     VALUES 
         (sponsor_1_id, demo_org_id, 'sponsor', 'عبدالله الراجحي', 'https://picsum.photos/seed/abdullah/100/100'),
-        (sponsor_2_id, demo_org_id, 'sponsor', 'فاطمة الأحمد', 'https://picsum.photos/seed/fatima/100/100')
-    ON CONFLICT (id) DO UPDATE SET
-        organization_id = EXCLUDED.organization_id,
-        role = EXCLUDED.role,
-        name = EXCLUDED.name,
-        avatar_url = EXCLUDED.avatar_url;
+        (sponsor_2_id, demo_org_id, 'sponsor', 'فاطمة الأحمد', 'https://picsum.photos/seed/fatima/100/100');
 
     -- ============================================================================
     -- CREATE USER PERMISSIONS
@@ -69,15 +86,7 @@ BEGIN
     )
     VALUES (
         team_member_1_id, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE
-    )
-    ON CONFLICT (user_id) DO UPDATE SET
-        can_edit_orphans = EXCLUDED.can_edit_orphans,
-        can_edit_sponsors = EXCLUDED.can_edit_sponsors,
-        can_edit_transactions = EXCLUDED.can_edit_transactions,
-        can_create_expense = EXCLUDED.can_create_expense,
-        can_approve_expense = EXCLUDED.can_approve_expense,
-        can_view_financials = EXCLUDED.can_view_financials,
-        is_manager = EXCLUDED.is_manager;
+    );
 
     -- Team Member 2 (نورة السعد) - Employee with limited permissions
     -- Can view financials, edit orphans/sponsors, but cannot create/approve expenses directly
@@ -87,15 +96,7 @@ BEGIN
     )
     VALUES (
         team_member_2_id, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE
-    )
-    ON CONFLICT (user_id) DO UPDATE SET
-        can_edit_orphans = EXCLUDED.can_edit_orphans,
-        can_edit_sponsors = EXCLUDED.can_edit_sponsors,
-        can_edit_transactions = EXCLUDED.can_edit_transactions,
-        can_create_expense = EXCLUDED.can_create_expense,
-        can_approve_expense = EXCLUDED.can_approve_expense,
-        can_view_financials = EXCLUDED.can_view_financials,
-        is_manager = EXCLUDED.is_manager;
+    );
 
     -- ============================================================================
     -- CREATE ORPHANS
@@ -158,8 +159,7 @@ BEGIN
             'سكن عائلي',
             'الأم',
             'كفالة جزئية'
-        )
-    ON CONFLICT (id) DO NOTHING;
+        );
 
     -- ============================================================================
     -- LINK SPONSORS TO ORPHANS
@@ -168,8 +168,7 @@ BEGIN
     VALUES 
         (sponsor_1_id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),  -- عبدالله sponsors أحمد
         (sponsor_1_id, 'cccccccc-cccc-cccc-cccc-cccccccccccc'),  -- عبدالله sponsors يوسف
-        (sponsor_2_id, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')   -- فاطمة sponsors سارة
-    ON CONFLICT (sponsor_id, orphan_id) DO NOTHING;
+        (sponsor_2_id, 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');  -- فاطمة sponsors سارة
 
     -- ============================================================================
     -- NOTE: Team members do not have direct relationships with orphans
@@ -190,8 +189,7 @@ BEGIN
         ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 50.00, '2024-02-01', NULL, 'متأخر'),
         ('cccccccc-cccc-cccc-cccc-cccccccccccc', 50.00, '2024-01-01', '2024-01-01', 'مدفوع'),
         ('cccccccc-cccc-cccc-cccc-cccccccccccc', 50.00, '2024-02-01', '2024-02-01', 'مدفوع'),
-        ('cccccccc-cccc-cccc-cccc-cccccccccccc', 50.00, '2024-03-01', NULL, 'مستحق')
-    ON CONFLICT DO NOTHING;
+        ('cccccccc-cccc-cccc-cccc-cccccccccccc', 50.00, '2024-03-01', NULL, 'مستحق');
 
     -- 2025 Payments for all orphans
     -- August: paid (مدفوع), September: late (متأخر), October: due (مستحق), November: processing (قيد المعالجة)
@@ -203,12 +201,7 @@ BEGIN
         '2025-08-15'::DATE as paid_date,
         'مدفوع' as status
     FROM orphans
-    WHERE organization_id = demo_org_id
-    AND NOT EXISTS (
-        SELECT 1 FROM payments 
-        WHERE payments.orphan_id = orphans.id 
-        AND payments.due_date = '2025-08-01'::DATE
-    );
+    WHERE organization_id = demo_org_id;
 
     INSERT INTO payments (orphan_id, amount, due_date, paid_date, status)
     SELECT 
@@ -218,12 +211,7 @@ BEGIN
         NULL as paid_date,
         'متأخر' as status
     FROM orphans
-    WHERE organization_id = demo_org_id
-    AND NOT EXISTS (
-        SELECT 1 FROM payments 
-        WHERE payments.orphan_id = orphans.id 
-        AND payments.due_date = '2025-09-01'::DATE
-    );
+    WHERE organization_id = demo_org_id;
 
     INSERT INTO payments (orphan_id, amount, due_date, paid_date, status)
     SELECT 
@@ -233,12 +221,7 @@ BEGIN
         NULL as paid_date,
         'مستحق' as status
     FROM orphans
-    WHERE organization_id = demo_org_id
-    AND NOT EXISTS (
-        SELECT 1 FROM payments 
-        WHERE payments.orphan_id = orphans.id 
-        AND payments.due_date = '2025-10-01'::DATE
-    );
+    WHERE organization_id = demo_org_id;
 
     INSERT INTO payments (orphan_id, amount, due_date, paid_date, status)
     SELECT 
@@ -248,12 +231,7 @@ BEGIN
         NULL as paid_date,
         'قيد المعالجة' as status
     FROM orphans
-    WHERE organization_id = demo_org_id
-    AND NOT EXISTS (
-        SELECT 1 FROM payments 
-        WHERE payments.orphan_id = orphans.id 
-        AND payments.due_date = '2025-11-01'::DATE
-    );
+    WHERE organization_id = demo_org_id;
 
     -- Achievements
     INSERT INTO achievements (orphan_id, title, description, date)
@@ -294,8 +272,7 @@ BEGIN
         ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'psychological_child', 'ملتحق', 'جلسات دعم نفسي منتظمة'),
         ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'psychological_child', 'بحاجة للتقييم', 'يحتاج تقييم نفسي'),
         ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'psychological_guardian', 'غير ملتحق', 'لم يبدأ بعد'),
-        ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'psychological_guardian', 'ملتحق', 'جلسات دعم للوالدة')
-    ON CONFLICT (orphan_id, program_type) DO NOTHING;
+        ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'psychological_guardian', 'ملتحق', 'جلسات دعم للوالدة');
 
     -- Update Logs
     INSERT INTO update_logs (orphan_id, author_id, note)
