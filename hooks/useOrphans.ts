@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import { withUserContext } from '../lib/supabaseClient';
 import { Orphan, Payment, Achievement, SpecialOccasion, Gift, UpdateLog, ProgramParticipation, PaymentStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { cache, getCacheKey } from '../utils/cache';
@@ -41,61 +42,65 @@ export const useOrphans = () => {
       setError(null);
 
       // Fetch orphans based on user role and organization
-      let orphansQuery = supabase
-        .from('orphans')
-        .select('*')
-        .eq('organization_id', userProfile.organization_id);
+      // Use withUserContext to ensure RLS policies work correctly
+      const { data: orphansData, error: orphansError } = await withUserContext(async () => {
+        let orphansQuery = supabase
+          .from('orphans')
+          .select('*')
+          .eq('organization_id', userProfile.organization_id);
 
-      // If user is a sponsor, only show their sponsored orphans
-      // Team members can see all orphans in their organization
-      if (userProfile.role === 'sponsor') {
-        const { data: sponsorOrphans } = await supabase
-          .from('sponsor_orphans')
-          .select('orphan_id')
-          .eq('sponsor_id', userProfile.id);
+        // If user is a sponsor, only show their sponsored orphans
+        // Team members can see all orphans in their organization
+        if (userProfile.role === 'sponsor') {
+          const { data: sponsorOrphans } = await supabase
+            .from('sponsor_orphans')
+            .select('orphan_id')
+            .eq('sponsor_id', userProfile.id);
 
-        if (!sponsorOrphans || sponsorOrphans.length === 0) {
-          setOrphans([]);
-          setLoading(false);
-          cache.set(cacheKey, [], 2 * 60 * 1000); // Cache empty result for 2 minutes
-          return;
+          if (!sponsorOrphans || sponsorOrphans.length === 0) {
+            return { data: [], error: null };
+          }
+
+          const orphanIds = sponsorOrphans.map(so => so.orphan_id);
+          orphansQuery = orphansQuery.in('id', orphanIds);
         }
 
-        const orphanIds = sponsorOrphans.map(so => so.orphan_id);
-        orphansQuery = orphansQuery.in('id', orphanIds);
-      }
+        return await orphansQuery;
+      });
 
-      const { data: orphansData, error: orphansError } = await orphansQuery;
-
-      if (orphansError) throw orphansError;
-      if (!orphansData) {
+      if (!orphansData || orphansData.length === 0) {
         setOrphans([]);
         setLoading(false);
         cache.set(cacheKey, [], 2 * 60 * 1000);
         return;
       }
 
+      if (orphansError) throw orphansError;
+
       const orphanIds = orphansData.map(o => o.id);
 
       // Batch fetch all related data at once instead of per-orphan queries
-      const [paymentsData, achievementsData, occasionsData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = await Promise.all([
-        // Fetch all payments for all orphans
-        supabase.from('payments').select('*').in('orphan_id', orphanIds),
-        // Fetch all achievements
-        supabase.from('achievements').select('*').in('orphan_id', orphanIds),
-        // Fetch all special occasions
-        supabase.from('special_occasions').select('*').in('orphan_id', orphanIds),
-        // Fetch all gifts
-        supabase.from('gifts').select('*').in('orphan_id', orphanIds),
-        // Fetch all update logs
-        supabase.from('update_logs').select('*, user_profiles(name)').in('orphan_id', orphanIds),
-        // Fetch all family members
-        supabase.from('family_members').select('*').in('orphan_id', orphanIds),
-        // Fetch all program participations
-        supabase.from('program_participations').select('*').in('orphan_id', orphanIds),
-        // Fetch all sponsor relationships
-        supabase.from('sponsor_orphans').select('orphan_id, sponsor_id').in('orphan_id', orphanIds),
-      ]);
+      // Use withUserContext to ensure RLS policies work correctly
+      const [paymentsData, achievementsData, occasionsData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = await withUserContext(async () => {
+        return await Promise.all([
+          // Fetch all payments for all orphans
+          supabase.from('payments').select('*').in('orphan_id', orphanIds),
+          // Fetch all achievements
+          supabase.from('achievements').select('*').in('orphan_id', orphanIds),
+          // Fetch all special occasions
+          supabase.from('special_occasions').select('*').in('orphan_id', orphanIds),
+          // Fetch all gifts
+          supabase.from('gifts').select('*').in('orphan_id', orphanIds),
+          // Fetch all update logs
+          supabase.from('update_logs').select('*, user_profiles(name)').in('orphan_id', orphanIds),
+          // Fetch all family members
+          supabase.from('family_members').select('*').in('orphan_id', orphanIds),
+          // Fetch all program participations
+          supabase.from('program_participations').select('*').in('orphan_id', orphanIds),
+          // Fetch all sponsor relationships
+          supabase.from('sponsor_orphans').select('orphan_id, sponsor_id').in('orphan_id', orphanIds),
+        ]);
+      });
 
       // Group related data by orphan_id for O(1) lookup
       const paymentsByOrphan = new Map<string, any[]>();

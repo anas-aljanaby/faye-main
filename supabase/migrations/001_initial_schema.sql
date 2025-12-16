@@ -5,6 +5,8 @@
 -- ALTER PUBLICATION supabase_realtime ADD TABLE messages;
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Enable pgcrypto extension for password hashing
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================================
 -- CORE TABLES
@@ -18,15 +20,37 @@ CREATE TABLE organizations (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 2. User profiles table (extends Supabase auth.users)
+-- 2. User profiles table (custom auth - no longer extends Supabase auth.users)
 CREATE TABLE user_profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
     role TEXT NOT NULL CHECK (role IN ('team_member', 'sponsor')),
     name TEXT NOT NULL,
     avatar_url TEXT,
+    member_id UUID UNIQUE, -- Links to user_profiles.id when a member is assigned to a user account
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 2a. Custom authentication table
+CREATE TABLE custom_auth (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    user_profile_id UUID UNIQUE REFERENCES user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    last_login_at TIMESTAMPTZ,
+    CONSTRAINT username_email_check CHECK (username IS NOT NULL AND email IS NOT NULL)
+);
+
+-- 2b. User sessions table (for RLS)
+CREATE TABLE user_sessions (
+    pid INTEGER PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '1 hour') NOT NULL
 );
 
 -- 2b. User permissions table (stores permission flags per user)
@@ -298,6 +322,12 @@ CREATE INDEX idx_conversations_last_message_at ON conversations(last_message_at 
 CREATE INDEX idx_messages_conversation ON messages(conversation_id);
 CREATE INDEX idx_messages_sender ON messages(sender_id);
 CREATE INDEX idx_messages_created_at ON messages(created_at);
+CREATE INDEX idx_custom_auth_username ON custom_auth(username);
+CREATE INDEX idx_custom_auth_email ON custom_auth(email);
+CREATE INDEX idx_custom_auth_user_profile ON custom_auth(user_profile_id);
+CREATE INDEX idx_user_profiles_member_id ON user_profiles(member_id);
+CREATE INDEX idx_user_sessions_user_id ON user_sessions(user_id);
+CREATE INDEX idx_user_sessions_expires_at ON user_sessions(expires_at);
 
 -- ============================================================================
 -- TRIGGERS FOR UPDATED_AT
@@ -343,6 +373,9 @@ CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
 CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_custom_auth_updated_at BEFORE UPDATE ON custom_auth
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Trigger to update conversation's last_message_at when a new message is inserted
 CREATE OR REPLACE FUNCTION update_conversation_last_message()
 RETURNS TRIGGER AS $$
@@ -384,12 +417,128 @@ ALTER TABLE sponsor_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE custom_auth ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================================
+-- CUSTOM AUTH FUNCTIONS
+-- ============================================================================
+
+-- Function to hash password
+CREATE OR REPLACE FUNCTION hash_password(password TEXT)
+RETURNS TEXT AS $$
+BEGIN
+    RETURN crypt(password, gen_salt('bf'));
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to verify password
+CREATE OR REPLACE FUNCTION verify_password(password TEXT, password_hash TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN password_hash = crypt(password, password_hash);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to set current user ID (called by application)
+CREATE OR REPLACE FUNCTION set_current_user_id(user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+    DELETE FROM user_sessions WHERE pid = pg_backend_pid();
+    IF user_id IS NOT NULL THEN
+        INSERT INTO user_sessions (pid, user_id, expires_at)
+        VALUES (pg_backend_pid(), user_id, NOW() + INTERVAL '1 hour')
+        ON CONFLICT (pid) DO UPDATE SET
+            user_id = EXCLUDED.user_id,
+            expires_at = EXCLUDED.expires_at;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to clear current user ID
+CREATE OR REPLACE FUNCTION clear_current_user_id()
+RETURNS VOID AS $$
+BEGIN
+    DELETE FROM user_sessions WHERE pid = pg_backend_pid();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get current user ID (replaces auth.uid() for RLS)
+CREATE OR REPLACE FUNCTION get_current_user_id()
+RETURNS UUID AS $$
+DECLARE
+    current_user_uuid UUID;
+BEGIN
+    SELECT user_id INTO current_user_uuid
+    FROM user_sessions
+    WHERE pid = pg_backend_pid()
+    AND expires_at > NOW();
+    RETURN current_user_uuid;
+END;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
+
+-- Function to authenticate user (returns user_profile_id if successful)
+CREATE OR REPLACE FUNCTION authenticate_user(login_identifier TEXT, password_text TEXT)
+RETURNS UUID AS $$
+DECLARE
+    auth_record RECORD;
+BEGIN
+    SELECT id, password_hash, user_profile_id INTO auth_record
+    FROM custom_auth
+    WHERE username = login_identifier OR email = login_identifier;
+    
+    IF auth_record IS NULL OR NOT verify_password(password_text, auth_record.password_hash) THEN
+        RETURN NULL;
+    END IF;
+    
+    UPDATE custom_auth SET last_login_at = NOW() WHERE id = auth_record.id;
+    RETURN auth_record.user_profile_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to create a user account and link it to a member
+CREATE OR REPLACE FUNCTION create_user_account(
+    p_username TEXT,
+    p_email TEXT,
+    p_password TEXT,
+    p_member_profile_id UUID
+)
+RETURNS UUID AS $$
+DECLARE
+    auth_id UUID;
+    existing_auth RECORD;
+    member_record RECORD;
+BEGIN
+    SELECT id, member_id INTO member_record FROM user_profiles WHERE id = p_member_profile_id;
+    IF member_record IS NULL THEN
+        RAISE EXCEPTION 'Member profile not found';
+    END IF;
+    IF member_record.member_id IS NOT NULL THEN
+        RAISE EXCEPTION 'Member is already linked to a user account';
+    END IF;
+    SELECT id INTO existing_auth FROM custom_auth WHERE user_profile_id = p_member_profile_id;
+    IF existing_auth IS NOT NULL THEN
+        RAISE EXCEPTION 'Member is already linked to a user account';
+    END IF;
+    SELECT id INTO existing_auth FROM custom_auth WHERE username = p_username OR email = p_email;
+    IF existing_auth IS NOT NULL THEN
+        RAISE EXCEPTION 'Username or email already exists';
+    END IF;
+    
+    INSERT INTO custom_auth (username, email, password_hash, user_profile_id)
+    VALUES (p_username, p_email, hash_password(p_password), p_member_profile_id)
+    RETURNING id INTO auth_id;
+    
+    UPDATE user_profiles SET member_id = p_member_profile_id WHERE id = p_member_profile_id;
+    RETURN auth_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Helper function to get user's organization_id
 CREATE OR REPLACE FUNCTION get_user_organization_id()
 RETURNS UUID AS $$
 BEGIN
-    RETURN (SELECT organization_id FROM user_profiles WHERE id = auth.uid());
+    RETURN (SELECT organization_id FROM user_profiles WHERE id = get_current_user_id());
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -399,7 +548,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_profiles 
-        WHERE id = auth.uid() AND role = 'team_member'
+        WHERE id = get_current_user_id() AND role = 'team_member'
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -410,7 +559,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_profiles 
-        WHERE id = auth.uid() AND role = 'sponsor'
+        WHERE id = get_current_user_id() AND role = 'sponsor'
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -421,7 +570,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_permissions 
-        WHERE user_id = auth.uid() AND is_manager = TRUE
+        WHERE user_id = get_current_user_id() AND is_manager = TRUE
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -432,7 +581,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_permissions 
-        WHERE user_id = auth.uid() AND (can_edit_orphans = TRUE OR is_manager = TRUE)
+        WHERE user_id = get_current_user_id() AND (can_edit_orphans = TRUE OR is_manager = TRUE)
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -443,7 +592,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_permissions 
-        WHERE user_id = auth.uid() AND (can_edit_sponsors = TRUE OR is_manager = TRUE)
+        WHERE user_id = get_current_user_id() AND (can_edit_sponsors = TRUE OR is_manager = TRUE)
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -454,7 +603,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_permissions 
-        WHERE user_id = auth.uid() AND (can_edit_transactions = TRUE OR is_manager = TRUE)
+        WHERE user_id = get_current_user_id() AND (can_edit_transactions = TRUE OR is_manager = TRUE)
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -465,7 +614,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_permissions 
-        WHERE user_id = auth.uid() AND (can_create_expense = TRUE OR is_manager = TRUE)
+        WHERE user_id = get_current_user_id() AND (can_create_expense = TRUE OR is_manager = TRUE)
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -476,7 +625,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_permissions 
-        WHERE user_id = auth.uid() AND (can_approve_expense = TRUE OR is_manager = TRUE)
+        WHERE user_id = get_current_user_id() AND (can_approve_expense = TRUE OR is_manager = TRUE)
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -487,7 +636,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
     RETURN EXISTS (
         SELECT 1 FROM user_permissions 
-        WHERE user_id = auth.uid() AND (can_view_financials = TRUE OR is_manager = TRUE)
+        WHERE user_id = get_current_user_id() AND (can_view_financials = TRUE OR is_manager = TRUE)
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -502,7 +651,7 @@ BEGIN
     -- Get user's organization
     SELECT organization_id INTO user_org_id
     FROM user_profiles
-    WHERE id = auth.uid();
+    WHERE id = get_current_user_id();
     
     -- Get orphan's organization (bypasses RLS due to SECURITY DEFINER)
     SELECT organization_id INTO orphan_org_id
@@ -526,7 +675,7 @@ BEGIN
     -- Get user's organization
     SELECT organization_id INTO user_org_id
     FROM user_profiles
-    WHERE id = auth.uid();
+    WHERE id = get_current_user_id();
     
     -- Get transaction's organization (bypasses RLS due to SECURITY DEFINER)
     SELECT organization_id INTO transaction_org_id
@@ -548,7 +697,7 @@ BEGIN
     RETURN EXISTS (
         SELECT 1 FROM receipts
         WHERE transaction_id = transaction_uuid
-        AND sponsor_id = auth.uid()
+        AND sponsor_id = get_current_user_id()
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -565,7 +714,22 @@ CREATE POLICY "Users can view profiles in their organization"
 
 CREATE POLICY "Users can update their own profile"
     ON user_profiles FOR UPDATE
-    USING (id = auth.uid());
+    USING (id = get_current_user_id());
+
+-- Custom auth policies
+CREATE POLICY "Users can view their own auth record"
+    ON custom_auth FOR SELECT
+    USING (user_profile_id = get_current_user_id());
+
+CREATE POLICY "Users can update their own password"
+    ON custom_auth FOR UPDATE
+    USING (user_profile_id = get_current_user_id())
+    WITH CHECK (user_profile_id = get_current_user_id());
+
+CREATE POLICY "System manages sessions"
+    ON user_sessions FOR ALL
+    USING (FALSE)
+    WITH CHECK (FALSE);
 
 -- User permissions policies
 CREATE POLICY "Users can view permissions in their organization"
@@ -574,7 +738,7 @@ CREATE POLICY "Users can view permissions in their organization"
         EXISTS (
             SELECT 1 FROM user_profiles up1
             JOIN user_profiles up2 ON up1.organization_id = up2.organization_id
-            WHERE up1.id = auth.uid() AND up2.id = user_permissions.user_id
+            WHERE up1.id = get_current_user_id() AND up2.id = user_permissions.user_id
         )
     );
 
@@ -603,7 +767,7 @@ CREATE POLICY "Sponsors can view their sponsored orphans"
     USING (
         id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
@@ -642,13 +806,13 @@ CREATE POLICY "Team members with permission can manage sponsor-orphan relationsh
 
 CREATE POLICY "Sponsors can view their own sponsor-orphan relationships"
     ON sponsor_orphans FOR SELECT
-    USING (sponsor_id = auth.uid());
+    USING (sponsor_id = get_current_user_id());
 
 -- Team Member-Orphan junction policies
 CREATE POLICY "Team members can manage their own assignments"
     ON team_member_orphans FOR ALL
     USING (
-        team_member_id = auth.uid() 
+        team_member_id = get_current_user_id() 
         OR (
             check_orphan_organization(team_member_orphans.orphan_id)
             AND is_team_member()
@@ -668,7 +832,7 @@ CREATE POLICY "Sponsors can view payments for their sponsored orphans"
     USING (
         orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
@@ -685,7 +849,7 @@ CREATE POLICY "Sponsors can view achievements for their sponsored orphans"
     USING (
         orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
@@ -702,7 +866,7 @@ CREATE POLICY "Sponsors can view special occasions for their sponsored orphans"
     USING (
         orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
@@ -719,7 +883,7 @@ CREATE POLICY "Sponsors can view gifts for their sponsored orphans"
     USING (
         orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
@@ -736,7 +900,7 @@ CREATE POLICY "Sponsors can view update logs for their sponsored orphans"
     USING (
         orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
@@ -753,7 +917,7 @@ CREATE POLICY "Sponsors can view family members for their sponsored orphans"
     USING (
         orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
@@ -770,7 +934,7 @@ CREATE POLICY "Sponsors can view program participations for their sponsored orph
     USING (
         orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
@@ -812,7 +976,7 @@ CREATE POLICY "Team members with permission can update financial transactions"
         AND (
             can_edit_transactions()
             OR can_approve_expense()
-            OR created_by_id = auth.uid()
+            OR created_by_id = get_current_user_id()
         )
     );
 
@@ -830,7 +994,7 @@ CREATE POLICY "Sponsors can view their own financial transactions"
     USING (
         organization_id = get_user_organization_id()
         AND (
-            created_by_id = auth.uid()
+            created_by_id = get_current_user_id()
             OR check_transaction_has_sponsor_receipts(id)
         )
     );
@@ -845,7 +1009,7 @@ CREATE POLICY "Team members can manage receipts in their organization"
 
 CREATE POLICY "Sponsors can view their own receipts"
     ON receipts FOR SELECT
-    USING (sponsor_id = auth.uid());
+    USING (sponsor_id = get_current_user_id());
 
 -- Receipt orphans policies
 CREATE POLICY "Team members can manage receipt orphans in their organization"
@@ -864,33 +1028,33 @@ CREATE POLICY "Sponsors can view receipt orphans for their receipts"
     USING (
         receipt_id IN (
             SELECT id FROM receipts 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
 -- Sponsor notes policies
 CREATE POLICY "Sponsors can view their own notes"
     ON sponsor_notes FOR SELECT
-    USING (sponsor_id = auth.uid());
+    USING (sponsor_id = get_current_user_id());
 
 CREATE POLICY "Sponsors can insert their own notes"
     ON sponsor_notes FOR INSERT
     WITH CHECK (
-        sponsor_id = auth.uid()
+        sponsor_id = get_current_user_id()
         AND orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 
-            WHERE sponsor_id = auth.uid()
+            WHERE sponsor_id = get_current_user_id()
         )
     );
 
 CREATE POLICY "Sponsors can update their own notes"
     ON sponsor_notes FOR UPDATE
-    USING (sponsor_id = auth.uid())
-    WITH CHECK (sponsor_id = auth.uid());
+    USING (sponsor_id = get_current_user_id())
+    WITH CHECK (sponsor_id = get_current_user_id());
 
 CREATE POLICY "Sponsors can delete their own notes"
     ON sponsor_notes FOR DELETE
-    USING (sponsor_id = auth.uid());
+    USING (sponsor_id = get_current_user_id());
 
 CREATE POLICY "Team members can view sponsor notes"
     ON sponsor_notes FOR SELECT
@@ -899,7 +1063,7 @@ CREATE POLICY "Team members can view sponsor notes"
             SELECT 1 FROM orphans o
             JOIN user_profiles up ON up.organization_id = o.organization_id
             WHERE o.id = sponsor_notes.orphan_id
-            AND up.id = auth.uid()
+            AND up.id = get_current_user_id()
             AND up.role = 'team_member'
         )
     );
@@ -908,7 +1072,7 @@ CREATE POLICY "Team members can view sponsor notes"
 CREATE POLICY "Team members can manage their own tasks"
     ON tasks FOR ALL
     USING (
-        team_member_id = auth.uid() 
+        team_member_id = get_current_user_id() 
         AND is_team_member()
     );
 
@@ -917,10 +1081,10 @@ CREATE POLICY "Team members can view tasks for orphans they're assigned to"
     USING (
         is_team_member()
         AND (
-            team_member_id = auth.uid()
+            team_member_id = get_current_user_id()
             OR orphan_id IN (
                 SELECT orphan_id FROM team_member_orphans 
-                WHERE team_member_id = auth.uid()
+                WHERE team_member_id = get_current_user_id()
             )
         )
     );
@@ -932,7 +1096,7 @@ CREATE POLICY "Team members can view sponsor-team member relationships in their 
         EXISTS (
             SELECT 1 FROM user_profiles up1
             JOIN user_profiles up2 ON up1.organization_id = up2.organization_id
-            WHERE (up1.id = auth.uid() OR up2.id = auth.uid())
+            WHERE (up1.id = get_current_user_id() OR up2.id = get_current_user_id())
             AND (up1.id = sponsor_team_members.sponsor_id OR up2.id = sponsor_team_members.team_member_id)
         )
     );
@@ -964,7 +1128,7 @@ BEGIN
     RETURN EXISTS (
         SELECT 1 FROM conversations
         WHERE id = conv_id
-        AND (user1_id = auth.uid() OR user2_id = auth.uid())
+        AND (user1_id = get_current_user_id() OR user2_id = get_current_user_id())
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -972,13 +1136,13 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Conversations policies
 CREATE POLICY "Users can view conversations they're part of"
     ON conversations FOR SELECT
-    USING (user1_id = auth.uid() OR user2_id = auth.uid());
+    USING (user1_id = get_current_user_id() OR user2_id = get_current_user_id());
 
 CREATE POLICY "Users can create conversations with users in their organization"
     ON conversations FOR INSERT
     WITH CHECK (
         organization_id = get_user_organization_id()
-        AND (user1_id = auth.uid() OR user2_id = auth.uid())
+        AND (user1_id = get_current_user_id() OR user2_id = get_current_user_id())
         AND EXISTS (
             SELECT 1 FROM user_profiles
             WHERE id IN (user1_id, user2_id)
@@ -988,7 +1152,7 @@ CREATE POLICY "Users can create conversations with users in their organization"
 
 CREATE POLICY "Users can update conversations they're part of"
     ON conversations FOR UPDATE
-    USING (user1_id = auth.uid() OR user2_id = auth.uid());
+    USING (user1_id = get_current_user_id() OR user2_id = get_current_user_id());
 
 -- Messages policies
 CREATE POLICY "Users can view messages in conversations they're part of"
@@ -999,18 +1163,18 @@ CREATE POLICY "Users can insert messages in conversations they're part of"
     ON messages FOR INSERT
     WITH CHECK (
         is_conversation_participant(conversation_id)
-        AND sender_id = auth.uid()
+        AND sender_id = get_current_user_id()
     );
 
 CREATE POLICY "Users can update read_at for messages they received"
     ON messages FOR UPDATE
     USING (
         is_conversation_participant(conversation_id)
-        AND sender_id != auth.uid()
+        AND sender_id != get_current_user_id()
     )
     WITH CHECK (
         is_conversation_participant(conversation_id)
-        AND sender_id != auth.uid()
+        AND sender_id != get_current_user_id()
     );
 
 -- Note: To enable real-time for messages table, run this in Supabase SQL Editor:

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { authenticate, signOut as authSignOut, getSession, setCurrentUserId, AuthSession } from '../lib/auth';
+import { supabase, withUserContext } from '../lib/supabaseClient';
 import { cache } from '../utils/cache';
 
 interface UserProfile {
@@ -9,6 +9,7 @@ interface UserProfile {
   role: 'team_member' | 'sponsor';
   name: string;
   avatar_url?: string;
+  member_id?: string;
 }
 
 interface UserPermissions {
@@ -33,12 +34,12 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
 };
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: { id: string } | null;
+  session: AuthSession | null;
   userProfile: UserProfile | null;
   permissions: UserPermissions | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signIn: (loginIdentifier: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshPermissions: () => Promise<void>;
   // Helper functions for permission checks
@@ -62,50 +63,82 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<{ id: string } | null>(null);
+  const [session, setSessionState] = useState<AuthSession | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserProfileAndPermissions(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchUserProfileAndPermissions(session.user.id);
-      } else {
-        setUserProfile(null);
-        setPermissions(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    // Check for existing session on mount
+    const existingSession = getSession();
+    if (existingSession) {
+      loadSession(existingSession);
+    } else {
+      setLoading(false);
+    }
   }, []);
+
+  const loadSession = async (authSession: AuthSession) => {
+    try {
+      setSessionState(authSession);
+      setUser({ id: authSession.userProfileId });
+      setUserProfile(authSession.userProfile);
+
+      // Set user ID for RLS
+      await setCurrentUserId(authSession.userProfileId);
+
+      // Fetch user permissions (only for team members)
+      if (authSession.userProfile.role === 'team_member') {
+        await fetchPermissions(authSession.userProfileId);
+      } else {
+        setPermissions(null);
+      }
+    } catch (error) {
+      console.error('Error loading session:', error);
+      setSessionState(null);
+      setUser(null);
+      setUserProfile(null);
+      setPermissions(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPermissions = async (userId: string) => {
+    try {
+      await setCurrentUserId(userId);
+      const { data: permissionsData, error: permissionsError } = await withUserContext(async () => {
+        return await supabase
+          .from('user_permissions')
+          .select('can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager')
+          .eq('user_id', userId)
+          .single();
+      });
+
+      if (permissionsError) {
+        console.error('Error fetching user permissions:', permissionsError);
+        setPermissions(DEFAULT_PERMISSIONS);
+      } else {
+        setPermissions(permissionsData as UserPermissions);
+      }
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+      setPermissions(DEFAULT_PERMISSIONS);
+    }
+  };
 
   const fetchUserProfileAndPermissions = async (userId: string) => {
     try {
-      // Fetch user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('id, organization_id, role, name, avatar_url')
-        .eq('id', userId)
-        .single();
+      await setCurrentUserId(userId);
+      
+      const { data: profileData, error: profileError } = await withUserContext(async () => {
+        return await supabase
+          .from('user_profiles')
+          .select('id, organization_id, role, name, avatar_url, member_id')
+          .eq('id', userId)
+          .single();
+      });
 
       if (profileError) {
         console.error('Error fetching user profile:', profileError);
@@ -116,26 +149,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Fetch user permissions (only for team members)
         if (profileData.role === 'team_member') {
-          console.log('Fetching permissions for team member:', userId);
-          const { data: permissionsData, error: permissionsError } = await supabase
-            .from('user_permissions')
-            .select('can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager')
-            .eq('user_id', userId)
-            .single();
-
-          console.log('Permissions result:', { permissionsData, permissionsError });
-
-          if (permissionsError) {
-            console.error('Error fetching user permissions:', permissionsError);
-            // Use default permissions if no permissions found
-            setPermissions(DEFAULT_PERMISSIONS);
-          } else {
-            console.log('Setting permissions:', permissionsData);
-            setPermissions(permissionsData as UserPermissions);
-          }
+          await fetchPermissions(userId);
         } else {
-          // Sponsors don't need team member permissions
-          console.log('User is a sponsor, skipping permissions');
           setPermissions(null);
         }
       }
@@ -143,22 +158,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error fetching user profile and permissions:', error);
       setUserProfile(null);
       setPermissions(null);
-    } finally {
-      setLoading(false);
     }
   };
 
   const refreshPermissions = async () => {
     if (user) {
-      const { data: permissionsData, error: permissionsError } = await supabase
-        .from('user_permissions')
-        .select('can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!permissionsError && permissionsData) {
-        setPermissions(permissionsData as UserPermissions);
-      }
+      await fetchPermissions(user.id);
     }
   };
 
@@ -175,21 +180,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return result;
   };
 
-  const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+  const signIn = async (loginIdentifier: string, password: string) => {
+    const { session: authSession, error } = await authenticate(loginIdentifier, password);
 
-    if (data.session?.user) {
-      await fetchUserProfileAndPermissions(data.session.user.id);
+    if (error) {
+      return { error };
     }
 
-    return { error };
+    if (authSession) {
+      await loadSession(authSession);
+    }
+
+    return { error: null };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await authSignOut();
+    setUser(null);
+    setSessionState(null);
     setUserProfile(null);
     setPermissions(null);
     // Clear cache on sign out
@@ -216,4 +224,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
