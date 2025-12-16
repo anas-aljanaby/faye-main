@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const SignIn: React.FC = () => {
-  const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -16,10 +16,10 @@ const SignIn: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(loginIdentifier, password);
       
       if (error) {
-        setError(error.message || 'حدث خطأ أثناء تسجيل الدخول');
+        setError(error || 'حدث خطأ أثناء تسجيل الدخول');
       } else {
         navigate('/');
       }
@@ -57,19 +57,19 @@ const SignIn: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                البريد الإلكتروني
+              <label htmlFor="loginIdentifier" className="block text-sm font-medium text-gray-700 mb-2">
+                اسم المستخدم أو البريد الإلكتروني
               </label>
               <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="loginIdentifier"
+                type="text"
+                value={loginIdentifier}
+                onChange={(e) => setLoginIdentifier(e.target.value)}
                 required
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"
-                placeholder="example@email.com"
+                placeholder="username@email.com أو username"
                 dir="ltr"
-                autoComplete="email"
+                autoComplete="username"
               />
             </div>
 
