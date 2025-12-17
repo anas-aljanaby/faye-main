@@ -74,7 +74,7 @@ CREATE TABLE orphans (
     organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
     name TEXT NOT NULL,
     photo_url TEXT,
-    date_of_birth DATE NOT NULL,
+    date_of_birth DATE,
     gender TEXT NOT NULL CHECK (gender IN ('ذكر', 'أنثى')),
     health_status TEXT,
     grade TEXT,
