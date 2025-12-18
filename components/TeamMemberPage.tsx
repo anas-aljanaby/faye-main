@@ -9,6 +9,7 @@ import { Task } from '../types';
 import { GoogleGenAI, Type } from "@google/genai";
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
+import Avatar from './Avatar';
 
 
 const BellIcon: React.FC<{ count: number }> = ({ count }) => (
@@ -334,7 +335,7 @@ const TeamMemberPage: React.FC = () => {
                 }}
               />
             ) : (
-              <img src={member.avatarUrl} alt={member.name} className="w-20 h-20 rounded-full" />
+              <Avatar src={member.avatarUrl} name={member.name} size="xl" className="!w-20 !h-20 !text-3xl" />
             )}
             <div>
                 <h1 className="text-3xl font-bold text-gray-800">{member.name}</h1>
@@ -430,7 +431,7 @@ const TeamMemberPage: React.FC = () => {
                 {assignedOrphans.length > 0 ? (
                     assignedOrphans.map(orphan => (
                     <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                        <img src={orphan.photoUrl} alt={orphan.name} className="w-12 h-12 rounded-full me-4"/>
+                        <Avatar src={orphan.photoUrl} name={orphan.name} size="lg" className="me-4" />
                         <p className="font-semibold text-gray-800">{orphan.name}</p>
                     </Link>
                     ))
@@ -459,13 +460,7 @@ const TeamMemberPage: React.FC = () => {
                             .filter(s => s.uuid && assignedSponsorIds.includes(s.uuid))
                             .map(sponsor => (
                                 <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                                    {sponsor.avatarUrl ? (
-                                        <img src={sponsor.avatarUrl} alt={sponsor.name} className="w-12 h-12 rounded-full me-4"/>
-                                    ) : (
-                                        <div className="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center text-primary font-bold text-lg me-4">
-                                            {sponsor.name.charAt(0)}
-                                        </div>
-                                    )}
+                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="lg" className="me-4" />
                                     <p className="font-semibold text-gray-800">{sponsor.name}</p>
                                 </Link>
                             ))
@@ -572,7 +567,7 @@ const TeamMemberPage: React.FC = () => {
                                 className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                             >
                                 <div className="flex items-center gap-3">
-                                    <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full" />
+                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
                                     <div>
                                         <p className="font-semibold">{orphan.name}</p>
                                         <p className="text-sm text-gray-500">{orphan.age} سنوات</p>
@@ -645,13 +640,7 @@ const TeamMemberPage: React.FC = () => {
                                 className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                             >
                                 <div className="flex items-center gap-3">
-                                    {sponsor.avatarUrl ? (
-                                        <img src={sponsor.avatarUrl} alt={sponsor.name} className="w-10 h-10 rounded-full" />
-                                    ) : (
-                                        <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-bold">
-                                            {sponsor.name.charAt(0)}
-                                        </div>
-                                    )}
+                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" />
                                     <div>
                                         <p className="font-semibold">{sponsor.name}</p>
                                         <p className="text-sm text-gray-500">يكفل {sponsor.sponsoredOrphanIds.length} يتيم</p>

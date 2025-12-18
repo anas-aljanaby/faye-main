@@ -263,9 +263,9 @@ BEGIN
     RAISE NOTICE '  ✓ Created ${sponsors.size} sponsor profiles';
 
     -- ============================================================================
-    -- STEP 4: CREATE TEAM MEMBER PERMISSIONS
+    -- STEP 4: CREATE USER PERMISSIONS (for all users)
     -- ============================================================================
-    RAISE NOTICE 'Creating team member permissions...';
+    RAISE NOTICE 'Creating user permissions...';
 `;
 
   // Create permissions for team members (first one gets manager permissions)
@@ -293,8 +293,20 @@ BEGIN
     }
   }
 
+  // Create permissions for sponsors (read-only defaults)
+  for (const [, user] of sponsors) {
+    sql += `
+    -- ${user.name} (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (${user.varName}_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+`;
+  }
+
   sql += `
-    RAISE NOTICE '  ✓ Created permissions for team members';
+    RAISE NOTICE '  ✓ Created permissions for all users';
 
     -- ============================================================================
     -- STEP 5: CREATE AUTH ACCOUNTS

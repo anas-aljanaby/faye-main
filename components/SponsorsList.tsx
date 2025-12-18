@@ -5,6 +5,7 @@ import { useOrphans } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
 import { Sponsor } from '../types';
 import { supabase } from '../lib/supabase';
+import Avatar from './Avatar';
 
 const AddSponsorModal: React.FC<{
     isOpen: boolean;
@@ -394,13 +395,7 @@ const SponsorsList: React.FC = () => {
                                     className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
                                     aria-label={`تحديد ${sponsor.name}`}
                                 />
-                                {sponsor.avatarUrl ? (
-                                  <img src={sponsor.avatarUrl} alt={sponsor.name} className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
-                                ) : (
-                                  <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-2xl flex-shrink-0">
-                                    {sponsor.name.charAt(0)}
-                                  </div>
-                                )}
+                                <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="xl" className="flex-shrink-0" />
                                 <div className="flex-1">
                                     <h3 className="text-xl font-semibold text-gray-800">{sponsor.name}</h3>
                                     <p className="text-sm text-text-secondary">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
@@ -510,13 +505,7 @@ const SponsorsList: React.FC = () => {
                                         className="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 text-right"
                                     >
                                         <div className="flex items-center gap-3">
-                                            {sponsor.avatarUrl ? (
-                                                <img src={sponsor.avatarUrl} alt={sponsor.name} className="w-10 h-10 rounded-full" />
-                                            ) : (
-                                                <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-bold">
-                                                    {sponsor.name.charAt(0)}
-                                                </div>
-                                            )}
+                                            <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" />
                                             <div>
                                                 <p className="font-semibold">{sponsor.name}</p>
                                                 <p className="text-sm text-gray-500">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
@@ -554,7 +543,7 @@ const SponsorsList: React.FC = () => {
                                             className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full" />
+                                                <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
                                                 <div>
                                                     <p className="font-semibold">{orphan.name}</p>
                                                     <p className="text-sm text-gray-500">{orphan.age} سنوات</p>

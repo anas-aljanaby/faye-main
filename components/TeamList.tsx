@@ -4,6 +4,7 @@ import { useTeamMembers } from '../hooks/useTeamMembers';
 import { usePermissions, TeamMemberWithPermissions, UserPermissions } from '../hooks/usePermissions';
 import { useAuth } from '../contexts/AuthContext';
 import { TeamMember } from '../types';
+import Avatar from './Avatar';
 
 // Permission labels and descriptions for display
 const PERMISSION_CONFIG: Record<string, { label: string; description: string; icon: JSX.Element }> = {
@@ -167,11 +168,7 @@ const PermissionsPanel: React.FC<{
                                         : 'border-gray-200 hover:border-gray-300 bg-white'
                                 }`}
                             >
-                                <img 
-                                    src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=32`}
-                                    alt={member.name}
-                                    className="w-8 h-8 rounded-full object-cover"
-                                />
+                                <Avatar src={member.avatar_url} name={member.name} size="sm" />
                                 <div className="flex-1 text-right min-w-0">
                                     <p className="font-medium text-sm truncate">{member.name}</p>
                                     {member.permissions?.is_manager && (
@@ -196,11 +193,7 @@ const PermissionsPanel: React.FC<{
                             return (
                                 <>
                                     <div className="flex items-center gap-3 mb-4 pb-4 border-b">
-                                        <img 
-                                            src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=48`}
-                                            alt={member.name}
-                                            className="w-12 h-12 rounded-full object-cover"
-                                        />
+                                        <Avatar src={member.avatar_url} name={member.name} size="lg" />
                                         <div>
                                             <h3 className="font-bold text-lg">{member.name}</h3>
                                             <p className="text-sm text-text-secondary">
@@ -308,11 +301,7 @@ const PermissionsModal: React.FC<{
                 {/* Header */}
                 <div className="bg-gradient-to-r from-primary to-primary-hover p-4">
                     <div className="flex items-center gap-3">
-                        <img 
-                            src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=48`} 
-                            alt={member.name} 
-                            className="w-12 h-12 rounded-full object-cover border-2 border-white/30"
-                        />
+                        <Avatar src={member.avatar_url} name={member.name} size="lg" className="border-2 border-white/30" />
                         <div>
                             <h3 className="text-xl font-bold text-white">{member.name}</h3>
                             <p className="text-white/80 text-sm">
@@ -784,7 +773,7 @@ const TeamList: React.FC = () => {
                                     className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
                                     aria-label={`تحديد ${member.name}`}
                                 />
-                                <img src={member.avatarUrl} alt={member.name} className="w-16 h-16 rounded-full object-cover" />
+                                <Avatar src={member.avatarUrl} name={member.name} size="xl" />
                                 <div className="flex-1">
                                     <h3 className="text-xl font-semibold text-gray-800">{member.name}</h3>
                                     <div className="flex items-center gap-2 flex-wrap">

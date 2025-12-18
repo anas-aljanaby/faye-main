@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useOrphans } from '../hooks/useOrphans';
 import { Orphan } from '../types';
+import Avatar from './Avatar';
 
 const AddOrphanModal: React.FC<{
     isOpen: boolean;
@@ -375,7 +376,7 @@ const OrphansList: React.FC = () => {
                                     )}
                                 </div>
                                 <div className="relative">
-                                    <img src={orphan.photoUrl} alt={orphan.name} className="w-28 h-28 rounded-full object-cover mb-3 border-4 border-gray-100" />
+                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="mb-3 border-4 border-gray-100 !w-28 !h-28 !text-3xl" />
                                      <div className="absolute bottom-4 -right-1">
                                         <span className={`text-xs font-bold px-2 py-1 rounded-full text-white ${orphan.performance === 'ممتاز' ? 'bg-green-500' : orphan.performance === 'جيد جداً' ? 'bg-blue-500' : 'bg-yellow-500'}`}>{orphan.performance}</span>
                                     </div>

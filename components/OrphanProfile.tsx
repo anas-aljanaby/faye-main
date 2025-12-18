@@ -12,6 +12,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
+import Avatar from './Avatar';
 
 const AddAchievementModal: React.FC<{
     isOpen: boolean;
@@ -823,7 +824,7 @@ const OrphanProfile: React.FC = () => {
             size="lg"
           />
         ) : (
-          <img src={orphan.photoUrl} alt={orphan.name} className="w-32 h-32 rounded-full object-cover ring-4 ring-primary-light" />
+          <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="!w-32 !h-32 !text-5xl ring-4 ring-primary-light" />
         )}
         <div className="text-center md:text-right flex-grow">
           {isEditMode ? (

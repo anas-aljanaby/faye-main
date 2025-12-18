@@ -11,6 +11,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
+import Avatar from './Avatar';
 
 const WidgetCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode; }> = ({ title, icon, children }) => (
     <div className="bg-bg-card rounded-lg shadow-md p-5 h-full">
@@ -186,7 +187,7 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
                     return (
                         <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                             <div className="flex items-center gap-3">
-                                <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full object-cover" />
+                                <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
                                 <span className="font-semibold text-gray-800">{orphan.name}</span>
                             </div>
                             <span className={`text-sm font-semibold ${statusColor}`}>{statusText}</span>
@@ -378,7 +379,7 @@ const Dashboard: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {sponsoredOrphans.map(orphan => (
                                 <Link key={orphan.id} to={`/orphan/${orphan.id}`} className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                    <img src={orphan.photoUrl} alt={orphan.name} className="w-16 h-16 rounded-full object-cover" />
+                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" />
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
                                         <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
@@ -402,13 +403,7 @@ const Dashboard: React.FC = () => {
                                                 to={`/team/${member.id}`}
                                                 className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-lg transition-all"
                                             >
-                                                {member.avatar_url ? (
-                                                    <img src={member.avatar_url} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
-                                                ) : (
-                                                    <div className="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center text-primary font-bold text-lg">
-                                                        {member.name.charAt(0)}
-                                                    </div>
-                                                )}
+                                                <Avatar src={member.avatar_url} name={member.name} size="lg" />
                                                 <div>
                                                     <h3 className="font-semibold text-gray-800">{member.name}</h3>
                                                     <p className="text-sm text-text-secondary">عضو فريق</p>
@@ -428,13 +423,7 @@ const Dashboard: React.FC = () => {
                                         to={`/team/${manager.id}`}
                                         className="bg-blue-50 rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-lg transition-all"
                                     >
-                                        {manager.avatar_url ? (
-                                            <img src={manager.avatar_url} alt={manager.name} className="w-12 h-12 rounded-full object-cover" />
-                                        ) : (
-                                            <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-700 font-bold text-lg">
-                                                {manager.name.charAt(0)}
-                                            </div>
-                                        )}
+                                        <Avatar src={manager.avatar_url} name={manager.name} size="lg" />
                                         <div>
                                             <h3 className="font-semibold text-gray-800">{manager.name}</h3>
                                             <p className="text-sm text-text-secondary">مدير</p>
@@ -612,7 +601,7 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {orphansData.slice(0, 4).map(orphan => (
                 <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="bg-bg-card rounded-lg shadow-md p-4 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                  <img src={orphan.photoUrl} alt={orphan.name} className="w-24 h-24 rounded-full object-cover mb-4 border-4 border-gray-100" />
+                  <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="mb-4 border-4 border-gray-100 !w-24 !h-24 !text-3xl" />
                   <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
                   <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
                 </Link>
@@ -650,7 +639,7 @@ const Dashboard: React.FC = () => {
                 })
                 .map(member => (
                 <Link to={`/team/${member.id}`} key={member.id} className="bg-bg-card rounded-lg shadow-md p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                  <img src={member.avatarUrl} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
+                  <Avatar src={member.avatarUrl} name={member.name} size="lg" />
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">{member.name}</h3>
                     <p className="text-sm text-text-secondary">عضو فريق</p>

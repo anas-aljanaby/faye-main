@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Conversation, Message } from '../types';
 import { findOrCreateConversation, formatTimestamp } from '../utils/messaging';
 import { supabase } from '../lib/supabase';
+import Avatar from './Avatar';
 
 const TemplatesModal: React.FC<{
     isOpen: boolean;
@@ -329,14 +330,7 @@ const Messages: React.FC = () => {
     };
     
     const renderAvatar = (conv: Conversation) => {
-        if (conv.participant?.avatar_url) {
-            return <img src={conv.participant.avatar_url} alt={conv.participant.name} className="w-12 h-12 rounded-full object-cover" />;
-        }
-        return (
-            <div className="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center text-primary font-bold text-xl">
-                {conv.participant?.name?.charAt(0) || '?'}
-            </div>
-        );
+        return <Avatar src={conv.participant?.avatar_url} name={conv.participant?.name || '?'} size="lg" />;
     }
     
     return (
@@ -428,13 +422,7 @@ const Messages: React.FC = () => {
                                     return (
                                         <div key={msg.id} className={`flex items-start gap-3 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
                                            {!isCurrentUser && (
-                                               msg.sender?.avatar_url ? (
-                                                   <img src={msg.sender.avatar_url} alt={msg.sender.name} className="w-10 h-10 rounded-full" />
-                                               ) : (
-                                                   <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-bold text-lg">
-                                                       {msg.sender?.name?.charAt(0) || '?'}
-                                                   </div>
-                                               )
+                                               <Avatar src={msg.sender?.avatar_url} name={msg.sender?.name || '?'} size="md" />
                                            )}
                                             <div className={`max-w-lg p-3 rounded-xl ${isCurrentUser ? 'bg-primary text-white' : 'bg-white border'}`}>
                                                 <p className="font-bold text-sm mb-1">{msg.sender?.name || 'مستخدم'}</p>
@@ -486,13 +474,7 @@ const Messages: React.FC = () => {
                                     onClick={() => handleStartConversation(user.id)}
                                     className="p-3 border rounded-lg hover:bg-primary-light hover:border-primary cursor-pointer transition-colors flex items-center gap-3"
                                 >
-                                    {user.avatar_url ? (
-                                        <img src={user.avatar_url} alt={user.name} className="w-10 h-10 rounded-full" />
-                                    ) : (
-                                        <div className="w-10 h-10 bg-primary-light rounded-full flex items-center justify-center text-primary font-bold">
-                                            {user.name.charAt(0)}
-                                        </div>
-                                    )}
+                                    <Avatar src={user.avatar_url} name={user.name} size="md" />
                                     <div>
                                         <p className="font-semibold">{user.name}</p>
                                         <p className="text-sm text-gray-500">{user.role === 'sponsor' ? 'كافل' : 'عضو فريق'}</p>

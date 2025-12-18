@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Faye Organization Data Import
--- Generated at: 2025-12-18T02:24:33.927Z
+-- Generated at: 2025-12-18T03:47:56.515Z
 -- ============================================================================
 -- This script imports real organization data from the Excel file
 -- Run this in Supabase SQL Editor after running 001_initial_schema.sql
@@ -795,9 +795,9 @@ BEGIN
     RAISE NOTICE '  ✓ Created 94 sponsor profiles';
 
     -- ============================================================================
-    -- STEP 4: CREATE TEAM MEMBER PERMISSIONS
+    -- STEP 4: CREATE USER PERMISSIONS (for all users)
     -- ============================================================================
-    RAISE NOTICE 'Creating team member permissions...';
+    RAISE NOTICE 'Creating user permissions...';
 
     -- اسراء السامرائي (Manager with all permissions)
     INSERT INTO user_permissions (
@@ -855,7 +855,665 @@ BEGIN
     )
     VALUES (team_member_8_id, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, FALSE);
 
-    RAISE NOTICE '  ✓ Created permissions for team members';
+    -- اسماء (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_1_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- نورة المنصور (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_2_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- فاعلة خير (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_3_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- خير ربي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_4_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- فوزية الطاسان (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_5_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سمانتا فضل الله (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_6_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- حنان دهلوي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_7_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- أيوب الجنابي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_8_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سليمان محمد (فاعل خير) (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_9_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- خالد ال محمود (نوار الدخيل) (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_10_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- لينا غندور (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_11_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- دكتورة مريم (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_12_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- عائشة الملا (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_13_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ام عبدالله القطرية (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_14_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ام طارق (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_15_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- حنان عبدالغفور (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_16_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ايمان اللفت (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_17_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ليلى الكنعان (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_18_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- الاخوة والاخوات (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_19_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- نورة اللفت (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_20_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ايمان الحلواني (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_21_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ام احمد (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_22_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- نورة القحطاني (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_23_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- عيد الماجد (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_24_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ام ثامر (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_25_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- أبو علي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_26_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- امل الهداب (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_27_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ليلى (ام انس) (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_28_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- انوار الابراهيم (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_29_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- تهاني المعلم (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_30_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ام عبدالعزيز (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_31_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ايمان السقاط (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_32_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- أبو عبدالله (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_33_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سيناء العمران (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_34_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- علي ال محمود (نوار الدخيل) (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_35_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سهى العمران (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_36_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- فاطمة العسماوي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_37_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سعاد الداوود (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_38_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- بدرية الملحم (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_39_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سعود الرميزان (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_40_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- أبو نهار (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_41_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- محمد ال محمود (نوار الدخيل) (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_42_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- شيخة بانمي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_43_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- غنيمة العسماوي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_44_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سحر غزالي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_45_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- عهود رجب (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_46_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ام عبدالاله (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_47_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- اعتماد اللفت (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_48_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- مجد الحواري (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_49_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- علياء (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_50_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- مرام الشريف (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_51_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ابرار الابراهيم (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_52_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- منى الحافظ (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_53_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- مها المرشد (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_54_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- نورة الحافظ (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_55_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- نبيلة معروف بنتن (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_56_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- حنان اللفت (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_57_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ناجية الحربي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_58_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- شهد الحلواني (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_59_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- نوار الدخيل (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_60_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- دلال الفيلجاوي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_61_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- خولة الدحان (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_62_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- اروى السيد (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_63_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- خلود الجنابي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_64_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- مها الحافظ وجوهرة (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_65_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- امنة عرنوص (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_66_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سلوى اسماعيل (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_67_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- زينة السعدي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_68_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- خلود الراشد (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_69_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سعاد عبدالعزيز الحميد (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_70_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- علية حسين (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_71_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ام مشعل (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_72_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سامية اسماعيل (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_73_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- منيرة الرشيد (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_74_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- قاسم الجنابي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_75_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- سوسن عبدالمحسن الحنين (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_76_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- هناء إسماعيل (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_77_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- انتصار البراك (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_78_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- حياة اللفت (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_79_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- مؤمن الزرزور (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_80_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ليلى جمعة (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_81_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- روني كامل (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_82_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ميسم خالد (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_83_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- طلحة (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_84_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- زينب سعد / ضحى علاء عبد الوهاب (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_85_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- هاجر مثنى نوري (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_86_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- عثمان المشايخي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_87_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- عبد الله علي كريم (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_88_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ايناس جواد النعيمي / اثير طه (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_89_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- صفا قاسم (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_90_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- قتيبة الغالبي (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_91_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- شفاء قاسم (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_92_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- جوانة (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_93_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    -- ياسر محيسن (Sponsor with default permissions)
+    INSERT INTO user_permissions (
+        user_id, can_edit_orphans, can_edit_sponsors, can_edit_transactions,
+        can_create_expense, can_approve_expense, can_view_financials, is_manager
+    )
+    VALUES (sponsor_94_id, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+
+    RAISE NOTICE '  ✓ Created permissions for all users';
 
     -- ============================================================================
     -- STEP 5: CREATE AUTH ACCOUNTS
