@@ -11,7 +11,6 @@ import TeamMemberPage from './components/TeamMemberPage';
 import FinancialSystem from './components/FinancialSystem';
 import OrphansList from './components/OrphansList';
 import SponsorsList from './components/SponsorsList';
-import TeamList from './components/TeamList';
 import Messages from './components/Messages';
 import HumanResources from './components/HumanResources';
 import SignIn from './components/SignIn';
@@ -44,7 +43,7 @@ function App() {
                         <Route path="/team/:id" element={<TeamMemberPage />} />
                         <Route path="/orphans" element={<OrphansList />} />
                         <Route path="/sponsors" element={<TeamMemberRoute><SponsorsList /></TeamMemberRoute>} />
-                        <Route path="/team" element={<TeamMemberRoute><TeamList /></TeamMemberRoute>} />
+                        <Route path="/team" element={<Navigate to="/human-resources" replace />} />
                         <Route path="/messages" element={<Messages />} />
                         <Route path="/human-resources" element={<TeamMemberRoute><HumanResources /></TeamMemberRoute>} />
                         <Route path="/policies" element={<div className="text-3xl font-bold">صفحة سياسات فيء</div>} />

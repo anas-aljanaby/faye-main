@@ -1,9 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import TeamList from './TeamList';
+import { useDelegates, Delegate, DelegateInput } from '../hooks/useDelegates';
 
 type HrSection = 
     | 'regulations' 
     | 'team'
+    | 'delegates'
     | 'volunteers' 
     | 'attendance' 
     | 'leaves' 
@@ -415,9 +418,384 @@ const VolunteersSection: React.FC = () => {
     );
 };
 
+// --- DELEGATES SECTION ---
+
+interface AddEditDelegateModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (delegate: DelegateInput) => void;
+    delegateToEdit?: Delegate | null;
+}
+
+const AddEditDelegateModal: React.FC<AddEditDelegateModalProps> = ({ isOpen, onClose, onSave, delegateToEdit }) => {
+    const [formData, setFormData] = useState<DelegateInput>({
+        name: delegateToEdit?.name || '',
+        task: delegateToEdit?.task || '',
+        address: delegateToEdit?.address || '',
+        emails: delegateToEdit?.emails || [''],
+        phones: delegateToEdit?.phones || [''],
+    });
+
+    // Reset form when modal opens with different delegate
+    React.useEffect(() => {
+        if (isOpen) {
+            setFormData({
+                name: delegateToEdit?.name || '',
+                task: delegateToEdit?.task || '',
+                address: delegateToEdit?.address || '',
+                emails: delegateToEdit?.emails?.length ? delegateToEdit.emails : [''],
+                phones: delegateToEdit?.phones?.length ? delegateToEdit.phones : [''],
+            });
+        }
+    }, [isOpen, delegateToEdit]);
+
+    if (!isOpen) return null;
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleEmailChange = (index: number, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            emails: prev.emails.map((email, i) => i === index ? value : email)
+        }));
+    };
+
+    const handlePhoneChange = (index: number, value: string) => {
+        setFormData(prev => ({
+            ...prev,
+            phones: prev.phones.map((phone, i) => i === index ? value : phone)
+        }));
+    };
+
+    const addEmail = () => {
+        setFormData(prev => ({ ...prev, emails: [...prev.emails, ''] }));
+    };
+
+    const removeEmail = (index: number) => {
+        if (formData.emails.length > 1) {
+            setFormData(prev => ({ ...prev, emails: prev.emails.filter((_, i) => i !== index) }));
+        }
+    };
+
+    const addPhone = () => {
+        setFormData(prev => ({ ...prev, phones: [...prev.phones, ''] }));
+    };
+
+    const removePhone = (index: number) => {
+        if (formData.phones.length > 1) {
+            setFormData(prev => ({ ...prev, phones: prev.phones.filter((_, i) => i !== index) }));
+        }
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Filter out empty emails and phones
+        const cleanedData = {
+            ...formData,
+            emails: formData.emails.filter(email => email.trim() !== ''),
+            phones: formData.phones.filter(phone => phone.trim() !== ''),
+        };
+        onSave(cleanedData);
+        onClose();
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <h3 className="text-xl font-bold mb-6">{delegateToEdit ? 'تعديل مندوب' : 'إضافة مندوب جديد'}</h3>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">الاسم *</label>
+                        <input 
+                            name="name" 
+                            value={formData.name} 
+                            onChange={handleChange} 
+                            placeholder="اسم المندوب" 
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                            required 
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">المهمة</label>
+                        <textarea 
+                            name="task" 
+                            value={formData.task || ''} 
+                            onChange={handleChange} 
+                            placeholder="وصف المهمة" 
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                            rows={2}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
+                        <input 
+                            name="address" 
+                            value={formData.address || ''} 
+                            onChange={handleChange} 
+                            placeholder="العنوان" 
+                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                        />
+                    </div>
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
+                            <button 
+                                type="button" 
+                                onClick={addEmail}
+                                className="text-primary hover:text-primary-hover text-sm font-medium flex items-center gap-1"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                إضافة
+                            </button>
+                        </div>
+                        <div className="space-y-2">
+                            {formData.emails.map((email, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input 
+                                        type="email"
+                                        value={email} 
+                                        onChange={(e) => handleEmailChange(index, e.target.value)} 
+                                        placeholder="example@email.com" 
+                                        className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                                        dir="ltr"
+                                    />
+                                    {formData.emails.length > 1 && (
+                                        <button 
+                                            type="button" 
+                                            onClick={() => removeEmail(index)}
+                                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="block text-sm font-medium text-gray-700">رقم الهاتف</label>
+                            <button 
+                                type="button" 
+                                onClick={addPhone}
+                                className="text-primary hover:text-primary-hover text-sm font-medium flex items-center gap-1"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                إضافة
+                            </button>
+                        </div>
+                        <div className="space-y-2">
+                            {formData.phones.map((phone, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input 
+                                        type="tel"
+                                        value={phone} 
+                                        onChange={(e) => handlePhoneChange(index, e.target.value)} 
+                                        placeholder="رقم الهاتف" 
+                                        className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                                        dir="ltr"
+                                    />
+                                    {formData.phones.length > 1 && (
+                                        <button 
+                                            type="button" 
+                                            onClick={() => removePhone(index)}
+                                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
+                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">حفظ</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+const DelegatesSection: React.FC = () => {
+    const { delegates, loading, error, addDelegate, updateDelegate, deleteDelegate } = useDelegates();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingDelegate, setEditingDelegate] = useState<Delegate | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const filteredDelegates = useMemo(() => {
+        return delegates.filter(delegate =>
+            delegate.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (delegate.task && delegate.task.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (delegate.address && delegate.address.toLowerCase().includes(searchQuery.toLowerCase()))
+        );
+    }, [delegates, searchQuery]);
+
+    const handleSave = async (delegateData: DelegateInput) => {
+        if (editingDelegate) {
+            await updateDelegate(editingDelegate.id, delegateData);
+        } else {
+            await addDelegate(delegateData);
+        }
+        setIsModalOpen(false);
+        setEditingDelegate(null);
+    };
+
+    const handleEdit = (delegate: Delegate) => {
+        setEditingDelegate(delegate);
+        setIsModalOpen(true);
+    };
+
+    const handleDelete = async (id: string) => {
+        if (window.confirm('هل أنت متأكد من حذف هذا المندوب؟')) {
+            setDeletingId(id);
+            await deleteDelegate(id);
+            setDeletingId(null);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center text-red-600 py-20">
+                <p>حدث خطأ: {error}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <h2 className="text-2xl font-bold text-gray-800">المندوبين</h2>
+                <button 
+                    onClick={() => { setEditingDelegate(null); setIsModalOpen(true); }} 
+                    className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover flex items-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    إضافة مندوب
+                </button>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                    <p className="text-sm text-gray-600">إجمالي المندوبين</p>
+                    <p className="text-2xl font-bold text-primary">{delegates.length}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                    <p className="text-sm text-gray-600">مع بريد إلكتروني</p>
+                    <p className="text-2xl font-bold text-primary">{delegates.filter(d => d.emails && d.emails.length > 0).length}</p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg border">
+                    <p className="text-sm text-gray-600">مع رقم هاتف</p>
+                    <p className="text-2xl font-bold text-primary">{delegates.filter(d => d.phones && d.phones.length > 0).length}</p>
+                </div>
+            </div>
+
+            {/* Search */}
+            <div className="flex gap-3">
+                <input 
+                    type="text" 
+                    value={searchQuery} 
+                    onChange={e => setSearchQuery(e.target.value)} 
+                    placeholder="ابحث بالاسم أو المهمة أو العنوان..." 
+                    className="flex-grow p-2 border rounded-lg" 
+                />
+            </div>
+
+            {/* Delegates Table */}
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-right">
+                    <thead className="bg-gray-100 text-gray-600">
+                        <tr>
+                            <th className="p-3">#</th>
+                            <th className="p-3">الاسم</th>
+                            <th className="p-3">المهمة</th>
+                            <th className="p-3">العنوان</th>
+                            <th className="p-3">البريد الإلكتروني</th>
+                            <th className="p-3">رقم الهاتف</th>
+                            <th className="p-3">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {filteredDelegates.map((delegate, index) => (
+                            <tr key={delegate.id} className="border-b hover:bg-gray-50">
+                                <td className="p-3">{index + 1}</td>
+                                <td className="p-3 font-semibold">{delegate.name}</td>
+                                <td className="p-3 text-gray-500 max-w-xs truncate" title={delegate.task || ''}>{delegate.task || '-'}</td>
+                                <td className="p-3 text-gray-500">{delegate.address || '-'}</td>
+                                <td className="p-3 text-gray-500" dir="ltr">
+                                    {delegate.emails && delegate.emails.length > 0 ? (
+                                        <div className="flex flex-col gap-1">
+                                            {delegate.emails.map((email, i) => (
+                                                <span key={i} className="block">{email}</span>
+                                            ))}
+                                        </div>
+                                    ) : '-'}
+                                </td>
+                                <td className="p-3 text-gray-500" dir="ltr">
+                                    {delegate.phones && delegate.phones.length > 0 ? (
+                                        <div className="flex flex-col gap-1">
+                                            {delegate.phones.map((phone, i) => (
+                                                <span key={i} className="block">{phone}</span>
+                                            ))}
+                                        </div>
+                                    ) : '-'}
+                                </td>
+                                <td className="p-3">
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => handleEdit(delegate)} 
+                                            className="text-blue-600 hover:text-blue-800 p-1"
+                                        >
+                                            تعديل
+                                        </button>
+                                        <button 
+                                            onClick={() => handleDelete(delegate.id)} 
+                                            className="text-red-600 hover:text-red-800 p-1"
+                                            disabled={deletingId === delegate.id}
+                                        >
+                                            {deletingId === delegate.id ? 'جاري...' : 'حذف'}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                {filteredDelegates.length === 0 && (
+                    <p className="text-center text-gray-500 py-10">
+                        {delegates.length === 0 ? 'لا يوجد مندوبين. قم بإضافة مندوب جديد.' : 'لا توجد نتائج مطابقة.'}
+                    </p>
+                )}
+            </div>
+
+            <AddEditDelegateModal
+                isOpen={isModalOpen}
+                onClose={() => { setIsModalOpen(false); setEditingDelegate(null); }}
+                onSave={handleSave}
+                delegateToEdit={editingDelegate}
+            />
+        </div>
+    );
+};
+
 const hrSections: { id: HrSection; title: string; icon: React.ReactNode }[] = [
     { id: 'regulations', title: 'اللائحة', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg> },
     { id: 'team', title: 'الموظفون', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+    { id: 'delegates', title: 'المندوبين', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
     { id: 'volunteers', title: 'المتطوعون', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8.3-15 15.7"/><path d="m15 8.3-11 11.4"/><path d="m19 12.3-1.4-1.4"/><path d="m15 16.3-1.4-1.4"/></svg> },
     { id: 'attendance', title: 'الحاضرين والإنصراف', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
     { id: 'leaves', title: 'الاجازات', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> },
@@ -434,11 +812,6 @@ const PlaceholderContent: React.FC<{ title: string }> = ({ title }) => (
     <div className="text-center text-gray-500 py-20 flex flex-col items-center justify-center h-full">
         <h2 className="text-2xl font-bold mb-2">{title}</h2>
         <p>محتوى هذا القسم سيتم إضافته قريباً.</p>
-        {title === 'الموظفون' && (
-            <Link to="/team" className="mt-4 inline-block bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors">
-                الانتقال إلى صفحة الموظفين
-            </Link>
-        )}
     </div>
 );
 
@@ -452,6 +825,14 @@ const HumanResources: React.FC = () => {
 
         if (activeSection === 'volunteers') {
             return <VolunteersSection />;
+        }
+
+        if (activeSection === 'team') {
+            return <TeamList embedded />;
+        }
+
+        if (activeSection === 'delegates') {
+            return <DelegatesSection />;
         }
 
         return <PlaceholderContent title={section.title} />;

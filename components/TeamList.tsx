@@ -542,7 +542,11 @@ const SortPopover: React.FC<{
 };
 
 
-const TeamList: React.FC = () => {
+interface TeamListProps {
+    embedded?: boolean;
+}
+
+const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
     const { teamMembers: teamMembersData, loading } = useTeamMembers();
     const { teamMembers: teamMembersWithPermissions, togglePermission, isManager, loading: permissionsLoading, refetch: refetchPermissions } = usePermissions();
     const { isManager: checkIsManager, userProfile } = useAuth();
@@ -699,9 +703,11 @@ const TeamList: React.FC = () => {
             )}
 
             <header className="space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                    <h1 className="text-3xl font-bold text-gray-800">فريق العمل</h1>
-                </div>
+                {!embedded && (
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                        <h1 className="text-3xl font-bold text-gray-800">فريق العمل</h1>
+                    </div>
+                )}
                  <div className="flex flex-col sm:flex-row items-center gap-3">
                     <div className="relative w-full flex-grow">
                         <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
