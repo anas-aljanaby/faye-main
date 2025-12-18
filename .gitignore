@@ -25,3 +25,6 @@ dist-ssr
 
 .env
 .env.local
+
+# Credentials file (contains passwords)
+user-credentials.json
