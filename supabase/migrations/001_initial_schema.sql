@@ -265,11 +265,24 @@ CREATE TABLE tasks (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
+-- 17. Delegates table (HR representatives)
+CREATE TABLE delegates (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+    name TEXT NOT NULL,
+    task TEXT,
+    address TEXT,
+    emails TEXT[] DEFAULT '{}',
+    phones TEXT[] DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
 -- ============================================================================
 -- MESSAGING SYSTEM TABLES
 -- ============================================================================
 
--- 17. Conversations table
+-- 18. Conversations table
 CREATE TABLE conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user1_id UUID NOT NULL REFERENCES user_profiles(id) ON DELETE CASCADE,
@@ -282,7 +295,7 @@ CREATE TABLE conversations (
     CHECK (user1_id != user2_id)
 );
 
--- 18. Messages table
+-- 19. Messages table
 CREATE TABLE messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
@@ -309,6 +322,8 @@ CREATE INDEX idx_sponsor_team_members_team_member ON sponsor_team_members(team_m
 CREATE INDEX idx_payments_orphan_status ON payments(orphan_id, status);
 CREATE INDEX idx_financial_transactions_org_date_type ON financial_transactions(organization_id, date, type);
 CREATE INDEX idx_tasks_member_completed_due ON tasks(team_member_id, completed, due_date);
+CREATE INDEX idx_delegates_organization ON delegates(organization_id);
+CREATE INDEX idx_delegates_name ON delegates(name);
 CREATE INDEX idx_update_logs_orphan ON update_logs(orphan_id);
 CREATE INDEX idx_update_logs_author ON update_logs(author_id);
 CREATE INDEX idx_receipts_transaction ON receipts(transaction_id);
@@ -370,6 +385,9 @@ CREATE TRIGGER update_sponsor_notes_updated_at BEFORE UPDATE ON sponsor_notes
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_delegates_updated_at BEFORE UPDATE ON delegates
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -415,6 +433,7 @@ ALTER TABLE receipts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE receipt_orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sponsor_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE delegates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE custom_auth ENABLE ROW LEVEL SECURITY;
@@ -1087,6 +1106,35 @@ CREATE POLICY "Team members can view tasks for orphans they're assigned to"
                 WHERE team_member_id = get_current_user_id()
             )
         )
+    );
+
+-- Delegates policies
+CREATE POLICY "Team members can view delegates in their organization"
+    ON delegates FOR SELECT
+    USING (
+        organization_id = get_user_organization_id() 
+        AND is_team_member()
+    );
+
+CREATE POLICY "Team members can insert delegates"
+    ON delegates FOR INSERT
+    WITH CHECK (
+        organization_id = get_user_organization_id() 
+        AND is_team_member()
+    );
+
+CREATE POLICY "Team members can update delegates"
+    ON delegates FOR UPDATE
+    USING (
+        organization_id = get_user_organization_id() 
+        AND is_team_member()
+    );
+
+CREATE POLICY "Team members can delete delegates"
+    ON delegates FOR DELETE
+    USING (
+        organization_id = get_user_organization_id() 
+        AND is_team_member()
     );
 
 -- Sponsor-Team Member junction policies
