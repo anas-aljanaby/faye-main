@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, withUserContext } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
-import { cache, getCacheKey } from '../utils/cache';
+import { cache } from '../utils/cache';
 
 export interface Delegate {
   id: string;
@@ -53,11 +53,13 @@ export const useDelegates = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error: fetchError } = await supabase
-        .from('delegates')
-        .select('*')
-        .eq('organization_id', userProfile.organization_id)
-        .order('name', { ascending: true });
+      const { data, error: fetchError } = await withUserContext(async () => {
+        return await supabase
+          .from('delegates')
+          .select('*')
+          .eq('organization_id', userProfile.organization_id)
+          .order('name', { ascending: true });
+      });
 
       if (fetchError) throw fetchError;
 
@@ -85,18 +87,20 @@ export const useDelegates = () => {
     try {
       setError(null);
 
-      const { data, error: insertError } = await supabase
-        .from('delegates')
-        .insert({
-          organization_id: userProfile.organization_id,
-          name: delegate.name,
-          task: delegate.task,
-          address: delegate.address,
-          emails: delegate.emails,
-          phones: delegate.phones,
-        })
-        .select()
-        .single();
+      const { data, error: insertError } = await withUserContext(async () => {
+        return await supabase
+          .from('delegates')
+          .insert({
+            organization_id: userProfile.organization_id,
+            name: delegate.name,
+            task: delegate.task,
+            address: delegate.address,
+            emails: delegate.emails,
+            phones: delegate.phones,
+          })
+          .select()
+          .single();
+      });
 
       if (insertError) throw insertError;
 
@@ -127,12 +131,14 @@ export const useDelegates = () => {
     try {
       setError(null);
 
-      const { data, error: updateError } = await supabase
-        .from('delegates')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error: updateError } = await withUserContext(async () => {
+        return await supabase
+          .from('delegates')
+          .update(updates)
+          .eq('id', id)
+          .select()
+          .single();
+      });
 
       if (updateError) throw updateError;
 
@@ -166,10 +172,12 @@ export const useDelegates = () => {
     try {
       setError(null);
 
-      const { error: deleteError } = await supabase
-        .from('delegates')
-        .delete()
-        .eq('id', id);
+      const { error: deleteError } = await withUserContext(async () => {
+        return await supabase
+          .from('delegates')
+          .delete()
+          .eq('id', id);
+      });
 
       if (deleteError) throw deleteError;
 
