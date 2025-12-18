@@ -11,6 +11,7 @@ import { Bar, Pie } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import Avatar from './Avatar';
 
 // Approve Transaction Modal
 const ApproveTransactionModal: React.FC<{
@@ -121,7 +122,7 @@ const ApproveTransactionModal: React.FC<{
                                                 return (
                                                     <div key={orphanId} className="bg-white rounded p-3 border border-blue-200">
                                                         <div className="flex items-center gap-3">
-                                                            <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full object-cover" />
+                                                            <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
                                                             <div className="flex-1">
                                                                 <p className="font-semibold text-gray-800">{orphan.name}</p>
                                                                 <p className="text-sm text-gray-600">دفعة: {paymentText}</p>
@@ -147,7 +148,7 @@ const ApproveTransactionModal: React.FC<{
                                 const orphan = orphans.find(o => o.id === transaction.orphanId);
                                 return orphan ? (
                                     <div className="flex items-center gap-3">
-                                        <img src={orphan.photoUrl} alt={orphan.name} className="w-12 h-12 rounded-full object-cover" />
+                                        <Avatar src={orphan.photoUrl} name={orphan.name} size="lg" />
                                         <p className="font-semibold text-gray-800">{orphan.name}</p>
                                     </div>
                                 ) : null;
@@ -2149,11 +2150,7 @@ const FinancialSystem: React.FC = () => {
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4 flex-1">
-                                                <img
-                                                    src={orphan.photoUrl}
-                                                    alt={orphan.name}
-                                                    className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                                                />
+                                                <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="border-2 border-gray-200" />
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3">
                                                         <h3 className="text-xl font-bold text-gray-800">{orphan.name}</h3>

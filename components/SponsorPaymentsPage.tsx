@@ -6,6 +6,7 @@ import { useSponsors } from '../hooks/useSponsors';
 import { PaymentStatus, Orphan, Payment } from '../types';
 import PaymentStatusBadge from './PaymentStatusBadge';
 import { supabase } from '../lib/supabase';
+import Avatar from './Avatar';
 
 type StatusFilter = 'all' | PaymentStatus;
 
@@ -385,11 +386,7 @@ const SponsorPaymentsPage: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4 flex-1">
-                      <img
-                        src={orphan.photoUrl}
-                        alt={orphan.name}
-                        className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                      />
+                      <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="border-2 border-gray-200" />
                       <div className="flex-1">
                         <div className="flex items-center gap-3">
                           <h3 className="text-xl font-bold text-gray-800">{orphan.name}</h3>

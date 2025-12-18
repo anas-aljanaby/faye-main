@@ -10,6 +10,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
+import Avatar from './Avatar';
 
 // A simple SendMessageModal for this component
 const SendMessageModal: React.FC<{
@@ -137,7 +138,7 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
                             className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                         >
                             <div className="flex items-center gap-3">
-                                <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full object-cover" />
+                                <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
                                 <span className="font-semibold text-gray-800">{orphan.name}</span>
                             </div>
                             <span className={`text-sm font-semibold ${statusColor}`}>{statusText}</span>
@@ -328,7 +329,7 @@ const SponsorPage: React.FC = () => {
                                         to={isViewingOwnPage ? '/payments' : `/orphan/${orphan.id}`} 
                                         className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                                     >
-                                        <img src={orphan.photoUrl} alt={orphan.name} className="w-16 h-16 rounded-full object-cover" />
+                                        <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" />
                                         <div>
                                             <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
                                             <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
@@ -413,7 +414,7 @@ const SponsorPage: React.FC = () => {
                                         className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                                     >
                                         <div className="flex items-center gap-3">
-                                            <img src={orphan.photoUrl} alt={orphan.name} className="w-10 h-10 rounded-full" />
+                                            <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
                                             <div>
                                                 <p className="font-semibold">{orphan.name}</p>
                                                 <p className="text-sm text-gray-500">{orphan.age} سنوات</p>

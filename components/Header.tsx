@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import Avatar from './Avatar';
 
 interface BellIconProps {
   onClick: () => void;
@@ -85,16 +86,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               className="flex items-center gap-2 p-2 rounded-lg hover:bg-primary-hover transition-colors"
               aria-label="User menu"
             >
-              {userProfile?.avatar_url ? (
-                <img src={userProfile.avatar_url} alt={userProfile.name} className="w-8 h-8 rounded-full" />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
-                </div>
-              )}
+              <Avatar src={userProfile?.avatar_url} name={userProfile?.name || 'مستخدم'} size="sm" />
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
