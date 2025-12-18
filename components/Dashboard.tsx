@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useOrphans } from '../hooks/useOrphans';
 import { useSponsors } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
 import { financialTransactions } from '../data';
 import { TransactionStatus, Orphan, Sponsor, PaymentStatus, TransactionType } from '../types';
-import { GoogleGenAI } from "@google/genai";
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
@@ -216,9 +215,6 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 };
 
 const Dashboard: React.FC = () => {
-    const [report, setReport] = useState<string>('');
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string>('');
     const { orphans: orphansData } = useOrphans();
     const { sponsors: sponsorsData } = useSponsors();
     const { teamMembers: teamMembersData } = useTeamMembers();
@@ -489,102 +485,103 @@ const Dashboard: React.FC = () => {
 
     // Team member dashboard (existing content)
 
-    const handleGenerateReport = async () => {
-        setIsLoading(true);
-        setError('');
-        setReport('');
+    // Calculate stats
+    const overduePayments = orphansData.reduce((count, orphan) => 
+        count + orphan.payments.filter(p => p.status === PaymentStatus.Overdue).length, 0
+    );
+    const duePayments = orphansData.reduce((count, orphan) => 
+        count + orphan.payments.filter(p => p.status === PaymentStatus.Due).length, 0
+    );
 
-        try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-            const dataSummary = {
-                totalOrphans: orphansData.length,
-                totalSponsors: sponsorsData.length,
-                totalTeamMembers: teamMembersData.length,
-                orphans: orphansData.map(o => ({
-                    name: o.name,
-                    age: o.age,
-                    performance: o.performance,
-                    payments: o.payments.map(p => ({ status: p.status, amount: p.amount, dueDate: p.dueDate.toISOString().split('T')[0] }))
-                })),
-                teamMembers: teamMembersData.map(m => ({
-                    name: m.name,
-                    pendingTasks: m.tasks.filter(t => !t.completed).length,
-                    totalTasks: m.tasks.length,
-                }))
-            };
-
-            const prompt = `
-            أنت محلل بيانات في منظمة "فيء" لرعاية الأيتام. بناءً على بيانات JSON التالية، قم بإنشاء تقرير موجز باللغة العربية.
-            يجب أن يكون التقرير احترافيًا وسهل القراءة للمديرين.
-            ركز على النقاط الرئيسية:
-            1. نظرة عامة سريعة على الأرقام (عدد الأيتام، الكفلاء، الموظفين).
-            2. تحليل الوضع المالي: اذكر إجمالي المبالغ المتأخرة والمستحقة بالدولار الأمريكي ($) وعددها.
-            3. تحليل أداء فريق العمل: اذكر إجمالي عدد المهام المعلقة.
-            4. ملاحظات هامة: هل هناك أيتام يحتاجون إلى اهتمام خاص (بناءً على الأداء الدراسي أو الدفعات المتأخرة)؟ اذكر أسماءهم إن وجدوا.
-            
-            استخدم تنسيقاً واضحاً ومقروءاً. ابدأ بعنوان "التقرير الموجز للوضع الحالي". قسم التقرير إلى فقرات بعناوين فرعية واضحة (مثل: نظرة عامة، الوضع المالي، أداء الفريق، توصيات).
-            لا تستخدم تنسيق Markdown.
-
-            البيانات:
-            ${JSON.stringify(dataSummary, null, 2)}
-            `;
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: prompt,
-            });
-            
-            setReport(response.text);
-
-        } catch (err) {
-            console.error(err);
-            setError('حدث خطأ أثناء إنشاء التقرير. يرجى المحاولة مرة أخرى لاحقاً.');
-        } finally {
-            setIsLoading(false);
-        }
+    // Get current time greeting
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'صباح الخير';
+        if (hour < 18) return 'مساء الخير';
+        return 'مساء الخير';
     };
     
     return (
         <div className="space-y-12">
-          <section>
-            <div className="bg-bg-card rounded-lg shadow-md p-6">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
-                <h2 className="text-2xl font-bold text-gray-700">التقرير الموجز بالذكاء الاصطناعي</h2>
-                <button
-                  onClick={handleGenerateReport}
-                  disabled={isLoading}
-                  className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 disabled:bg-primary/70 disabled:cursor-not-allowed w-full sm:w-auto"
-                >
-                  {isLoading ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>جاري الإنشاء...</span>
-                    </>
-                  ) : (
-                    <>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
-                        <span>إنشاء تقرير</span>
-                    </>
-                  )}
-                </button>
+          {/* Welcome Hero Section */}
+          <section className="bg-gradient-to-l from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 md:p-8 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute bottom-0 right-0 w-48 h-48 bg-primary/5 rounded-full translate-x-1/4 translate-y-1/4"></div>
+            
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div>
+                  <p className="text-primary font-medium mb-1">{getGreeting()} 👋</p>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                    {userProfile?.name || 'مرحباً بك في فيء'}
+                  </h1>
+                  <p className="text-text-secondary">
+                    لوحة التحكم الرئيسية - نظرة شاملة على أنشطة المنظمة
+                  </p>
+                </div>
+                
+                <div className="flex flex-wrap gap-3">
+                  <Link to="/orphans" className="inline-flex items-center gap-2 bg-primary text-white font-semibold py-2.5 px-5 rounded-lg hover:bg-primary-hover transition-colors shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    عرض الأيتام
+                  </Link>
+                  <Link to="/messages" className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm border">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    الرسائل
+                  </Link>
+                </div>
               </div>
-              {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">{error}</div>}
-              <div className="bg-gray-50/80 p-4 rounded-md min-h-[150px] text-gray-700 whitespace-pre-wrap font-sans text-sm leading-relaxed border">
-                {isLoading && !report && <div className="flex justify-center items-center h-full text-gray-400">يتم الآن تحليل البيانات...</div>}
-                {report ? report : <p className="text-center flex justify-center items-center h-full text-gray-400">انقر على الزر لإنشاء تقرير موجز باستخدام الذكاء الاصطناعي حول الوضع الحالي للمنظمة.</p>}
-              </div>
-               {report && !isLoading && (
-                    <div className="mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
-                        <h4 className="text-sm font-semibold text-gray-600">إجراءات مقترحة:</h4>
-                        <Link to="/financial-system" className="text-sm font-semibold py-1.5 px-3 bg-yellow-100 text-yellow-800 rounded-full hover:bg-yellow-200 transition-colors">عرض الدفعات المتأخرة</Link>
-                        <Link to="/messages" className="text-sm font-semibold py-1.5 px-3 bg-blue-100 text-blue-800 rounded-full hover:bg-blue-200 transition-colors">صياغة رسالة تذكير للكفلاء</Link>
-                        <Link to="/team" className="text-sm font-semibold py-1.5 px-3 bg-indigo-100 text-indigo-800 rounded-full hover:bg-indigo-200 transition-colors">متابعة فريق العمل</Link>
+
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
-                )}
+                    <div>
+                      <p className="text-2xl font-bold text-gray-800">{orphansData.length}</p>
+                      <p className="text-sm text-text-secondary">يتيم</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-800">{sponsorsData.length}</p>
+                      <p className="text-sm text-text-secondary">كافل</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-800">{duePayments}</p>
+                      <p className="text-sm text-text-secondary">دفعة مستحقة</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 ${overduePayments > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'} rounded-lg flex items-center justify-center`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <div>
+                      <p className={`text-2xl font-bold ${overduePayments > 0 ? 'text-red-600' : 'text-gray-800'}`}>{overduePayments}</p>
+                      <p className="text-sm text-text-secondary">دفعة متأخرة</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
