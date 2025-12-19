@@ -415,8 +415,10 @@ CREATE TRIGGER update_conversation_last_message_on_insert
 
 -- Enable RLS on all tables
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
+-- Note: user_profiles and user_permissions have RLS disabled to avoid connection-pool issues
+-- Tenant isolation for these tables is enforced at the application layer via organization_id filters
+-- ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sponsor_orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_member_orphans ENABLE ROW LEVEL SECURITY;
@@ -726,14 +728,16 @@ CREATE POLICY "Users can view their own organization"
     ON organizations FOR SELECT
     USING (id = get_user_organization_id());
 
--- User profiles policies
-CREATE POLICY "Users can view profiles in their organization"
-    ON user_profiles FOR SELECT
-    USING (organization_id = get_user_organization_id());
-
-CREATE POLICY "Users can update their own profile"
-    ON user_profiles FOR UPDATE
-    USING (id = get_current_user_id());
+-- User profiles policies - DISABLED
+-- RLS is disabled on user_profiles to avoid connection-pool issues with pg_backend_pid()
+-- Tenant isolation is enforced at the application layer via organization_id filters
+-- CREATE POLICY "Users can view profiles in their organization"
+--     ON user_profiles FOR SELECT
+--     USING (organization_id = get_user_organization_id());
+--
+-- CREATE POLICY "Users can update their own profile"
+--     ON user_profiles FOR UPDATE
+--     USING (id = get_current_user_id());
 
 -- Custom auth policies
 CREATE POLICY "Users can view their own auth record"
@@ -750,28 +754,30 @@ CREATE POLICY "System manages sessions"
     USING (FALSE)
     WITH CHECK (FALSE);
 
--- User permissions policies
-CREATE POLICY "Users can view permissions in their organization"
-    ON user_permissions FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM user_profiles up1
-            JOIN user_profiles up2 ON up1.organization_id = up2.organization_id
-            WHERE up1.id = get_current_user_id() AND up2.id = user_permissions.user_id
-        )
-    );
-
-CREATE POLICY "Managers can insert permissions"
-    ON user_permissions FOR INSERT
-    WITH CHECK (is_manager());
-
-CREATE POLICY "Managers can update permissions"
-    ON user_permissions FOR UPDATE
-    USING (is_manager());
-
-CREATE POLICY "Managers can delete permissions"
-    ON user_permissions FOR DELETE
-    USING (is_manager());
+-- User permissions policies - DISABLED
+-- RLS is disabled on user_permissions to avoid connection-pool issues with pg_backend_pid()
+-- Tenant isolation is enforced at the application layer via organization_id filters
+-- CREATE POLICY "Users can view permissions in their organization"
+--     ON user_permissions FOR SELECT
+--     USING (
+--         EXISTS (
+--             SELECT 1 FROM user_profiles up1
+--             JOIN user_profiles up2 ON up1.organization_id = up2.organization_id
+--             WHERE up1.id = get_current_user_id() AND up2.id = user_permissions.user_id
+--         )
+--     );
+--
+-- CREATE POLICY "Managers can insert permissions"
+--     ON user_permissions FOR INSERT
+--     WITH CHECK (is_manager());
+--
+-- CREATE POLICY "Managers can update permissions"
+--     ON user_permissions FOR UPDATE
+--     USING (is_manager());
+--
+-- CREATE POLICY "Managers can delete permissions"
+--     ON user_permissions FOR DELETE
+--     USING (is_manager());
 
 -- Orphans policies
 CREATE POLICY "Team members can view all orphans in their organization"

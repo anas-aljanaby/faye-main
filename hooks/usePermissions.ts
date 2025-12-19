@@ -100,7 +100,7 @@ export const usePermissions = () => {
         .from('user_permissions')
         .select('id')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       console.log('Existing permissions check:', { existingPermissions, checkError });
 

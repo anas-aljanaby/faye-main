@@ -67,15 +67,12 @@ export const authenticate = async (
       return { session: null, error: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     }
 
-    // Set user ID for RLS before fetching profile
-    await setCurrentUserId(data);
-
-    // Fetch user profile
+    // Fetch user profile (RLS disabled on user_profiles, so no need to set user context)
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('id, organization_id, role, name, avatar_url, member_id')
       .eq('id', data)
-      .single();
+      .maybeSingle();
 
     if (profileError || !profile) {
       console.error('Error fetching user profile:', profileError);
@@ -90,8 +87,6 @@ export const authenticate = async (
     // Store session
     setSession(session);
 
-    // User ID is already set above
-
     return { session, error: null };
   } catch (err) {
     console.error('Unexpected authentication error:', err);
@@ -101,7 +96,6 @@ export const authenticate = async (
 
 // Sign out
 export const signOut = async () => {
-  await setCurrentUserId(null);
   clearSession();
 };
 
