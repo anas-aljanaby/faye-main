@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authenticate, signOut as authSignOut, getSession, setCurrentUserId, AuthSession } from '../lib/auth';
-import { supabase, withUserContext } from '../lib/supabaseClient';
+import { authenticate, signOut as authSignOut, getSession, AuthSession } from '../lib/auth';
+import { supabase } from '../lib/supabaseClient';
 import { cache } from '../utils/cache';
 
 interface UserProfile {
@@ -85,10 +85,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser({ id: authSession.userProfileId });
       setUserProfile(authSession.userProfile);
 
-      // Set user ID for RLS
-      await setCurrentUserId(authSession.userProfileId);
-
       // Fetch user permissions (only for team members)
+      // Note: RLS is disabled on user_permissions, so no need to set user context
       if (authSession.userProfile.role === 'team_member') {
         await fetchPermissions(authSession.userProfileId);
       } else {
@@ -107,17 +105,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchPermissions = async (userId: string) => {
     try {
-      await setCurrentUserId(userId);
-      const { data: permissionsData, error: permissionsError } = await withUserContext(async () => {
-        return await supabase
-          .from('user_permissions')
-          .select('can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager')
-          .eq('user_id', userId)
-          .single();
-      });
+      // RLS is disabled on user_permissions, so no need for withUserContext
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .from('user_permissions')
+        .select('can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager')
+        .eq('user_id', userId)
+        .maybeSingle();
 
       if (permissionsError) {
         console.error('Error fetching user permissions:', permissionsError);
+        setPermissions(DEFAULT_PERMISSIONS);
+      } else if (!permissionsData) {
+        // No explicit permissions record yet - use defaults
         setPermissions(DEFAULT_PERMISSIONS);
       } else {
         setPermissions(permissionsData as UserPermissions);
@@ -130,18 +129,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfileAndPermissions = async (userId: string) => {
     try {
-      await setCurrentUserId(userId);
-      
-      const { data: profileData, error: profileError } = await withUserContext(async () => {
-        return await supabase
-          .from('user_profiles')
-          .select('id, organization_id, role, name, avatar_url, member_id')
-          .eq('id', userId)
-          .single();
-      });
+      // RLS is disabled on user_profiles, so no need for withUserContext
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id, organization_id, role, name, avatar_url, member_id')
+        .eq('id', userId)
+        .maybeSingle();
 
       if (profileError) {
         console.error('Error fetching user profile:', profileError);
+        setUserProfile(null);
+        setPermissions(null);
+      } else if (!profileData) {
+        console.error('User profile not found for id:', userId);
         setUserProfile(null);
         setPermissions(null);
       } else {
