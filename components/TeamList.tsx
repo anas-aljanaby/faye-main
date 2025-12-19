@@ -789,23 +789,8 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                 return <p className="text-sm text-text-secondary">عضو فريق</p>;
                                             }
                                             const p = memberPerms.permissions;
-                                            const badges = [];
-                                            
-                                            if (p.is_manager) {
-                                                badges.push(<span key="manager" className="text-xs px-2 py-0.5 bg-primary text-white rounded-full">مدير</span>);
-                                            } else {
-                                                if (p.can_approve_expense) {
-                                                    badges.push(<span key="approve" className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">موافقة</span>);
-                                                }
-                                                if (p.can_view_financials) {
-                                                    badges.push(<span key="finance" className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">مالية</span>);
-                                                }
-                                            }
-                                            
-                                            if (badges.length === 0) {
-                                                return <p className="text-sm text-text-secondary">عضو فريق</p>;
-                                            }
-                                            return badges;
+                                            // Simplified: don't show role/permission badges in card list
+                                            return <p className="text-sm text-text-secondary">عضو فريق</p>;
                                         })()}
                                     </div>
                                 </div>

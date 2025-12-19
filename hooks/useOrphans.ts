@@ -351,6 +351,84 @@ export const useOrphans = () => {
     }
   };
 
-  return { orphans, loading, error, refetch: fetchOrphans, updateOrphan };
+  const addSpecialOccasion = async (orphanUuid: string, title: string, date: Date) => {
+    if (!userProfile) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const { error: insertError } = await withUserContext(async () => {
+        return await supabase
+          .from('special_occasions')
+          .insert({
+            orphan_id: orphanUuid,
+            title: title,
+            date: date.toISOString().split('T')[0],
+          });
+      });
+
+      if (insertError) throw insertError;
+
+      // Clear cache and refetch orphans to get updated data
+      const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
+      cache.delete(cacheKey);
+      await fetchOrphans(false);
+    } catch (err) {
+      console.error('Error adding special occasion:', err);
+      throw err;
+    }
+  };
+
+  const updateSpecialOccasion = async (occasionId: string, title: string) => {
+    if (!userProfile) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const { error: updateError } = await withUserContext(async () => {
+        return await supabase
+          .from('special_occasions')
+          .update({ title })
+          .eq('id', occasionId);
+      });
+
+      if (updateError) throw updateError;
+
+      // Clear cache and refetch orphans to get updated data
+      const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
+      cache.delete(cacheKey);
+      await fetchOrphans(false);
+    } catch (err) {
+      console.error('Error updating special occasion:', err);
+      throw err;
+    }
+  };
+
+  const deleteSpecialOccasion = async (occasionId: string) => {
+    if (!userProfile) {
+      throw new Error('User not authenticated');
+    }
+
+    try {
+      const { error: deleteError } = await withUserContext(async () => {
+        return await supabase
+          .from('special_occasions')
+          .delete()
+          .eq('id', occasionId);
+      });
+
+      if (deleteError) throw deleteError;
+
+      // Clear cache and refetch orphans to get updated data
+      const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
+      cache.delete(cacheKey);
+      await fetchOrphans(false);
+    } catch (err) {
+      console.error('Error deleting special occasion:', err);
+      throw err;
+    }
+  };
+
+  return { orphans, loading, error, refetch: fetchOrphans, updateOrphan, addSpecialOccasion, updateSpecialOccasion, deleteSpecialOccasion };
 };
 

@@ -185,6 +185,9 @@ const SponsorsList: React.FC = () => {
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [sortBy, setSortBy] = useState('name-asc');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 12;
 
     // Fetch assigned orphans for selected sponsor (when modal is open)
     useEffect(() => {
@@ -244,6 +247,17 @@ const SponsorsList: React.FC = () => {
 
         return sortedAndFiltered;
     }, [searchQuery, sponsorList, sortBy]);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, sortBy]);
+
+    const totalPages = Math.ceil(filteredSponsors.length / ITEMS_PER_PAGE);
+    const paginatedSponsors = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredSponsors.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredSponsors, currentPage]);
 
     const handleSelect = (id: number) => {
         const newSelectedIds = new Set(selectedIds);
@@ -351,6 +365,24 @@ const SponsorsList: React.FC = () => {
                             )}
                         </div>
                         <div className="h-6 border-l border-gray-200"></div>
+                        {/* View Toggle */}
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
+                                aria-label="عرض شبكي"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
+                                aria-label="عرض قائمة"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                            </button>
+                        </div>
+                        <div className="h-6 border-l border-gray-200"></div>
                          <div className="flex items-center gap-3">
                             <input 
                                 type="checkbox" 
@@ -382,41 +414,102 @@ const SponsorsList: React.FC = () => {
                         الإجمالي: {filteredSponsors.length}
                     </span>
                 </div>
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {filteredSponsors.map(sponsor => {
-                        const isSelected = selectedIds.has(sponsor.id);
-                        return (
-                            <div key={sponsor.id} className={`relative bg-white rounded-lg border p-4 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/sponsor/${sponsor.id}`)}>
-                                <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => handleSelect(sponsor.id)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
-                                    aria-label={`تحديد ${sponsor.name}`}
-                                />
-                                <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="xl" className="flex-shrink-0" />
-                                <div className="flex-1">
-                                    <h3 className="text-xl font-semibold text-gray-800">{sponsor.name}</h3>
-                                    <p className="text-sm text-text-secondary">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
+                {viewMode === 'grid' ? (
+                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {paginatedSponsors.map(sponsor => {
+                            const isSelected = selectedIds.has(sponsor.id);
+                            return (
+                                <div key={sponsor.id} className={`relative bg-white rounded-lg border p-4 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/sponsor/${sponsor.id}`)}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleSelect(sponsor.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
+                                        aria-label={`تحديد ${sponsor.name}`}
+                                    />
+                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="xl" className="flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-semibold text-gray-800 truncate">{sponsor.name}</h3>
+                                        <p className="text-sm text-text-secondary">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
+                                    </div>
+                                    <div className="relative flex-shrink-0">
+                                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(sponsor.id === activeMenuId ? null : sponsor.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${sponsor.name}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                                        </button>
+                                        {activeMenuId === sponsor.id && (
+                                            <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
+                                                <Link to={`/sponsor/${sponsor.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
+                                                {hasEditPermission && (
+                                                    <button onClick={(e) => { e.stopPropagation(); setEditingSponsor(sponsor); setActiveMenuId(null); }} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="relative">
-                                    <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(sponsor.id === activeMenuId ? null : sponsor.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${sponsor.name}`}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                    </button>
-                                    {activeMenuId === sponsor.id && (
-                                        <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
-                                            <Link to={`/sponsor/${sponsor.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
-                                            {hasEditPermission && (
-                                                <button onClick={(e) => { e.stopPropagation(); setEditingSponsor(sponsor); setActiveMenuId(null); }} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
-                                            )}
-                                        </div>
-                                    )}
+                            );
+                        })}
+                    </section>
+                ) : (
+                    <section className="space-y-2">
+                        {paginatedSponsors.map(sponsor => {
+                            const isSelected = selectedIds.has(sponsor.id);
+                            return (
+                                <div key={sponsor.id} className={`bg-white rounded-lg border p-3 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/sponsor/${sponsor.id}`)}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleSelect(sponsor.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
+                                        aria-label={`تحديد ${sponsor.name}`}
+                                    />
+                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" className="flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-gray-800 truncate">{sponsor.name}</h3>
+                                    </div>
+                                    <span className="text-sm text-text-secondary whitespace-nowrap">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</span>
+                                    <div className="relative flex-shrink-0">
+                                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(sponsor.id === activeMenuId ? null : sponsor.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${sponsor.name}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                                        </button>
+                                        {activeMenuId === sponsor.id && (
+                                            <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
+                                                <Link to={`/sponsor/${sponsor.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
+                                                {hasEditPermission && (
+                                                    <button onClick={(e) => { e.stopPropagation(); setEditingSponsor(sponsor); setActiveMenuId(null); }} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </section>
+                            );
+                        })}
+                    </section>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                        <span className="text-sm text-gray-600">
+                            صفحة {currentPage} من {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
         

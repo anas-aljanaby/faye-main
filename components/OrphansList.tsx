@@ -138,6 +138,8 @@ const FilterSortPopover: React.FC<{
 };
 
 
+const ITEMS_PER_PAGE = 12;
+
 const OrphansList: React.FC = () => {
     const { orphans: orphansData, loading } = useOrphans();
     const [orphanList, setOrphanList] = useState<Orphan[]>([]);
@@ -158,6 +160,8 @@ const OrphansList: React.FC = () => {
     const [sortBy, setSortBy] = useState('name-asc');
     const [performanceFilter, setPerformanceFilter] = useState('all');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [currentPage, setCurrentPage] = useState(1);
 
 
      useEffect(() => {
@@ -201,6 +205,17 @@ const OrphansList: React.FC = () => {
 
         return sortedAndFiltered;
     }, [searchQuery, orphanList, sortBy, performanceFilter]);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, sortBy, performanceFilter]);
+
+    const totalPages = Math.ceil(filteredOrphans.length / ITEMS_PER_PAGE);
+    const paginatedOrphans = useMemo(() => {
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        return filteredOrphans.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    }, [filteredOrphans, currentPage]);
 
 
     const handleSelect = (id: number) => {
@@ -310,8 +325,8 @@ const OrphansList: React.FC = () => {
             </header>
             
             <div>
-                 <div className="flex items-center justify-between border-b pb-3 mb-3">
-                    <div className="flex items-center gap-4">
+                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3 mb-3">
+                    <div className="flex items-center gap-4 flex-wrap">
                         <div className="relative">
                            <button 
                                 onClick={() => setIsPopoverOpen(prev => !prev)}
@@ -330,6 +345,24 @@ const OrphansList: React.FC = () => {
                                     onReset={handleResetFilters}
                                 />
                             )}
+                        </div>
+                        <div className="h-6 border-l border-gray-200"></div>
+                        {/* View Toggle */}
+                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
+                                aria-label="عرض شبكي"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
+                                aria-label="عرض قائمة"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                            </button>
                         </div>
                         <div className="h-6 border-l border-gray-200"></div>
                         <div className="flex items-center gap-3">
@@ -351,42 +384,89 @@ const OrphansList: React.FC = () => {
                         الإجمالي: {filteredOrphans.length}
                     </span>
                 </div>
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                    {filteredOrphans.map(orphan => {
-                        const isSelected = selectedIds.has(orphan.id);
-                        return (
-                            <div key={orphan.id} className={`relative bg-white rounded-lg border p-4 flex flex-col items-center text-center transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/orphan/${orphan.id}`)}>
-                                <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => handleSelect(orphan.id)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="absolute top-3 right-3 h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer"
-                                    aria-label={`تحديد ${orphan.name}`}
-                                />
-                                <div className="absolute top-3 left-3">
-                                    <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(orphan.id === activeMenuId ? null : orphan.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${orphan.name}`}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                    </button>
-                                    {activeMenuId === orphan.id && (
-                                        <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
-                                            <Link to={`/orphan/${orphan.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
-                                            <button onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="relative">
-                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="mb-3 border-4 border-gray-100 !w-28 !h-28 !text-3xl" />
-                                     <div className="absolute bottom-4 -right-1">
-                                        <span className={`text-xs font-bold px-2 py-1 rounded-full text-white ${orphan.performance === 'ممتاز' ? 'bg-green-500' : orphan.performance === 'جيد جداً' ? 'bg-blue-500' : 'bg-yellow-500'}`}>{orphan.performance}</span>
+                {viewMode === 'grid' ? (
+                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {paginatedOrphans.map(orphan => {
+                            const isSelected = selectedIds.has(orphan.id);
+                            return (
+                                <div key={orphan.id} className={`relative bg-white rounded-lg border p-4 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/orphan/${orphan.id}`)}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleSelect(orphan.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
+                                        aria-label={`تحديد ${orphan.name}`}
+                                    />
+                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-semibold text-gray-800 truncate">{orphan.name}</h3>
+                                        <p className="text-sm text-text-secondary">{orphan.age} سنوات - {orphan.country}</p>
+                                    </div>
+                                    <div className="relative flex-shrink-0">
+                                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(orphan.id === activeMenuId ? null : orphan.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${orphan.name}`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                                        </button>
+                                        {activeMenuId === orphan.id && (
+                                            <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
+                                                <Link to={`/orphan/${orphan.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
+                                                <button onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                <h3 className="text-xl font-semibold text-gray-800">{orphan.name}</h3>
-                                <p className="text-sm text-text-secondary">{orphan.age} سنوات - {orphan.country}</p>
-                            </div>
-                        );
-                    })}
-                </section>
+                            );
+                        })}
+                    </section>
+                ) : (
+                    <section className="space-y-2">
+                        {paginatedOrphans.map(orphan => {
+                            const isSelected = selectedIds.has(orphan.id);
+                            return (
+                                <div key={orphan.id} className={`bg-white rounded-lg border p-3 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/orphan/${orphan.id}`)}>
+                                    <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={() => handleSelect(orphan.id)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
+                                        aria-label={`تحديد ${orphan.name}`}
+                                    />
+                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="md" className="flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-gray-800 truncate">{orphan.name}</h3>
+                                    </div>
+                                    <span className="text-sm text-text-secondary whitespace-nowrap">{orphan.age} سنوات</span>
+                                    <span className="text-sm text-text-secondary whitespace-nowrap hidden sm:block">{orphan.country}</span>
+                                    <span className={`text-xs font-bold px-2 py-1 rounded-full text-white whitespace-nowrap ${orphan.performance === 'ممتاز' ? 'bg-green-500' : orphan.performance === 'جيد جداً' ? 'bg-blue-500' : 'bg-yellow-500'}`}>{orphan.performance}</span>
+                                </div>
+                            );
+                        })}
+                    </section>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                        </button>
+                        <span className="text-sm text-gray-600">
+                            صفحة {currentPage} من {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
         
