@@ -12,6 +12,7 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
+import { withUserContext } from '../lib/supabaseClient';
 import Avatar from './Avatar';
 
 const AddAchievementModal: React.FC<{
@@ -148,39 +149,208 @@ const AddUpdateLogModal: React.FC<{
     );
 };
 
-const AddEventModal: React.FC<{
+const EventModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
-    onSave: (title: string) => void;
+    onAdd: (title: string) => void;
+    onUpdate: (occasionId: string, title: string) => void;
+    onDelete: (occasionId: string) => void;
     date: Date | null;
-}> = ({ isOpen, onClose, onSave, date }) => {
-    const [title, setTitle] = useState('');
+    existingEvents: { id: string; title: string; type: string }[];
+}> = ({ isOpen, onClose, onAdd, onUpdate, onDelete, date, existingEvents }) => {
+    const [newTitle, setNewTitle] = useState('');
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingTitle, setEditingTitle] = useState('');
+    const [isAdding, setIsAdding] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleAddSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (title.trim()) {
-            onSave(title.trim());
-            setTitle('');
-            onClose();
+        if (newTitle.trim()) {
+            onAdd(newTitle.trim());
+            setNewTitle('');
+            setIsAdding(false);
         }
+    };
+
+    const handleEditSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingId && editingTitle.trim()) {
+            onUpdate(editingId, editingTitle.trim());
+            setEditingId(null);
+            setEditingTitle('');
+        }
+    };
+
+    const handleDelete = (id: string) => {
+        onDelete(id);
+        setDeleteConfirmId(null);
+    };
+
+    const startEditing = (id: string, title: string) => {
+        setEditingId(id);
+        setEditingTitle(title);
+        setIsAdding(false);
+        setDeleteConfirmId(null);
+    };
+
+    const cancelEditing = () => {
+        setEditingId(null);
+        setEditingTitle('');
+    };
+
+    const handleClose = () => {
+        setNewTitle('');
+        setEditingId(null);
+        setEditingTitle('');
+        setIsAdding(false);
+        setDeleteConfirmId(null);
+        onClose();
     };
 
     if (!isOpen || !date) return null;
 
+    // Filter to only show editable occasions (type === 'occasion')
+    const editableEvents = existingEvents.filter(e => e.type === 'occasion');
+    const otherEvents = existingEvents.filter(e => e.type !== 'occasion');
+
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-2">إضافة حدث جديد</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                    لـ {date.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                </p>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان الحدث (مثال: موعد طبيب الأسنان)" className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" required autoFocus/>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">حفظ الحدث</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={handleClose}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 className="text-xl font-bold">الأحداث</h3>
+                        <p className="text-sm text-gray-500">
+                            {date.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
                     </div>
-                </form>
+                    <button onClick={handleClose} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                </div>
+
+                {/* Existing Editable Events */}
+                {editableEvents.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                        <h4 className="text-sm font-semibold text-gray-600 mb-2">المناسبات المسجلة</h4>
+                        {editableEvents.map(event => (
+                            <div key={event.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                {editingId === event.id ? (
+                                    <form onSubmit={handleEditSubmit} className="space-y-2">
+                                        <input
+                                            type="text"
+                                            value={editingTitle}
+                                            onChange={(e) => setEditingTitle(e.target.value)}
+                                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+                                            autoFocus
+                                        />
+                                        <div className="flex gap-2">
+                                            <button type="submit" className="py-1.5 px-4 bg-primary text-white rounded-md text-sm font-semibold hover:bg-primary-hover">
+                                                حفظ
+                                            </button>
+                                            <button type="button" onClick={cancelEditing} className="py-1.5 px-4 bg-gray-100 text-gray-700 rounded-md text-sm font-semibold hover:bg-gray-200">
+                                                إلغاء
+                                            </button>
+                                        </div>
+                                    </form>
+                                ) : deleteConfirmId === event.id ? (
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-red-600 font-semibold">هل أنت متأكد من حذف "{event.title}"؟</p>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleDelete(event.id)} className="py-1.5 px-4 bg-red-500 text-white rounded-md text-sm font-semibold hover:bg-red-600">
+                                                نعم، احذف
+                                            </button>
+                                            <button onClick={() => setDeleteConfirmId(null)} className="py-1.5 px-4 bg-gray-100 text-gray-700 rounded-md text-sm font-semibold hover:bg-gray-200">
+                                                إلغاء
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                            <span className="text-gray-800">{event.title}</span>
+                                        </div>
+                                        <div className="flex gap-1">
+                                            <button
+                                                onClick={() => startEditing(event.id, event.title)}
+                                                className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 rounded-md"
+                                                title="تعديل"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                                            </button>
+                                            <button
+                                                onClick={() => setDeleteConfirmId(event.id)}
+                                                className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                                title="حذف"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Other Events (non-editable) */}
+                {otherEvents.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                        <h4 className="text-sm font-semibold text-gray-600 mb-2">أحداث أخرى</h4>
+                        {otherEvents.map((event, idx) => {
+                            const colors: Record<string, { bg: string; dot: string }> = {
+                                achievement: { bg: 'bg-green-50 border-green-200', dot: 'bg-green-500' },
+                                gift: { bg: 'bg-yellow-50 border-yellow-200', dot: 'bg-yellow-500' },
+                                payment: { bg: 'bg-red-50 border-red-200', dot: 'bg-red-500' },
+                            };
+                            const color = colors[event.type] || { bg: 'bg-gray-50 border-gray-200', dot: 'bg-gray-500' };
+                            return (
+                                <div key={`${event.type}-${idx}`} className={`${color.bg} border rounded-lg p-3`}>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`w-2 h-2 rounded-full ${color.dot}`}></span>
+                                        <span className="text-gray-800">{event.title}</span>
+                                        <span className="text-xs text-gray-500">
+                                            ({event.type === 'achievement' ? 'إنجاز' : event.type === 'gift' ? 'هدية' : event.type === 'payment' ? 'دفعة' : 'آخر'})
+                                        </span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Add New Event */}
+                {isAdding ? (
+                    <form onSubmit={handleAddSubmit} className="space-y-3 border-t pt-4">
+                        <h4 className="text-sm font-semibold text-gray-600">إضافة مناسبة جديدة</h4>
+                        <input
+                            value={newTitle}
+                            onChange={(e) => setNewTitle(e.target.value)}
+                            placeholder="عنوان المناسبة (مثال: موعد طبيب الأسنان)"
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+                            autoFocus
+                        />
+                        <div className="flex gap-2">
+                            <button type="submit" className="py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold text-sm">
+                                حفظ
+                            </button>
+                            <button type="button" onClick={() => { setIsAdding(false); setNewTitle(''); }} className="py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold text-sm">
+                                إلغاء
+                            </button>
+                        </div>
+                    </form>
+                ) : (
+                    <button
+                        onClick={() => { setIsAdding(true); setEditingId(null); setDeleteConfirmId(null); }}
+                        className="w-full py-2.5 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-primary hover:text-primary font-semibold flex items-center justify-center gap-2 transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        إضافة مناسبة جديدة
+                    </button>
+                )}
+
+                {existingEvents.length === 0 && !isAdding && (
+                    <p className="text-center text-gray-500 text-sm mt-4">لا توجد أحداث في هذا اليوم</p>
+                )}
             </div>
         </div>
     );
@@ -300,26 +470,26 @@ const ProgramStatusPill: React.FC<{ status: ProgramParticipation['status'] }> = 
 
 const InteractiveCalendar: React.FC<{ 
     orphan: Orphan;
-    onDayClick: (date: Date) => void;
+    onDayClick: (date: Date, events: { id: string; type: string; title: string }[]) => void;
 }> = ({ orphan, onDayClick }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const events = useMemo(() => {
-        const allEvents = new Map<string, { type: string; title: string }[]>();
-        const addEvent = (date: Date, type: string, title: string) => {
+        const allEvents = new Map<string, { id: string; type: string; title: string }[]>();
+        const addEvent = (date: Date, type: string, title: string, id: string) => {
             const dateString = date.toISOString().split('T')[0];
             if (!allEvents.has(dateString)) {
                 allEvents.set(dateString, []);
             }
-            allEvents.get(dateString)?.push({ type, title });
+            allEvents.get(dateString)?.push({ id, type, title });
         };
 
-        orphan.achievements.forEach(a => addEvent(a.date, 'achievement', a.title));
-        orphan.specialOccasions.forEach(o => addEvent(o.date, 'occasion', o.title));
-        orphan.gifts.forEach(g => addEvent(g.date, 'gift', g.item));
+        orphan.achievements.forEach(a => addEvent(a.date, 'achievement', a.title, a.id));
+        orphan.specialOccasions.forEach(o => addEvent(o.date, 'occasion', o.title, o.id));
+        orphan.gifts.forEach(g => addEvent(g.date, 'gift', g.item, g.id));
         orphan.payments.forEach(p => {
             if (p.status === PaymentStatus.Due || p.status === PaymentStatus.Overdue) {
-                 addEvent(p.dueDate, 'payment', 'دفعة مستحقة');
+                 addEvent(p.dueDate, 'payment', 'دفعة مستحقة', p.id);
             }
         });
 
@@ -367,9 +537,9 @@ const InteractiveCalendar: React.FC<{
                     return (
                         <div 
                             key={dayNumber} 
-                            onClick={() => onDayClick(date)}
+                            onClick={() => onDayClick(date, dayEvents || [])}
                             className={`h-12 flex flex-col items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 relative group ${isToday ? 'bg-primary text-white font-bold' : 'hover:bg-primary-light'}`}
-                            title={`إضافة حدث ليوم ${dayNumber}`}
+                            title={dayEvents && dayEvents.length > 0 ? `${dayEvents.length} حدث` : `إضافة حدث ليوم ${dayNumber}`}
                         >
                             <span className="z-10">{dayNumber}</span>
                             {dayEvents && (
@@ -402,7 +572,7 @@ const InteractiveCalendar: React.FC<{
 const OrphanProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orphans: orphansData, loading: orphansLoading, updateOrphan } = useOrphans();
+  const { orphans: orphansData, loading: orphansLoading, updateOrphan, addSpecialOccasion, updateSpecialOccasion, deleteSpecialOccasion } = useOrphans();
   const { sponsors: sponsorsData } = useSponsors();
   const { userProfile, canEditOrphans } = useAuth();
   const isTeamMember = userProfile?.role === 'team_member';
@@ -442,8 +612,9 @@ const OrphanProfile: React.FC = () => {
 
   const [isAddAchievementModalOpen, setIsAddAchievementModalOpen] = useState(false);
   const [isAddLogModalOpen, setIsAddLogModalOpen] = useState(false);
-  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [selectedDateForEvent, setSelectedDateForEvent] = useState<Date | null>(null);
+  const [selectedDateEvents, setSelectedDateEvents] = useState<{ id: string; type: string; title: string }[]>([]);
   
   // Sponsor note states
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -482,23 +653,27 @@ const OrphanProfile: React.FC = () => {
 
       try {
         // Check if user sponsors this orphan
-        const { data: sponsorOrphan } = await supabase
-          .from('sponsor_orphans')
-          .select('orphan_id')
-          .eq('sponsor_id', userProfile.id)
-          .eq('orphan_id', orphan.uuid)
-          .single();
+        const { data: sponsorOrphan } = await withUserContext(async () => {
+          return await supabase
+            .from('sponsor_orphans')
+            .select('orphan_id')
+            .eq('sponsor_id', userProfile.id)
+            .eq('orphan_id', orphan.uuid)
+            .single();
+        });
 
         if (sponsorOrphan) {
           setIsSponsorOfOrphan(true);
           
           // Fetch existing note
-          const { data: noteData } = await supabase
-            .from('sponsor_notes')
-            .select('note')
-            .eq('sponsor_id', userProfile.id)
-            .eq('orphan_id', orphan.uuid)
-            .single();
+          const { data: noteData } = await withUserContext(async () => {
+            return await supabase
+              .from('sponsor_notes')
+              .select('note')
+              .eq('sponsor_id', userProfile.id)
+              .eq('orphan_id', orphan.uuid)
+              .single();
+          });
 
           if (noteData) {
             setSponsorNote(noteData.note);
@@ -515,23 +690,28 @@ const OrphanProfile: React.FC = () => {
     checkSponsorAndFetchNote();
   }, [userProfile, orphan]);
 
-  // Fetch note for team members (to display)
+  // Fetch note for sponsor (to display only to sponsor)
   const [displayNote, setDisplayNote] = useState<{ note: string; sponsorName: string; updatedAt: Date } | null>(null);
   
   useEffect(() => {
     const fetchDisplayNote = async () => {
-      if (!orphan?.uuid || !userProfile) return;
+      if (!orphan?.uuid || !userProfile || userProfile.role !== 'sponsor') {
+        setDisplayNote(null);
+        return;
+      }
 
       try {
-        const { data: noteData } = await supabase
-          .from('sponsor_notes')
-          .select(`
-            note,
-            updated_at,
-            sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
-          `)
-          .eq('orphan_id', orphan.uuid)
-          .single();
+        const { data: noteData } = await withUserContext(async () => {
+          return await supabase
+            .from('sponsor_notes')
+            .select(`
+              note,
+              updated_at,
+              sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
+            `)
+            .eq('orphan_id', orphan.uuid)
+            .single();
+        });
 
         if (noteData) {
           setDisplayNote({
@@ -556,30 +736,34 @@ const OrphanProfile: React.FC = () => {
 
     setIsNoteLoading(true);
     try {
-      const { error } = await supabase
-        .from('sponsor_notes')
-        .upsert({
-          orphan_id: orphan.uuid,
-          sponsor_id: userProfile.id,
-          note: sponsorNote,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'orphan_id,sponsor_id'
-        });
+      const { error } = await withUserContext(async () => {
+        return await supabase
+          .from('sponsor_notes')
+          .upsert({
+            orphan_id: orphan.uuid,
+            sponsor_id: userProfile.id,
+            note: sponsorNote,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'orphan_id,sponsor_id'
+          });
+      });
 
       if (error) throw error;
 
       setIsNoteModalOpen(false);
       // Refresh display note
-      const { data: noteData } = await supabase
-        .from('sponsor_notes')
-        .select(`
-          note,
-          updated_at,
-          sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
-        `)
-        .eq('orphan_id', orphan.uuid)
-        .single();
+      const { data: noteData } = await withUserContext(async () => {
+        return await supabase
+          .from('sponsor_notes')
+          .select(`
+            note,
+            updated_at,
+            sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
+          `)
+          .eq('orphan_id', orphan.uuid)
+          .single();
+      });
 
       if (noteData) {
         setDisplayNote({
@@ -654,19 +838,49 @@ const OrphanProfile: React.FC = () => {
         setIsAddLogModalOpen(false);
     };
 
-    const handleDayClickForEvent = (date: Date) => {
+    const handleDayClickForEvent = (date: Date, events: { id: string; type: string; title: string }[]) => {
         setSelectedDateForEvent(date);
-        setIsAddEventModalOpen(true);
+        setSelectedDateEvents(events);
+        setIsEventModalOpen(true);
     };
 
     const handleAddEvent = async (title: string) => {
-        if (!selectedDateForEvent || !orphan) return;
+        if (!selectedDateForEvent || !orphan || !orphan.uuid) return;
 
-        // TODO: Implement API call to save special occasion to database
-        // For now, this is a placeholder
-        console.log('Adding special occasion:', { title, date: selectedDateForEvent, orphanId: orphan.id });
-        setIsAddEventModalOpen(false);
+        try {
+            await addSpecialOccasion(orphan.uuid, title, selectedDateForEvent);
+        } catch (error) {
+            console.error('Error adding special occasion:', error);
+            alert('حدث خطأ أثناء إضافة المناسبة');
+        }
+    };
+
+    const handleUpdateEvent = async (occasionId: string, title: string) => {
+        if (!orphan || !orphan.uuid) return;
+
+        try {
+            await updateSpecialOccasion(occasionId, title);
+        } catch (error) {
+            console.error('Error updating special occasion:', error);
+            alert('حدث خطأ أثناء تعديل المناسبة');
+        }
+    };
+
+    const handleDeleteEvent = async (occasionId: string) => {
+        if (!orphan || !orphan.uuid) return;
+
+        try {
+            await deleteSpecialOccasion(occasionId);
+        } catch (error) {
+            console.error('Error deleting special occasion:', error);
+            alert('حدث خطأ أثناء حذف المناسبة');
+        }
+    };
+    
+    const handleCloseEventModal = () => {
+        setIsEventModalOpen(false);
         setSelectedDateForEvent(null);
+        setSelectedDateEvents([]);
     };
 
     const handleGenerateSummaryReport = async () => {
@@ -1084,8 +1298,8 @@ const OrphanProfile: React.FC = () => {
           <InteractiveCalendar orphan={orphan} onDayClick={handleDayClickForEvent} />
         </InfoCard>
 
-      {/* Sponsor Note Display (visible to team members and sponsors) */}
-      {displayNote && (
+      {/* Sponsor Note Display (visible to sponsor only) */}
+      {userProfile?.role === 'sponsor' && displayNote && (
         <InfoCard
           title="ملاحظة الكافل"
           icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>}
@@ -1270,12 +1484,15 @@ const OrphanProfile: React.FC = () => {
         onSave={handleAddUpdateLog}
     />
 
-    {/* Add Event Modal */}
-    <AddEventModal 
-        isOpen={isAddEventModalOpen}
-        onClose={() => setIsAddEventModalOpen(false)}
-        onSave={handleAddEvent}
+    {/* Event Modal */}
+    <EventModal 
+        isOpen={isEventModalOpen}
+        onClose={handleCloseEventModal}
+        onAdd={handleAddEvent}
+        onUpdate={handleUpdateEvent}
+        onDelete={handleDeleteEvent}
         date={selectedDateForEvent}
+        existingEvents={selectedDateEvents}
     />
 
     {/* Sponsor Note Modal */}

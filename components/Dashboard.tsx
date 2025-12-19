@@ -4,8 +4,8 @@ import { useOrphans } from '../hooks/useOrphans';
 import { useSponsors } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
-import { financialTransactions } from '../data';
 import { TransactionStatus, Orphan, Sponsor, PaymentStatus, TransactionType } from '../types';
+import { useFinancialTransactions } from '../hooks/useFinancialTransactions';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
@@ -49,11 +49,16 @@ const UpcomingOccasions: React.FC<{ orphans: Orphan[] }> = ({ orphans }) => {
 };
 
 const PendingApprovals = () => {
-    const pending = financialTransactions.filter(tx => tx.status === TransactionStatus.Pending);
+    const { transactions, loading } = useFinancialTransactions();
+    const pending = transactions.filter(tx => tx.status === TransactionStatus.Pending);
 
     return (
         <WidgetCard title="الموافقات المالية المعلقة" icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}>
-            {pending.length > 0 ? (
+            {loading ? (
+                <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                </div>
+            ) : pending.length > 0 ? (
                 <>
                     <p className="font-bold text-2xl text-yellow-600">{pending.length} معاملات</p>
                     <p className="text-sm text-text-secondary">بإجمالي مبلغ <span className="font-semibold">${pending.reduce((sum, tx) => sum + tx.amount, 0).toLocaleString()}</span></p>
@@ -89,11 +94,13 @@ const LatestAchievements: React.FC<{ orphans: Orphan[] }> = ({ orphans }) => {
 };
 
 const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orphan[] }> = ({ sponsor, sponsoredOrphans }) => {
+    const { transactions } = useFinancialTransactions();
+
     const sponsorTransactions = useMemo(() => {
-        return financialTransactions.filter(
+        return transactions.filter(
             tx => tx.type === TransactionType.Income && tx.receipt?.sponsorName === sponsor.name
         );
-    }, [sponsor.name]);
+    }, [transactions, sponsor.name]);
 
     const totalDonations = useMemo(() => {
         return sponsorTransactions.reduce((sum, tx) => sum + tx.amount, 0);
@@ -594,7 +601,15 @@ const Dashboard: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-700 mb-4">الأيتام</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-700">الأيتام</h2>
+              {orphansData.length > 4 && (
+                <Link to="/orphans" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                  عرض الكل ({orphansData.length})
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </Link>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {orphansData.slice(0, 4).map(orphan => (
                 <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="bg-bg-card rounded-lg shadow-md p-4 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
@@ -607,9 +622,17 @@ const Dashboard: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-700 mb-4">الكفلاء</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-700">الكفلاء</h2>
+              {sponsorsData.length > 6 && (
+                <Link to="/sponsors" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                  عرض الكل ({sponsorsData.length})
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </Link>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sponsorsData.map(sponsor => (
+              {sponsorsData.slice(0, 6).map(sponsor => (
                 <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="bg-bg-card rounded-lg shadow-md p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                   <div className="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-xl">
                     {sponsor.name.charAt(0)}
@@ -624,7 +647,15 @@ const Dashboard: React.FC = () => {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-700 mb-4">فريق العمل</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-gray-700">فريق العمل</h2>
+              {teamMembersData.length > 6 && (
+                <Link to="/team" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                  عرض الكل ({teamMembersData.length})
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </Link>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {teamMembersData
                 .sort((a, b) => {
@@ -634,6 +665,7 @@ const Dashboard: React.FC = () => {
                   if (!aIsCurrentUser && bIsCurrentUser) return 1;
                   return 0;
                 })
+                .slice(0, 6)
                 .map(member => (
                 <Link to={`/team/${member.id}`} key={member.id} className="bg-bg-card rounded-lg shadow-md p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
                   <Avatar src={member.avatarUrl} name={member.name} size="lg" />
