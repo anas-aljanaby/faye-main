@@ -41,9 +41,9 @@ export const useOrphans = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch orphans based on user role and organization
-      // Use withUserContext to ensure RLS policies work correctly
-      const { data: orphansData, error: orphansError } = await withUserContext(async () => {
+      // Batch all queries into a single withUserContext call to avoid multiple RPC overhead
+      const result = await withUserContext(async () => {
+        // Fetch orphans based on user role and organization
         let orphansQuery = supabase
           .from('orphans')
           .select('*')
@@ -58,31 +58,31 @@ export const useOrphans = () => {
             .eq('sponsor_id', userProfile.id);
 
           if (!sponsorOrphans || sponsorOrphans.length === 0) {
-            return { data: [], error: null };
+            return { 
+              orphansData: [], 
+              orphansError: null,
+              relatedData: null
+            };
           }
 
           const orphanIds = sponsorOrphans.map(so => so.orphan_id);
           orphansQuery = orphansQuery.in('id', orphanIds);
         }
 
-        return await orphansQuery;
-      });
+        const { data: orphansData, error: orphansError } = await orphansQuery;
 
-      if (!orphansData || orphansData.length === 0) {
-        setOrphans([]);
-        setLoading(false);
-        cache.set(cacheKey, [], 2 * 60 * 1000);
-        return;
-      }
+        if (orphansError) {
+          return { orphansData: null, orphansError, relatedData: null };
+        }
 
-      if (orphansError) throw orphansError;
+        if (!orphansData || orphansData.length === 0) {
+          return { orphansData: [], orphansError: null, relatedData: null };
+        }
 
-      const orphanIds = orphansData.map(o => o.id);
+        const orphanIds = orphansData.map(o => o.id);
 
-      // Batch fetch all related data at once instead of per-orphan queries
-      // Use withUserContext to ensure RLS policies work correctly
-      const [paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = await withUserContext(async () => {
-        return await Promise.all([
+        // Batch fetch all related data at once
+        const [paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = await Promise.all([
           // Fetch all payments for all orphans
           supabase.from('payments').select('*').in('orphan_id', orphanIds),
           // Fetch all achievements
@@ -102,7 +102,42 @@ export const useOrphans = () => {
           // Fetch all sponsor relationships
           supabase.from('sponsor_orphans').select('orphan_id, sponsor_id').in('orphan_id', orphanIds),
         ]);
+
+        return {
+          orphansData,
+          orphansError: null,
+          relatedData: {
+            paymentsData,
+            achievementsData,
+            occasionsData,
+            occasionOrphansData,
+            giftsData,
+            logsData,
+            familyData,
+            programsData,
+            sponsorOrphansData,
+          }
+        };
       });
+
+      if (result.orphansError) throw result.orphansError;
+
+      if (!result.orphansData || result.orphansData.length === 0) {
+        setOrphans([]);
+        setLoading(false);
+        cache.set(cacheKey, [], 2 * 60 * 1000);
+        return;
+      }
+
+      const { orphansData, relatedData } = result;
+      if (!relatedData) {
+        setOrphans([]);
+        setLoading(false);
+        cache.set(cacheKey, [], 2 * 60 * 1000);
+        return;
+      }
+
+      const { paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData } = relatedData;
 
       // Group related data by orphan_id for O(1) lookup
       const paymentsByOrphan = new Map<string, any[]>();

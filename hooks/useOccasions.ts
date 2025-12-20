@@ -46,8 +46,9 @@ export const useOccasions = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch occasions based on user role and organization
-      const { data: occasionsData, error: occasionsError } = await withUserContext(async () => {
+      // Batch all queries into a single withUserContext call to avoid multiple RPC overhead
+      const result = await withUserContext(async () => {
+        // Fetch occasions based on user role and organization
         let occasionsQuery = supabase
           .from('special_occasions')
           .select('*')
@@ -66,10 +67,10 @@ export const useOccasions = () => {
         }
 
         // Execute the base query
-        const result = await occasionsQuery;
-        if (result.error) throw result.error;
+        const occasionsResult = await occasionsQuery;
+        if (occasionsResult.error) throw occasionsResult.error;
 
-        let finalOccasions = result.data || [];
+        let finalOccasions = occasionsResult.data || [];
 
         // If user is a sponsor, filter to only show occasions for their sponsored orphans or organization-wide
         if (userProfile.role === 'sponsor') {
@@ -127,49 +128,50 @@ export const useOccasions = () => {
           }
         }
 
-        return { data: finalOccasions, error: null };
-      });
+        const occasionsList: SpecialOccasion[] = finalOccasions;
+        const occasionIds = occasionsList.map(o => o.id);
 
-      if (occasionsError) throw occasionsError;
-
-      const occasionsList: SpecialOccasion[] = occasionsData || [];
-
-      // Fetch linked orphans for multi-orphan occasions
-      const occasionIds = occasionsList.map(o => o.id);
-      if (occasionIds.length > 0) {
-        const { data: occasionOrphansData } = await withUserContext(async () => {
-          return await supabase
+        // Fetch linked orphans for multi-orphan occasions (if any)
+        let occasionOrphansData = null;
+        if (occasionIds.length > 0) {
+          const { data } = await supabase
             .from('occasion_orphans')
             .select('occasion_id, orphan:orphans(id, name)')
             .in('occasion_id', occasionIds);
-        });
-
-        // Group linked orphans by occasion
-        const linkedOrphansByOccasion = new Map<string, Array<{ id: string; name: string }>>();
-        if (occasionOrphansData) {
-          occasionOrphansData.forEach((item: any) => {
-            const occasionId = item.occasion_id;
-            const orphan = item.orphan;
-            if (orphan && typeof orphan === 'object' && !Array.isArray(orphan)) {
-              if (!linkedOrphansByOccasion.has(occasionId)) {
-                linkedOrphansByOccasion.set(occasionId, []);
-              }
-              linkedOrphansByOccasion.get(occasionId)!.push({
-                id: orphan.id,
-                name: orphan.name
-              });
-            }
-          });
+          occasionOrphansData = data;
         }
 
-        // Attach linked orphans to occasions
-        occasionsList.forEach(occasion => {
-          const linked = linkedOrphansByOccasion.get(occasion.id);
-          if (linked && linked.length > 0) {
-            occasion.linked_orphans = linked;
+        return { occasionsList, occasionOrphansData };
+      });
+
+      const occasionsList: SpecialOccasion[] = result.occasionsList || [];
+      const occasionOrphansData = result.occasionOrphansData;
+
+      // Group linked orphans by occasion
+      const linkedOrphansByOccasion = new Map<string, Array<{ id: string; name: string }>>();
+      if (occasionOrphansData) {
+        occasionOrphansData.forEach((item: any) => {
+          const occasionId = item.occasion_id;
+          const orphan = item.orphan;
+          if (orphan && typeof orphan === 'object' && !Array.isArray(orphan)) {
+            if (!linkedOrphansByOccasion.has(occasionId)) {
+              linkedOrphansByOccasion.set(occasionId, []);
+            }
+            linkedOrphansByOccasion.get(occasionId)!.push({
+              id: orphan.id,
+              name: orphan.name
+            });
           }
         });
       }
+
+      // Attach linked orphans to occasions
+      occasionsList.forEach(occasion => {
+        const linked = linkedOrphansByOccasion.get(occasion.id);
+        if (linked && linked.length > 0) {
+          occasion.linked_orphans = linked;
+        }
+      });
 
       // Convert date strings to Date objects
       const occasionsWithDates = occasionsList.map(occ => ({
