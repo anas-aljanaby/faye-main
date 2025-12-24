@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Faye Organization Data Import
--- Generated at: 2025-12-18T03:47:56.515Z
+-- Generated at: 2025-12-24T15:20:34.604Z
 -- ============================================================================
 -- This script imports real organization data from the Excel file
 -- Run this in Supabase SQL Editor after running 001_initial_schema.sql
