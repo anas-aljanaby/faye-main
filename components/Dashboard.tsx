@@ -243,6 +243,19 @@ const Dashboard: React.FC = () => {
         return orphansData.filter(o => o.uuid && assignedOrphanIds.includes(o.uuid));
     }, [sponsor, orphansData, assignedOrphanIds]);
 
+    // Calculate payment stats for sponsored orphans (always call hooks at top level)
+    const sponsorPaymentStats = useMemo(() => {
+        let overdue = 0;
+        let due = 0;
+        sponsoredOrphans.forEach(orphan => {
+            orphan.payments.forEach(p => {
+                if (p.status === PaymentStatus.Overdue) overdue++;
+                if (p.status === PaymentStatus.Due) due++;
+            });
+        });
+        return { overdue, due };
+    }, [sponsoredOrphans]);
+
     // Fetch assigned team members, manager, and assigned orphans for sponsor
     useEffect(() => {
         const fetchSponsorData = async () => {
@@ -259,9 +272,17 @@ const Dashboard: React.FC = () => {
                     .eq('sponsor_id', sponsor.uuid);
 
                 if (assignedData) {
-                    const members = assignedData
-                        .map(item => item.team_member)
-                        .filter(Boolean) as Array<{ id: string; name: string; avatar_url?: string }>;
+                    const members: Array<{ id: string; name: string; avatar_url?: string }> = [];
+                    assignedData.forEach(item => {
+                        const teamMember = item.team_member as any;
+                        if (teamMember && typeof teamMember === 'object' && !Array.isArray(teamMember)) {
+                            members.push({
+                                id: String(teamMember.id || ''),
+                                name: String(teamMember.name || ''),
+                                avatar_url: teamMember.avatar_url ? String(teamMember.avatar_url) : undefined
+                            });
+                        }
+                    });
                     setAssignedTeamMembers(members);
                 }
 
@@ -345,37 +366,90 @@ const Dashboard: React.FC = () => {
         const DownloadIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
         const ShieldIcon = <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
 
+        // Get current time greeting
+        const getGreeting = () => {
+            const hour = new Date().getHours();
+            if (hour < 12) return 'صباح الخير';
+            if (hour < 18) return 'مساء الخير';
+            return 'مساء الخير';
+        };
+
         return (
             <div ref={receiptRef}>
                 <div className="space-y-8" style={{ paddingBottom: '80px' }}>
-                    {/* Sponsor Header */}
-                    <div className="bg-bg-card p-6 rounded-xl shadow-md flex flex-col sm:flex-row items-center gap-6">
-                        {sponsor.uuid ? (
-                          <AvatarUpload
-                            currentAvatarUrl={sponsor.avatarUrl}
-                            userId={sponsor.uuid}
-                            type="sponsor"
-                            onUploadComplete={(newUrl) => {
-                              window.location.reload();
-                            }}
-                            size="md"
-                          />
-                        ) : (
-                          <div className="w-24 h-24 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-4xl flex-shrink-0">
-                            {sponsor.name.charAt(0)}
-                          </div>
-                        )}
-                        <div className="text-center sm:text-right flex-grow">
-                            <h1 className="text-3xl font-bold text-gray-800">{sponsor.name}</h1>
-                            <p className="text-text-secondary">كافل مميز في فيء</p>
+                    {/* Welcome Hero Section for Sponsors */}
+                    <section className="bg-gradient-to-l from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 md:p-8 relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                        <div className="absolute bottom-0 right-0 w-48 h-48 bg-primary/5 rounded-full translate-x-1/4 translate-y-1/4"></div>
+                        
+                        <div className="relative z-10">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                                <div>
+                                    <p className="text-primary font-medium mb-1">{getGreeting()} 👋</p>
+                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+                                        {userProfile?.name || sponsor.name}
+                                    </h1>
+                                    <p className="text-text-secondary">
+                                        لوحة التحكم - نظرة شاملة على أيتامك المكفولين
+                                    </p>
+                                </div>
+                                
+                                <div className="flex flex-wrap gap-3">
+                                    <Link to="/payments" className="inline-flex items-center gap-2 bg-primary text-white font-semibold py-2.5 px-5 rounded-lg hover:bg-primary-hover transition-colors shadow-sm">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/></svg>
+                                        الدفعات
+                                    </Link>
+                                    <Link to="/messages" className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm border">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        الرسائل
+                                    </Link>
+                                    <button onClick={handleExportPDF} className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm border">
+                                        {DownloadIcon}
+                                        <span>تصدير</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Stats Cards - 3 metrics for sponsors */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+                                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-2xl font-bold text-gray-800">{sponsoredOrphans.length}</p>
+                                            <p className="text-sm text-text-secondary">يتيم مكفول</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-2xl font-bold text-gray-800">{sponsorPaymentStats.due}</p>
+                                            <p className="text-sm text-text-secondary">دفعة مستحقة</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 ${sponsorPaymentStats.overdue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'} rounded-lg flex items-center justify-center`}>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                        </div>
+                                        <div>
+                                            <p className={`text-2xl font-bold ${sponsorPaymentStats.overdue > 0 ? 'text-red-600' : 'text-gray-800'}`}>{sponsorPaymentStats.overdue}</p>
+                                            <p className="text-sm text-text-secondary">دفعة متأخرة</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                         <div className="flex items-center gap-3">
-                            <button onClick={handleExportPDF} className="p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2 font-semibold">
-                                {DownloadIcon}
-                                <span className="hidden sm:inline">تصدير</span>
-                            </button>
-                        </div>
-                    </div>
+                    </section>
 
                     <div ref={orphansSectionRef}>
                         <h2 className="text-2xl font-bold text-gray-700 mb-4">الأيتام المكفولين ({sponsoredOrphans.length})</h2>
