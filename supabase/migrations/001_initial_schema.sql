@@ -516,22 +516,51 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
 
--- Function to authenticate user (returns user_profile_id if successful)
+-- Function to authenticate user (returns profile data directly to avoid RLS issues)
 CREATE OR REPLACE FUNCTION authenticate_user(login_identifier TEXT, password_text TEXT)
-RETURNS UUID AS $$
+RETURNS JSONB AS $$
 DECLARE
     auth_record RECORD;
+    profile_record RECORD;
+    result JSONB;
 BEGIN
+    -- Find auth record
     SELECT id, password_hash, user_profile_id INTO auth_record
     FROM custom_auth
     WHERE username = login_identifier OR email = login_identifier;
     
+    -- Verify password
     IF auth_record IS NULL OR NOT verify_password(password_text, auth_record.password_hash) THEN
         RETURN NULL;
     END IF;
     
+    -- Update last login
     UPDATE custom_auth SET last_login_at = NOW() WHERE id = auth_record.id;
-    RETURN auth_record.user_profile_id;
+    
+    -- Fetch user profile (bypasses RLS due to SECURITY DEFINER)
+    SELECT id, organization_id, role, name, avatar_url, member_id
+    INTO profile_record
+    FROM user_profiles
+    WHERE id = auth_record.user_profile_id;
+    
+    -- Return profile data as JSONB
+    IF profile_record IS NULL THEN
+        RETURN NULL;
+    END IF;
+    
+    result := jsonb_build_object(
+        'user_profile_id', profile_record.id,
+        'profile', jsonb_build_object(
+            'id', profile_record.id,
+            'organization_id', profile_record.organization_id,
+            'role', profile_record.role,
+            'name', profile_record.name,
+            'avatar_url', profile_record.avatar_url,
+            'member_id', profile_record.member_id
+        )
+    );
+    
+    RETURN result;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

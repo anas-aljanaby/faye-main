@@ -52,7 +52,7 @@ export const authenticate = async (
   password: string
 ): Promise<{ session: AuthSession | null; error: string | null }> => {
   try {
-    // Call the authenticate_user function
+    // Call the authenticate_user function (now returns profile data directly)
     const { data, error } = await supabase.rpc('authenticate_user', {
       login_identifier: loginIdentifier,
       password_text: password,
@@ -67,23 +67,27 @@ export const authenticate = async (
       return { session: null, error: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     }
 
-    // Set current user ID for RLS policies
-    await setCurrentUserId(data);
+    // Extract user profile ID and profile data from the response
+    const userProfileId = data.user_profile_id as string;
+    const profile = data.profile as {
+      id: string;
+      organization_id: string;
+      role: 'team_member' | 'sponsor';
+      name: string;
+      avatar_url?: string;
+      member_id?: string;
+    };
 
-    // Fetch user profile (now with RLS enabled, we need the user ID set)
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('id, organization_id, role, name, avatar_url, member_id')
-      .eq('id', data)
-      .maybeSingle();
-
-    if (profileError || !profile) {
-      console.error('Error fetching user profile:', profileError);
+    if (!userProfileId || !profile) {
+      console.error('Error: Invalid response from authenticate_user');
       return { session: null, error: 'فشل في جلب بيانات المستخدم' };
     }
 
+    // Set current user ID for RLS policies (for subsequent queries)
+    await setCurrentUserId(userProfileId);
+
     const session: AuthSession = {
-      userProfileId: data,
+      userProfileId: userProfileId,
       userProfile: profile,
     };
 
