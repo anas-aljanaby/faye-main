@@ -28,6 +28,7 @@ CREATE TABLE user_profiles (
     name TEXT NOT NULL,
     avatar_url TEXT,
     member_id UUID UNIQUE, -- Links to user_profiles.id when a member is assigned to a user account
+    is_system_admin BOOLEAN DEFAULT FALSE NOT NULL, -- System admin is invisible to all users
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -148,10 +149,21 @@ CREATE TABLE achievements (
 -- 8. Special occasions table
 CREATE TABLE special_occasions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    orphan_id UUID NOT NULL REFERENCES orphans(id) ON DELETE CASCADE,
+    organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
     title TEXT NOT NULL,
     date DATE NOT NULL,
+    occasion_type TEXT NOT NULL CHECK (occasion_type IN ('orphan_specific', 'organization_wide', 'multi_orphan')),
+    orphan_id UUID REFERENCES orphans(id) ON DELETE CASCADE, -- Nullable for organization-wide occasions
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 8a. Occasion-Orphan junction table (many-to-many)
+CREATE TABLE occasion_orphans (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    occasion_id UUID NOT NULL REFERENCES special_occasions(id) ON DELETE CASCADE,
+    orphan_id UUID NOT NULL REFERENCES orphans(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE (occasion_id, orphan_id)
 );
 
 -- 9. Gifts table
@@ -330,6 +342,11 @@ CREATE INDEX idx_receipts_transaction ON receipts(transaction_id);
 CREATE INDEX idx_receipt_orphans_receipt ON receipt_orphans(receipt_id);
 CREATE INDEX idx_sponsor_notes_orphan ON sponsor_notes(orphan_id);
 CREATE INDEX idx_sponsor_notes_sponsor ON sponsor_notes(sponsor_id);
+CREATE INDEX idx_special_occasions_organization ON special_occasions(organization_id);
+CREATE INDEX idx_special_occasions_date ON special_occasions(date);
+CREATE INDEX idx_special_occasions_orphan ON special_occasions(orphan_id);
+CREATE INDEX idx_occasion_orphans_occasion ON occasion_orphans(occasion_id);
+CREATE INDEX idx_occasion_orphans_orphan ON occasion_orphans(orphan_id);
 CREATE INDEX idx_conversations_user1 ON conversations(user1_id);
 CREATE INDEX idx_conversations_user2 ON conversations(user2_id);
 CREATE INDEX idx_conversations_organization ON conversations(organization_id);
@@ -415,10 +432,10 @@ CREATE TRIGGER update_conversation_last_message_on_insert
 
 -- Enable RLS on all tables
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
--- Note: user_profiles and user_permissions have RLS disabled to avoid connection-pool issues
--- Tenant isolation for these tables is enforced at the application layer via organization_id filters
--- ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+-- Note: user_permissions has RLS disabled to avoid connection-pool issues
+-- Tenant isolation for this table is enforced at the application layer via organization_id filters
 -- ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sponsor_orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE team_member_orphans ENABLE ROW LEVEL SECURITY;
@@ -426,6 +443,7 @@ ALTER TABLE sponsor_team_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE achievements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE special_occasions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE occasion_orphans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gifts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE update_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE family_members ENABLE ROW LEVEL SECURITY;
@@ -684,6 +702,44 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Helper function to check if an occasion belongs to user's organization (bypasses RLS to prevent recursion)
+CREATE OR REPLACE FUNCTION check_occasion_organization(occasion_uuid UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    user_org_id UUID;
+    occasion_org_id UUID;
+BEGIN
+    -- Get user's organization
+    SELECT organization_id INTO user_org_id
+    FROM user_profiles
+    WHERE id = get_current_user_id();
+    
+    -- Get occasion's organization (bypasses RLS due to SECURITY DEFINER)
+    SELECT organization_id INTO occasion_org_id
+    FROM special_occasions
+    WHERE id = occasion_uuid;
+    
+    -- Return true if they match
+    RETURN user_org_id IS NOT NULL AND occasion_org_id IS NOT NULL AND user_org_id = occasion_org_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Helper function to check if a given organization_id matches user's organization (for INSERT/UPDATE operations)
+CREATE OR REPLACE FUNCTION check_organization_match(org_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    user_org_id UUID;
+BEGIN
+    -- Get user's organization
+    SELECT organization_id INTO user_org_id
+    FROM user_profiles
+    WHERE id = get_current_user_id();
+    
+    -- Return true if they match and both are not NULL
+    RETURN user_org_id IS NOT NULL AND org_id IS NOT NULL AND user_org_id = org_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Helper function to check if a receipt belongs to user's organization (bypasses RLS to prevent recursion)
 -- Drop existing function if it exists with different parameter name
 DROP FUNCTION IF EXISTS check_receipt_organization(UUID);
@@ -728,12 +784,34 @@ CREATE POLICY "Users can view their own organization"
     ON organizations FOR SELECT
     USING (id = get_user_organization_id());
 
--- User profiles policies - DISABLED
--- RLS is disabled on user_profiles to avoid connection-pool issues with pg_backend_pid()
--- Tenant isolation is enforced at the application layer via organization_id filters
--- CREATE POLICY "Users can view profiles in their organization"
---     ON user_profiles FOR SELECT
---     USING (organization_id = get_user_organization_id());
+-- User profiles policies
+-- Users can view their own profile (even if system admin)
+CREATE POLICY "Users can view their own profile"
+    ON user_profiles FOR SELECT
+    USING (id = get_current_user_id());
+
+-- Users can view other profiles in their organization, but system admin is invisible
+CREATE POLICY "Users can view profiles in their organization (excluding system admin)"
+    ON user_profiles FOR SELECT
+    USING (
+        organization_id = get_user_organization_id()
+        AND is_system_admin = FALSE
+        AND id != get_current_user_id()
+    );
+
+-- System admin can view their own profile
+CREATE POLICY "System admin can view their own profile"
+    ON user_profiles FOR SELECT
+    USING (
+        id = get_current_user_id()
+        AND is_system_admin = TRUE
+    );
+
+-- Users can update their own profile
+CREATE POLICY "Users can update their own profile"
+    ON user_profiles FOR UPDATE
+    USING (id = get_current_user_id())
+    WITH CHECK (id = get_current_user_id());
 --
 -- CREATE POLICY "Users can update their own profile"
 --     ON user_profiles FOR UPDATE
@@ -879,15 +957,49 @@ CREATE POLICY "Sponsors can view achievements for their sponsored orphans"
     );
 
 -- Special occasions policies
-CREATE POLICY "Team members can manage special occasions for orphans in their organization"
+CREATE POLICY "Team members can manage all occasions in their organization"
     ON special_occasions FOR ALL
     USING (
-        check_orphan_organization(special_occasions.orphan_id)
+        check_organization_match(organization_id)
+        AND is_team_member()
+    )
+    WITH CHECK (
+        check_organization_match(organization_id)
         AND is_team_member()
     );
 
-CREATE POLICY "Sponsors can view special occasions for their sponsored orphans"
+CREATE POLICY "Sponsors can view occasions for their sponsored orphans or organization-wide"
     ON special_occasions FOR SELECT
+    USING (
+        -- Organization-wide occasions
+        (occasion_type = 'organization_wide' AND organization_id = get_user_organization_id())
+        OR
+        -- Orphan-specific occasions for their sponsored orphans
+        (orphan_id IN (
+            SELECT orphan_id FROM sponsor_orphans 
+            WHERE sponsor_id = get_current_user_id()
+        ))
+        OR
+        -- Multi-orphan occasions linked to their sponsored orphans
+        (id IN (
+            SELECT occasion_id FROM occasion_orphans
+            WHERE orphan_id IN (
+                SELECT orphan_id FROM sponsor_orphans 
+                WHERE sponsor_id = get_current_user_id()
+            )
+        ))
+    );
+
+-- Occasion-Orphan junction table policies
+CREATE POLICY "Team members can manage occasion-orphan links in their organization"
+    ON occasion_orphans FOR ALL
+    USING (
+        check_occasion_organization(occasion_id)
+        AND is_team_member()
+    );
+
+CREATE POLICY "Sponsors can view occasion-orphan links for their sponsored orphans"
+    ON occasion_orphans FOR SELECT
     USING (
         orphan_id IN (
             SELECT orphan_id FROM sponsor_orphans 

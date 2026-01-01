@@ -81,14 +81,16 @@ export const useOrphans = () => {
 
       // Batch fetch all related data at once instead of per-orphan queries
       // Use withUserContext to ensure RLS policies work correctly
-      const [paymentsData, achievementsData, occasionsData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = await withUserContext(async () => {
+      const [paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = await withUserContext(async () => {
         return await Promise.all([
           // Fetch all payments for all orphans
           supabase.from('payments').select('*').in('orphan_id', orphanIds),
           // Fetch all achievements
           supabase.from('achievements').select('*').in('orphan_id', orphanIds),
-          // Fetch all special occasions
-          supabase.from('special_occasions').select('*').in('orphan_id', orphanIds),
+          // Fetch all special occasions linked to orphans (via orphan_id or junction table)
+          supabase.from('special_occasions').select('*').in('orphan_id', orphanIds).not('orphan_id', 'is', null),
+          // Fetch occasions linked via junction table
+          supabase.from('occasion_orphans').select('occasion_id, orphan_id, occasion:special_occasions(*)').in('orphan_id', orphanIds),
           // Fetch all gifts
           supabase.from('gifts').select('*').in('orphan_id', orphanIds),
           // Fetch all update logs
@@ -120,11 +122,29 @@ export const useOrphans = () => {
       });
 
       const occasionsByOrphan = new Map<string, any[]>();
+      // Add occasions linked via orphan_id
       (occasionsData.data || []).forEach(o => {
-        if (!occasionsByOrphan.has(o.orphan_id)) {
-          occasionsByOrphan.set(o.orphan_id, []);
+        if (o.orphan_id) {
+          if (!occasionsByOrphan.has(o.orphan_id)) {
+            occasionsByOrphan.set(o.orphan_id, []);
+          }
+          occasionsByOrphan.get(o.orphan_id)!.push(o);
         }
-        occasionsByOrphan.get(o.orphan_id)!.push(o);
+      });
+      // Add occasions linked via junction table
+      (occasionOrphansData.data || []).forEach((item: any) => {
+        const orphanId = item.orphan_id;
+        const occasion = item.occasion;
+        if (occasion && typeof occasion === 'object' && !Array.isArray(occasion)) {
+          if (!occasionsByOrphan.has(orphanId)) {
+            occasionsByOrphan.set(orphanId, []);
+          }
+          // Avoid duplicates
+          const existing = occasionsByOrphan.get(orphanId)!.find(o => o.id === occasion.id);
+          if (!existing) {
+            occasionsByOrphan.get(orphanId)!.push(occasion);
+          }
+        }
       });
 
       const giftsByOrphan = new Map<string, any[]>();
@@ -220,6 +240,10 @@ export const useOrphans = () => {
             id: o.id,
             title: o.title,
             date: new Date(o.date),
+            organization_id: o.organization_id,
+            occasion_type: o.occasion_type,
+            orphan_id: o.orphan_id,
+            created_at: new Date(o.created_at),
           }));
 
         const gifts = orphanGifts
@@ -351,84 +375,6 @@ export const useOrphans = () => {
     }
   };
 
-  const addSpecialOccasion = async (orphanUuid: string, title: string, date: Date) => {
-    if (!userProfile) {
-      throw new Error('User not authenticated');
-    }
-
-    try {
-      const { error: insertError } = await withUserContext(async () => {
-        return await supabase
-          .from('special_occasions')
-          .insert({
-            orphan_id: orphanUuid,
-            title: title,
-            date: date.toISOString().split('T')[0],
-          });
-      });
-
-      if (insertError) throw insertError;
-
-      // Clear cache and refetch orphans to get updated data
-      const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
-      cache.delete(cacheKey);
-      await fetchOrphans(false);
-    } catch (err) {
-      console.error('Error adding special occasion:', err);
-      throw err;
-    }
-  };
-
-  const updateSpecialOccasion = async (occasionId: string, title: string) => {
-    if (!userProfile) {
-      throw new Error('User not authenticated');
-    }
-
-    try {
-      const { error: updateError } = await withUserContext(async () => {
-        return await supabase
-          .from('special_occasions')
-          .update({ title })
-          .eq('id', occasionId);
-      });
-
-      if (updateError) throw updateError;
-
-      // Clear cache and refetch orphans to get updated data
-      const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
-      cache.delete(cacheKey);
-      await fetchOrphans(false);
-    } catch (err) {
-      console.error('Error updating special occasion:', err);
-      throw err;
-    }
-  };
-
-  const deleteSpecialOccasion = async (occasionId: string) => {
-    if (!userProfile) {
-      throw new Error('User not authenticated');
-    }
-
-    try {
-      const { error: deleteError } = await withUserContext(async () => {
-        return await supabase
-          .from('special_occasions')
-          .delete()
-          .eq('id', occasionId);
-      });
-
-      if (deleteError) throw deleteError;
-
-      // Clear cache and refetch orphans to get updated data
-      const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
-      cache.delete(cacheKey);
-      await fetchOrphans(false);
-    } catch (err) {
-      console.error('Error deleting special occasion:', err);
-      throw err;
-    }
-  };
-
-  return { orphans, loading, error, refetch: fetchOrphans, updateOrphan, addSpecialOccasion, updateSpecialOccasion, deleteSpecialOccasion };
+  return { orphans, loading, error, refetch: fetchOrphans, updateOrphan };
 };
 

@@ -391,12 +391,13 @@ export const useFinancialTransactions = () => {
         // Find sponsor UUID by name or ID
         let sponsorUuid: string | undefined = undefined;
         
-        // Try to find sponsor by name first
+        // Try to find sponsor by name first (excluding system admin)
         const { data: sponsors, error: sponsorError } = await supabase
           .from('user_profiles')
           .select('id')
           .eq('organization_id', userProfile.organization_id)
           .eq('role', 'sponsor')
+          .eq('is_system_admin', false)
           .ilike('name', `%${transactionData.receipt.sponsorName}%`)
           .limit(1);
 
@@ -494,12 +495,13 @@ export const useFinancialTransactions = () => {
     if (!userProfile) throw new Error('User not authenticated');
 
     try {
-      // Check if sponsor already exists (search by exact or similar name)
+      // Check if sponsor already exists (search by exact or similar name, excluding system admin)
       const { data: existing } = await supabase
         .from('user_profiles')
         .select('id, name, avatar_url')
         .eq('organization_id', userProfile.organization_id)
         .eq('role', 'sponsor')
+        .eq('is_system_admin', false)
         .ilike('name', `%${name}%`)
         .limit(1);
 

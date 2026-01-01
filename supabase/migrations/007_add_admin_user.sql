@@ -17,13 +17,13 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Create (or reuse) an admin profile as a team member
-    INSERT INTO user_profiles (organization_id, role, name)
-    VALUES (org_id, 'team_member', 'System Admin')
+    -- Create (or reuse) an admin profile as a team member with system admin flag
+    INSERT INTO user_profiles (organization_id, role, name, is_system_admin)
+    VALUES (org_id, 'team_member', 'System Admin', TRUE)
     ON CONFLICT DO NOTHING
     RETURNING id INTO admin_profile_id;
 
-    -- If profile already existed, fetch its ID
+    -- If profile already existed, fetch its ID and update it to be system admin
     IF admin_profile_id IS NULL THEN
         SELECT id
         INTO admin_profile_id
@@ -32,6 +32,13 @@ BEGIN
           AND role = 'team_member'
           AND name = 'System Admin'
         LIMIT 1;
+        
+        -- Update existing admin to have system admin flag
+        IF admin_profile_id IS NOT NULL THEN
+            UPDATE user_profiles
+            SET is_system_admin = TRUE
+            WHERE id = admin_profile_id;
+        END IF;
     END IF;
 
     IF admin_profile_id IS NULL THEN

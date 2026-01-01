@@ -1,6 +1,7 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useOrphans } from '../hooks/useOrphans';
+import { useOccasions } from '../hooks/useOccasions';
 import { useSponsors } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
@@ -470,8 +471,9 @@ const ProgramStatusPill: React.FC<{ status: ProgramParticipation['status'] }> = 
 
 const InteractiveCalendar: React.FC<{ 
     orphan: Orphan;
+    occasions: SpecialOccasion[];
     onDayClick: (date: Date, events: { id: string; type: string; title: string }[]) => void;
-}> = ({ orphan, onDayClick }) => {
+}> = ({ orphan, occasions, onDayClick }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const events = useMemo(() => {
@@ -485,7 +487,8 @@ const InteractiveCalendar: React.FC<{
         };
 
         orphan.achievements.forEach(a => addEvent(a.date, 'achievement', a.title, a.id));
-        orphan.specialOccasions.forEach(o => addEvent(o.date, 'occasion', o.title, o.id));
+        // Use occasions from hook instead of orphan.specialOccasions
+        occasions.forEach(o => addEvent(o.date, 'occasion', o.title, o.id));
         orphan.gifts.forEach(g => addEvent(g.date, 'gift', g.item, g.id));
         orphan.payments.forEach(p => {
             if (p.status === PaymentStatus.Due || p.status === PaymentStatus.Overdue) {
@@ -494,7 +497,7 @@ const InteractiveCalendar: React.FC<{
         });
 
         return allEvents;
-    }, [orphan]);
+    }, [orphan, occasions]);
 
     const changeMonth = (offset: number) => {
         setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
@@ -572,7 +575,8 @@ const InteractiveCalendar: React.FC<{
 const OrphanProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orphans: orphansData, loading: orphansLoading, updateOrphan, addSpecialOccasion, updateSpecialOccasion, deleteSpecialOccasion } = useOrphans();
+  const { orphans: orphansData, loading: orphansLoading, updateOrphan } = useOrphans();
+  const { occasions: allOccasions, addOccasion, updateOccasion, deleteOccasion } = useOccasions();
   const { sponsors: sponsorsData } = useSponsors();
   const { userProfile, canEditOrphans } = useAuth();
   const isTeamMember = userProfile?.role === 'team_member';
@@ -581,6 +585,16 @@ const OrphanProfile: React.FC = () => {
   const orphan = useMemo(() => findById(orphansData, id || ''), [orphansData, id]);
   const sponsor = useMemo(() => orphan ? findById(sponsorsData, orphan.sponsorId) : undefined, [orphan, sponsorsData]);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  // Filter occasions linked to this orphan
+  const orphanOccasions = useMemo(() => {
+    if (!orphan?.uuid) return [];
+    return allOccasions.filter(occ => 
+      occ.orphan_id === orphan.uuid || 
+      occ.occasion_type === 'organization_wide' ||
+      (occ.occasion_type === 'multi_orphan' && occ.linked_orphans?.some(o => o.id === orphan.uuid))
+    );
+  }, [allOccasions, orphan]);
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -848,7 +862,7 @@ const OrphanProfile: React.FC = () => {
         if (!selectedDateForEvent || !orphan || !orphan.uuid) return;
 
         try {
-            await addSpecialOccasion(orphan.uuid, title, selectedDateForEvent);
+            await addOccasion(title, selectedDateForEvent, 'orphan_specific', [orphan.uuid]);
         } catch (error) {
             console.error('Error adding special occasion:', error);
             alert('حدث خطأ أثناء إضافة المناسبة');
@@ -859,7 +873,7 @@ const OrphanProfile: React.FC = () => {
         if (!orphan || !orphan.uuid) return;
 
         try {
-            await updateSpecialOccasion(occasionId, title);
+            await updateOccasion(occasionId, { title });
         } catch (error) {
             console.error('Error updating special occasion:', error);
             alert('حدث خطأ أثناء تعديل المناسبة');
@@ -870,7 +884,7 @@ const OrphanProfile: React.FC = () => {
         if (!orphan || !orphan.uuid) return;
 
         try {
-            await deleteSpecialOccasion(occasionId);
+            await deleteOccasion(occasionId);
         } catch (error) {
             console.error('Error deleting special occasion:', error);
             alert('حدث خطأ أثناء حذف المناسبة');
@@ -948,7 +962,7 @@ const OrphanProfile: React.FC = () => {
                 ...orphan,
                 payments: orphan.payments.map(p => ({ status: p.status, amount: p.amount, dueDate: p.dueDate.toISOString().split('T')[0] })),
                 achievements: orphan.achievements.map(a => ({ ...a, date: a.date.toISOString().split('T')[0] })),
-                specialOccasions: orphan.specialOccasions.map(o => ({ ...o, date: o.date.toISOString().split('T')[0] })),
+                specialOccasions: orphanOccasions.map(o => ({ ...o, date: o.date.toISOString().split('T')[0] })),
             };
 
             const prompt = `
@@ -1295,7 +1309,7 @@ const OrphanProfile: React.FC = () => {
       </InfoCard>
 
         <InfoCard title="الرزنامة التفاعلية" icon={CalendarIcon} className="md:col-span-2">
-          <InteractiveCalendar orphan={orphan} onDayClick={handleDayClickForEvent} />
+          <InteractiveCalendar orphan={orphan} occasions={orphanOccasions} onDayClick={handleDayClickForEvent} />
         </InfoCard>
 
       {/* Sponsor Note Display (visible to sponsor only) */}
@@ -1373,7 +1387,7 @@ const OrphanProfile: React.FC = () => {
         </InfoCard>
         <div className="space-y-6">
           <InfoCard title="مناسبات خاصة" icon={CalendarIcon}>
-            {orphan.specialOccasions.length > 0 ? orphan.specialOccasions.map(occ => (
+            {orphanOccasions.length > 0 ? orphanOccasions.map(occ => (
               <p key={occ.id}><strong>{occ.title}:</strong> {occ.date.toLocaleDateString('ar-EG')}</p>
             )) : <p>لا توجد مناسبات.</p>}
           </InfoCard>

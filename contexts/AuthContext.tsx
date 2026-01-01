@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authenticate, signOut as authSignOut, getSession, AuthSession } from '../lib/auth';
+import { authenticate, signOut as authSignOut, getSession, AuthSession, setCurrentUserId } from '../lib/auth';
 import { supabase } from '../lib/supabaseClient';
 import { cache } from '../utils/cache';
 
@@ -81,6 +81,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadSession = async (authSession: AuthSession) => {
     try {
+      // Set current user ID for RLS policies
+      await setCurrentUserId(authSession.userProfileId);
+      
       setSessionState(authSession);
       setUser({ id: authSession.userProfileId });
       setUserProfile(authSession.userProfile);
@@ -129,7 +132,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfileAndPermissions = async (userId: string) => {
     try {
-      // RLS is disabled on user_profiles, so no need for withUserContext
+      // Set current user ID for RLS policies
+      await setCurrentUserId(userId);
+      
+      // Fetch user profile (now with RLS enabled, we need the user ID set)
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('id, organization_id, role, name, avatar_url, member_id')
@@ -196,6 +202,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await authSignOut();
+    await setCurrentUserId(null); // Clear current user ID for RLS
     setUser(null);
     setSessionState(null);
     setUserProfile(null);

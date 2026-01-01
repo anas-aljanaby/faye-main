@@ -265,6 +265,7 @@ const Messages: React.FC = () => {
                 .from('user_profiles')
                 .select('id, name, avatar_url, role')
                 .eq('organization_id', userProfile.organization_id)
+                .eq('is_system_admin', false)
                 .neq('id', user.id);
 
             if (!error && data) {

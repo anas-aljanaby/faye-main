@@ -40,12 +40,14 @@ export const useTeamMembers = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch team members from user_profiles
+      // Fetch team members from user_profiles (excluding system admin)
       const { data: teamMembersData, error: teamMembersError } = await supabase
         .from('user_profiles')
         .select('id, name, avatar_url')
         .eq('organization_id', userProfile.organization_id)
-        .eq('role', 'team_member');
+        .eq('role', 'team_member')
+        .eq('is_system_admin', false);
+
 
       if (teamMembersError) throw teamMembersError;
       if (!teamMembersData) {

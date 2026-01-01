@@ -40,12 +40,13 @@ export const useSponsors = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch sponsors from user_profiles
+      // Fetch sponsors from user_profiles (excluding system admin)
       const { data: sponsorsData, error: sponsorsError } = await supabase
         .from('user_profiles')
         .select('id, name, avatar_url')
         .eq('organization_id', userProfile.organization_id)
-        .eq('role', 'sponsor');
+        .eq('role', 'sponsor')
+        .eq('is_system_admin', false);
 
       if (sponsorsError) throw sponsorsError;
       if (!sponsorsData) {

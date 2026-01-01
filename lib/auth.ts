@@ -67,7 +67,10 @@ export const authenticate = async (
       return { session: null, error: 'اسم المستخدم أو كلمة المرور غير صحيحة' };
     }
 
-    // Fetch user profile (RLS disabled on user_profiles, so no need to set user context)
+    // Set current user ID for RLS policies
+    await setCurrentUserId(data);
+
+    // Fetch user profile (now with RLS enabled, we need the user ID set)
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('id, organization_id, role, name, avatar_url, member_id')

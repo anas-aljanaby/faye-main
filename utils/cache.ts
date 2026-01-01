@@ -79,5 +79,7 @@ export const getCacheKey = {
   financialTransactions: (orgId: string) => `financialTransactions:${orgId}`,
   conversations: (orgId: string, userId: string) => `conversations:${orgId}:${userId}`,
   messages: (conversationId: string) => `messages:${conversationId}`,
+  occasions: (orgId: string, userId?: string, role?: string) => 
+    `occasions:${orgId}:${userId || ''}:${role || ''}`,
 };
 

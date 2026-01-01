@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useOrphans } from '../hooks/useOrphans';
+import { useOccasions } from '../hooks/useOccasions';
 import { useSponsors } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +12,7 @@ import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
+import OccasionsManagementModal from './OccasionsManagementModal';
 
 const WidgetCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode; }> = ({ title, icon, children }) => (
     <div className="bg-bg-card rounded-lg shadow-md p-5 h-full">
@@ -24,25 +26,126 @@ const WidgetCard: React.FC<{ title: string; icon: React.ReactNode; children: Rea
     </div>
 );
 
-const UpcomingOccasions: React.FC<{ orphans: Orphan[] }> = ({ orphans }) => {
+const UpcomingOccasions: React.FC<{ onViewAll: () => void }> = ({ onViewAll }) => {
+    const { occasions, loading } = useOccasions();
+    const { orphans } = useOrphans();
     const today = new Date();
-    const upcoming = orphans
-        .flatMap(o => o.specialOccasions.map(occ => ({ ...occ, orphanName: o.name, orphanId: o.id })))
-        .filter(occ => occ.date >= today)
-        .sort((a, b) => a.date.getTime() - b.date.getTime())
-        .slice(0, 3);
+    today.setHours(0, 0, 0, 0);
+
+    const upcoming = useMemo(() => {
+        return occasions
+            .filter(occ => {
+                const occDate = new Date(occ.date);
+                occDate.setHours(0, 0, 0, 0);
+                return occDate >= today;
+            })
+            .sort((a, b) => a.date.getTime() - b.date.getTime())
+            .slice(0, 3);
+    }, [occasions, today]);
+
+    const getOrphanName = (occasion: typeof occasions[0]) => {
+        if (occasion.occasion_type === 'organization_wide') {
+            return null;
+        }
+        if (occasion.occasion_type === 'multi_orphan' && occasion.linked_orphans && occasion.linked_orphans.length > 0) {
+            return occasion.linked_orphans.map(o => o.name).join('، ');
+        }
+        if (occasion.orphan_id) {
+            const orphan = orphans.find(o => o.uuid === occasion.orphan_id);
+            return orphan?.name || null;
+        }
+        return null;
+    };
+
+    const getOrphanId = (occasion: typeof occasions[0]) => {
+        if (occasion.occasion_type === 'organization_wide') {
+            return null;
+        }
+        if (occasion.occasion_type === 'multi_orphan' && occasion.linked_orphans && occasion.linked_orphans.length > 0) {
+            return null; // Multiple orphans, can't link to one
+        }
+        if (occasion.orphan_id) {
+            const orphan = orphans.find(o => o.uuid === occasion.orphan_id);
+            return orphan?.id || null;
+        }
+        return null;
+    };
+
+    const getOccasionTypeLabel = (type: string) => {
+        switch (type) {
+            case 'orphan_specific':
+                return 'خاص';
+            case 'organization_wide':
+                return 'عام';
+            case 'multi_orphan':
+                return 'عدة أيتام';
+            default:
+                return '';
+        }
+    };
 
     return (
-        <WidgetCard title="المناسبات القادمة" icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7Z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z"/></svg>}>
-            {upcoming.length > 0 ? (
-                upcoming.map(occ => (
-                    <div key={occ.id} className="text-sm">
-                        <p className="font-semibold text-gray-800">{occ.title} لـ <Link to={`/orphan/${occ.orphanId}`} className="text-primary hover:underline">{occ.orphanName}</Link></p>
-                        <p className="text-text-secondary">{occ.date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' })}</p>
-                    </div>
-                ))
+        <WidgetCard 
+            title="المناسبات القادمة" 
+            icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7Z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z"/></svg>}
+        >
+            {loading ? (
+                <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                </div>
+            ) : upcoming.length > 0 ? (
+                <>
+                    {upcoming.map(occ => {
+                        const orphanName = getOrphanName(occ);
+                        const orphanId = getOrphanId(occ);
+                        return (
+                            <div key={occ.id} className="text-sm cursor-pointer hover:bg-gray-50 p-2 rounded -mx-2" onClick={onViewAll}>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-semibold text-gray-800">{occ.title}</p>
+                                    <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded">
+                                        {getOccasionTypeLabel(occ.occasion_type)}
+                                    </span>
+                                </div>
+                                {orphanName && (
+                                    <p className="text-text-secondary">
+                                        {orphanId ? (
+                                            <>لـ <Link to={`/orphan/${orphanId}`} className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>{orphanName}</Link></>
+                                        ) : (
+                                            <>لـ {orphanName}</>
+                                        )}
+                                    </p>
+                                )}
+                                <p className="text-text-secondary text-xs">{occ.date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long' })}</p>
+                            </div>
+                        );
+                    })}
+                    {occasions.filter(occ => {
+                        const occDate = new Date(occ.date);
+                        occDate.setHours(0, 0, 0, 0);
+                        return occDate >= today;
+                    }).length > 3 && (
+                        <button
+                            onClick={onViewAll}
+                            className="text-sm font-semibold text-primary hover:underline mt-2 w-full text-center"
+                        >
+                            عرض الكل ({occasions.filter(occ => {
+                                const occDate = new Date(occ.date);
+                                occDate.setHours(0, 0, 0, 0);
+                                return occDate >= today;
+                            }).length})
+                        </button>
+                    )}
+                </>
             ) : (
-                <p className="text-sm text-center text-text-secondary pt-4">لا توجد مناسبات قادمة.</p>
+                <div className="text-center">
+                    <p className="text-sm text-text-secondary pt-4">لا توجد مناسبات قادمة.</p>
+                    <button
+                        onClick={onViewAll}
+                        className="text-sm font-semibold text-primary hover:underline mt-2"
+                    >
+                        عرض جميع المناسبات
+                    </button>
+                </div>
             )}
         </WidgetCard>
     );
@@ -176,45 +279,72 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
             </div>
 
             <div className="space-y-3 mb-6">
-                <h3 className="font-bold text-gray-800">حالة دفعات الأيتام</h3>
-                {sponsoredOrphans.map(orphan => {
-                    const overdueCount = orphan.payments.filter(p => p.status === PaymentStatus.Overdue).length;
-                    const dueCount = orphan.payments.filter(p => p.status === PaymentStatus.Due).length;
-                    let statusText = "جميع الدفعات مسددة";
-                    let statusColor = "text-green-600";
-                    if (overdueCount > 0) {
-                        statusText = `لديه ${overdueCount} دفعة متأخرة`;
-                        statusColor = "text-red-600";
-                    } else if (dueCount > 0) {
-                        statusText = `لديه ${dueCount} دفعة مستحقة`;
-                        statusColor = "text-yellow-600";
-                    }
-
-                    return (
-                        <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <div className="flex items-center gap-3">
-                                <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
-                                <span className="font-semibold text-gray-800">{orphan.name}</span>
-                            </div>
-                            <span className={`text-sm font-semibold ${statusColor}`}>{statusText}</span>
+                <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-gray-800">حالة دفعات الأيتام</h3>
+                    {sponsoredOrphans.length > 3 && (
+                        <Link to="/payments" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                            عرض الكل
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                         </Link>
-                    );
-                })}
+                    )}
+                </div>
+                {sponsoredOrphans.length > 0 ? (
+                    <>
+                        {sponsoredOrphans.slice(0, 3).map(orphan => {
+                            const overdueCount = orphan.payments.filter(p => p.status === PaymentStatus.Overdue).length;
+                            const dueCount = orphan.payments.filter(p => p.status === PaymentStatus.Due).length;
+                            let statusText = "جميع الدفعات مسددة";
+                            let statusColor = "text-green-600";
+                            if (overdueCount > 0) {
+                                statusText = `لديه ${overdueCount} دفعة متأخرة`;
+                                statusColor = "text-red-600";
+                            } else if (dueCount > 0) {
+                                statusText = `لديه ${dueCount} دفعة مستحقة`;
+                                statusColor = "text-yellow-600";
+                            }
+
+                            return (
+                                <Link to="/payments" key={orphan.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
+                                        <span className="font-semibold text-gray-800">{orphan.name}</span>
+                                    </div>
+                                    <span className={`text-sm font-semibold ${statusColor}`}>{statusText}</span>
+                                </Link>
+                            );
+                        })}
+                    </>
+                ) : (
+                    <p className="text-sm text-center text-gray-500 py-4">لا يوجد أيتام مكفولين</p>
+                )}
             </div>
 
             <div className="border-t pt-4">
-                 <h3 className="font-bold text-gray-800 mb-3">أحدث التبرعات</h3>
+                 <div className="flex items-center justify-between mb-3">
+                     <h3 className="font-bold text-gray-800">أحدث التبرعات</h3>
+                     {sponsorTransactions.length > 3 && (
+                         <Link to="/payments" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                             عرض الكل
+                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                         </Link>
+                     )}
+                 </div>
                  <div className="space-y-2">
-                     {sponsorTransactions.slice(0, 3).map(tx => (
-                         <div key={tx.id} className="flex justify-between items-center p-2 rounded-lg">
-                            <div>
-                                <p className="font-semibold text-gray-700 text-sm">{tx.description}</p>
-                                <p className="text-xs text-gray-500">{tx.date.toLocaleDateString('ar-EG')}</p>
-                            </div>
-                            <span className="font-bold text-green-600 text-lg">${tx.amount.toLocaleString()}</span>
-                         </div>
-                     ))}
-                      {sponsorTransactions.length === 0 && <p className="text-sm text-center text-gray-500 py-4">لا توجد تبرعات مسجلة مؤخراً.</p>}
+                     {sponsorTransactions.length > 0 ? (
+                         <>
+                             {sponsorTransactions.slice(0, 3).map(tx => (
+                                 <div key={tx.id} className="flex justify-between items-center p-2 rounded-lg">
+                                    <div>
+                                        <p className="font-semibold text-gray-700 text-sm">{tx.description}</p>
+                                        <p className="text-xs text-gray-500">{tx.date.toLocaleDateString('ar-EG')}</p>
+                                    </div>
+                                    <span className="font-bold text-green-600 text-lg">${tx.amount.toLocaleString()}</span>
+                                 </div>
+                             ))}
+                         </>
+                     ) : (
+                         <p className="text-sm text-center text-gray-500 py-4">لا توجد تبرعات مسجلة مؤخراً.</p>
+                     )}
                  </div>
             </div>
         </div>
@@ -231,6 +361,7 @@ const Dashboard: React.FC = () => {
     const [assignedTeamMembers, setAssignedTeamMembers] = useState<Array<{ id: string; name: string; avatar_url?: string }>>([]);
     const [manager, setManager] = useState<{ id: string; name: string; avatar_url?: string } | null>(null);
     const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
+    const [isOccasionsModalOpen, setIsOccasionsModalOpen] = useState(false);
 
     // Find the current sponsor based on user profile
     const sponsor = useMemo(() => {
@@ -296,12 +427,13 @@ const Dashboard: React.FC = () => {
                     setAssignedOrphanIds(orphanAssignments.map(item => item.orphan_id));
                 }
 
-                // Fetch manager from same organization
+                // Fetch manager from same organization (excluding system admin)
                 const { data: allTeamMembers } = await supabase
                     .from('user_profiles')
                     .select('id, name, avatar_url')
                     .eq('organization_id', userProfile.organization_id)
-                    .eq('role', 'team_member');
+                    .eq('role', 'team_member')
+                    .eq('is_system_admin', false);
 
                 if (allTeamMembers && allTeamMembers.length > 0) {
                     const teamMemberIds = allTeamMembers.map(m => m.id);
@@ -452,18 +584,30 @@ const Dashboard: React.FC = () => {
                     </section>
 
                     <div ref={orphansSectionRef}>
-                        <h2 className="text-2xl font-bold text-gray-700 mb-4">الأيتام المكفولين ({sponsoredOrphans.length})</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {sponsoredOrphans.map(orphan => (
-                                <Link key={orphan.id} to={`/orphan/${orphan.id}`} className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" />
-                                    <div>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-2xl font-bold text-gray-700">الأيتام المكفولين</h2>
+                            {sponsoredOrphans.length > 4 && (
+                                <Link to="/orphans" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                                    عرض الكل ({sponsoredOrphans.length})
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </Link>
+                            )}
+                        </div>
+                        {sponsoredOrphans.length > 0 ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                {sponsoredOrphans.slice(0, 4).map(orphan => (
+                                    <Link key={orphan.id} to={`/orphan/${orphan.id}`} className="bg-bg-card rounded-lg shadow-md p-4 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                                        <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="mb-4 border-4 border-gray-100 !w-24 !h-24 !text-3xl" />
                                         <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
                                         <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-8 text-text-secondary">
+                                <p>لا يوجد أيتام مكفولين حالياً</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Team Members Section */}
@@ -668,11 +812,16 @@ const Dashboard: React.FC = () => {
 
           <section>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <UpcomingOccasions orphans={orphansData} />
+              <UpcomingOccasions onViewAll={() => setIsOccasionsModalOpen(true)} />
               <PendingApprovals />
               <LatestAchievements orphans={orphansData} />
             </div>
           </section>
+
+          <OccasionsManagementModal
+            isOpen={isOccasionsModalOpen}
+            onClose={() => setIsOccasionsModalOpen(false)}
+          />
 
           <section>
             <div className="flex items-center justify-between mb-4">

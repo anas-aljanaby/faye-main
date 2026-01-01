@@ -26,6 +26,14 @@ export interface SpecialOccasion {
   id: string;
   title: string;
   date: Date;
+  organization_id: string;
+  occasion_type: 'orphan_specific' | 'organization_wide' | 'multi_orphan';
+  orphan_id?: string; // Nullable for organization-wide occasions
+  linked_orphans?: Array<{
+    id: string;
+    name: string;
+  }>; // For multi-orphan occasions
+  created_at: Date;
 }
 
 export interface Gift {

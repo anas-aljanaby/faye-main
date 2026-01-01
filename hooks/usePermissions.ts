@@ -41,12 +41,13 @@ export const usePermissions = () => {
       setLoading(true);
       setError(null);
 
-      // Fetch all team members in the organization
+      // Fetch all team members in the organization (excluding system admin)
       const { data: teamMembersData, error: teamError } = await supabase
         .from('user_profiles')
         .select('id, name, avatar_url')
         .eq('organization_id', userProfile.organization_id)
-        .eq('role', 'team_member');
+        .eq('role', 'team_member')
+        .eq('is_system_admin', false);
 
       if (teamError) throw teamError;
 
