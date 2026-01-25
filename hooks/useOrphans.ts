@@ -465,7 +465,7 @@ export const useOrphansBasic = () => {
             .eq('sponsor_id', userProfile.id);
 
           if (!sponsorOrphans || sponsorOrphans.length === 0) {
-            return { orphansData: [], orphansError: null };
+            return { orphansData: [], orphansError: null, paymentsData: null };
           }
 
           const orphanIds = sponsorOrphans.map(so => so.orphan_id);
@@ -475,10 +475,30 @@ export const useOrphansBasic = () => {
         const { data: orphansData, error: orphansError } = await orphansQuery;
 
         if (orphansError) {
-          return { orphansData: null, orphansError };
+          return { orphansData: null, orphansError, paymentsData: null };
         }
 
-        return { orphansData: orphansData || [], orphansError: null };
+        if (!orphansData || orphansData.length === 0) {
+          return { orphansData: [], orphansError: null, paymentsData: null };
+        }
+
+        const orphanIds = orphansData.map(o => o.id);
+
+        // Fetch only payments (needed for dashboard stats)
+        const { data: paymentsData, error: paymentsError } = await supabase
+          .from('payments')
+          .select('*')
+          .in('orphan_id', orphanIds);
+
+        if (paymentsError) {
+          console.warn('Error fetching payments for basic orphans:', paymentsError);
+        }
+
+        return { 
+          orphansData: orphansData || [], 
+          orphansError: null,
+          paymentsData: paymentsData || []
+        };
       });
 
       if (result.orphansError) throw result.orphansError;
@@ -501,14 +521,37 @@ export const useOrphansBasic = () => {
         return Math.abs(hash) % 1000000;
       };
 
-      // Transform to Orphan type with only essential fields
+      // Group payments by orphan_id
+      const paymentsByOrphan = new Map<string, any[]>();
+      (result.paymentsData || []).forEach(p => {
+        if (!paymentsByOrphan.has(p.orphan_id)) {
+          paymentsByOrphan.set(p.orphan_id, []);
+        }
+        paymentsByOrphan.get(p.orphan_id)!.push(p);
+      });
+
+      // Transform to Orphan type with essential fields + payments
       const basicOrphans: Orphan[] = result.orphansData.map((orphan) => {
+        const orphanId = orphan.id;
+        const orphanPayments = paymentsByOrphan.get(orphanId) || [];
+
         // Calculate age from date_of_birth
         const today = new Date();
         const birthDate = new Date(orphan.date_of_birth);
         const age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
         const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
+
+        // Transform payments
+        const payments: Payment[] = orphanPayments
+          .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
+          .map(p => ({
+            id: p.id,
+            amount: parseFloat(p.amount),
+            dueDate: new Date(p.due_date),
+            paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
+            status: p.status as PaymentStatus,
+          }));
 
         return {
           id: uuidToNumber(orphan.id),
@@ -539,7 +582,7 @@ export const useOrphansBasic = () => {
             child: { status: 'غير ملتحق', details: '' },
             guardian: { status: 'غير ملتحق', details: '' },
           },
-          payments: [],
+          payments,
           achievements: [],
           specialOccasions: [],
           gifts: [],
