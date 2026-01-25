@@ -413,3 +413,149 @@ export const useOrphans = () => {
   return { orphans, loading, error, refetch: fetchOrphans, updateOrphan };
 };
 
+// Lightweight hook for lists/dashboards - fetches only essential fields
+export const useOrphansBasic = () => {
+  const [orphans, setOrphans] = useState<Orphan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { userProfile } = useAuth();
+
+  useEffect(() => {
+    if (!userProfile) {
+      setLoading(false);
+      return;
+    }
+
+    fetchOrphans();
+  }, [userProfile]);
+
+  const fetchOrphans = async (useCache = true) => {
+    if (!userProfile) return;
+
+    const cacheKey = `orphans-basic:${userProfile.organization_id}:${userProfile.id}:${userProfile.role}`;
+    
+    // Check cache first
+    if (useCache) {
+      const cachedData = cache.get<Orphan[]>(cacheKey);
+      if (cachedData) {
+        setOrphans(cachedData);
+        setLoading(false);
+        // Still fetch in background to update cache (stale-while-revalidate)
+        fetchOrphans(false).catch(() => {});
+        return;
+      }
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result = await withUserContext(async () => {
+        // Fetch only essential fields
+        let orphansQuery = supabase
+          .from('orphans')
+          .select('id, name, photo_url, date_of_birth')
+          .eq('organization_id', userProfile.organization_id);
+
+        // If user is a sponsor, only show their sponsored orphans
+        if (userProfile.role === 'sponsor') {
+          const { data: sponsorOrphans } = await supabase
+            .from('sponsor_orphans')
+            .select('orphan_id')
+            .eq('sponsor_id', userProfile.id);
+
+          if (!sponsorOrphans || sponsorOrphans.length === 0) {
+            return { orphansData: [], orphansError: null };
+          }
+
+          const orphanIds = sponsorOrphans.map(so => so.orphan_id);
+          orphansQuery = orphansQuery.in('id', orphanIds);
+        }
+
+        const { data: orphansData, error: orphansError } = await orphansQuery;
+
+        if (orphansError) {
+          return { orphansData: null, orphansError };
+        }
+
+        return { orphansData: orphansData || [], orphansError: null };
+      });
+
+      if (result.orphansError) throw result.orphansError;
+
+      if (!result.orphansData || result.orphansData.length === 0) {
+        setOrphans([]);
+        setLoading(false);
+        cache.set(cacheKey, [], 2 * 60 * 1000);
+        return;
+      }
+
+      // Helper function to convert UUID to numeric ID for compatibility
+      const uuidToNumber = (uuid: string): number => {
+        let hash = 0;
+        for (let i = 0; i < uuid.length; i++) {
+          const char = uuid.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash;
+        }
+        return Math.abs(hash) % 1000000;
+      };
+
+      // Transform to Orphan type with only essential fields
+      const basicOrphans: Orphan[] = result.orphansData.map((orphan) => {
+        // Calculate age from date_of_birth
+        const today = new Date();
+        const birthDate = new Date(orphan.date_of_birth);
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
+
+        return {
+          id: uuidToNumber(orphan.id),
+          uuid: orphan.id,
+          name: orphan.name,
+          photoUrl: orphan.photo_url || '',
+          age: adjustedAge,
+          dateOfBirth: new Date(orphan.date_of_birth),
+          gender: 'ذكر' as 'ذكر' | 'أنثى', // Default, not used in basic view
+          healthStatus: '',
+          grade: '',
+          country: '',
+          governorate: '',
+          attendance: '',
+          performance: '',
+          familyStatus: '',
+          housingStatus: '',
+          guardian: '',
+          sponsorId: 0,
+          sponsorshipType: '',
+          teamMemberId: 0,
+          familyMembers: [],
+          hobbies: [],
+          needsAndWishes: [],
+          updateLogs: [],
+          educationalProgram: { status: 'غير ملتحق', details: '' },
+          psychologicalSupport: {
+            child: { status: 'غير ملتحق', details: '' },
+            guardian: { status: 'غير ملتحق', details: '' },
+          },
+          payments: [],
+          achievements: [],
+          specialOccasions: [],
+          gifts: [],
+        } as Orphan;
+      });
+
+      setOrphans(basicOrphans);
+      cache.set(cacheKey, basicOrphans, 5 * 60 * 1000);
+    } catch (err) {
+      console.error('Error fetching basic orphans:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch orphans');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { orphans, loading, error, refetch: fetchOrphans };
+};
+
