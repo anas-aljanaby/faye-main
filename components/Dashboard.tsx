@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useOrphans } from '../hooks/useOrphans';
+import { useOrphansBasic } from '../hooks/useOrphans';
 import { useOccasions } from '../hooks/useOccasions';
-import { useSponsors } from '../hooks/useSponsors';
+import { useSponsorsBasic } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
 import { TransactionStatus, Orphan, Sponsor, PaymentStatus, TransactionType } from '../types';
@@ -28,7 +28,7 @@ const WidgetCard: React.FC<{ title: string; icon: React.ReactNode; children: Rea
 
 const UpcomingOccasions: React.FC<{ onViewAll: () => void }> = ({ onViewAll }) => {
     const { occasions, loading } = useOccasions();
-    const { orphans } = useOrphans();
+    const { orphans } = useOrphansBasic();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -352,8 +352,8 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 };
 
 const Dashboard: React.FC = () => {
-    const { orphans: orphansData } = useOrphans();
-    const { sponsors: sponsorsData } = useSponsors();
+    const { orphans: orphansData } = useOrphansBasic();
+    const { sponsors: sponsorsData } = useSponsorsBasic();
     const { teamMembers: teamMembersData } = useTeamMembers();
     const { userProfile } = useAuth();
     const receiptRef = useRef<HTMLDivElement>(null);
