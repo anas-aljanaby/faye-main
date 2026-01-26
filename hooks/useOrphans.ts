@@ -451,10 +451,10 @@ export const useOrphansBasic = () => {
       setError(null);
 
       const result = await withUserContext(async () => {
-        // Fetch only essential fields
+        // Fetch only essential fields (for list/dashboard views)
         let orphansQuery = supabase
           .from('orphans')
-          .select('id, name, photo_url, date_of_birth')
+          .select('id, name, photo_url, date_of_birth, country, performance')
           .eq('organization_id', userProfile.organization_id);
 
         // If user is a sponsor, only show their sponsored orphans
@@ -563,10 +563,10 @@ export const useOrphansBasic = () => {
           gender: 'ذكر' as 'ذكر' | 'أنثى', // Default, not used in basic view
           healthStatus: '',
           grade: '',
-          country: '',
+          country: orphan.country || '',
           governorate: '',
           attendance: '',
-          performance: '',
+          performance: orphan.performance || '',
           familyStatus: '',
           housingStatus: '',
           guardian: '',
