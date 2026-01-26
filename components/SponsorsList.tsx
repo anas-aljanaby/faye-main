@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSponsors } from '../hooks/useSponsors';
-import { useOrphans } from '../hooks/useOrphans';
+import { useSponsorsBasic } from '../hooks/useSponsors';
+import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
 import { Sponsor } from '../types';
 import { supabase } from '../lib/supabase';
@@ -157,8 +157,8 @@ const SortPopover: React.FC<{
 
 
 const SponsorsList: React.FC = () => {
-    const { sponsors: sponsorsData, loading, refetch: refetchSponsors } = useSponsors();
-    const { orphans: orphansData, refetch: refetchOrphans } = useOrphans();
+    const { sponsors: sponsorsData, loading, refetch: refetchSponsors } = useSponsorsBasic();
+    const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
     const { userProfile, canEditSponsors, canEditOrphans, isManager } = useAuth();
     const hasEditPermission = userProfile?.role === 'team_member' && canEditSponsors();
     const canAssignOrphansToSponsors = useMemo(() => {

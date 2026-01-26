@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useOrphans } from '../hooks/useOrphans';
+import { useOrphansBasic } from '../hooks/useOrphans';
 import { Orphan } from '../types';
 import Avatar from './Avatar';
 
@@ -141,7 +141,7 @@ const FilterSortPopover: React.FC<{
 const ITEMS_PER_PAGE = 12;
 
 const OrphansList: React.FC = () => {
-    const { orphans: orphansData, loading } = useOrphans();
+    const { orphans: orphansData, loading } = useOrphansBasic();
     const [orphanList, setOrphanList] = useState<Orphan[]>([]);
     
     useEffect(() => {
