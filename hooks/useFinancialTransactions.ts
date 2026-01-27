@@ -28,7 +28,7 @@ const numberToUuid = (num: number, uuidMap: Map<number, string>): string | undef
   return uuidMap.get(num);
 };
 
-export const useFinancialTransactions = () => {
+export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') => {
   const [transactions, setTransactions] = useState<FinancialTransactionWithApproval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,11 +46,12 @@ export const useFinancialTransactions = () => {
   const fetchTransactions = async (useCache = true) => {
     if (!userProfile) return;
 
-    const cacheKey = getCacheKey.financialTransactions(userProfile.organization_id);
+    const baseCacheKey = getCacheKey.financialTransactions(userProfile.organization_id);
+    const cacheKey = mode === 'full' ? baseCacheKey : `${baseCacheKey}:dashboard`;
     
     // Check cache first
     if (useCache) {
-      const cachedData = cache.get<FinancialTransaction[]>(cacheKey);
+      const cachedData = cache.get<FinancialTransactionWithApproval[]>(cacheKey);
       if (cachedData) {
         setTransactions(cachedData);
         setLoading(false);
@@ -63,6 +64,40 @@ export const useFinancialTransactions = () => {
     try {
       setLoading(true);
       setError(null);
+
+      // For dashboard widgets we only need basic transaction data (no receipts/payments joins)
+      if (mode === 'dashboard') {
+        const { data: transactionsData, error: transactionsError } = await supabase
+          .from('financial_transactions')
+          .select('*')
+          .eq('organization_id', userProfile.organization_id)
+          .order('date', { ascending: false });
+
+        if (transactionsError) throw transactionsError;
+        if (!transactionsData) {
+          setTransactions([]);
+          setLoading(false);
+          cache.set(cacheKey, [], 2 * 60 * 1000);
+          return;
+        }
+
+        const summaryTransactions: FinancialTransactionWithApproval[] = transactionsData.map((tx) => ({
+          id: tx.id,
+          date: new Date(tx.date),
+          description: tx.description,
+          // We don't join created_by for dashboard mode; it's not used there
+          createdBy: 'مدير النظام',
+          amount: parseFloat(tx.amount),
+          status: tx.status as TransactionStatus,
+          type: tx.type as TransactionType,
+          ...(tx.orphan_id && { orphanId: uuidToNumber(tx.orphan_id) }),
+        }));
+
+        setTransactions(summaryTransactions);
+        cache.set(cacheKey, summaryTransactions, 2 * 60 * 1000);
+        setLoading(false);
+        return;
+      }
 
       // Fetch transactions with related data including approval info
       const { data: transactionsData, error: transactionsError } = await supabase
@@ -231,7 +266,7 @@ export const useFinancialTransactions = () => {
               orphanAmounts[orphanId] = parseFloat(ro.amount.toString());
             }
           });
-
+          
           receiptData = {
             sponsorName: receipt.sponsor?.name || '',
             donationCategory: receipt.donation_category,
