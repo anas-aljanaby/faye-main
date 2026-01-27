@@ -152,7 +152,7 @@ const UpcomingOccasions: React.FC<{ onViewAll: () => void }> = ({ onViewAll }) =
 };
 
 const PendingApprovals = () => {
-    const { transactions, loading } = useFinancialTransactions();
+    const { transactions, loading } = useFinancialTransactions('dashboard');
     const pending = transactions.filter(tx => tx.status === TransactionStatus.Pending);
 
     return (
