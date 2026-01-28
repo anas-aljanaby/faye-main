@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { useOrphans } from '../hooks/useOrphans';
+import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
 import { useSponsors } from '../hooks/useSponsors';
 import { PaymentStatus, Orphan, Payment } from '../types';
@@ -12,7 +12,7 @@ type StatusFilter = 'all' | PaymentStatus;
 
 const SponsorPaymentsPage: React.FC = () => {
   const { userProfile } = useAuth();
-  const { orphans: orphansData } = useOrphans();
+  const { orphans: orphansData } = useOrphansBasic();
   const { sponsors: sponsorsData } = useSponsors();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');

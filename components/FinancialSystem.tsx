@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSponsors } from '../hooks/useSponsors';
-import { useOrphans } from '../hooks/useOrphans';
+import { useOrphansBasic } from '../hooks/useOrphans';
 import { useFinancialTransactions, FinancialTransactionWithApproval } from '../hooks/useFinancialTransactions';
 import { FinancialTransaction, TransactionStatus, TransactionType, Sponsor, Orphan, PaymentStatus, Payment } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -1051,7 +1051,7 @@ const FinancialSystem: React.FC = () => {
     const orphanPaymentsSectionRef = useRef<HTMLDivElement>(null);
     const { canCreateExpense, canViewFinancials, userProfile } = useAuth();
     const { sponsors: sponsorsData, refetch: refetchSponsors } = useSponsors();
-    const { orphans: orphansData, refetch: refetchOrphans } = useOrphans();
+    const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
     const { 
         transactions, 
         loading: transactionsLoading, 

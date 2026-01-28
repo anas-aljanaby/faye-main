@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useSponsors } from '../hooks/useSponsors';
-import { useOrphans } from '../hooks/useOrphans';
+import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
 import { findById } from '../utils/idMapper';
 import { financialTransactions } from '../data';
@@ -176,7 +176,7 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 const SponsorPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { sponsors: sponsorsData, loading: sponsorsLoading, refetch: refetchSponsors } = useSponsors();
-    const { orphans: orphansData, refetch: refetchOrphans } = useOrphans();
+    const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
     const { canEditOrphans, canEditSponsors, isManager, userProfile } = useAuth();
     const sponsor = useMemo(() => findById(sponsorsData, id || ''), [sponsorsData, id]);
     // Check if current user is viewing their own sponsor page

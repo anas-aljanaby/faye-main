@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useOccasions } from '../hooks/useOccasions';
-import { useOrphans } from '../hooks/useOrphans';
+import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
 import { SpecialOccasion } from '../types';
 
@@ -12,7 +12,7 @@ interface OccasionsManagementModalProps {
 
 const OccasionsManagementModal: React.FC<OccasionsManagementModalProps> = ({ isOpen, onClose }) => {
   const { occasions, loading, addOccasion, updateOccasion, deleteOccasion } = useOccasions();
-  const { orphans } = useOrphans();
+  const { orphans } = useOrphansBasic();
   const { canEditOrphans } = useAuth();
   const hasEditPermission = canEditOrphans();
 

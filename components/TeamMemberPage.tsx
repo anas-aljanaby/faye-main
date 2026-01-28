@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTeamMembers } from '../hooks/useTeamMembers';
-import { useOrphans } from '../hooks/useOrphans';
+import { useOrphansBasic } from '../hooks/useOrphans';
 import { useSponsors } from '../hooks/useSponsors';
 import { useAuth } from '../contexts/AuthContext';
 import { findById } from '../utils/idMapper';
@@ -75,7 +75,7 @@ const TeamMemberPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { teamMembers: teamMembersData, loading: teamMembersLoading, refetch: refetchTeamMembers } = useTeamMembers();
-  const { orphans: orphansData, refetch: refetchOrphans } = useOrphans();
+  const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
   const { sponsors: sponsorsData, refetch: refetchSponsors } = useSponsors();
   const { userProfile, canEditOrphans, canEditSponsors, isManager } = useAuth();
   const member = useMemo(() => findById(teamMembersData, id || ''), [teamMembersData, id]);
