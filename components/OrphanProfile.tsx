@@ -1,6 +1,6 @@
 import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useOrphans } from '../hooks/useOrphans';
+import { useOrphansBasic, useOrphanDetail } from '../hooks/useOrphans';
 import { useOccasions } from '../hooks/useOccasions';
 import { useSponsors } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
@@ -575,14 +575,17 @@ const InteractiveCalendar: React.FC<{
 const OrphanProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orphans: orphansData, loading: orphansLoading, updateOrphan } = useOrphans();
+  // Use lightweight list hook only to map numeric ID to orphan UUID
+  const { orphans: orphansIndex, loading: orphansLoading } = useOrphansBasic();
+  const orphanFromIndex = useMemo(() => findById(orphansIndex, id || ''), [orphansIndex, id]);
+  const orphanUuid = orphanFromIndex?.uuid || null;
+  const { orphan, loading: orphanLoading, error: orphanError, updateOrphan } = useOrphanDetail(orphanUuid);
   const { occasions: allOccasions, addOccasion, updateOccasion, deleteOccasion } = useOccasions();
   const { sponsors: sponsorsData } = useSponsors();
   const { userProfile, canEditOrphans } = useAuth();
   const isTeamMember = userProfile?.role === 'team_member';
   const hasEditPermission = isTeamMember && canEditOrphans();
   
-  const orphan = useMemo(() => findById(orphansData, id || ''), [orphansData, id]);
   const sponsor = useMemo(() => orphan ? findById(sponsorsData, orphan.sponsorId) : undefined, [orphan, sponsorsData]);
   const profileRef = useRef<HTMLDivElement>(null);
 
@@ -794,11 +797,11 @@ const OrphanProfile: React.FC = () => {
     }
   };
 
-  if (orphansLoading) {
+  if (orphansLoading || orphanLoading) {
     return <div className="text-center py-8">جاري التحميل...</div>;
   }
 
-  if (!orphan) {
+  if (!orphan && !orphanLoading) {
     return <div className="text-center text-red-500">لم يتم العثور على اليتيم.</div>;
   }
 
