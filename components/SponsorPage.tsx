@@ -1,9 +1,8 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useSponsors } from '../hooks/useSponsors';
+import { useSponsorDetail } from '../hooks/useSponsors';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
-import { findById } from '../utils/idMapper';
 import { financialTransactions } from '../data';
 import { PaymentStatus, TransactionType, Sponsor, Orphan } from '../types';
 import { jsPDF } from 'jspdf';
@@ -175,15 +174,13 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 
 const SponsorPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const { sponsors: sponsorsData, loading: sponsorsLoading, refetch: refetchSponsors } = useSponsors();
-    const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
+    const { sponsor, assignedOrphanIds, setAssignedOrphanIds, loading: sponsorsLoading, refetch: refetchSponsors } = useSponsorDetail(id);
+    const { orphans: orphansData } = useOrphansBasic();
     const { canEditOrphans, canEditSponsors, isManager, userProfile } = useAuth();
-    const sponsor = useMemo(() => findById(sponsorsData, id || ''), [sponsorsData, id]);
     // Check if current user is viewing their own sponsor page
     const isViewingOwnPage = useMemo(() => {
         return userProfile?.role === 'sponsor' && userProfile?.id === sponsor?.uuid;
     }, [userProfile, sponsor]);
-    const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
     const [showAssignOrphansModal, setShowAssignOrphansModal] = useState(false);
     
     const sponsoredOrphans = useMemo(() => {
@@ -200,31 +197,6 @@ const SponsorPage: React.FC = () => {
     const receiptRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     const orphansSectionRef = useRef<HTMLDivElement>(null);
-
-    // Fetch assigned orphans for this sponsor
-    useEffect(() => {
-        const fetchAssignedOrphans = async () => {
-            if (!sponsor?.uuid) {
-                setAssignedOrphanIds([]);
-                return;
-            }
-
-            try {
-                const { data } = await supabase
-                    .from('sponsor_orphans')
-                    .select('orphan_id')
-                    .eq('sponsor_id', sponsor.uuid);
-
-                if (data) {
-                    setAssignedOrphanIds(data.map(item => item.orphan_id));
-                }
-            } catch (err) {
-                console.error('Error fetching assigned orphans:', err);
-            }
-        };
-
-        fetchAssignedOrphans();
-    }, [sponsor]);
 
     if (sponsorsLoading) {
         return <div className="text-center py-8">جاري التحميل...</div>;

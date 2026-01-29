@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Sponsor } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { cache, getCacheKey } from '../utils/cache';
+import { findById } from '../utils/idMapper';
 
 export const useSponsors = () => {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
@@ -220,5 +221,50 @@ export const useSponsorsBasic = () => {
   };
 
   return { sponsors, loading, error, refetch: fetchSponsors };
+};
+
+// Single sponsor detail: resolve by id, then fetch assigned orphan UUIDs only for this sponsor
+export const useSponsorDetail = (sponsorId: string | undefined) => {
+  const { sponsors, loading: sponsorsLoading, refetch: refetchSponsors } = useSponsorsBasic();
+  const sponsor = useMemo(() => findById(sponsors, sponsorId || ''), [sponsors, sponsorId]);
+  const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
+  const [loadingAssigned, setLoadingAssigned] = useState(false);
+  const [errorAssigned, setErrorAssigned] = useState<string | null>(null);
+
+  const fetchAssignedOrphans = useCallback(async () => {
+    if (!sponsor?.uuid) {
+      setAssignedOrphanIds([]);
+      return;
+    }
+    try {
+      setLoadingAssigned(true);
+      setErrorAssigned(null);
+      const { data, error } = await supabase
+        .from('sponsor_orphans')
+        .select('orphan_id')
+        .eq('sponsor_id', sponsor.uuid);
+      if (error) throw error;
+      setAssignedOrphanIds((data || []).map((row) => row.orphan_id));
+    } catch (err) {
+      console.error('Error fetching assigned orphans:', err);
+      setErrorAssigned(err instanceof Error ? err.message : 'Failed to fetch assigned orphans');
+    } finally {
+      setLoadingAssigned(false);
+    }
+  }, [sponsor?.uuid]);
+
+  useEffect(() => {
+    fetchAssignedOrphans();
+  }, [fetchAssignedOrphans]);
+
+  const refetch = useCallback(() => {
+    refetchSponsors();
+    fetchAssignedOrphans();
+  }, [refetchSponsors, fetchAssignedOrphans]);
+
+  const loading = sponsorsLoading || (!!sponsor && loadingAssigned);
+  const error = errorAssigned;
+
+  return { sponsor, assignedOrphanIds, setAssignedOrphanIds, loading, error, refetch };
 };
 

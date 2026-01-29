@@ -200,7 +200,7 @@ export const useOrphanDetail = (orphanId: string) => {
 
 ### Phase 4: Detail Pages & Single Records
 - [x] Create `useOrphanDetail(id)` for single orphan pages (implemented in `useOrphans.ts` and used by `OrphanProfile` together with `useOrphansBasic` for ID mapping)
-- [ ] Create `useSponsorDetail(id)` for single sponsor pages
+- [x] Create `useSponsorDetail(id)` for single sponsor pages (implemented in `useSponsors.ts` and used by `SponsorPage` together with `useOrphansBasic` for orphan list/assign modal)
 - [ ] Implement lazy loading for tabs/accordions in detail pages
 - [ ] Add pagination for large data lists
 - [ ] Test detail page improvements
