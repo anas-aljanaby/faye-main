@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
-import { useSponsors } from '../hooks/useSponsors';
+import { useSponsorsBasic } from '../hooks/useSponsors';
 import { PaymentStatus, Orphan, Payment } from '../types';
 import PaymentStatusBadge from './PaymentStatusBadge';
 import { supabase } from '../lib/supabase';
@@ -13,7 +13,7 @@ type StatusFilter = 'all' | PaymentStatus;
 const SponsorPaymentsPage: React.FC = () => {
   const { userProfile } = useAuth();
   const { orphans: orphansData } = useOrphansBasic();
-  const { sponsors: sponsorsData } = useSponsors();
+  const { sponsors: sponsorsData } = useSponsorsBasic();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'dueDate' | 'amount'>('name');

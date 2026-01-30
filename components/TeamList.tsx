@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTeamMembers } from '../hooks/useTeamMembers';
+import { useTeamMembersBasic } from '../hooks/useTeamMembers';
 import { usePermissions, TeamMemberWithPermissions, UserPermissions } from '../hooks/usePermissions';
 import { useAuth } from '../contexts/AuthContext';
 import { TeamMember } from '../types';
@@ -547,7 +547,7 @@ interface TeamListProps {
 }
 
 const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
-    const { teamMembers: teamMembersData, loading } = useTeamMembers();
+    const { teamMembers: teamMembersData, loading } = useTeamMembersBasic();
     const { teamMembers: teamMembersWithPermissions, togglePermission, isManager, loading: permissionsLoading, refetch: refetchPermissions } = usePermissions();
     const { isManager: checkIsManager, userProfile } = useAuth();
     const [teamList, setTeamList] = useState<TeamMember[]>([]);

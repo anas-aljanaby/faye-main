@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { useOccasions } from '../hooks/useOccasions';
 import { useSponsorsBasic } from '../hooks/useSponsors';
-import { useTeamMembers } from '../hooks/useTeamMembers';
+import { useTeamMembersBasic } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
 import { TransactionStatus, Orphan, Sponsor, PaymentStatus, TransactionType } from '../types';
 import { useFinancialTransactions } from '../hooks/useFinancialTransactions';
@@ -354,7 +354,7 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 const Dashboard: React.FC = () => {
     const { orphans: orphansData } = useOrphansBasic();
     const { sponsors: sponsorsData } = useSponsorsBasic();
-    const { teamMembers: teamMembersData } = useTeamMembers();
+    const { teamMembers: teamMembersData } = useTeamMembersBasic();
     const { userProfile } = useAuth();
     const receiptRef = useRef<HTMLDivElement>(null);
     const orphansSectionRef = useRef<HTMLDivElement>(null);

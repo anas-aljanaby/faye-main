@@ -121,3 +121,85 @@ export const useTeamMembers = () => {
   return { teamMembers, loading, error, refetch: fetchTeamMembers };
 };
 
+// Lightweight hook for lists/dashboards - no tasks fetched
+export const useTeamMembersBasic = () => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { userProfile } = useAuth();
+
+  useEffect(() => {
+    if (!userProfile) {
+      setLoading(false);
+      return;
+    }
+
+    fetchTeamMembers();
+  }, [userProfile]);
+
+  const fetchTeamMembers = async (useCache = true) => {
+    if (!userProfile) return;
+
+    const cacheKey = `team-members-basic:${userProfile.organization_id}`;
+
+    if (useCache) {
+      const cachedData = cache.get<TeamMember[]>(cacheKey);
+      if (cachedData) {
+        setTeamMembers(cachedData);
+        setLoading(false);
+        fetchTeamMembers(false).catch(() => {});
+        return;
+      }
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data: teamMembersData, error: teamMembersError } = await supabase
+        .from('user_profiles')
+        .select('id, name, avatar_url')
+        .eq('organization_id', userProfile.organization_id)
+        .eq('role', 'team_member')
+        .eq('is_system_admin', false);
+
+      if (teamMembersError) throw teamMembersError;
+      if (!teamMembersData) {
+        setTeamMembers([]);
+        setLoading(false);
+        cache.set(cacheKey, [], 2 * 60 * 1000);
+        return;
+      }
+
+      const uuidToNumber = (uuid: string): number => {
+        let hash = 0;
+        for (let i = 0; i < uuid.length; i++) {
+          const char = uuid.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash;
+        }
+        return Math.abs(hash) % 1000000;
+      };
+
+      const basicMembers: TeamMember[] = teamMembersData.map((member) => ({
+        id: uuidToNumber(member.id),
+        uuid: member.id,
+        name: member.name,
+        avatarUrl: member.avatar_url || '',
+        assignedOrphanIds: [],
+        tasks: [],
+      }));
+
+      setTeamMembers(basicMembers);
+      cache.set(cacheKey, basicMembers, 5 * 60 * 1000);
+    } catch (err) {
+      console.error('Error fetching basic team members:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch team members');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { teamMembers, loading, error, refetch: fetchTeamMembers };
+};
+

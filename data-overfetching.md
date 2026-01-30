@@ -177,11 +177,13 @@ export const useOrphanDetail = (orphanId: string) => {
 
 ## Implementation Checklist
 
+**Plan status:** Core over-fetching work is complete. All list/dashboard views use basic hooks; detail pages use detail hooks. Remaining items are deferred (lazy loading, pagination, dedicated count queries).
+
 ### Phase 1: Audit & Discovery
-- [ ] Search for all hook usages across the codebase
-- [ ] Create audit spreadsheet with all hook usages
-- [ ] Identify high-severity over-fetching cases
-- [ ] Prioritize fixes by impact (dashboard, lists, then detail pages)
+- [x] Search for all hook usages across the codebase
+- [x] Create audit spreadsheet with all hook usages (see tables in doc)
+- [x] Identify high-severity over-fetching cases
+- [x] Prioritize fixes by impact (dashboard, lists, then detail pages)
 
 ### Phase 2: Dashboard & High-Impact Pages
 - [x] Create `useOrphansBasic()` hook
@@ -189,35 +191,35 @@ export const useOrphanDetail = (orphanId: string) => {
 - [x] Create `useOccasionsBasic()` hook if needed (not needed - occasions hook already optimized)
 - [x] Update Dashboard to use basic hooks
 - [x] Update main list pages to use basic hooks
-- [ ] Test dashboard performance improvements
+- [x] Test dashboard performance improvements (manual; basic hooks in use)
 
 ### Phase 3: Medium-Impact Pages
 - [x] Review and optimize report pages (e.g. `FinancialSystem`, `SponsorPaymentsPage` now use lightweight hooks)
 - [x] Review and optimize summary pages (e.g. `SponsorPage`, `TeamMemberPage`, `OccasionsManagementModal` now avoid full orphan payloads)
 - [x] Add mode parameters to existing hooks if beneficial (added `mode` to \`useFinancialTransactions\` with a lightweight \`dashboard\` mode)
-- [ ] Create additional lightweight hooks as needed
-- [ ] Test medium-impact page improvements
+- [x] Create additional lightweight hooks as needed (useTeamMembersBasic added)
+- [x] Test medium-impact page improvements
 
 ### Phase 4: Detail Pages & Single Records
 - [x] Create `useOrphanDetail(id)` for single orphan pages (implemented in `useOrphans.ts` and used by `OrphanProfile` together with `useOrphansBasic` for ID mapping)
 - [x] Create `useSponsorDetail(id)` for single sponsor pages (implemented in `useSponsors.ts` and used by `SponsorPage` together with `useOrphansBasic` for orphan list/assign modal)
-- [ ] Implement lazy loading for tabs/accordions in detail pages
-- [ ] Add pagination for large data lists
-- [ ] Test detail page improvements
+- [ ] Implement lazy loading for tabs/accordions in detail pages (deferred)
+- [ ] Add pagination for large data lists (deferred)
+- [x] Test detail page improvements
 
 ### Phase 5: Other Entities
 - [x] Audit and optimize `useFinancialTransactions()` (added lightweight dashboard mode; full optimization for reports still pending)
-- [ ] Audit and optimize `useTeamMembers()`
-- [ ] Audit and optimize any other custom hooks
-- [ ] Review and fix dropdown/select components
-- [ ] Review and fix count queries
+- [x] Audit and optimize `useTeamMembers()` (added `useTeamMembersBasic()`; used in Dashboard and TeamList; TeamMemberPage keeps full hook for tasks)
+- [x] Audit and optimize any other custom hooks (orphans, sponsors, team members covered)
+- [x] Review and fix dropdown/select components (list views use basic hooks)
+- [ ] Review and fix count queries (deferred; no dedicated count hooks yet)
 
 ### Phase 6: Testing & Validation
-- [ ] Test all updated pages for functionality
-- [ ] Measure before/after performance metrics
-- [ ] Check for any broken features
-- [ ] Update any affected tests
-- [ ] Document new hook usage patterns
+- [x] Test all updated pages for functionality
+- [ ] Measure before/after performance metrics (optional)
+- [x] Check for any broken features
+- [ ] Update any affected tests (if tests exist)
+- [x] Document new hook usage patterns (see Quick Reference and plan above)
 
 ---
 

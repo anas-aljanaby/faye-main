@@ -2,7 +2,7 @@ import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useOrphansBasic, useOrphanDetail } from '../hooks/useOrphans';
 import { useOccasions } from '../hooks/useOccasions';
-import { useSponsors } from '../hooks/useSponsors';
+import { useSponsorsBasic } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
 import { findById } from '../utils/idMapper';
@@ -581,7 +581,7 @@ const OrphanProfile: React.FC = () => {
   const orphanUuid = orphanFromIndex?.uuid || null;
   const { orphan, loading: orphanLoading, error: orphanError, updateOrphan } = useOrphanDetail(orphanUuid);
   const { occasions: allOccasions, addOccasion, updateOccasion, deleteOccasion } = useOccasions();
-  const { sponsors: sponsorsData } = useSponsors();
+  const { sponsors: sponsorsData } = useSponsorsBasic();
   const { userProfile, canEditOrphans } = useAuth();
   const isTeamMember = userProfile?.role === 'team_member';
   const hasEditPermission = isTeamMember && canEditOrphans();
