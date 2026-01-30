@@ -29,5 +29,3 @@ dist-ssr
 # Credentials file (contains passwords)
 user-credentials.json
 ANALYSIS_ORPHANS_SPONSORS_FETCHING.md
-PERFORMANCE_TESTING_GUIDE.md
-data-overfetching.md
