@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { withUserContext } from '../lib/supabaseClient';
 import { Orphan, Payment, Achievement, SpecialOccasion, Gift, UpdateLog, ProgramParticipation, PaymentStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { cache, getCacheKey } from '../utils/cache';
+import { uuidToNumber } from '../utils/idMapper';
+
+/** Profile shape needed for orphans basic fetch (from AuthContext userProfile) */
+type OrphansBasicProfile = { organization_id: string; id: string; role: 'team_member' | 'sponsor' };
 
 export const useOrphans = () => {
   const [orphans, setOrphans] = useState<Orphan[]>([]);
@@ -413,193 +418,142 @@ export const useOrphans = () => {
   return { orphans, loading, error, refetch: fetchOrphans, updateOrphan };
 };
 
-// Lightweight hook for lists/dashboards - fetches only essential fields
+/** Fetches basic orphans data (for lists/dashboards). Used by useOrphansBasic with React Query. */
+export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promise<Orphan[]> {
+  const result = await withUserContext(async () => {
+    let orphansQuery = supabase
+      .from('orphans')
+      .select('id, name, photo_url, date_of_birth, country, performance')
+      .eq('organization_id', profile.organization_id);
+
+    if (profile.role === 'sponsor') {
+      const { data: sponsorOrphans } = await supabase
+        .from('sponsor_orphans')
+        .select('orphan_id')
+        .eq('sponsor_id', profile.id);
+
+      if (!sponsorOrphans || sponsorOrphans.length === 0) {
+        return { orphansData: [], orphansError: null, paymentsData: null };
+      }
+
+      const orphanIds = sponsorOrphans.map(so => so.orphan_id);
+      orphansQuery = orphansQuery.in('id', orphanIds);
+    }
+
+    const { data: orphansData, error: orphansError } = await orphansQuery;
+
+    if (orphansError) {
+      return { orphansData: null, orphansError, paymentsData: null };
+    }
+
+    if (!orphansData || orphansData.length === 0) {
+      return { orphansData: [], orphansError: null, paymentsData: null };
+    }
+
+    const orphanIds = orphansData.map(o => o.id);
+
+    const { data: paymentsData, error: paymentsError } = await supabase
+      .from('payments')
+      .select('*')
+      .in('orphan_id', orphanIds);
+
+    if (paymentsError) {
+      console.warn('Error fetching payments for basic orphans:', paymentsError);
+    }
+
+    return {
+      orphansData: orphansData || [],
+      orphansError: null,
+      paymentsData: paymentsData || [],
+    };
+  });
+
+  if (result.orphansError) throw result.orphansError;
+  if (!result.orphansData || result.orphansData.length === 0) return [];
+
+  const paymentsByOrphan = new Map<string, any[]>();
+  (result.paymentsData || []).forEach(p => {
+    if (!paymentsByOrphan.has(p.orphan_id)) {
+      paymentsByOrphan.set(p.orphan_id, []);
+    }
+    paymentsByOrphan.get(p.orphan_id)!.push(p);
+  });
+
+  return result.orphansData.map((orphan) => {
+    const orphanPayments = paymentsByOrphan.get(orphan.id) || [];
+    const today = new Date();
+    const birthDate = new Date(orphan.date_of_birth);
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
+
+    const payments: Payment[] = orphanPayments
+      .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
+      .map(p => ({
+        id: p.id,
+        amount: parseFloat(p.amount),
+        dueDate: new Date(p.due_date),
+        paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
+        status: p.status as PaymentStatus,
+      }));
+
+    return {
+      id: uuidToNumber(orphan.id),
+      uuid: orphan.id,
+      name: orphan.name,
+      photoUrl: orphan.photo_url || '',
+      age: adjustedAge,
+      dateOfBirth: new Date(orphan.date_of_birth),
+      gender: 'ذكر' as 'ذكر' | 'أنثى',
+      healthStatus: '',
+      grade: '',
+      country: orphan.country || '',
+      governorate: '',
+      attendance: '',
+      performance: orphan.performance || '',
+      familyStatus: '',
+      housingStatus: '',
+      guardian: '',
+      sponsorId: 0,
+      sponsorshipType: '',
+      teamMemberId: 0,
+      familyMembers: [],
+      hobbies: [],
+      needsAndWishes: [],
+      updateLogs: [],
+      educationalProgram: { status: 'غير ملتحق', details: '' },
+      psychologicalSupport: {
+        child: { status: 'غير ملتحق', details: '' },
+        guardian: { status: 'غير ملتحق', details: '' },
+      },
+      payments,
+      achievements: [],
+      specialOccasions: [],
+      gifts: [],
+    } as Orphan;
+  });
+}
+
+// Lightweight hook for lists/dashboards - uses React Query for shared cache and request deduplication
 export const useOrphansBasic = () => {
-  const [orphans, setOrphans] = useState<Orphan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { userProfile } = useAuth();
+  const {
+    data: orphans = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['orphans-basic', userProfile?.organization_id, userProfile?.id, userProfile?.role],
+    queryFn: () => fetchOrphansBasicData(userProfile!),
+    enabled: !!userProfile,
+  });
 
-  useEffect(() => {
-    if (!userProfile) {
-      setLoading(false);
-      return;
-    }
-
-    fetchOrphans();
-  }, [userProfile]);
-
-  const fetchOrphans = async (useCache = true) => {
-    if (!userProfile) return;
-
-    const cacheKey = `orphans-basic:${userProfile.organization_id}:${userProfile.id}:${userProfile.role}`;
-    
-    // Check cache first
-    if (useCache) {
-      const cachedData = cache.get<Orphan[]>(cacheKey);
-      if (cachedData) {
-        setOrphans(cachedData);
-        setLoading(false);
-        // Still fetch in background to update cache (stale-while-revalidate)
-        fetchOrphans(false).catch(() => {});
-        return;
-      }
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const result = await withUserContext(async () => {
-        // Fetch only essential fields (for list/dashboard views)
-        let orphansQuery = supabase
-          .from('orphans')
-          .select('id, name, photo_url, date_of_birth, country, performance')
-          .eq('organization_id', userProfile.organization_id);
-
-        // If user is a sponsor, only show their sponsored orphans
-        if (userProfile.role === 'sponsor') {
-          const { data: sponsorOrphans } = await supabase
-            .from('sponsor_orphans')
-            .select('orphan_id')
-            .eq('sponsor_id', userProfile.id);
-
-          if (!sponsorOrphans || sponsorOrphans.length === 0) {
-            return { orphansData: [], orphansError: null, paymentsData: null };
-          }
-
-          const orphanIds = sponsorOrphans.map(so => so.orphan_id);
-          orphansQuery = orphansQuery.in('id', orphanIds);
-        }
-
-        const { data: orphansData, error: orphansError } = await orphansQuery;
-
-        if (orphansError) {
-          return { orphansData: null, orphansError, paymentsData: null };
-        }
-
-        if (!orphansData || orphansData.length === 0) {
-          return { orphansData: [], orphansError: null, paymentsData: null };
-        }
-
-        const orphanIds = orphansData.map(o => o.id);
-
-        // Fetch only payments (needed for dashboard stats)
-        const { data: paymentsData, error: paymentsError } = await supabase
-          .from('payments')
-          .select('*')
-          .in('orphan_id', orphanIds);
-
-        if (paymentsError) {
-          console.warn('Error fetching payments for basic orphans:', paymentsError);
-        }
-
-        return { 
-          orphansData: orphansData || [], 
-          orphansError: null,
-          paymentsData: paymentsData || []
-        };
-      });
-
-      if (result.orphansError) throw result.orphansError;
-
-      if (!result.orphansData || result.orphansData.length === 0) {
-        setOrphans([]);
-        setLoading(false);
-        cache.set(cacheKey, [], 2 * 60 * 1000);
-        return;
-      }
-
-      // Helper function to convert UUID to numeric ID for compatibility
-      const uuidToNumber = (uuid: string): number => {
-        let hash = 0;
-        for (let i = 0; i < uuid.length; i++) {
-          const char = uuid.charCodeAt(i);
-          hash = ((hash << 5) - hash) + char;
-          hash = hash & hash;
-        }
-        return Math.abs(hash) % 1000000;
-      };
-
-      // Group payments by orphan_id
-      const paymentsByOrphan = new Map<string, any[]>();
-      (result.paymentsData || []).forEach(p => {
-        if (!paymentsByOrphan.has(p.orphan_id)) {
-          paymentsByOrphan.set(p.orphan_id, []);
-        }
-        paymentsByOrphan.get(p.orphan_id)!.push(p);
-      });
-
-      // Transform to Orphan type with essential fields + payments
-      const basicOrphans: Orphan[] = result.orphansData.map((orphan) => {
-        const orphanId = orphan.id;
-        const orphanPayments = paymentsByOrphan.get(orphanId) || [];
-
-        // Calculate age from date_of_birth
-        const today = new Date();
-        const birthDate = new Date(orphan.date_of_birth);
-        const age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
-
-        // Transform payments
-        const payments: Payment[] = orphanPayments
-          .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
-          .map(p => ({
-            id: p.id,
-            amount: parseFloat(p.amount),
-            dueDate: new Date(p.due_date),
-            paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
-            status: p.status as PaymentStatus,
-          }));
-
-        return {
-          id: uuidToNumber(orphan.id),
-          uuid: orphan.id,
-          name: orphan.name,
-          photoUrl: orphan.photo_url || '',
-          age: adjustedAge,
-          dateOfBirth: new Date(orphan.date_of_birth),
-          gender: 'ذكر' as 'ذكر' | 'أنثى', // Default, not used in basic view
-          healthStatus: '',
-          grade: '',
-          country: orphan.country || '',
-          governorate: '',
-          attendance: '',
-          performance: orphan.performance || '',
-          familyStatus: '',
-          housingStatus: '',
-          guardian: '',
-          sponsorId: 0,
-          sponsorshipType: '',
-          teamMemberId: 0,
-          familyMembers: [],
-          hobbies: [],
-          needsAndWishes: [],
-          updateLogs: [],
-          educationalProgram: { status: 'غير ملتحق', details: '' },
-          psychologicalSupport: {
-            child: { status: 'غير ملتحق', details: '' },
-            guardian: { status: 'غير ملتحق', details: '' },
-          },
-          payments,
-          achievements: [],
-          specialOccasions: [],
-          gifts: [],
-        } as Orphan;
-      });
-
-      setOrphans(basicOrphans);
-      cache.set(cacheKey, basicOrphans, 5 * 60 * 1000);
-    } catch (err) {
-      console.error('Error fetching basic orphans:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch orphans');
-    } finally {
-      setLoading(false);
-    }
+  return {
+    orphans,
+    loading,
+    error: error ? (error instanceof Error ? error.message : 'Failed to fetch orphans') : null,
+    refetch,
   };
-
-  return { orphans, loading, error, refetch: fetchOrphans };
 };
 
 // Detail hook - fetches a single orphan with all related data
