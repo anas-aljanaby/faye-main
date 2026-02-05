@@ -198,8 +198,5 @@ export const useTeamMembersBasic = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  return { teamMembers, loading, error, refetch: fetchTeamMembers };
+  };  return { teamMembers, loading, error, refetch: fetchTeamMembers };
 };
-
