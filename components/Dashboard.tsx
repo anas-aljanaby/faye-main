@@ -13,6 +13,208 @@ import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
 import OccasionsManagementModal from './OccasionsManagementModal';
+import { GoogleGenAI } from '@google/genai';
+
+type TimeRange = 'week' | 'month' | 'year';
+
+const AnimatedCounter: React.FC<{ value: number; prefix?: string; suffix?: string }> = ({ value, prefix = '', suffix = '' }) => {
+    const [displayValue, setDisplayValue] = useState(0);
+
+    useEffect(() => {
+        let start = 0;
+        const end = value;
+        const duration = 800;
+        const incrementTime = 20;
+        const step = end === 0 ? 0 : (end / duration) * incrementTime;
+
+        const timer = setInterval(() => {
+            start += step;
+            if (start >= end || step === 0) {
+                setDisplayValue(end);
+                clearInterval(timer);
+            } else {
+                setDisplayValue(Math.floor(start));
+            }
+        }, incrementTime);
+
+        return () => clearInterval(timer);
+    }, [value]);
+
+    return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
+};
+
+const StatWidget: React.FC<{ title: string; value: number; icon: React.ReactNode; color: string; subtext: string }> = ({ title, value, icon, color, subtext }) => (
+    <div className="h-full flex flex-col justify-between">
+        <div className="flex justify-between items-start">
+            <div>
+                <p className="text-text-secondary text-sm font-medium mb-1">{title}</p>
+                <h3 className="text-3xl font-bold text-gray-800">
+                    <AnimatedCounter value={value} />
+                </h3>
+            </div>
+            <div className={`p-3 rounded-xl ${color} bg-opacity-20`}>
+                {icon}
+            </div>
+        </div>
+        <div className="mt-4 flex items-center text-sm">
+            <span className="text-green-500 font-bold flex items-center ml-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                +12%
+            </span>
+            <span className="text-gray-400">{subtext}</span>
+        </div>
+    </div>
+);
+
+const ActivityList: React.FC = () => {
+    const activities = [
+        { id: 1, text: 'تم تسجيل يتيم جديد في النظام', time: 'منذ ساعتين', type: 'success' },
+        { id: 2, text: 'دفعة كفالة متأخرة تحتاج متابعة', time: 'منذ 5 ساعات', type: 'warning' },
+        { id: 3, text: 'تمت الموافقة على مصروفات تعليمية', time: 'أمس', type: 'info' },
+        { id: 4, text: 'اجتماع فريق العمل الشهري', time: 'أمس', type: 'info' },
+    ];
+
+    return (
+        <div className="space-y-4 mt-2">
+            {activities.map(act => (
+                <div key={act.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors border-b border-gray-100 last:border-0">
+                    <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${
+                        act.type === 'success' ? 'bg-green-500' : 
+                        act.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+                    }`} />
+                    <div>
+                        <p className="text-sm font-semibold text-gray-800">{act.text}</p>
+                        <p className="text-xs text-gray-400">{act.time}</p>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const AiSummaryWidget: React.FC = () => {
+    const [summary, setSummary] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const generateSummary = async () => {
+        setLoading(true);
+        try {
+            const apiKey = (import.meta as any).env?.VITE_GOOGLE_GENAI_API_KEY as string | undefined;
+            if (!apiKey) {
+                throw new Error('Missing VITE_GOOGLE_GENAI_API_KEY');
+            }
+
+            const ai = new GoogleGenAI({ apiKey });
+            const prompt = "أعطني ملخصاً تنفيذياً سريعاً ومحفزاً لمدير جمعية أيتام يوضح حالة الأيتام والكفلاء والمدفوعات بشكل عام.";
+
+            const response = await ai.models.generateContent({
+                model: 'gemini-3.5-flash',
+                contents: prompt,
+            });
+
+            // @ts-expect-error: runtime SDK may expose text directly
+            setSummary(response.text || 'تم إنشاء الملخص بنجاح، لكن تعذر عرض التفاصيل.');
+        } catch (error) {
+            setSummary('تعذر إنشاء الملخص حالياً. يرجى التحقق من إعداد مفتاح واجهة برمجة التطبيقات ثم المحاولة لاحقاً.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="bg-gradient-to-br from-primary to-primary-hover text-white rounded-xl p-6 h-full flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+            <div>
+                <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                    رؤى ذكية
+                </h3>
+                <p className="text-sm opacity-90 leading-relaxed min-h-[80px]">
+                    {loading ? 'جاري التحليل...' : summary || 'اضغط على الزر للحصول على تحليل فوري للأداء العام للجمعية.'}
+                </p>
+            </div>
+            <button 
+                onClick={generateSummary}
+                disabled={loading}
+                className="mt-4 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors w-max backdrop-blur-sm"
+            >
+                تحديث التحليل
+            </button>
+        </div>
+    );
+};
+
+const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: number }> = ({ orphansCount, sponsorsCount }) => {
+    const [timeRange, setTimeRange] = useState<TimeRange>('month');
+
+    return (
+        <section className="space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800">نظرة سريعة على المؤشرات</h2>
+                    <p className="text-text-secondary text-sm">قسم تحليلي تجريبي مستورد من النسخة الجديدة.</p>
+                </div>
+                <div className="bg-white p-1 rounded-lg border flex shadow-sm">
+                    {(['week', 'month', 'year'] as TimeRange[]).map((t) => (
+                        <button
+                            key={t}
+                            onClick={() => setTimeRange(t)}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                                timeRange === t ? 'bg-primary text-white shadow' : 'text-gray-500 hover:bg-gray-50'
+                            }`}
+                        >
+                            {t === 'week' ? 'أسبوعي' : t === 'month' ? 'شهري' : 'سنوي'}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-bg-card rounded-xl shadow-sm border border-gray-100 p-5">
+                    <StatWidget
+                        title="إجمالي الأيتام"
+                        value={orphansCount}
+                        subtext="مقارنة بالشهر الماضي"
+                        color="text-primary bg-primary"
+                        icon={
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        }
+                    />
+                </div>
+                <div className="bg-bg-card rounded-xl shadow-sm border border-gray-100 p-5">
+                    <StatWidget
+                        title="إجمالي الكفلاء"
+                        value={sponsorsCount}
+                        subtext="زيادة مستمرة"
+                        color="text-blue-600 bg-blue-600"
+                        icon={
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        }
+                    />
+                </div>
+                <div className="bg-bg-card rounded-xl shadow-sm border border-gray-100 p-5">
+                    <StatWidget
+                        title="التبرعات (تجريبي)"
+                        value={15400}
+                        subtext="إجمالي التبرعات التقديرية"
+                        color="text-green-600 bg-green-600"
+                        icon={
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                        }
+                    />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AiSummaryWidget />
+                <div className="bg-bg-card rounded-xl shadow-sm border border-gray-100 p-5">
+                    <h3 className="font-bold text-gray-800 mb-2">آخر الأنشطة</h3>
+                    <ActivityList />
+                </div>
+            </div>
+        </section>
+    );
+};
 
 const WidgetCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode; }> = ({ title, icon, children }) => (
     <div className="bg-bg-card rounded-lg shadow-md p-5 h-full">
@@ -809,6 +1011,11 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
           </section>
+
+          <AdvancedOverviewSection
+            orphansCount={orphansData.length}
+            sponsorsCount={sponsorsData.length}
+          />
 
           <section>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
