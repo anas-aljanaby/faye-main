@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { Orphan } from '../types';
 import EntityCard, { EntityCardField } from './EntityCard';
+import { DataTable } from './DataTable';
+import { ColumnDef } from '@tanstack/react-table';
+import Avatar from './Avatar';
 
 const AddOrphanModal: React.FC<{
     isOpen: boolean;
@@ -163,6 +166,99 @@ const OrphansList: React.FC = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
 
+    // Column definitions for DataTable (list view)
+    const tableColumns = useMemo<ColumnDef<Orphan>[]>(() => [
+        {
+            id: 'select',
+            header: ({ table }) => (
+                <div className="px-1">
+                    <input
+                        type="checkbox"
+                        checked={table.getIsAllPageRowsSelected()}
+                        onChange={table.getToggleAllPageRowsSelectedHandler()}
+                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                    />
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="px-1">
+                    <input
+                        type="checkbox"
+                        checked={row.getIsSelected()}
+                        disabled={!row.getCanSelect()}
+                        onChange={row.getToggleSelectedHandler()}
+                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            ),
+            enableSorting: false,
+            enableHiding: false,
+            size: 40,
+        },
+        {
+            accessorKey: 'name',
+            header: 'اليتيم',
+            cell: ({ row }) => (
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
+                        <Avatar src={row.original.photoUrl} name={row.original.name} size="md" className="!w-full !h-full !text-sm" />
+                    </div>
+                    <div>
+                        <div className="font-bold text-gray-900">{row.original.name}</div>
+                        <div className="text-[10px] text-gray-500 uppercase tracking-wider">{row.original.age} سنوات</div>
+                    </div>
+                </div>
+            ),
+            size: 200,
+        },
+        {
+            accessorKey: 'country',
+            header: 'الموقع',
+            cell: ({ row }) => (
+                <div className="flex items-center gap-1.5 text-gray-600">
+                    <svg className="w-4 h-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span>{row.original.country}، {row.original.governorate}</span>
+                </div>
+            ),
+        },
+        {
+            accessorKey: 'grade',
+            header: 'المرحلة الدراسية',
+            cell: ({ getValue }) => <span className="text-gray-700">{getValue() as string}</span>,
+        },
+        {
+            accessorKey: 'performance',
+            header: 'الأداء',
+            cell: ({ row }) => {
+                const p = row.original.performance;
+                const color = p === 'ممتاز'
+                    ? 'bg-green-100 text-green-700 border-green-200'
+                    : p === 'جيد جداً'
+                    ? 'bg-blue-100 text-blue-700 border-blue-200'
+                    : 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                return <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${color}`}>{p}</span>;
+            },
+        },
+        {
+            accessorKey: 'attendance',
+            header: 'الحضور',
+            cell: ({ getValue }) => <span className="text-gray-600">{getValue() as string}</span>,
+        },
+    ], []);
+
+    const renderBulkActions = (selectedRows: Orphan[]) => {
+        return (
+            <button
+                onClick={() => setIsMessageModalOpen(true)}
+                className="text-xs font-semibold bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 hover:text-primary transition-colors flex items-center gap-2 shadow-sm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                مراسلة المحدد
+            </button>
+        );
+    };
+
 
      useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -303,42 +399,46 @@ const OrphansList: React.FC = () => {
     return (
         <>
         <div className="space-y-6 pb-24">
-            <header className="space-y-3">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+            <header className="space-y-4">
+                {/* Row 1: Title + subtitle on one side, Export + Add buttons on the other (left-most in RTL) */}
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-800">سجل الأيتام المركزي</h1>
-                        <p className="text-sm text-text-secondary">
+                        <p className="text-sm text-text-secondary mt-0.5">
                             عرض وإدارة بيانات الأيتام بتنسيق متقدم
                         </p>
                     </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setIsAddModalOpen(true)}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                            إضافة يتيم
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleExportExcel}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            تصدير
+                        </button>
+                    </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap">
-                    <button
-                        type="button"
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                        إضافة يتيم
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleExportExcel}
-                        className="hidden sm:inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                        تصدير
-                    </button>
-                    <div className="relative flex-grow min-w-[200px]">
+                {/* Row 2: Search bar in white container */}
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="relative w-full sm:w-72">
                         <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         </div>
                         <input
                             type="text"
                             placeholder="ابحث باسم اليتيم أو الموقع..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white pr-10 pl-4 py-2.5 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition"
+                            className="w-full pr-10 pl-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white outline-none transition-colors"
                             ref={searchInputRef}
                         />
                     </div>
@@ -346,151 +446,124 @@ const OrphansList: React.FC = () => {
             </header>
             
             <div>
-                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3 mb-3">
-                    <div className="flex items-center gap-4 flex-wrap">
-                        <div className="relative">
-                           <button 
-                                onClick={() => setIsPopoverOpen(prev => !prev)}
-                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary"
-                                aria-label="الفرز والتصفية"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                            </button>
-                            {isPopoverOpen && (
-                                <FilterSortPopover 
-                                    onClose={() => setIsPopoverOpen(false)}
-                                    sortBy={sortBy}
-                                    setSortBy={setSortBy}
-                                    performanceFilter={performanceFilter}
-                                    setPerformanceFilter={setPerformanceFilter}
-                                    onReset={handleResetFilters}
-                                />
-                            )}
-                        </div>
-                        <div className="h-6 border-l border-gray-200"></div>
-                        {/* View Toggle */}
-                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
-                                aria-label="عرض شبكي"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
-                                aria-label="عرض قائمة"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
-                            </button>
-                        </div>
-                        <div className="h-6 border-l border-gray-200"></div>
-                        <div className="flex items-center gap-3">
-                            <input 
-                                type="checkbox" 
-                                id="selectAllCheckbox"
-                                checked={filteredOrphans.length > 0 && selectedIds.size === filteredOrphans.length}
-                                onChange={handleSelectAll}
-                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                                disabled={filteredOrphans.length === 0}
-                                aria-label="تحديد الكل"
+                {/* One row: view selector, sort button, select all, total count */}
+                <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
+                            aria-label="عرض قائمة"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
+                            aria-label="عرض شبكي"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                        </button>
+                    </div>
+                    <div className="relative">
+                        <button 
+                            onClick={() => setIsPopoverOpen(prev => !prev)}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary"
+                            aria-label="الفرز والتصفية"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                        </button>
+                        {isPopoverOpen && (
+                            <FilterSortPopover 
+                                onClose={() => setIsPopoverOpen(false)}
+                                sortBy={sortBy}
+                                setSortBy={setSortBy}
+                                performanceFilter={performanceFilter}
+                                setPerformanceFilter={setPerformanceFilter}
+                                onReset={handleResetFilters}
                             />
-                            <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
-                                تحديد الكل
-                            </label>
-                        </div>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <input 
+                            type="checkbox" 
+                            id="selectAllCheckbox"
+                            checked={filteredOrphans.length > 0 && selectedIds.size === filteredOrphans.length}
+                            onChange={handleSelectAll}
+                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                            disabled={filteredOrphans.length === 0}
+                            aria-label="تحديد الكل"
+                        />
+                        <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
+                            تحديد الكل
+                        </label>
                     </div>
                     <span className="text-sm text-text-secondary">
-                        تم العثور على {filteredOrphans.length} يتيم
+                        تم العثور على {viewMode === 'grid' ? filteredOrphans.length : orphanList.length} يتيم
                     </span>
                 </div>
-                {viewMode === 'grid' ? (
-                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {paginatedOrphans.map(orphan => {
-                            const isSelected = selectedIds.has(orphan.id);
-                            const cardFields: EntityCardField[] = [
-                                { label: 'المرحلة:', value: orphan.grade },
-                                { label: 'الأداء:', value: orphan.performance, type: 'pill' },
-                            ];
-                            return (
-                                <EntityCard
-                                    key={orphan.id}
-                                    variant="card"
-                                    title={orphan.name}
-                                    subtitle={`${orphan.age} سنوات • ${orphan.gender}`}
-                                    imageUrl={orphan.photoUrl}
-                                    imageAlt={orphan.name}
-                                    fields={cardFields}
-                                    location={`${orphan.country}، ${orphan.governorate}`}
-                                    actionLabel="عرض الملف الكامل"
-                                    onClick={() => navigate(`/orphan/${orphan.id}`)}
-                                    selected={isSelected}
-                                    onSelect={() => handleSelect(orphan.id)}
-                                    showCheckbox={true}
-                                />
-                            );
-                        })}
-                    </section>
-                ) : (
-                    <section className="space-y-2">
-                        <div className="grid grid-cols-[auto_200px_1fr_1fr_auto_1fr] gap-4 items-center px-4 py-2 text-sm font-bold text-gray-600 border-b border-gray-100">
-                            <div />
-                            <div>اليتيم</div>
-                            <div>الموقع</div>
-                            <div>المرحلة الدراسية</div>
-                            <div>الأداء</div>
-                            <div>الحضور</div>
-                        </div>
-                        {paginatedOrphans.map(orphan => {
-                            const isSelected = selectedIds.has(orphan.id);
-                            const rowFields: EntityCardField[] = [
-                                { value: `${orphan.country}، ${orphan.governorate}` },
-                                { value: orphan.grade },
-                                { value: orphan.performance, type: 'pill' },
-                                { value: orphan.attendance },
-                            ];
-                            return (
-                                <EntityCard
-                                    key={orphan.id}
-                                    variant="row"
-                                    title={orphan.name}
-                                    subtitle={`${orphan.age} سنوات`}
-                                    imageUrl={orphan.photoUrl}
-                                    imageAlt={orphan.name}
-                                    fields={rowFields}
-                                    actionLabel=""
-                                    onClick={() => navigate(`/orphan/${orphan.id}`)}
-                                    selected={isSelected}
-                                    onSelect={() => handleSelect(orphan.id)}
-                                    showCheckbox={true}
-                                />
-                            );
-                        })}
-                    </section>
-                )}
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-6">
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                        </button>
-                        <span className="text-sm text-gray-600">
-                            صفحة {currentPage} من {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                        </button>
-                    </div>
+                {viewMode === 'list' ? (
+                    /* Table view - uses DataTable with its own search, sort, pagination, and export */
+                    <DataTable
+                        columns={tableColumns}
+                        data={orphanList}
+                        onRowClick={(row) => navigate(`/orphan/${row.id}`)}
+                        renderBulkActions={renderBulkActions}
+                        storageKey="orphans_table"
+                        filterPlaceholder="ابحث باسم اليتيم..."
+                    />
+                ) : (
+                    <>
+                        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {paginatedOrphans.map(orphan => {
+                                const isSelected = selectedIds.has(orphan.id);
+                                const cardFields: EntityCardField[] = [
+                                    { label: 'المرحلة:', value: orphan.grade },
+                                    { label: 'الأداء:', value: orphan.performance, type: 'pill' },
+                                ];
+                                return (
+                                    <EntityCard
+                                        key={orphan.id}
+                                        variant="card"
+                                        title={orphan.name}
+                                        subtitle={`${orphan.age} سنوات • ${orphan.gender}`}
+                                        imageUrl={orphan.photoUrl}
+                                        imageAlt={orphan.name}
+                                        fields={cardFields}
+                                        location={`${orphan.country}، ${orphan.governorate}`}
+                                        actionLabel="عرض الملف الكامل"
+                                        onClick={() => navigate(`/orphan/${orphan.id}`)}
+                                        selected={isSelected}
+                                        onSelect={() => handleSelect(orphan.id)}
+                                        showCheckbox={true}
+                                    />
+                                );
+                            })}
+                        </section>
+
+                        {/* Pagination - grid only */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-2 mt-6">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                                <span className="text-sm text-gray-600">
+                                    صفحة {currentPage} من {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
