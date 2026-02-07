@@ -15,6 +15,9 @@ import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
 import { withUserContext } from '../lib/supabaseClient';
 import Avatar from './Avatar';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+import OptimizedImage from './OptimizedImage';
 
 const AddAchievementModal: React.FC<{
     isOpen: boolean;
@@ -572,6 +575,79 @@ const InteractiveCalendar: React.FC<{
 };
 
 
+// --- New Design Helper Components ---
+
+const Lightbox: React.FC<{ src: string; type: 'image' | 'video'; onClose: () => void }> = ({ src, type, onClose }) => (
+    <motion.div 
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+        onClick={onClose}
+    >
+        <button className="absolute top-4 right-4 text-white hover:text-gray-300 p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div className="max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
+            {type === 'image' ? (
+                <OptimizedImage src={src} alt="Full view" className="max-h-[90vh] max-w-full rounded-lg shadow-2xl" />
+            ) : (
+                <video src={src} controls autoPlay className="max-h-[90vh] max-w-full rounded-lg shadow-2xl" />
+            )}
+        </div>
+    </motion.div>
+);
+
+const TabButton: React.FC<{ active: boolean; label: string; onClick: () => void; icon?: React.ReactNode }> = ({ active, label, onClick, icon }) => (
+    <button
+        onClick={onClick}
+        className={`relative px-6 py-3 text-sm font-bold transition-colors duration-200 flex items-center gap-2 whitespace-nowrap
+        ${active ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+    >
+        {icon}
+        {label}
+        {active && (
+            <motion.div
+                layoutId="activeTab"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+            />
+        )}
+    </button>
+);
+
+const EditableField: React.FC<{ 
+    label: string; 
+    value: string | number; 
+    isEditing: boolean; 
+    onChange: (val: string) => void;
+    type?: 'text' | 'number' | 'date' | 'select';
+    options?: string[];
+}> = ({ label, value, isEditing, onChange, type = 'text', options }) => {
+    return (
+        <div className="mb-1">
+            <span className="text-xs text-gray-500 block mb-0.5">{label}</span>
+            {isEditing ? (
+                type === 'select' && options ? (
+                    <select 
+                        value={value} 
+                        onChange={(e) => onChange(e.target.value)}
+                        className="w-full p-1.5 border rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary"
+                    >
+                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                    </select>
+                ) : (
+                    <input 
+                        type={type} 
+                        value={value} 
+                        onChange={(e) => onChange(e.target.value)}
+                        className="w-full p-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-primary"
+                    />
+                )
+            ) : (
+                <p className="font-semibold text-gray-800 text-sm min-h-[1.25rem]">{value || '—'}</p>
+            )}
+        </div>
+    );
+};
+
 const OrphanProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -599,6 +675,8 @@ const OrphanProfile: React.FC = () => {
     );
   }, [allOccasions, orphan]);
   
+  const [activeTab, setActiveTab] = useState<'overview' | 'education' | 'timeline' | 'gallery' | 'financial'>('overview');
+  const [lightboxItem, setLightboxItem] = useState<{ src: string; type: 'image' | 'video' } | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editFormData, setEditFormData] = useState({
@@ -1024,493 +1102,649 @@ const OrphanProfile: React.FC = () => {
     }
   };
 
-  const UserIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-  const BookIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>;
-  const HomeIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>;
-  const ShieldIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
-  const CalendarIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>;
   const DownloadIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
-  const TrophyIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M8 21h8"/><path d="M12 17.5c-1.5 0-3-1-3-3.5V4.5A2.5 2.5 0 0 1 11.5 2h1A2.5 2.5 0 0 1 15 4.5V14c0 2.5-1.5 3.5-3 3.5Z"/></svg>;
-  const GiftIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7Z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z"/></svg>;
-  const SparklesIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>;
-  const HeartIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
-  const FileTextIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>;
-  const ClipboardCheckIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="m9 15 2 2 4-4"/></svg>;
 
+  // Mock Academic Data for Chart
+  const academicData = [
+    { term: 'الفصل 1', math: 85, science: 78, arabic: 90, islamic: 95 },
+    { term: 'الفصل 2', math: 88, science: 82, arabic: 92, islamic: 94 },
+    { term: 'الفصل 3', math: 92, science: 85, arabic: 95, islamic: 98 },
+    { term: 'الحالي', math: orphan.performance === 'ممتاز' ? 95 : 80, science: 88, arabic: 96, islamic: 99 },
+  ];
 
   return (
     <>
-    <div ref={profileRef} className="bg-transparent p-4 sm:p-0" style={{paddingBottom: '100px'}}>
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* تصميم ترويسة مستوحى من النسخة الجديدة */}
-      <div className="relative h-48 bg-gradient-to-r from-primary to-primary-hover rounded-2xl shadow-lg mb-16 overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,_white,_transparent_60%)]" />
-        <div className="absolute inset-0 flex items-center justify-between px-6 pt-4">
-          <div className="hidden sm:flex gap-2 ms-auto">
-            {hasEditPermission && (
-              <>
-                {isEditMode ? (
-                  <>
-                    <button onClick={handleCancelEdit} className="bg-white/10 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/20 transition-colors">
-                      إلغاء
-                    </button>
-                    <button
-                      onClick={handleSaveEdit}
-                      disabled={isSaving}
-                      className="bg-white text-primary font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors disabled:bg-white/70 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                      {isSaving ? 'جاري الحفظ...' : 'حفظ'}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={handleEdit}
-                    className="bg-white/15 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/25 transition-colors flex items-center gap-2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                    تعديل
-                  </button>
-                )}
-              </>
-            )}
-            {isSponsorOfOrphan && (
-              <button 
-                onClick={() => setIsNoteModalOpen(true)} 
-                className="bg-white/15 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/25 transition-colors flex items-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <path d="M14 2v6h6"/>
-                  <path d="M16 13H8"/>
-                  <path d="M16 17H8"/>
-                  <path d="M10 9H8"/>
-                </svg>
-                ملاحظة
-              </button>
-            )}
-            <button
-              id="export-button-desktop"
-              onClick={handleExportPDF}
-              className="bg-white text-primary font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2"
+    {/* Lightbox Overlay */}
+    <AnimatePresence>
+        {lightboxItem && (
+            <Lightbox 
+                src={lightboxItem.src} 
+                type={lightboxItem.type} 
+                onClose={() => setLightboxItem(null)} 
+            />
+        )}
+    </AnimatePresence>
+
+    {/* AI Summary Report Modal */}
+    <AnimatePresence>
+        {isSummaryModalOpen && (
+            <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+                onClick={() => setIsSummaryModalOpen(false)}
             >
-              {DownloadIcon}
-              تصدير PDF
-            </button>
-          </div>
-        </div>
-
-        {/* الصورة الدائرية والاسم */}
-        <div className="absolute -bottom-14 right-6 sm:right-12 flex items-center gap-6 w-full">
-          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-md bg-white overflow-hidden flex-shrink-0">
-            {orphan.uuid ? (
-              <AvatarUpload
-                currentAvatarUrl={orphan.photoUrl}
-                userId={orphan.uuid}
-                type="orphan"
-                onUploadComplete={() => window.location.reload()}
-                size="lg"
-              />
-            ) : (
-              <Avatar
-                src={orphan.photoUrl}
-                name={orphan.name}
-                size="xl"
-                className="!w-full !h-full !text-4xl"
-              />
-            )}
-          </div>
-          <div className="-translate-y-10 sm:-translate-y-12 text-white drop-shadow-md">
-            {isEditMode ? (
-              <input
-                type="text"
-                value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                className="text-2xl sm:text-3xl font-bold text-gray-900 bg-white/90 border-2 border-primary rounded-lg px-4 py-2 w-full max-w-xs"
-              />
-            ) : (
-              <h1 className="text-2xl sm:text-3xl font-bold">{orphan.name}</h1>
-            )}
-            <p className="text-sm sm:text-base opacity-90 font-medium">
-              {orphan.age} سنوات • {orphan.grade} • {orphan.governorate}, {orphan.country}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <InfoCard title="البيانات الشخصية" icon={UserIcon}>
-            {isEditMode ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">تاريخ الميلاد:</label>
-                  <input type="date" value={editFormData.dateOfBirth} onChange={(e) => setEditFormData({ ...editFormData, dateOfBirth: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">الجنس:</label>
-                  <select value={editFormData.gender} onChange={(e) => setEditFormData({ ...editFormData, gender: e.target.value as 'ذكر' | 'أنثى' })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
-                    <option value="ذكر">ذكر</option>
-                    <option value="أنثى">أنثى</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">الحالة الصحية:</label>
-                  <input type="text" value={editFormData.healthStatus} onChange={(e) => setEditFormData({ ...editFormData, healthStatus: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">القائم بالرعاية:</label>
-                  <input type="text" value={editFormData.guardian} onChange={(e) => setEditFormData({ ...editFormData, guardian: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-              </div>
-            ) : (
-              <>
-                <p><strong>تاريخ الميلاد:</strong> {orphan.dateOfBirth.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                <p><strong>الجنس:</strong> {orphan.gender}</p>
-                <p><strong>الحالة الصحية:</strong> {orphan.healthStatus}</p>
-                <p><strong>القائم بالرعاية:</strong> {orphan.guardian}</p>
-              </>
-            )}
-        </InfoCard>
-        <InfoCard title="البيانات الدراسية" icon={BookIcon}>
-            {isEditMode ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">المرحلة:</label>
-                  <input type="text" value={editFormData.grade} onChange={(e) => setEditFormData({ ...editFormData, grade: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">الانتظام:</label>
-                  <input type="text" value={editFormData.attendance} onChange={(e) => setEditFormData({ ...editFormData, attendance: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">المستوى:</label>
-                  <input type="text" value={editFormData.performance} onChange={(e) => setEditFormData({ ...editFormData, performance: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-              </div>
-            ) : (
-              <>
-                <p><strong>المرحلة:</strong> {orphan.grade}</p>
-                <p><strong>الانتظام:</strong> {orphan.attendance}</p>
-                <p><strong>المستوى:</strong> <span className="font-bold text-primary">{orphan.performance}</span></p>
-              </>
-            )}
-        </InfoCard>
-        <InfoCard title="الحالة الاجتماعية والسكن" icon={HomeIcon}>
-            {isEditMode ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">العائلة:</label>
-                  <input type="text" value={editFormData.familyStatus} onChange={(e) => setEditFormData({ ...editFormData, familyStatus: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">السكن:</label>
-                  <input type="text" value={editFormData.housingStatus} onChange={(e) => setEditFormData({ ...editFormData, housingStatus: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">البلد:</label>
-                  <input type="text" value={editFormData.country} onChange={(e) => setEditFormData({ ...editFormData, country: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">المحافظة:</label>
-                  <input type="text" value={editFormData.governorate} onChange={(e) => setEditFormData({ ...editFormData, governorate: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-              </div>
-            ) : (
-              <>
-                <p><strong>العائلة:</strong> {orphan.familyStatus}</p>
-                <p><strong>السكن:</strong> {orphan.housingStatus}</p>
-              </>
-            )}
-        </InfoCard>
-        <InfoCard title="الكفالة والمتابعة" icon={ShieldIcon}>
-            {isEditMode ? (
-              <div className="space-y-3">
-                {sponsor ? (
-                  <p><strong>الكافل:</strong>{' '}
-                    <Link to={`/sponsor/${sponsor.id}`} className="text-primary hover:underline">{sponsor.name}</Link>
-                  </p>
-                ) : (
-                  <p><strong>الكافل:</strong> غير محدد</p>
-                )}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">نوع الكفالة:</label>
-                  <input type="text" value={editFormData.sponsorshipType} onChange={(e) => setEditFormData({ ...editFormData, sponsorshipType: e.target.value })} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" />
-                </div>
-              </div>
-            ) : (
-              <>
-                {sponsor ? (
-                  <p><strong>الكافل:</strong>{' '}
-                    <Link to={`/sponsor/${sponsor.id}`} className="text-primary hover:underline">{sponsor.name}</Link>
-                  </p>
-                ) : (
-                  <p><strong>الكافل:</strong> غير محدد</p>
-                )}
-                <p><strong>نوع الكفالة:</strong> {orphan.sponsorshipType}</p>
-              </>
-            )}
-        </InfoCard>
-      </div>
-
-       <InfoCard title="البيانات الاجتماعية والشخصية" icon={HeartIcon} className="md:col-span-2">
-            <div className="space-y-4">
-                <div>
-                    <h4 className="font-bold text-gray-800 mb-2">أفراد الأسرة</h4>
-                    <div className="space-y-1">
-                        {orphan.familyMembers.length > 0 ? orphan.familyMembers.map((member, index) => (
-                            <p key={index}>- {member.relationship} (العمر: {member.age})</p>
-                        )) : <p>لا توجد بيانات.</p>}
-                    </div>
-                </div>
-                <div className="border-t pt-4">
-                    <h4 className="font-bold text-gray-800 mb-2">الهوايات والأنشطة</h4>
-                     {orphan.hobbies.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                           {orphan.hobbies.map((hobby, index) => (
-                                <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">{hobby}</span>
-                            ))}
+                <div className="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-xl font-bold mb-4">التقرير الموجز لـ {orphan.name}</h3>
+                    {isSummaryLoading ? (
+                        <div className="space-y-3 animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-full"></div>
+                            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
                         </div>
-                    ) : <p>لا توجد بيانات.</p>}
+                    ) : summaryError ? (
+                        <div className="text-red-600 bg-red-100 p-3 rounded">{summaryError}</div>
+                    ) : (
+                        <div className="prose prose-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{summaryReport}</div>
+                    )}
+                    <button onClick={() => setIsSummaryModalOpen(false)} className="mt-4 w-full py-2 bg-gray-100 rounded-lg font-bold hover:bg-gray-200">إغلاق</button>
                 </div>
-                <div className="border-t pt-4">
-                    <h4 className="font-bold text-gray-800 mb-2">الاحتياجات والأمنيات</h4>
-                    {orphan.needsAndWishes.length > 0 ? (
-                        <ul className="list-disc pr-5 space-y-1">
-                            {orphan.needsAndWishes.map((item, index) => (
-                                <li key={index}>{item}</li>
-                            ))}
-                        </ul>
-                    ) : <p>لا توجد بيانات.</p>}
+            </motion.div>
+        )}
+    </AnimatePresence>
+
+    {/* AI Needs Report Modal */}
+    <AnimatePresence>
+        {isNeedsModalOpen && (
+            <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+                onClick={() => setIsNeedsModalOpen(false)}
+            >
+                <div className="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-xl font-bold mb-4 border-b pb-3">تقرير تقييم الاحتياجات لـ {orphan.name}</h3>
+                    {isNeedsLoading ? (
+                        <div className="space-y-3 animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-full"></div>
+                            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                        </div>
+                    ) : needsError ? (
+                        <div className="text-red-600 bg-red-100 p-3 rounded">{needsError}</div>
+                    ) : (
+                        <div className="prose prose-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-sans">{needsReport}</div>
+                    )}
+                    <button onClick={() => setIsNeedsModalOpen(false)} className="mt-4 w-full py-2 bg-gray-100 rounded-lg font-bold hover:bg-gray-200">إغلاق</button>
+                </div>
+            </motion.div>
+        )}
+    </AnimatePresence>
+
+    <div ref={profileRef} className="bg-bg-page min-h-screen pb-20">
+        {/* Header / Cover */}
+        <div className="relative h-48 bg-gradient-to-r from-primary to-primary-hover rounded-b-[2.5rem] shadow-lg mb-16">
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,_white,_transparent_60%)]" />
+            
+            {/* Actions Toolbar */}
+            <div className="absolute top-4 left-4 flex gap-2 no-print">
+                {hasEditPermission && (
+                    <>
+                        {isEditMode ? (
+                            <>
+                                <button onClick={handleCancelEdit} className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition text-sm font-semibold">إلغاء</button>
+                                <button onClick={handleSaveEdit} disabled={isSaving} className="bg-white text-primary px-3 py-2 rounded-lg transition text-sm font-semibold disabled:opacity-70">
+                                    {isSaving ? 'جاري الحفظ...' : 'حفظ'}
+                                </button>
+                            </>
+                        ) : (
+                            <button onClick={handleEdit} className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition text-sm font-semibold">تعديل</button>
+                        )}
+                    </>
+                )}
+                {isSponsorOfOrphan && (
+                    <button onClick={() => setIsNoteModalOpen(true)} className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition text-sm font-semibold">ملاحظة</button>
+                )}
+                <button id="export-button-desktop" onClick={handleExportPDF} className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition" title="طباعة">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                </button>
+                <button onClick={handleGenerateSummaryReport} className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                    <span className="hidden sm:inline text-sm">تقرير ذكي</span>
+                </button>
+            </div>
+
+            {/* Avatar + Name */}
+            <div className="absolute -bottom-14 right-8 md:right-16 flex items-center gap-6 w-full">
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md bg-white overflow-hidden flex-shrink-0">
+                    {orphan.uuid ? (
+                        <AvatarUpload
+                            currentAvatarUrl={orphan.photoUrl}
+                            userId={orphan.uuid}
+                            type="orphan"
+                            onUploadComplete={() => window.location.reload()}
+                            size="lg"
+                        />
+                    ) : (
+                        <Avatar
+                            src={orphan.photoUrl}
+                            name={orphan.name}
+                            size="xl"
+                            className="!w-full !h-full !text-4xl"
+                        />
+                    )}
+                </motion.div>
+                <div className="text-white drop-shadow-md -translate-y-12 md:-translate-y-14">
+                    {isEditMode ? (
+                        <input
+                            type="text"
+                            value={editFormData.name}
+                            onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                            className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 bg-white/90 border-2 border-primary rounded-lg px-4 py-2 w-full max-w-xs"
+                        />
+                    ) : (
+                        <h1 className="text-3xl md:text-4xl font-bold">{orphan.name}</h1>
+                    )}
+                    <p className="opacity-90 text-sm md:text-base font-medium">{orphan.grade} • {orphan.age} سنوات</p>
                 </div>
             </div>
-        </InfoCard>
+        </div>
 
-        <InfoCard title="برامج فيء" icon={ClipboardCheckIcon} className="md:col-span-2">
-            <div className="space-y-4">
-                <div>
-                    <h4 className="font-bold text-gray-800 mb-2">البرنامج التربوي</h4>
-                    <div className="flex items-center gap-3">
-                        <ProgramStatusPill status={orphan.educationalProgram.status} />
-                        <p className="text-sm">{orphan.educationalProgram.details}</p>
-                    </div>
-                </div>
-                <div className="border-t pt-4">
-                    <h4 className="font-bold text-gray-800 mb-2">الدعم النفسي</h4>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                            <p className="font-semibold text-gray-700 text-sm mb-2">للطفل ({orphan.name})</p>
-                            <div className="flex items-center gap-3">
-                                <ProgramStatusPill status={orphan.psychologicalSupport.child.status} />
-                                <p className="text-sm">{orphan.psychologicalSupport.child.details}</p>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            {/* Tabs Navigation */}
+            <div className="flex overflow-x-auto border-b border-gray-200 mb-6 no-print" style={{ scrollbarWidth: 'none' }}>
+                <TabButton active={activeTab === 'overview'} label="نظرة عامة" onClick={() => setActiveTab('overview')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>} />
+                <TabButton active={activeTab === 'education'} label="التعليم" onClick={() => setActiveTab('education')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>} />
+                <TabButton active={activeTab === 'timeline'} label="الجدول الزمني" onClick={() => setActiveTab('timeline')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>} />
+                <TabButton active={activeTab === 'gallery'} label="المعرض" onClick={() => setActiveTab('gallery')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>} />
+                <TabButton active={activeTab === 'financial'} label="المالية" onClick={() => setActiveTab('financial')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
+            </div>
+
+            <div className="min-h-[400px]">
+                {/* ==================== TAB 1: OVERVIEW ==================== */}
+                {activeTab === 'overview' && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Personal Info Card */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="flex justify-between items-center mb-4 border-b pb-2">
+                                <h3 className="font-bold text-lg text-gray-800">البيانات الشخصية</h3>
+                                <span className={`px-2 py-1 rounded text-xs ${orphan.healthStatus.includes('جيدة') ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{orphan.healthStatus}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <EditableField label="تاريخ الميلاد" value={isEditMode ? editFormData.dateOfBirth : orphan.dateOfBirth.toLocaleDateString('ar-EG')} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, dateOfBirth: v })} type="date" />
+                                <EditableField label="الجنس" value={isEditMode ? editFormData.gender : orphan.gender} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, gender: v as 'ذكر' | 'أنثى' })} options={['ذكر', 'أنثى']} type="select" />
+                                <EditableField label="الدولة" value={isEditMode ? editFormData.country : orphan.country} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, country: v })} />
+                                <EditableField label="المحافظة" value={isEditMode ? editFormData.governorate : orphan.governorate} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, governorate: v })} />
+                                <div className="col-span-2">
+                                    <EditableField label="القائم بالرعاية" value={isEditMode ? editFormData.guardian : orphan.guardian} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, guardian: v })} />
+                                </div>
                             </div>
                         </div>
-                         <div className="bg-gray-50 p-3 rounded-lg">
-                            <p className="font-semibold text-gray-700 text-sm mb-2">للقائم بالرعاية ({orphan.guardian})</p>
-                             <div className="flex items-center gap-3">
-                                <ProgramStatusPill status={orphan.psychologicalSupport.guardian.status} />
-                                <p className="text-sm">{orphan.psychologicalSupport.guardian.details}</p>
+
+                        {/* Sponsorship Info */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">تفاصيل الكفالة</h3>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">الكافل</p>
+                                        {sponsor ? <Link to={`/sponsor/${sponsor.id}`} className="font-semibold text-primary hover:underline">{sponsor.name}</Link> : <span className="text-gray-400">غير محدد</span>}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500">نوع الكفالة</p>
+                                        {isEditMode ? (
+                                            <input type="text" value={editFormData.sponsorshipType} onChange={(e) => setEditFormData({ ...editFormData, sponsorshipType: e.target.value })} className="w-full p-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-primary" />
+                                        ) : (
+                                            <p className="font-semibold text-gray-800">{orphan.sponsorshipType}</p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </InfoCard>
 
-      <FinancialRecordCard orphanId={orphan.id} />
-      
-      <InfoCard title="تحليلات الذكاء الاصطناعي" icon={SparklesIcon} className="md:col-span-2">
-        <div className="grid sm:grid-cols-2 gap-4">
-            <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-bold text-gray-800">موجز سريع للحالة</h4>
-                <p className="text-sm my-2">احصل على تقرير فوري يلخص الوضع الأكاديمي والمالي لليتيم مع توصية سريعة.</p>
-                <button onClick={handleGenerateSummaryReport} className="text-sm font-semibold py-2 px-4 bg-primary-light text-primary rounded-lg hover:bg-primary hover:text-white transition-colors w-full">
-                    إنشاء موجز
-                </button>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-bold text-gray-800">تقرير تقييم الاحتياجات</h4>
-                <p className="text-sm my-2">تحليل شامل لبيانات اليتيم لتحديد نقاط القوة والجوانب التي تحتاج إلى دعم.</p>
-                <button onClick={handleGenerateNeedsReport} className="text-sm font-semibold py-2 px-4 bg-primary-light text-primary rounded-lg hover:bg-primary hover:text-white transition-colors w-full">
-                    إنشاء تقرير احتياجات
-                </button>
-            </div>
-        </div>
-      </InfoCard>
+                        {/* Social & Housing */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">الحالة الاجتماعية والسكن</h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                <EditableField label="العائلة" value={isEditMode ? editFormData.familyStatus : orphan.familyStatus} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, familyStatus: v })} />
+                                <EditableField label="السكن" value={isEditMode ? editFormData.housingStatus : orphan.housingStatus} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, housingStatus: v })} />
+                            </div>
+                            {orphan.familyMembers.length > 0 && (
+                                <div className="mt-4 pt-3 border-t">
+                                    <h4 className="text-xs text-gray-500 mb-2">أفراد الأسرة</h4>
+                                    <div className="space-y-1">
+                                        {orphan.familyMembers.map((member, index) => (
+                                            <p key={index} className="text-sm text-gray-700">- {member.relationship} (العمر: {member.age})</p>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
-        <InfoCard title="الرزنامة التفاعلية" icon={CalendarIcon} className="md:col-span-2">
-          <InteractiveCalendar orphan={orphan} occasions={orphanOccasions} onDayClick={handleDayClickForEvent} />
-        </InfoCard>
+                        {/* Interests & Needs */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="space-y-4">
+                                <div>
+                                    <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <svg className="text-yellow-500" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                        الهوايات والاهتمامات
+                                    </h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        {orphan.hobbies.length > 0 ? orphan.hobbies.map((hobby, i) => (
+                                            <span key={i} className="px-3 py-1 bg-yellow-50 text-yellow-800 rounded-full text-sm font-medium border border-yellow-100">{hobby}</span>
+                                        )) : <span className="text-sm text-gray-400">لا توجد بيانات</span>}
+                                        {isEditMode && <button className="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm hover:bg-gray-200">+</button>}
+                                    </div>
+                                </div>
+                                <div className="border-t pt-3">
+                                    <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                        <svg className="text-red-500" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                                        الاحتياجات والأمنيات
+                                    </h4>
+                                    <ul className="space-y-2">
+                                        {orphan.needsAndWishes.length > 0 ? orphan.needsAndWishes.map((need, i) => (
+                                            <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                                                <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                                                {need}
+                                            </li>
+                                        )) : <li className="text-sm text-gray-400">لا توجد بيانات</li>}
+                                        {isEditMode && <li className="text-sm text-gray-400 italic cursor-pointer hover:text-primary">+ أضف احتياج</li>}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
 
-      {/* Sponsor Note Display (visible to sponsor only) */}
-      {userProfile?.role === 'sponsor' && displayNote && (
-        <InfoCard
-          title="ملاحظة الكافل"
-          icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>}
-          className="md:col-span-2 bg-blue-50 border-2 border-blue-200"
-        >
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-gray-600">من: <span className="font-semibold text-gray-800">{displayNote.sponsorName}</span></p>
-              <p className="text-xs text-gray-500">آخر تحديث: {displayNote.updatedAt.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-blue-200">
-              <p className="text-gray-800 whitespace-pre-wrap">{displayNote.note}</p>
-            </div>
-          </div>
-        </InfoCard>
-      )}
+                        {/* Faye Programs - Full Width */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">برامج فيء</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <h4 className="font-bold text-gray-700 text-sm mb-2">البرنامج التربوي</h4>
+                                    <div className="flex items-center gap-3">
+                                        <ProgramStatusPill status={orphan.educationalProgram.status} />
+                                        <p className="text-sm text-gray-600">{orphan.educationalProgram.details}</p>
+                                    </div>
+                                </div>
+                                <div className="border-t pt-4">
+                                    <h4 className="font-bold text-gray-700 text-sm mb-2">الدعم النفسي</h4>
+                                    <div className="grid sm:grid-cols-2 gap-4">
+                                        <div className="bg-gray-50 p-3 rounded-lg">
+                                            <p className="font-semibold text-gray-700 text-xs mb-2">للطفل ({orphan.name})</p>
+                                            <div className="flex items-center gap-3">
+                                                <ProgramStatusPill status={orphan.psychologicalSupport.child.status} />
+                                                <p className="text-sm">{orphan.psychologicalSupport.child.details}</p>
+                                            </div>
+                                        </div>
+                                        <div className="bg-gray-50 p-3 rounded-lg">
+                                            <p className="font-semibold text-gray-700 text-xs mb-2">للقائم بالرعاية ({orphan.guardian})</p>
+                                            <div className="flex items-center gap-3">
+                                                <ProgramStatusPill status={orphan.psychologicalSupport.guardian.status} />
+                                                <p className="text-sm">{orphan.psychologicalSupport.guardian.details}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-      <InfoCard
-        title="سجل التحديثات"
-        icon={FileTextIcon}
-        className="md:col-span-2"
-        headerActions={
-            <button onClick={() => setIsAddLogModalOpen(true)} className="text-sm font-semibold py-1 px-3 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                إضافة
-            </button>
-        }
-    >
-        <div className="space-y-3 max-h-72 overflow-y-auto pr-2 -mr-2">
-            {orphan.updateLogs.length > 0 ? orphan.updateLogs.map(log => (
-                <div key={log.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200/80">
-                    <div className="flex justify-between items-center mb-1">
-                        <p className="font-bold text-gray-800 text-sm">{log.author}</p>
-                        <p className="text-xs text-gray-500">{log.date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                    </div>
-                    <p className="text-sm">{log.note}</p>
-                </div>
-            )) : <p className="text-center py-4">لا توجد تحديثات مسجلة.</p>}
-        </div>
-    </InfoCard>
-
-      <div className="grid md:grid-cols-3 gap-6">
-        <InfoCard 
-            title="الإنجازات" 
-            icon={TrophyIcon} 
-            className="md:col-span-2"
-            headerActions={
-                <button onClick={() => setIsAddAchievementModalOpen(true)} className="text-sm font-semibold py-1 px-3 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    إضافة
-                </button>
-            }
-        >
-          {orphan.achievements.length > 0 ? orphan.achievements.map(ach => (
-            <div key={ach.id} className="p-3 bg-gray-50 rounded-lg">
-                {ach.mediaUrl && (
-                    <div className="mb-3 rounded-lg overflow-hidden">
-                        {ach.mediaType === 'image' ? (
-                            <img src={ach.mediaUrl} alt={ach.title} className="w-full h-auto object-cover" />
-                        ) : ach.mediaType === 'video' ? (
-                            <video src={ach.mediaUrl} controls muted className="w-full h-auto bg-black" />
-                        ) : null}
-                    </div>
+                        {/* Sponsor Note (visible to sponsor only) */}
+                        {userProfile?.role === 'sponsor' && displayNote && (
+                            <div className="bg-blue-50 p-6 rounded-xl shadow-sm border-2 border-blue-200 md:col-span-2">
+                                <h3 className="font-bold text-lg text-gray-800 mb-3">ملاحظة الكافل</h3>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-sm text-gray-600">من: <span className="font-semibold text-gray-800">{displayNote.sponsorName}</span></p>
+                                        <p className="text-xs text-gray-500">آخر تحديث: {displayNote.updatedAt.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-lg border border-blue-200">
+                                        <p className="text-gray-800 whitespace-pre-wrap">{displayNote.note}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </motion.div>
                 )}
-                <div>
-                    <p className="font-bold text-gray-800">{ach.title} <span className="text-sm font-normal text-gray-500">- {ach.date.toLocaleDateString('ar-EG')}</span></p>
-                    <p className="text-sm">{ach.description}</p>
-                </div>
+
+                {/* ==================== TAB 2: EDUCATION ==================== */}
+                {activeTab === 'education' && (
+                    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                        <div className="grid md:grid-cols-3 gap-6">
+                            {/* Academic Performance Chart */}
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                                <h3 className="font-bold text-lg text-gray-800 mb-6">تطور الأداء الدراسي</h3>
+                                <div className="h-[300px] w-full" dir="ltr">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={academicData}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                            <XAxis dataKey="term" />
+                                            <YAxis domain={[0, 100]} />
+                                            <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                                            <Legend />
+                                            <Line type="monotone" dataKey="math" name="الرياضيات" stroke="#8884d8" strokeWidth={2} dot={{ r: 4 }} />
+                                            <Line type="monotone" dataKey="science" name="العلوم" stroke="#82ca9d" strokeWidth={2} dot={{ r: 4 }} />
+                                            <Line type="monotone" dataKey="arabic" name="اللغة العربية" stroke="#ffc658" strokeWidth={2} dot={{ r: 4 }} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Academic Summary */}
+                            <div className="space-y-6">
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                    <h3 className="font-bold text-gray-800 mb-4">الملخص الأكاديمي</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <EditableField label="المرحلة" value={isEditMode ? editFormData.grade : orphan.grade} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, grade: v })} />
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="text-gray-600">الانتظام</span>
+                                                <span className="font-bold text-green-600">{orphan.attendance}</span>
+                                            </div>
+                                            {isEditMode && (
+                                                <input type="text" value={editFormData.attendance} onChange={(e) => setEditFormData({ ...editFormData, attendance: e.target.value })} className="w-full p-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-primary" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="flex justify-between text-sm mb-1">
+                                                <span className="text-gray-600">المستوى</span>
+                                                <span className="font-bold text-primary">{orphan.performance}</span>
+                                            </div>
+                                            {isEditMode && (
+                                                <input type="text" value={editFormData.performance} onChange={(e) => setEditFormData({ ...editFormData, performance: e.target.value })} className="w-full p-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-primary" />
+                                            )}
+                                        </div>
+                                        <div className="pt-2">
+                                            <p className="text-sm text-gray-500 mb-1">ملاحظات المعلم:</p>
+                                            <p className="text-sm italic bg-gray-50 p-2 rounded text-gray-700">"{orphan.name} طالب مجتهد جداً ويشارك بفاعلية في الأنشطة الصفية."</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                    <h3 className="font-bold text-gray-800 mb-3">البرنامج التعليمي</h3>
+                                    <div className="flex items-start gap-3">
+                                        <div className="mt-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="M22 10v6M2 10v6"/><path d="M2 10l10-5 10 5-10 5z"/><path d="M12 12v9"/></svg>
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-sm">{orphan.educationalProgram.status}</p>
+                                            <p className="text-xs text-gray-500 mt-1">{orphan.educationalProgram.details}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Psychological Support */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-lg text-gray-800 mb-4">الدعم النفسي</h3>
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="font-semibold text-gray-700 text-sm mb-2">للطفل ({orphan.name})</p>
+                                    <div className="flex items-center gap-3">
+                                        <ProgramStatusPill status={orphan.psychologicalSupport.child.status} />
+                                        <p className="text-sm">{orphan.psychologicalSupport.child.details}</p>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <p className="font-semibold text-gray-700 text-sm mb-2">للقائم بالرعاية ({orphan.guardian})</p>
+                                    <div className="flex items-center gap-3">
+                                        <ProgramStatusPill status={orphan.psychologicalSupport.guardian.status} />
+                                        <p className="text-sm">{orphan.psychologicalSupport.guardian.details}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* ==================== TAB 3: TIMELINE ==================== */}
+                {activeTab === 'timeline' && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+                        {/* Activity Timeline */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-bold text-lg text-gray-800">سجل النشاطات والأحداث</h3>
+                                <button onClick={() => setIsAddLogModalOpen(true)} className="text-sm font-semibold py-1.5 px-4 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                    إضافة تحديث
+                                </button>
+                            </div>
+                            <div className="relative border-r-2 border-gray-200 mr-3 space-y-8">
+                                {[
+                                    ...orphan.updateLogs.map(l => ({ ...l, type: 'log' as const })),
+                                    ...orphan.achievements.map(a => ({ ...a, type: 'achievement' as const })),
+                                    ...orphanOccasions.map(o => ({ ...o, type: 'occasion' as const })),
+                                ]
+                                    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                                    .map((item: any, idx) => (
+                                        <div key={idx} className="relative pr-8">
+                                            <div className={`absolute -right-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm
+                                                ${item.type === 'achievement' ? 'bg-green-500' : item.type === 'occasion' ? 'bg-purple-500' : 'bg-blue-500'}
+                                            `}></div>
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                                                <span className="text-xs font-bold text-gray-400">{new Date(item.date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                {item.type === 'achievement' && <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">إنجاز</span>}
+                                                {item.type === 'occasion' && <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">مناسبة</span>}
+                                            </div>
+                                            <h4 className="font-bold text-gray-800">{item.title || item.note || 'تحديث'}</h4>
+                                            {item.description && <p className="text-sm text-gray-600 mt-1">{item.description}</p>}
+                                            {item.author && <p className="text-xs text-gray-500 mt-1">بواسطة: {item.author}</p>}
+                                        </div>
+                                    ))
+                                }
+                                {orphan.updateLogs.length === 0 && orphan.achievements.length === 0 && orphanOccasions.length === 0 && (
+                                    <p className="text-center text-gray-400 py-8">لا توجد أحداث مسجلة</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Interactive Calendar */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-lg text-gray-800 mb-4">الرزنامة التفاعلية</h3>
+                            <InteractiveCalendar orphan={orphan} occasions={orphanOccasions} onDayClick={handleDayClickForEvent} />
+                        </div>
+
+                        {/* Occasions & Gifts */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h3 className="font-bold text-gray-800 mb-3">مناسبات خاصة</h3>
+                                {orphanOccasions.length > 0 ? orphanOccasions.map(occ => (
+                                    <div key={occ.id} className="flex items-center gap-2 py-2 border-b last:border-0">
+                                        <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                                        <span className="font-semibold text-sm text-gray-800">{occ.title}</span>
+                                        <span className="text-xs text-gray-500 mr-auto">{occ.date.toLocaleDateString('ar-EG')}</span>
+                                    </div>
+                                )) : <p className="text-sm text-gray-400">لا توجد مناسبات.</p>}
+                            </div>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <h3 className="font-bold text-gray-800 mb-3">الهدايا</h3>
+                                {orphan.gifts.length > 0 ? orphan.gifts.map(gift => (
+                                    <div key={gift.id} className="flex items-center gap-2 py-2 border-b last:border-0">
+                                        <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                        <span className="font-semibold text-sm text-gray-800">{gift.item}</span>
+                                        <span className="text-xs text-gray-500 mr-auto">من {gift.from}</span>
+                                    </div>
+                                )) : <p className="text-sm text-gray-400">لا توجد هدايا مسجلة.</p>}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* ==================== TAB 4: GALLERY ==================== */}
+                {activeTab === 'gallery' && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-bold text-lg text-gray-800">معرض الصور والإنجازات</h3>
+                            <button onClick={() => setIsAddAchievementModalOpen(true)} className="text-sm font-semibold py-1.5 px-4 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                إضافة إنجاز
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {orphan.achievements.filter(a => a.mediaUrl).map((achievement, idx) => (
+                                <div 
+                                    key={idx} 
+                                    className="group relative aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                    onClick={() => setLightboxItem({ src: achievement.mediaUrl!, type: achievement.mediaType || 'image' })}
+                                >
+                                    {achievement.mediaType === 'video' ? (
+                                        <video src={achievement.mediaUrl} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <OptimizedImage src={achievement.mediaUrl!} alt={achievement.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                    )}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                        <p className="text-white text-sm font-medium truncate">{achievement.title}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {/* Empty State */}
+                        {orphan.achievements.filter(a => a.mediaUrl).length === 0 && (
+                            <div className="col-span-full py-12 text-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
+                                <svg className="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                <p>لا توجد صور في المعرض حالياً</p>
+                            </div>
+                        )}
+
+                        {/* Achievements List */}
+                        {orphan.achievements.length > 0 && (
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-6">
+                                <h3 className="font-bold text-gray-800 mb-4">قائمة الإنجازات</h3>
+                                <div className="space-y-3">
+                                    {orphan.achievements.map(ach => (
+                                        <div key={ach.id} className="p-3 bg-gray-50 rounded-lg flex items-start gap-3">
+                                            <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0"></div>
+                                            <div>
+                                                <p className="font-bold text-gray-800 text-sm">{ach.title} <span className="font-normal text-gray-500">- {ach.date.toLocaleDateString('ar-EG')}</span></p>
+                                                {ach.description && <p className="text-sm text-gray-600">{ach.description}</p>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+
+                {/* ==================== TAB 5: FINANCIAL ==================== */}
+                {activeTab === 'financial' && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+                        <div className="grid md:grid-cols-3 gap-6">
+                            {/* Payment Records Table */}
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 col-span-2">
+                                <h3 className="font-bold text-lg text-gray-800 mb-4">سجل الدفعات ({new Date().getFullYear()})</h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-right">
+                                        <thead className="bg-gray-50 text-gray-600">
+                                            <tr>
+                                                <th className="p-3 rounded-r-lg">التاريخ المستحق</th>
+                                                <th className="p-3">المبلغ</th>
+                                                <th className="p-3">الحالة</th>
+                                                <th className="p-3 rounded-l-lg">تاريخ الدفع</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {orphan.payments.map((payment, i) => (
+                                                <tr key={i} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                                                    <td className="p-3">{payment.dueDate.toLocaleDateString('ar-EG')}</td>
+                                                    <td className="p-3 font-bold">${payment.amount}</td>
+                                                    <td className="p-3">
+                                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                                            payment.status === PaymentStatus.Paid ? 'bg-green-100 text-green-700' :
+                                                            payment.status === PaymentStatus.Overdue ? 'bg-red-100 text-red-700' :
+                                                            'bg-yellow-100 text-yellow-700'
+                                                        }`}>
+                                                            {payment.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 text-gray-500">{payment.paidDate ? payment.paidDate.toLocaleDateString('ar-EG') : '-'}</td>
+                                                </tr>
+                                            ))}
+                                            {orphan.payments.length === 0 && (
+                                                <tr><td colSpan={4} className="p-6 text-center text-gray-400">لا توجد دفعات مسجلة</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Financial Summary Card */}
+                            <div className="bg-primary text-white p-6 rounded-xl shadow-lg flex flex-col justify-between relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
+                                <div>
+                                    <p className="text-white/80 text-sm mb-1">الرصيد المستحق</p>
+                                    <h3 className="text-4xl font-bold mb-6">
+                                        ${orphan.payments.filter(p => p.status !== PaymentStatus.Paid).reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+                                    </h3>
+                                    <p className="text-white/80 text-sm mb-1">إجمالي المدفوعات</p>
+                                    <h3 className="text-2xl font-bold">
+                                        ${orphan.payments.filter(p => p.status === PaymentStatus.Paid).reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
+                                    </h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Yearly Payment Summary */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-lg text-gray-800 mb-4">ملخص الدفعات الشهري</h3>
+                            <YearlyPaymentSummary payments={orphan.payments} />
+                        </div>
+
+                        {/* Financial Record from transactions */}
+                        <FinancialRecordCard orphanId={orphan.id} />
+
+                        {/* AI Analytics */}
+                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                                تحليلات الذكاء الاصطناعي
+                            </h3>
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <h4 className="font-bold text-gray-800">موجز سريع للحالة</h4>
+                                    <p className="text-sm my-2 text-gray-600">احصل على تقرير فوري يلخص الوضع الأكاديمي والمالي لليتيم مع توصية سريعة.</p>
+                                    <button onClick={handleGenerateSummaryReport} className="text-sm font-semibold py-2 px-4 bg-primary-light text-primary rounded-lg hover:bg-primary hover:text-white transition-colors w-full">
+                                        إنشاء موجز
+                                    </button>
+                                </div>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <h4 className="font-bold text-gray-800">تقرير تقييم الاحتياجات</h4>
+                                    <p className="text-sm my-2 text-gray-600">تحليل شامل لبيانات اليتيم لتحديد نقاط القوة والجوانب التي تحتاج إلى دعم.</p>
+                                    <button onClick={handleGenerateNeedsReport} className="text-sm font-semibold py-2 px-4 bg-primary-light text-primary rounded-lg hover:bg-primary hover:text-white transition-colors w-full">
+                                        إنشاء تقرير احتياجات
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
             </div>
-          )) : <p>لا توجد إنجازات مسجلة.</p>}
-        </InfoCard>
-        <div className="space-y-6">
-          <InfoCard title="مناسبات خاصة" icon={CalendarIcon}>
-            {orphanOccasions.length > 0 ? orphanOccasions.map(occ => (
-              <p key={occ.id}><strong>{occ.title}:</strong> {occ.date.toLocaleDateString('ar-EG')}</p>
-            )) : <p>لا توجد مناسبات.</p>}
-          </InfoCard>
-          <InfoCard title="الهدايا" icon={GiftIcon}>
-             {orphan.gifts.length > 0 ? orphan.gifts.map(gift => (
-              <p key={gift.id} className="text-sm"><strong>{gift.item}</strong> من {gift.from}</p>
-             )) : <p>لا توجد هدايا مسجلة.</p>}
-          </InfoCard>
         </div>
-      </div>
     </div>
-    </div>
-    
+
     {/* Mobile Action Bar */}
-    <div className={`mobile-action-bar sm:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-2 grid gap-1 text-center ${hasEditPermission && isEditMode ? 'grid-cols-6' : hasEditPermission ? 'grid-cols-5' : 'grid-cols-4'}`}>
-        <button onClick={() => navigate(-1)} className="flex flex-col items-center text-gray-600 hover:text-primary">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            <span className="text-xs">رجوع</span>
-        </button>
-        {!isEditMode && (
-          <>
-            {isSponsorOfOrphan && (
-              <button 
-                onClick={() => setIsNoteModalOpen(true)} 
-                className="flex flex-col items-center text-gray-600 hover:text-primary"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <path d="M14 2v6h6"/>
-                  <path d="M16 13H8"/>
-                  <path d="M16 17H8"/>
-                  <path d="M10 9H8"/>
-                </svg>
-                <span className="text-xs">ملاحظة</span>
-              </button>
-            )}
-            <button onClick={handleExportPDF} className="flex flex-col items-center text-gray-600 hover:text-primary">
-              {DownloadIcon}
-              <span className="text-xs">PDF</span>
+    <div className="mobile-action-bar sm:hidden fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-2 grid grid-cols-5 gap-1 text-center no-print">
+        {[
+            { key: 'overview' as const, label: 'عامة', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
+            { key: 'education' as const, label: 'التعليم', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> },
+            { key: 'timeline' as const, label: 'الأحداث', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
+            { key: 'gallery' as const, label: 'المعرض', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> },
+            { key: 'financial' as const, label: 'المالية', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+        ].map(tab => (
+            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`flex flex-col items-center py-1 rounded-lg transition-colors ${activeTab === tab.key ? 'text-primary bg-primary-light' : 'text-gray-500 hover:text-primary'}`}>
+                {tab.icon}
+                <span className="text-xs mt-0.5">{tab.label}</span>
             </button>
-            <button onClick={handleGenerateSummaryReport} className="flex flex-col items-center text-gray-600 hover:text-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h4"/><path d="M9 12h6"/><path d="M12 9v6"/><path d="M15 12h0"/></svg>
-              <span className="text-xs">موجز</span>
-            </button>
-            <button onClick={handleGenerateNeedsReport} className="flex flex-col items-center text-gray-600 hover:text-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15.09 16.05 19.5 20.5"/><path d="M6.12 6.12a9 9 0 0 0 11.76 11.76"/><path d="M17.88 17.88a9 9 0 0 0-11.76-11.76"/><path d="m3.5 7.5.01-.01"/><path d="m20.5 16.5.01-.01"/><path d="M12 2a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4v0a4 4 0 0 0-4-4Z"/><path d="M12 12a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4v0a4 4 0 0 0-4-4Z"/></svg>
-              <span className="text-xs">احتياجات</span>
-            </button>
-          </>
-        )}
-        {hasEditPermission && (
-          <>
-            <button onClick={isEditMode ? handleCancelEdit : handleEdit} className="flex flex-col items-center text-gray-600 hover:text-primary">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-              <span className="text-xs">{isEditMode ? 'إلغاء' : 'تعديل'}</span>
-            </button>
-            {isEditMode && (
-              <button onClick={handleSaveEdit} disabled={isSaving} className="flex flex-col items-center text-gray-600 hover:text-primary disabled:opacity-50">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-                <span className="text-xs">{isSaving ? 'جاري...' : 'حفظ'}</span>
-              </button>
-            )}
-          </>
-        )}
+        ))}
     </div>
-
-    {/* Summary Report Modal */}
-    {isSummaryModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold">التقرير الموجز لـ {orphan.name}</h3>
-                    <button onClick={() => setIsSummaryModalOpen(false)} className="text-gray-500 hover:text-gray-800">&times;</button>
-                </div>
-                {isSummaryLoading && <div className="text-center p-8">جاري إنشاء التقرير...</div>}
-                {summaryError && <div className="text-red-600 bg-red-100 p-3 rounded">{summaryError}</div>}
-                {summaryReport && <div className="whitespace-pre-wrap text-gray-700">{summaryReport}</div>}
-            </div>
-        </div>
-    )}
-    
-     {/* Needs Report Modal */}
-    {isNeedsModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4 border-b pb-3">
-                    <h3 className="text-xl font-bold">تقرير تقييم الاحتياجات لـ {orphan.name}</h3>
-                    <button onClick={() => setIsNeedsModalOpen(false)} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
-                </div>
-                {isNeedsLoading && <div className="text-center p-8">جاري تحليل البيانات وإنشاء التقرير...</div>}
-                {needsError && <div className="text-red-600 bg-red-100 p-3 rounded">{needsError}</div>}
-                {needsReport && <div className="whitespace-pre-wrap text-gray-700 leading-relaxed font-sans">{needsReport}</div>}
-            </div>
-        </div>
-    )}
 
     {/* Add Achievement Modal */}
     <AddAchievementModal 
@@ -1540,7 +1774,7 @@ const OrphanProfile: React.FC = () => {
     {/* Sponsor Note Modal */}
     {isNoteModalOpen && (
       <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4" onClick={() => setIsNoteModalOpen(false)}>
-        <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
           <h3 className="text-xl font-bold mb-4 text-blue-600 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
