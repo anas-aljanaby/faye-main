@@ -179,9 +179,7 @@ export const useTeamMembersBasic = () => {
           hash = hash & hash;
         }
         return Math.abs(hash) % 1000000;
-      };
-
-      const basicMembers: TeamMember[] = teamMembersData.map((member) => ({
+      };      const basicMembers: TeamMember[] = teamMembersData.map((member) => ({
         id: uuidToNumber(member.id),
         uuid: member.id,
         name: member.name,

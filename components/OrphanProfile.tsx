@@ -1042,76 +1042,101 @@ const OrphanProfile: React.FC = () => {
     <>
     <div ref={profileRef} className="bg-transparent p-4 sm:p-0" style={{paddingBottom: '100px'}}>
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="bg-bg-card p-8 rounded-xl shadow-sm flex flex-col md:flex-row items-center gap-8">
-        {orphan.uuid ? (
-          <AvatarUpload
-            currentAvatarUrl={orphan.photoUrl}
-            userId={orphan.uuid}
-            type="orphan"
-            onUploadComplete={(newUrl) => {
-              // Refresh orphans to get updated avatar
-              window.location.reload();
-            }}
-            size="lg"
-          />
-        ) : (
-          <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="!w-32 !h-32 !text-5xl ring-4 ring-primary-light" />
-        )}
-        <div className="text-center md:text-right flex-grow">
-          {isEditMode ? (
-            <input
-              type="text"
-              value={editFormData.name}
-              onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-              className="text-4xl font-bold text-gray-800 bg-white border-2 border-primary rounded-lg px-4 py-2 w-full md:w-auto"
-            />
-          ) : (
-            <h1 className="text-4xl font-bold text-gray-800">{orphan.name}</h1>
-          )}
-          <p className="text-lg text-text-secondary">{orphan.age} سنوات - {orphan.governorate}, {orphan.country}</p>
-        </div>
-        <div className="ms-auto hidden sm:flex gap-2">
-          {hasEditPermission && (
-            <>
-              {isEditMode ? (
-                <>
-                  <button onClick={handleCancelEdit} className="bg-gray-100 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-200 transition-colors">
-                    إلغاء
+      {/* تصميم ترويسة مستوحى من النسخة الجديدة */}
+      <div className="relative h-48 bg-gradient-to-r from-primary to-primary-hover rounded-2xl shadow-lg mb-16 overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,_white,_transparent_60%)]" />
+        <div className="absolute inset-0 flex items-center justify-between px-6 pt-4">
+          <div className="hidden sm:flex gap-2 ms-auto">
+            {hasEditPermission && (
+              <>
+                {isEditMode ? (
+                  <>
+                    <button onClick={handleCancelEdit} className="bg-white/10 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/20 transition-colors">
+                      إلغاء
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      disabled={isSaving}
+                      className="bg-white text-primary font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors disabled:bg-white/70 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isSaving ? 'جاري الحفظ...' : 'حفظ'}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handleEdit}
+                    className="bg-white/15 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/25 transition-colors flex items-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                    تعديل
                   </button>
-                  <button onClick={handleSaveEdit} disabled={isSaving} className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors disabled:bg-primary/70 disabled:cursor-not-allowed flex items-center gap-2">
-                    {isSaving ? 'جاري الحفظ...' : 'حفظ'}
-                  </button>
-                </>
-              ) : (
-                <button onClick={handleEdit} className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                  تعديل
-                </button>
-              )}
-            </>
-          )}
-          {isSponsorOfOrphan && (
-            <button 
-              onClick={() => setIsNoteModalOpen(true)} 
-              className="bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
+                )}
+              </>
+            )}
+            {isSponsorOfOrphan && (
+              <button 
+                onClick={() => setIsNoteModalOpen(true)} 
+                className="bg-white/15 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/25 transition-colors flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <path d="M14 2v6h6"/>
+                  <path d="M16 13H8"/>
+                  <path d="M16 17H8"/>
+                  <path d="M10 9H8"/>
+                </svg>
+                ملاحظة
+              </button>
+            )}
+            <button
+              id="export-button-desktop"
+              onClick={handleExportPDF}
+              className="bg-white text-primary font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <path d="M14 2v6h6"/>
-                <path d="M16 13H8"/>
-                <path d="M16 17H8"/>
-                <path d="M10 9H8"/>
-              </svg>
-              ملاحظة
+              {DownloadIcon}
+              تصدير PDF
             </button>
-          )}
-          <button id="export-button-desktop" onClick={handleExportPDF} className="bg-primary text-white font-semibold py-2 px-5 rounded-lg hover:bg-primary-hover transition-colors flex items-center gap-2">
-            {DownloadIcon}
-            تصدير PDF
-          </button>
+          </div>
+        </div>
+
+        {/* الصورة الدائرية والاسم */}
+        <div className="absolute -bottom-14 right-6 sm:right-12 flex items-center gap-6 w-full">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-white shadow-md bg-white overflow-hidden flex-shrink-0">
+            {orphan.uuid ? (
+              <AvatarUpload
+                currentAvatarUrl={orphan.photoUrl}
+                userId={orphan.uuid}
+                type="orphan"
+                onUploadComplete={() => window.location.reload()}
+                size="lg"
+              />
+            ) : (
+              <Avatar
+                src={orphan.photoUrl}
+                name={orphan.name}
+                size="xl"
+                className="!w-full !h-full !text-4xl"
+              />
+            )}
+          </div>
+          <div className="-translate-y-10 sm:-translate-y-12 text-white drop-shadow-md">
+            {isEditMode ? (
+              <input
+                type="text"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                className="text-2xl sm:text-3xl font-bold text-gray-900 bg-white/90 border-2 border-primary rounded-lg px-4 py-2 w-full max-w-xs"
+              />
+            ) : (
+              <h1 className="text-2xl sm:text-3xl font-bold">{orphan.name}</h1>
+            )}
+            <p className="text-sm sm:text-base opacity-90 font-medium">
+              {orphan.age} سنوات • {orphan.grade} • {orphan.governorate}, {orphan.country}
+            </p>
+          </div>
         </div>
       </div>
-      
+
       <div className="grid md:grid-cols-2 gap-6">
         <InfoCard title="البيانات الشخصية" icon={UserIcon}>
             {isEditMode ? (

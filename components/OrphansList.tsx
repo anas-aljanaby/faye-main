@@ -303,9 +303,14 @@ const OrphansList: React.FC = () => {
     return (
         <>
         <div className="space-y-6 pb-24">
-            <header className="space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                    <h1 className="text-3xl font-bold text-gray-800">قائمة الأيتام</h1>
+            <header className="space-y-3">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800">سجل الأيتام المركزي</h1>
+                        <p className="text-sm text-text-secondary">
+                            عرض وإدارة بيانات الأيتام بتنسيق متقدم
+                        </p>
+                    </div>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center gap-3">
                     <div className="relative w-full flex-grow">
@@ -314,7 +319,7 @@ const OrphansList: React.FC = () => {
                         </div>
                         <input
                             type="text"
-                            placeholder="ابحث عن يتيم..."
+                            placeholder="ابحث باسم اليتيم أو الموقع..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full bg-white pr-10 pl-4 py-2.5 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition"
@@ -388,32 +393,69 @@ const OrphansList: React.FC = () => {
                     <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                         {paginatedOrphans.map(orphan => {
                             const isSelected = selectedIds.has(orphan.id);
+                            const performanceColor =
+                                orphan.performance === 'ممتاز'
+                                    ? 'bg-green-100 text-green-700 border-green-200'
+                                    : orphan.performance === 'جيد جداً'
+                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                    : 'bg-yellow-100 text-yellow-700 border-yellow-200';
+
                             return (
-                                <div key={orphan.id} className={`relative bg-white rounded-lg border p-4 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/orphan/${orphan.id}`)}>
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => handleSelect(orphan.id)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
-                                        aria-label={`تحديد ${orphan.name}`}
-                                    />
-                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-semibold text-gray-800 truncate">{orphan.name}</h3>
-                                        <p className="text-sm text-text-secondary">{orphan.age} سنوات - {orphan.country}</p>
-                                    </div>
-                                    <div className="relative flex-shrink-0">
-                                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(orphan.id === activeMenuId ? null : orphan.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${orphan.name}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                        </button>
-                                        {activeMenuId === orphan.id && (
-                                            <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
-                                                <Link to={`/orphan/${orphan.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
-                                                <button onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
+                                <div
+                                    key={orphan.id}
+                                    className={`relative bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col h-full cursor-pointer transition-all duration-200 ${
+                                        isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-lg hover:-translate-y-1'
+                                    }`}
+                                    onClick={() => navigate(`/orphan/${orphan.id}`)}
+                                >
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-light flex-shrink-0">
+                                                <Avatar src={orphan.photoUrl} name={orphan.name} size="md" className="!w-full !h-full !text-lg" />
                                             </div>
-                                        )}
+                                            <div className="min-w-0">
+                                                <h3 className="font-bold text-gray-900 text-base truncate">{orphan.name}</h3>
+                                                <p className="text-xs text-gray-500">
+                                                    {orphan.age} سنوات • {orphan.gender}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => handleSelect(orphan.id)}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer"
+                                            aria-label={`تحديد ${orphan.name}`}
+                                        />
                                     </div>
+
+                                    <div className="space-y-2 text-xs text-gray-600 flex-1">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-gray-500">المرحلة</span>
+                                            <span className="font-medium text-gray-800">{orphan.grade}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-gray-500">الأداء</span>
+                                            <span
+                                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${performanceColor}`}
+                                            >
+                                                {orphan.performance}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-gray-400 mt-1">
+                                            <svg className="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                            <span className="truncate text-[11px]">
+                                                {orphan.country}، {orphan.governorate}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        className="mt-4 w-full py-2.5 bg-primary-light text-primary text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-colors"
+                                    >
+                                        عرض الملف الكامل
+                                    </button>
                                 </div>
                             );
                         })}
@@ -422,23 +464,45 @@ const OrphansList: React.FC = () => {
                     <section className="space-y-2">
                         {paginatedOrphans.map(orphan => {
                             const isSelected = selectedIds.has(orphan.id);
+                            const performanceColor =
+                                orphan.performance === 'ممتاز'
+                                    ? 'bg-green-100 text-green-700 border-green-200'
+                                    : orphan.performance === 'جيد جداً'
+                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
+                                    : 'bg-yellow-100 text-yellow-700 border-yellow-200';
+
                             return (
-                                <div key={orphan.id} className={`bg-white rounded-lg border p-3 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/orphan/${orphan.id}`)}>
+                                <div
+                                    key={orphan.id}
+                                    className={`bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-4 transition-all duration-200 cursor-pointer ${
+                                        isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'
+                                    }`}
+                                    onClick={() => navigate(`/orphan/${orphan.id}`)}
+                                >
                                     <input
                                         type="checkbox"
                                         checked={isSelected}
                                         onChange={() => handleSelect(orphan.id)}
                                         onClick={(e) => e.stopPropagation()}
-                                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
+                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
                                         aria-label={`تحديد ${orphan.name}`}
                                     />
                                     <Avatar src={orphan.photoUrl} name={orphan.name} size="md" className="flex-shrink-0" />
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-gray-800 truncate">{orphan.name}</h3>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="min-w-0">
+                                                <h3 className="font-semibold text-gray-800 truncate text-sm">{orphan.name}</h3>
+                                                <p className="text-[11px] text-gray-500 truncate">
+                                                    {orphan.age} سنوات • {orphan.country}، {orphan.governorate}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap ${performanceColor}`}
+                                            >
+                                                {orphan.performance}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <span className="text-sm text-text-secondary whitespace-nowrap">{orphan.age} سنوات</span>
-                                    <span className="text-sm text-text-secondary whitespace-nowrap hidden sm:block">{orphan.country}</span>
-                                    <span className={`text-xs font-bold px-2 py-1 rounded-full text-white whitespace-nowrap ${orphan.performance === 'ممتاز' ? 'bg-green-500' : orphan.performance === 'جيد جداً' ? 'bg-blue-500' : 'bg-yellow-500'}`}>{orphan.performance}</span>
                                 </div>
                             );
                         })}
