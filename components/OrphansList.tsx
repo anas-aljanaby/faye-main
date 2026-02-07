@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { Orphan } from '../types';
-import Avatar from './Avatar';
+import EntityCard, { EntityCardField } from './EntityCard';
 
 const AddOrphanModal: React.FC<{
     isOpen: boolean;
@@ -312,8 +312,24 @@ const OrphansList: React.FC = () => {
                         </p>
                     </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <div className="relative w-full flex-grow">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-wrap">
+                    <button
+                        type="button"
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        إضافة يتيم
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleExportExcel}
+                        className="hidden sm:inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        تصدير
+                    </button>
+                    <div className="relative flex-grow min-w-[200px]">
                         <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         </div>
@@ -386,124 +402,69 @@ const OrphansList: React.FC = () => {
                         </div>
                     </div>
                     <span className="text-sm text-text-secondary">
-                        الإجمالي: {filteredOrphans.length}
+                        تم العثور على {filteredOrphans.length} يتيم
                     </span>
                 </div>
                 {viewMode === 'grid' ? (
-                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {paginatedOrphans.map(orphan => {
                             const isSelected = selectedIds.has(orphan.id);
-                            const performanceColor =
-                                orphan.performance === 'ممتاز'
-                                    ? 'bg-green-100 text-green-700 border-green-200'
-                                    : orphan.performance === 'جيد جداً'
-                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                    : 'bg-yellow-100 text-yellow-700 border-yellow-200';
-
+                            const cardFields: EntityCardField[] = [
+                                { label: 'المرحلة:', value: orphan.grade },
+                                { label: 'الأداء:', value: orphan.performance, type: 'pill' },
+                            ];
                             return (
-                                <div
+                                <EntityCard
                                     key={orphan.id}
-                                    className={`relative bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col h-full cursor-pointer transition-all duration-200 ${
-                                        isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-lg hover:-translate-y-1'
-                                    }`}
+                                    variant="card"
+                                    title={orphan.name}
+                                    subtitle={`${orphan.age} سنوات • ${orphan.gender}`}
+                                    imageUrl={orphan.photoUrl}
+                                    imageAlt={orphan.name}
+                                    fields={cardFields}
+                                    location={`${orphan.country}، ${orphan.governorate}`}
+                                    actionLabel="عرض الملف الكامل"
                                     onClick={() => navigate(`/orphan/${orphan.id}`)}
-                                >
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-light flex-shrink-0">
-                                                <Avatar src={orphan.photoUrl} name={orphan.name} size="md" className="!w-full !h-full !text-lg" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h3 className="font-bold text-gray-900 text-base truncate">{orphan.name}</h3>
-                                                <p className="text-xs text-gray-500">
-                                                    {orphan.age} سنوات • {orphan.gender}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <input
-                                            type="checkbox"
-                                            checked={isSelected}
-                                            onChange={() => handleSelect(orphan.id)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer"
-                                            aria-label={`تحديد ${orphan.name}`}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2 text-xs text-gray-600 flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-gray-500">المرحلة</span>
-                                            <span className="font-medium text-gray-800">{orphan.grade}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-gray-500">الأداء</span>
-                                            <span
-                                                className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${performanceColor}`}
-                                            >
-                                                {orphan.performance}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5 text-gray-400 mt-1">
-                                            <svg className="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                            <span className="truncate text-[11px]">
-                                                {orphan.country}، {orphan.governorate}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        className="mt-4 w-full py-2.5 bg-primary-light text-primary text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-colors"
-                                    >
-                                        عرض الملف الكامل
-                                    </button>
-                                </div>
+                                    selected={isSelected}
+                                    onSelect={() => handleSelect(orphan.id)}
+                                    showCheckbox={true}
+                                />
                             );
                         })}
                     </section>
                 ) : (
                     <section className="space-y-2">
+                        <div className="grid grid-cols-[auto_200px_1fr_1fr_auto_1fr] gap-4 items-center px-4 py-2 text-sm font-bold text-gray-600 border-b border-gray-100">
+                            <div />
+                            <div>اليتيم</div>
+                            <div>الموقع</div>
+                            <div>المرحلة الدراسية</div>
+                            <div>الأداء</div>
+                            <div>الحضور</div>
+                        </div>
                         {paginatedOrphans.map(orphan => {
                             const isSelected = selectedIds.has(orphan.id);
-                            const performanceColor =
-                                orphan.performance === 'ممتاز'
-                                    ? 'bg-green-100 text-green-700 border-green-200'
-                                    : orphan.performance === 'جيد جداً'
-                                    ? 'bg-blue-100 text-blue-700 border-blue-200'
-                                    : 'bg-yellow-100 text-yellow-700 border-yellow-200';
-
+                            const rowFields: EntityCardField[] = [
+                                { value: `${orphan.country}، ${orphan.governorate}` },
+                                { value: orphan.grade },
+                                { value: orphan.performance, type: 'pill' },
+                                { value: orphan.attendance },
+                            ];
                             return (
-                                <div
+                                <EntityCard
                                     key={orphan.id}
-                                    className={`bg-white rounded-xl border border-gray-100 p-3 flex items-center gap-4 transition-all duration-200 cursor-pointer ${
-                                        isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'
-                                    }`}
+                                    variant="row"
+                                    title={orphan.name}
+                                    subtitle={`${orphan.age} سنوات`}
+                                    imageUrl={orphan.photoUrl}
+                                    imageAlt={orphan.name}
+                                    fields={rowFields}
+                                    actionLabel=""
                                     onClick={() => navigate(`/orphan/${orphan.id}`)}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => handleSelect(orphan.id)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
-                                        aria-label={`تحديد ${orphan.name}`}
-                                    />
-                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="md" className="flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between gap-2">
-                                            <div className="min-w-0">
-                                                <h3 className="font-semibold text-gray-800 truncate text-sm">{orphan.name}</h3>
-                                                <p className="text-[11px] text-gray-500 truncate">
-                                                    {orphan.age} سنوات • {orphan.country}، {orphan.governorate}
-                                                </p>
-                                            </div>
-                                            <span
-                                                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border whitespace-nowrap ${performanceColor}`}
-                                            >
-                                                {orphan.performance}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                                    selected={isSelected}
+                                    onSelect={() => handleSelect(orphan.id)}
+                                    showCheckbox={true}
+                                />
                             );
                         })}
                     </section>
