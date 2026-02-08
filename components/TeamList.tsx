@@ -569,6 +569,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [sortBy, setSortBy] = useState('name-asc');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+    const [memberFilter, setMemberFilter] = useState<'all' | 'employees' | 'volunteers' | 'delegates'>('all');
 
     const handleTogglePermission = async (userId: string, permissionKey: string): Promise<{ success: boolean; error?: string }> => {
         const result = await togglePermission(userId, permissionKey as any);
@@ -702,69 +703,97 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                 />
             )}
 
-            <header className="space-y-4">
-                {!embedded && (
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                        <h1 className="text-3xl font-bold text-gray-800">فريق العمل</h1>
+            {!embedded && (
+                <header>
+                    <h1 className="text-3xl font-bold text-gray-800">فريق العمل</h1>
+                </header>
+            )}
+
+            {/* Toolbar - faye-new style */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div className="relative w-full md:w-80">
+                    <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </div>
-                )}
-                 <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <div className="relative w-full flex-grow">
-                        <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="ابحث عن عضو..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white pr-10 pl-4 py-2.5 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition"
-                            ref={searchInputRef}
-                        />
-                    </div>
+                    <input
+                        type="text"
+                        placeholder="البحث في الموظفين..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pr-10 pl-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                        ref={searchInputRef}
+                    />
                 </div>
-            </header>
-            
-            <div>
-                <div className="flex items-center justify-between border-b pb-3 mb-3">
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
-                           <button 
-                                onClick={() => setIsPopoverOpen(prev => !prev)}
-                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary"
-                                aria-label="الفرز"
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <div className="bg-gray-100 p-1 rounded-xl flex flex-1 md:flex-none overflow-x-auto scrollbar-hide">
+                        {([
+                            { key: 'all', label: 'الكل' },
+                            { key: 'employees', label: 'الموظفون' },
+                            { key: 'volunteers', label: 'المتطوعون' },
+                            { key: 'delegates', label: 'المندوبين' },
+                        ] as const).map(option => (
+                            <button
+                                key={option.key}
+                                onClick={() => setMemberFilter(option.key)}
+                                className={`px-3 py-2 rounded-lg transition-all text-sm whitespace-nowrap ${
+                                    memberFilter === option.key
+                                        ? 'bg-white text-primary shadow-sm font-bold'
+                                        : 'text-gray-500 hover:text-gray-700'
+                                }`}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                                {option.label}
                             </button>
-                            {isPopoverOpen && (
-                                <SortPopover 
-                                    onClose={() => setIsPopoverOpen(false)}
-                                    sortBy={sortBy}
-                                    setSortBy={setSortBy}
-                                    onReset={handleResetSort}
-                                />
-                            )}
-                        </div>
-                        <div className="h-6 border-l border-gray-200"></div>
-                         <div className="flex items-center gap-3">
-                            <input 
-                                type="checkbox" 
-                                id="selectAllCheckbox"
-                                checked={filteredTeamMembers.length > 0 && selectedIds.size === filteredTeamMembers.length}
-                                onChange={handleSelectAll}
-                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                                disabled={filteredTeamMembers.length === 0}
-                                aria-label="تحديد الكل"
-                            />
-                            <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
-                               تحديد الكل
-                            </label>
-                        </div>
+                        ))}
                     </div>
-                     <span className="text-sm text-text-secondary">
-                        الإجمالي: {filteredTeamMembers.length}
-                    </span>
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 whitespace-nowrap flex items-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        إضافة موظف
+                    </button>
                 </div>
+            </div>
+
+            {/* Sub-toolbar: sort, select all, total */}
+            <div className="flex flex-wrap items-center gap-4">
+                <div className="relative">
+                    <button 
+                        onClick={() => setIsPopoverOpen(prev => !prev)}
+                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary"
+                        aria-label="الفرز"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                    </button>
+                    {isPopoverOpen && (
+                        <SortPopover 
+                            onClose={() => setIsPopoverOpen(false)}
+                            sortBy={sortBy}
+                            setSortBy={setSortBy}
+                            onReset={handleResetSort}
+                        />
+                    )}
+                </div>
+                <div className="flex items-center gap-3">
+                    <input 
+                        type="checkbox" 
+                        id="selectAllCheckbox"
+                        checked={filteredTeamMembers.length > 0 && selectedIds.size === filteredTeamMembers.length}
+                        onChange={handleSelectAll}
+                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                        disabled={filteredTeamMembers.length === 0}
+                        aria-label="تحديد الكل"
+                    />
+                    <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
+                        تحديد الكل
+                    </label>
+                </div>
+                <span className="text-sm text-text-secondary">
+                    تم العثور على {filteredTeamMembers.length} عضو
+                </span>
+            </div>
+
+            <div>
                 
                 <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {filteredTeamMembers.map(member => {
