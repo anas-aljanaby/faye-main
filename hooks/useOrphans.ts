@@ -534,11 +534,14 @@ export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promi
   });
 }
 
+// Stable empty array to avoid new references on every render while loading
+const EMPTY_ORPHANS: Orphan[] = [];
+
 // Lightweight hook for lists/dashboards - uses React Query for shared cache and request deduplication
 export const useOrphansBasic = () => {
   const { userProfile } = useAuth();
   const {
-    data: orphans = [],
+    data: orphans = EMPTY_ORPHANS,
     isLoading: loading,
     error,
     refetch,

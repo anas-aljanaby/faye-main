@@ -148,10 +148,10 @@ const OrphansList: React.FC = () => {
     const [orphanList, setOrphanList] = useState<Orphan[]>([]);
     
     useEffect(() => {
-        if (orphansData) {
+        if (!loading && orphansData) {
             setOrphanList(orphansData);
         }
-    }, [orphansData]);
+    }, [orphansData, loading]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');

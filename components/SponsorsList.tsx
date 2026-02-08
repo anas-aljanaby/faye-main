@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSponsorsBasic } from '../hooks/useSponsors';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
 import { Sponsor } from '../types';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
+import EntityCard, { EntityCardField } from './EntityCard';
+import { DataTable } from './DataTable';
+import { ColumnDef } from '@tanstack/react-table';
 
 const AddSponsorModal: React.FC<{
     isOpen: boolean;
@@ -167,10 +170,10 @@ const SponsorsList: React.FC = () => {
     const [sponsorList, setSponsorList] = useState<Sponsor[]>([]);
     
     useEffect(() => {
-        if (sponsorsData) {
+        if (!loading && sponsorsData) {
             setSponsorList(sponsorsData);
         }
-    }, [sponsorsData]);
+    }, [sponsorsData, loading]);
     const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
@@ -179,8 +182,6 @@ const SponsorsList: React.FC = () => {
     const [sponsorAssignedOrphanIds, setSponsorAssignedOrphanIds] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-    const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [sortBy, setSortBy] = useState('name-asc');
@@ -188,6 +189,73 @@ const SponsorsList: React.FC = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 12;
+
+    // Column definitions for DataTable (list view)
+    const tableColumns = useMemo<ColumnDef<Sponsor>[]>(() => [
+        {
+            id: 'select',
+            header: ({ table }) => (
+                <div className="px-1">
+                    <input
+                        type="checkbox"
+                        checked={table.getIsAllPageRowsSelected()}
+                        onChange={table.getToggleAllPageRowsSelectedHandler()}
+                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                    />
+                </div>
+            ),
+            cell: ({ row }) => (
+                <div className="px-1">
+                    <input
+                        type="checkbox"
+                        checked={row.getIsSelected()}
+                        disabled={!row.getCanSelect()}
+                        onChange={row.getToggleSelectedHandler()}
+                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                </div>
+            ),
+            enableSorting: false,
+            enableHiding: false,
+            size: 40,
+        },
+        {
+            accessorKey: 'name',
+            header: 'الكافل',
+            cell: ({ row }) => (
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
+                        <Avatar src={row.original.avatarUrl} name={row.original.name} size="md" className="!w-full !h-full !text-sm" />
+                    </div>
+                    <div>
+                        <div className="font-bold text-gray-900">{row.original.name}</div>
+                    </div>
+                </div>
+            ),
+            size: 200,
+        },
+        {
+            accessorKey: 'sponsoredOrphanIds',
+            header: 'عدد الأيتام',
+            cell: ({ row }) => (
+                <span className="text-gray-600">{row.original.sponsoredOrphanIds.length} {row.original.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</span>
+            ),
+            sortingFn: (rowA, rowB) => rowA.original.sponsoredOrphanIds.length - rowB.original.sponsoredOrphanIds.length,
+        },
+    ], []);
+
+    const renderBulkActions = (selectedRows: Sponsor[]) => {
+        return (
+            <button
+                onClick={() => setIsMessageModalOpen(true)}
+                className="text-xs font-semibold bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 hover:text-primary transition-colors flex items-center gap-2 shadow-sm"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                مراسلة المحدد
+            </button>
+        );
+    };
 
     // Fetch assigned orphans for selected sponsor (when modal is open)
     useEffect(() => {
@@ -215,18 +283,6 @@ const SponsorsList: React.FC = () => {
             fetchSponsorAssignedOrphans();
         }
     }, [selectedSponsorForAssignment, showAssignOrphansModal]);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setActiveMenuId(null);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
 
     const filteredSponsors = useMemo(() => {
         let sortedAndFiltered = [...sponsorList];
@@ -325,19 +381,44 @@ const SponsorsList: React.FC = () => {
         <div className="space-y-6 pb-24">
             <header className="space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                    <h1 className="text-3xl font-bold text-gray-800">قائمة الكفلاء</h1>
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-800">قائمة الكفلاء</h1>
+                        <p className="text-sm text-text-secondary mt-0.5">
+                            عرض وإدارة بيانات الكفلاء بتنسيق متقدم
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {hasEditPermission && (
+                            <button
+                                type="button"
+                                onClick={() => setIsAddModalOpen(true)}
+                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                إضافة كافل
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={handleExportExcel}
+                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                            تصدير
+                        </button>
+                    </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                    <div className="relative w-full flex-grow">
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div className="relative w-full sm:w-72">
                         <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                         </div>
                         <input
                             type="text"
-                            placeholder="ابحث عن كافل..."
+                            placeholder="ابحث باسم الكافل..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-white pr-10 pl-4 py-2.5 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition"
+                            className="w-full pr-10 pl-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white outline-none transition-colors"
                             ref={searchInputRef}
                         />
                     </div>
@@ -345,170 +426,128 @@ const SponsorsList: React.FC = () => {
             </header>
             
             <div>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-3 mb-3">
-                    <div className="flex items-center gap-4 flex-wrap">
-                        <div className="relative">
-                           <button 
-                                onClick={() => setIsPopoverOpen(prev => !prev)}
-                                className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary"
-                                aria-label="الفرز"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                            </button>
-                            {isPopoverOpen && (
-                                <SortPopover 
-                                    onClose={() => setIsPopoverOpen(false)}
-                                    sortBy={sortBy}
-                                    setSortBy={setSortBy}
-                                    onReset={handleResetSort}
-                                />
-                            )}
-                        </div>
-                        <div className="h-6 border-l border-gray-200"></div>
-                        {/* View Toggle */}
-                        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
-                                aria-label="عرض شبكي"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
-                                aria-label="عرض قائمة"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
-                            </button>
-                        </div>
-                        <div className="h-6 border-l border-gray-200"></div>
-                         <div className="flex items-center gap-3">
-                            <input 
-                                type="checkbox" 
-                                id="selectAllCheckbox"
-                                checked={filteredSponsors.length > 0 && selectedIds.size === filteredSponsors.length}
-                                onChange={handleSelectAll}
-                                className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                                disabled={filteredSponsors.length === 0}
-                                aria-label="تحديد الكل"
+                {/* Toolbar row: view toggle, sort, select all, assign, total */}
+                <div className="flex flex-wrap items-center gap-4 mb-4">
+                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
+                            aria-label="عرض قائمة"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
+                            aria-label="عرض شبكي"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                        </button>
+                    </div>
+                    <div className="relative">
+                        <button 
+                            onClick={() => setIsPopoverOpen(prev => !prev)}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary"
+                            aria-label="الفرز"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                        </button>
+                        {isPopoverOpen && (
+                            <SortPopover 
+                                onClose={() => setIsPopoverOpen(false)}
+                                sortBy={sortBy}
+                                setSortBy={setSortBy}
+                                onReset={handleResetSort}
                             />
-                            <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
-                                تحديد الكل
-                            </label>
-                        </div>
-                        {canAssignOrphansToSponsors && (
-                            <>
-                                <div className="h-6 border-l border-gray-200"></div>
-                                <button
-                                    onClick={() => setShowAssignOrphansModal(true)}
-                                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold text-sm flex items-center gap-2"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                                    <span>تعيين أيتام لكافل</span>
-                                </button>
-                            </>
                         )}
                     </div>
+                    <div className="flex items-center gap-3">
+                        <input 
+                            type="checkbox" 
+                            id="selectAllCheckbox"
+                            checked={filteredSponsors.length > 0 && selectedIds.size === filteredSponsors.length}
+                            onChange={handleSelectAll}
+                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                            disabled={filteredSponsors.length === 0}
+                            aria-label="تحديد الكل"
+                        />
+                        <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
+                            تحديد الكل
+                        </label>
+                    </div>
+                    {canAssignOrphansToSponsors && (
+                        <button
+                            onClick={() => setShowAssignOrphansModal(true)}
+                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold text-sm flex items-center gap-2"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                            <span>تعيين أيتام لكافل</span>
+                        </button>
+                    )}
                     <span className="text-sm text-text-secondary">
-                        الإجمالي: {filteredSponsors.length}
+                        تم العثور على {viewMode === 'grid' ? filteredSponsors.length : sponsorList.length} كافل
                     </span>
                 </div>
-                {viewMode === 'grid' ? (
-                    <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {paginatedSponsors.map(sponsor => {
-                            const isSelected = selectedIds.has(sponsor.id);
-                            return (
-                                <div key={sponsor.id} className={`relative bg-white rounded-lg border p-4 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/sponsor/${sponsor.id}`)}>
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => handleSelect(sponsor.id)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
-                                        aria-label={`تحديد ${sponsor.name}`}
-                                    />
-                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="xl" className="flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-semibold text-gray-800 truncate">{sponsor.name}</h3>
-                                        <p className="text-sm text-text-secondary">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
-                                    </div>
-                                    <div className="relative flex-shrink-0">
-                                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(sponsor.id === activeMenuId ? null : sponsor.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${sponsor.name}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                        </button>
-                                        {activeMenuId === sponsor.id && (
-                                            <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
-                                                <Link to={`/sponsor/${sponsor.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
-                                                {hasEditPermission && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setEditingSponsor(sponsor); setActiveMenuId(null); }} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </section>
-                ) : (
-                    <section className="space-y-2">
-                        {paginatedSponsors.map(sponsor => {
-                            const isSelected = selectedIds.has(sponsor.id);
-                            return (
-                                <div key={sponsor.id} className={`bg-white rounded-lg border p-3 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/sponsor/${sponsor.id}`)}>
-                                    <input
-                                        type="checkbox"
-                                        checked={isSelected}
-                                        onChange={() => handleSelect(sponsor.id)}
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
-                                        aria-label={`تحديد ${sponsor.name}`}
-                                    />
-                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" className="flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="font-semibold text-gray-800 truncate">{sponsor.name}</h3>
-                                    </div>
-                                    <span className="text-sm text-text-secondary whitespace-nowrap">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</span>
-                                    <div className="relative flex-shrink-0">
-                                        <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(sponsor.id === activeMenuId ? null : sponsor.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${sponsor.name}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                        </button>
-                                        {activeMenuId === sponsor.id && (
-                                            <div ref={menuRef} className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-xl z-10 border">
-                                                <Link to={`/sponsor/${sponsor.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
-                                                {hasEditPermission && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setEditingSponsor(sponsor); setActiveMenuId(null); }} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </section>
-                )}
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 mt-6">
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                            disabled={currentPage === 1}
-                            className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                        </button>
-                        <span className="text-sm text-gray-600">
-                            صفحة {currentPage} من {totalPages}
-                        </span>
-                        <button
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                            disabled={currentPage === totalPages}
-                            className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                        </button>
-                    </div>
+                {viewMode === 'list' ? (
+                    <DataTable
+                        columns={tableColumns}
+                        data={sponsorList}
+                        onRowClick={(row) => navigate(`/sponsor/${row.id}`)}
+                        renderBulkActions={renderBulkActions}
+                        storageKey="sponsors_table"
+                        filterPlaceholder="ابحث باسم الكافل..."
+                    />
+                ) : (
+                    <>
+                        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {paginatedSponsors.map(sponsor => {
+                                const isSelected = selectedIds.has(sponsor.id);
+                                const cardFields: EntityCardField[] = [
+                                    { label: 'عدد الأيتام:', value: `${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}` },
+                                ];
+                                return (
+                                    <EntityCard
+                                        key={sponsor.id}
+                                        variant="card"
+                                        title={sponsor.name}
+                                        subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
+                                        imageUrl={sponsor.avatarUrl}
+                                        imageAlt={sponsor.name}
+                                        fields={cardFields}
+                                        actionLabel="عرض الملف الكامل"
+                                        onClick={() => navigate(`/sponsor/${sponsor.id}`)}
+                                        selected={isSelected}
+                                        onSelect={() => handleSelect(sponsor.id)}
+                                        showCheckbox={true}
+                                    />
+                                );
+                            })}
+                        </section>
+
+                        {/* Pagination - grid only */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-center gap-2 mt-6">
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                                <span className="text-sm text-gray-600">
+                                    صفحة {currentPage} من {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

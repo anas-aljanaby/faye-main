@@ -157,11 +157,14 @@ export async function fetchSponsorsBasicData(organizationId: string): Promise<Sp
   });
 }
 
+// Stable empty array to avoid new references on every render while loading
+const EMPTY_SPONSORS: Sponsor[] = [];
+
 // Lightweight hook for lists/dashboards - uses React Query for shared cache and request deduplication
 export const useSponsorsBasic = () => {
   const { userProfile } = useAuth();
   const {
-    data: sponsors = [],
+    data: sponsors = EMPTY_SPONSORS,
     isLoading: loading,
     error,
     refetch,
