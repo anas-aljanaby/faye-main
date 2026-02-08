@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import TeamList from './TeamList';
 import { useDelegates, Delegate, DelegateInput } from '../hooks/useDelegates';
 
@@ -792,19 +793,25 @@ const DelegatesSection: React.FC = () => {
     );
 };
 
-const hrSections: { id: HrSection; title: string; icon: React.ReactNode }[] = [
-    { id: 'regulations', title: 'اللائحة', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg> },
-    { id: 'team', title: 'الموظفون', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
-    { id: 'delegates', title: 'المندوبين', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
-    { id: 'volunteers', title: 'المتطوعون', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8.3-15 15.7"/><path d="m15 8.3-11 11.4"/><path d="m19 12.3-1.4-1.4"/><path d="m15 16.3-1.4-1.4"/></svg> },
-    { id: 'attendance', title: 'الحاضرين والإنصراف', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
-    { id: 'leaves', title: 'الاجازات', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> },
-    { id: 'holidays', title: 'العطلات الرسمية', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg> },
-    { id: 'incentives', title: 'الحوافز والجوائز', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M8 21h8"/><path d="M12 17.5c-1.5 0-3-1-3-3.5V4.5A2.5 2.5 0 0 1 11.5 2h1A2.5 2.5 0 0 1 15 4.5V14c0 2.5-1.5 3.5-3 3.5Z"/></svg> },
-    { id: 'circulars', title: 'التعميمات الادارية', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11v2a2 2 0 0 0 2 2h3l7 7V2L8 9H5a2 2 0 0 0-2 2z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> },
-    { id: 'disciplinary', title: 'الجزاءات التأديبية', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h.79a4.5 4.5 0 1 1 0 9Z"/><line x1="12" x2="12" y1="12" y2="22"/><line x1="12" x2="12" y1="2" y2="3"/></svg> },
-    { id: 'advances', title: 'السلف', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
-    { id: 'salaries', title: 'الرواتب', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="6" x2="6" y1="12" y2="12"/><line x1="18" x2="18" y1="12" y2="12"/></svg> },
+const HR_TAB_LABELS: Record<HrSection, string> = {
+    team: 'إدارة فريق العمل',
+    volunteers: 'سجل المتطوعين',
+    delegates: 'المندوبين',
+    leaves: 'الإجازات',
+    attendance: 'الحضور والانصراف',
+    regulations: 'اللوائح والسياسات',
+    holidays: 'العطلات الرسمية',
+    incentives: 'الحوافز والجوائز',
+    circulars: 'التعميمات الإدارية',
+    disciplinary: 'الجزاءات التأديبية',
+    advances: 'السلف',
+    salaries: 'الرواتب',
+};
+
+const HR_TAB_ORDER: HrSection[] = [
+    'team', 'volunteers', 'delegates', 'leaves', 'attendance',
+    'regulations', 'holidays', 'incentives', 'circulars',
+    'disciplinary', 'advances', 'salaries',
 ];
 
 
@@ -817,59 +824,57 @@ const PlaceholderContent: React.FC<{ title: string }> = ({ title }) => (
 
 
 const HumanResources: React.FC = () => {
-    const [activeSection, setActiveSection] = useState<HrSection>('volunteers');
+    const [activeSection, setActiveSection] = useState<HrSection>('team');
 
     const renderContent = () => {
-        const section = hrSections.find(s => s.id === activeSection);
-        if (!section) return null;
-
-        if (activeSection === 'volunteers') {
-            return <VolunteersSection />;
+        switch (activeSection) {
+            case 'volunteers':
+                return <VolunteersSection />;
+            case 'team':
+                return <TeamList embedded />;
+            case 'delegates':
+                return <DelegatesSection />;
+            default:
+                return <PlaceholderContent title={HR_TAB_LABELS[activeSection]} />;
         }
-
-        if (activeSection === 'team') {
-            return <TeamList embedded />;
-        }
-
-        if (activeSection === 'delegates') {
-            return <DelegatesSection />;
-        }
-
-        return <PlaceholderContent title={section.title} />;
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-4">
-                <h1 className="text-3xl font-bold text-gray-800">إدارة الموارد البشرية</h1>
-                
-                {/* Horizontal Tab Navigation */}
-                <div className="border-b border-gray-200 overflow-x-auto">
-                    <nav className="flex gap-2 min-w-max" role="tablist">
-                        {hrSections.map(section => (
-                            <button
-                                key={section.id}
-                                onClick={() => setActiveSection(section.id)}
-                                role="tab"
-                                aria-selected={activeSection === section.id}
-                                className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all whitespace-nowrap border-b-2 ${
-                                    activeSection === section.id
-                                        ? 'border-primary text-primary bg-primary/5'
-                                        : 'border-transparent text-text-secondary hover:text-primary hover:border-gray-300'
-                                }`}
-                            >
-                                <span className="flex-shrink-0">{section.icon}</span>
-                                <span>{section.title}</span>
-                            </button>
-                        ))}
-                    </nav>
+        <div className="space-y-6 pb-20">
+            {/* Header - faye-new design */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-800">الموارد البشرية</h1>
+                    <p className="text-text-secondary">إدارة فريق العمل، الحضور، والعطلات الرسمية.</p>
                 </div>
+            </div>
+
+            {/* Tab Navigation - faye-new pill style */}
+            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide border-b">
+                {HR_TAB_ORDER.map(section => (
+                    <button
+                        key={section}
+                        onClick={() => setActiveSection(section)}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-colors
+                        ${activeSection === section ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
+                    >
+                        {HR_TAB_LABELS[section]}
+                    </button>
+                ))}
             </div>
             
             {/* Main Content Area */}
-            <main className="bg-bg-card p-6 rounded-xl shadow-sm min-h-[400px]">
-                {renderContent()}
-            </main>
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={activeSection}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    {renderContent()}
+                </motion.div>
+            </AnimatePresence>
         </div>
     );
 };
