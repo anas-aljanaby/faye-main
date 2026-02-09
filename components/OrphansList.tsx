@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useOrphansBasic } from '../hooks/useOrphans';
+import { useOrphansPaginated } from '../hooks/useOrphans';
 import { Orphan } from '../types';
 import EntityCard, { EntityCardField } from './EntityCard';
 import { DataTable } from './DataTable';
@@ -144,14 +144,6 @@ const FilterSortPopover: React.FC<{
 const ITEMS_PER_PAGE = 12;
 
 const OrphansList: React.FC = () => {
-    const { orphans: orphansData, loading } = useOrphansBasic();
-    const [orphanList, setOrphanList] = useState<Orphan[]>([]);
-    
-    useEffect(() => {
-        if (!loading && orphansData) {
-            setOrphanList(orphansData);
-        }
-    }, [orphansData, loading]);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -165,6 +157,14 @@ const OrphansList: React.FC = () => {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
+
+    const { orphans: orphanList, totalCount, loading } = useOrphansPaginated({
+        page: currentPage,
+        pageSize: ITEMS_PER_PAGE,
+        search: searchQuery,
+        performanceFilter,
+        sortBy,
+    });
 
     // Column definitions for DataTable (list view)
     const tableColumns = useMemo<ColumnDef<Orphan>[]>(() => [
@@ -272,46 +272,13 @@ const OrphansList: React.FC = () => {
         };
     }, []);
 
-    const filteredOrphans = useMemo(() => {
-        let sortedAndFiltered = [...orphanList];
-
-        // Filtering
-        if (performanceFilter !== 'all') {
-            sortedAndFiltered = sortedAndFiltered.filter(o => o.performance === performanceFilter);
-        }
-        
-        if (searchQuery) {
-            sortedAndFiltered = sortedAndFiltered.filter(o => o.name.toLowerCase().includes(searchQuery.toLowerCase()));
-        }
-
-        // Sorting
-        const performanceOrder: { [key: string]: number } = { 'ممتاز': 1, 'جيد جداً': 2, 'جيد': 3, 'مقبول': 4, 'ضعيف': 5 };
-        switch (sortBy) {
-            case 'age-asc':
-                sortedAndFiltered.sort((a, b) => a.age - b.age);
-                break;
-            case 'performance-desc':
-                sortedAndFiltered.sort((a, b) => (performanceOrder[a.performance] || 99) - (performanceOrder[b.performance] || 99));
-                break;
-            case 'name-asc':
-            default:
-                sortedAndFiltered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-                break;
-        }
-
-        return sortedAndFiltered;
-    }, [searchQuery, orphanList, sortBy, performanceFilter]);
-
     // Reset to first page when filters change
     useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, sortBy, performanceFilter]);
 
-    const totalPages = Math.ceil(filteredOrphans.length / ITEMS_PER_PAGE);
-    const paginatedOrphans = useMemo(() => {
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredOrphans.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    }, [filteredOrphans, currentPage]);
+    const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE) || 1;
+    const paginatedOrphans = orphanList;
 
 
     const handleSelect = (id: number) => {
@@ -326,7 +293,7 @@ const OrphansList: React.FC = () => {
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            setSelectedIds(new Set(filteredOrphans.map(o => o.id)));
+            setSelectedIds(new Set(orphanList.map(o => o.id)));
         } else {
             setSelectedIds(new Set());
         }
@@ -338,38 +305,8 @@ const OrphansList: React.FC = () => {
         setSelectedIds(new Set());
     };
     
-    const handleSaveNewOrphan = (data: { name: string; age: number; grade: string; country: string }) => {
-        const newOrphan: Orphan = {
-            id: Date.now(),
-            name: data.name,
-            age: data.age,
-            grade: data.grade,
-            country: data.country,
-            governorate: 'غير محدد',
-            photoUrl: `https://picsum.photos/seed/${Date.now()}/200/200`,
-            dateOfBirth: new Date(new Date().setFullYear(new Date().getFullYear() - data.age)),
-            gender: 'ذكر', 
-            healthStatus: 'جيدة',
-            attendance: 'منتظم',
-            performance: 'جيد',
-            familyStatus: 'غير محدد',
-            housingStatus: 'غير محدد',
-            guardian: 'غير محدد',
-            sponsorId: -1,
-            sponsorshipType: 'غير محدد',
-            teamMemberId: 0, // Team members don't have direct relationships with orphans
-            familyMembers: [],
-            hobbies: [],
-            needsAndWishes: [],
-            updateLogs: [],
-            educationalProgram: { status: 'غير ملتحق', details: '' },
-            psychologicalSupport: { child: { status: 'غير ملتحق', details: '' }, guardian: { status: 'غير ملتحق', details: '' } },
-            payments: [],
-            achievements: [],
-            specialOccasions: [],
-            gifts: [],
-        };
-        setOrphanList(prev => [newOrphan, ...prev]);
+    const handleSaveNewOrphan = (_data: { name: string; age: number; grade: string; country: string }) => {
+        // TODO: persist new orphan via API then refetch paginated list
         setIsAddModalOpen(false);
     };
 
@@ -377,7 +314,7 @@ const OrphansList: React.FC = () => {
         const headers = ['id', 'name', 'age', 'grade', 'country', 'performance'];
         const csvRows = [
             headers.join(','),
-            ...filteredOrphans.map(o => [o.id, `"${o.name}"`, o.age, `"${o.grade}"`, `"${o.country}"`, `"${o.performance}"`].join(','))
+            ...orphanList.map(o => [o.id, `"${o.name}"`, o.age, `"${o.grade}"`, `"${o.country}"`, `"${o.performance}"`].join(','))
         ];
         const csvContent = '\uFEFF' + csvRows.join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -487,10 +424,10 @@ const OrphansList: React.FC = () => {
                         <input 
                             type="checkbox" 
                             id="selectAllCheckbox"
-                            checked={filteredOrphans.length > 0 && selectedIds.size === filteredOrphans.length}
+                            checked={orphanList.length > 0 && selectedIds.size === orphanList.length}
                             onChange={handleSelectAll}
                             className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                            disabled={filteredOrphans.length === 0}
+                            disabled={orphanList.length === 0}
                             aria-label="تحديد الكل"
                         />
                         <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
@@ -498,7 +435,7 @@ const OrphansList: React.FC = () => {
                         </label>
                     </div>
                     <span className="text-sm text-text-secondary">
-                        تم العثور على {viewMode === 'grid' ? filteredOrphans.length : orphanList.length} يتيم
+                        تم العثور على {totalCount} يتيم
                     </span>
                 </div>
 

@@ -537,6 +537,147 @@ export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promi
 // Stable empty array to avoid new references on every render while loading
 const EMPTY_ORPHANS: Orphan[] = [];
 
+export type OrphansPaginatedFilters = {
+  page: number;
+  pageSize: number;
+  search?: string;
+  performanceFilter?: string;
+  sortBy?: string;
+};
+
+export type OrphansPaginatedResult = {
+  orphans: Orphan[];
+  totalCount: number;
+};
+
+/** Fetches one page of orphans for list view (server-side pagination). */
+export async function fetchOrphansPaginatedData(
+  profile: OrphansBasicProfile,
+  filters: OrphansPaginatedFilters
+): Promise<OrphansPaginatedResult> {
+  const { page, pageSize, search, performanceFilter = 'all', sortBy = 'name-asc' } = filters;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const result = await withUserContext(async () => {
+    let orphansQuery = supabase
+      .from('orphans')
+      .select('id, name, photo_url, date_of_birth, country, governorate, grade, performance', { count: 'exact' })
+      .eq('organization_id', profile.organization_id);
+
+    if (profile.role === 'sponsor') {
+      const { data: sponsorOrphans } = await supabase
+        .from('sponsor_orphans')
+        .select('orphan_id')
+        .eq('sponsor_id', profile.id);
+
+      if (!sponsorOrphans || sponsorOrphans.length === 0) {
+        return { orphansData: [], totalCount: 0, paymentsData: [] };
+      }
+      const orphanIds = sponsorOrphans.map(so => so.orphan_id);
+      orphansQuery = orphansQuery.in('id', orphanIds);
+    }
+
+    if (search && search.trim()) {
+      orphansQuery = orphansQuery.or(`name.ilike.%${search.trim()}%,country.ilike.%${search.trim()}%,governorate.ilike.%${search.trim()}%`);
+    }
+    if (performanceFilter !== 'all') {
+      orphansQuery = orphansQuery.eq('performance', performanceFilter);
+    }
+    if (sortBy === 'age-asc') {
+      orphansQuery = orphansQuery.order('date_of_birth', { ascending: false });
+    } else if (sortBy === 'performance-desc') {
+      orphansQuery = orphansQuery.order('performance', { ascending: true });
+    } else {
+      orphansQuery = orphansQuery.order('name', { ascending: true });
+    }
+
+    const { data: orphansData, error: orphansError, count } = await orphansQuery.range(from, to);
+
+    if (orphansError) {
+      return { orphansData: null, orphansError, totalCount: 0, paymentsData: [] };
+    }
+    if (!orphansData || orphansData.length === 0) {
+      return { orphansData: [], totalCount: count ?? 0, paymentsData: [] };
+    }
+
+    const orphanIds = orphansData.map(o => o.id);
+    const { data: paymentsData } = await supabase
+      .from('payments')
+      .select('*')
+      .in('orphan_id', orphanIds);
+
+    return {
+      orphansData,
+      totalCount: count ?? orphansData.length,
+      paymentsData: paymentsData || [],
+    };
+  });
+
+  if (result.orphansError) throw result.orphansError;
+  if (!result.orphansData || result.orphansData.length === 0) {
+    return { orphans: [], totalCount: result.totalCount };
+  }
+
+  const paymentsByOrphan = new Map<string, any[]>();
+  (result.paymentsData || []).forEach(p => {
+    if (!paymentsByOrphan.has(p.orphan_id)) paymentsByOrphan.set(p.orphan_id, []);
+    paymentsByOrphan.get(p.orphan_id)!.push(p);
+  });
+
+  const orphans = result.orphansData.map((orphan) => {
+    const orphanPayments = paymentsByOrphan.get(orphan.id) || [];
+    const today = new Date();
+    const birthDate = new Date(orphan.date_of_birth);
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const adjustedAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age;
+    const payments: Payment[] = orphanPayments
+      .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
+      .map(p => ({
+        id: p.id,
+        amount: parseFloat(p.amount),
+        dueDate: new Date(p.due_date),
+        paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
+        status: p.status as PaymentStatus,
+      }));
+
+    return {
+      id: uuidToNumber(orphan.id),
+      uuid: orphan.id,
+      name: orphan.name,
+      photoUrl: orphan.photo_url || '',
+      age: adjustedAge,
+      dateOfBirth: new Date(orphan.date_of_birth),
+      gender: 'ذكر' as 'ذكر' | 'أنثى',
+      healthStatus: '',
+      grade: orphan.grade || '',
+      country: orphan.country || '',
+      governorate: orphan.governorate || '',
+      attendance: '',
+      performance: orphan.performance || '',
+      familyStatus: '',
+      housingStatus: '',
+      guardian: '',
+      sponsorId: 0,
+      sponsorshipType: '',
+      teamMemberId: 0,
+      familyMembers: [],
+      hobbies: [],
+      needsAndWishes: [],
+      updateLogs: [],
+      educationalProgram: { status: 'غير ملتحق', details: '' },
+      psychologicalSupport: { child: { status: 'غير ملتحق', details: '' }, guardian: { status: 'غير ملتحق', details: '' } },
+      payments,
+      achievements: [],
+      specialOccasions: [],
+      gifts: [],
+    } as Orphan;
+  });
+
+  return { orphans, totalCount: result.totalCount };
+}
+
 // Lightweight hook for lists/dashboards - uses React Query for shared cache and request deduplication
 export const useOrphansBasic = () => {
   const { userProfile } = useAuth();
@@ -553,6 +694,29 @@ export const useOrphansBasic = () => {
 
   return {
     orphans,
+    loading,
+    error: error ? (error instanceof Error ? error.message : 'Failed to fetch orphans') : null,
+    refetch,
+  };
+};
+
+/** Paginated orphans list (server-side). Use in OrphansList for large datasets. */
+export const useOrphansPaginated = (filters: OrphansPaginatedFilters) => {
+  const { userProfile } = useAuth();
+  const {
+    data,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['orphans-paginated', userProfile?.organization_id, userProfile?.id, userProfile?.role, filters],
+    queryFn: () => fetchOrphansPaginatedData(userProfile!, filters),
+    enabled: !!userProfile,
+  });
+
+  return {
+    orphans: data?.orphans ?? EMPTY_ORPHANS,
+    totalCount: data?.totalCount ?? 0,
     loading,
     error: error ? (error instanceof Error ? error.message : 'Failed to fetch orphans') : null,
     refetch,
