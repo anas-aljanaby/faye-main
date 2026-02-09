@@ -418,12 +418,12 @@ export const useOrphans = () => {
   return { orphans, loading, error, refetch: fetchOrphans, updateOrphan };
 };
 
-/** Fetches basic orphans data (for lists/dashboards). Used by useOrphansBasic with React Query. */
+/** Fetches basic orphans data (for lists/dashboards). Used by useOrphansBasic with React Query. Uses Supabase relationship syntax (orphans + payments in one query). */
 export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promise<Orphan[]> {
   const result = await withUserContext(async () => {
     let orphansQuery = supabase
       .from('orphans')
-      .select('id, name, photo_url, date_of_birth, country, performance')
+      .select('id, name, photo_url, date_of_birth, country, performance, payments(*)')
       .eq('organization_id', profile.organization_id);
 
     if (profile.role === 'sponsor') {
@@ -433,7 +433,7 @@ export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promi
         .eq('sponsor_id', profile.id);
 
       if (!sponsorOrphans || sponsorOrphans.length === 0) {
-        return { orphansData: [], orphansError: null, paymentsData: null };
+        return { orphansData: [], orphansError: null };
       }
 
       const orphanIds = sponsorOrphans.map(so => so.orphan_id);
@@ -443,44 +443,21 @@ export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promi
     const { data: orphansData, error: orphansError } = await orphansQuery;
 
     if (orphansError) {
-      return { orphansData: null, orphansError, paymentsData: null };
+      return { orphansData: null, orphansError };
     }
 
     if (!orphansData || orphansData.length === 0) {
-      return { orphansData: [], orphansError: null, paymentsData: null };
+      return { orphansData: [], orphansError: null };
     }
 
-    const orphanIds = orphansData.map(o => o.id);
-
-    const { data: paymentsData, error: paymentsError } = await supabase
-      .from('payments')
-      .select('*')
-      .in('orphan_id', orphanIds);
-
-    if (paymentsError) {
-      console.warn('Error fetching payments for basic orphans:', paymentsError);
-    }
-
-    return {
-      orphansData: orphansData || [],
-      orphansError: null,
-      paymentsData: paymentsData || [],
-    };
+    return { orphansData, orphansError: null };
   });
 
   if (result.orphansError) throw result.orphansError;
   if (!result.orphansData || result.orphansData.length === 0) return [];
 
-  const paymentsByOrphan = new Map<string, any[]>();
-  (result.paymentsData || []).forEach(p => {
-    if (!paymentsByOrphan.has(p.orphan_id)) {
-      paymentsByOrphan.set(p.orphan_id, []);
-    }
-    paymentsByOrphan.get(p.orphan_id)!.push(p);
-  });
-
   return result.orphansData.map((orphan) => {
-    const orphanPayments = paymentsByOrphan.get(orphan.id) || [];
+    const orphanPayments = Array.isArray(orphan.payments) ? (orphan.payments as any[]) : [];
     const today = new Date();
     const birthDate = new Date(orphan.date_of_birth);
     const age = today.getFullYear() - birthDate.getFullYear();
@@ -559,10 +536,10 @@ export async function fetchOrphansPaginatedData(
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  const result = await withUserContext(async () => {
+    const result = await withUserContext(async () => {
     let orphansQuery = supabase
       .from('orphans')
-      .select('id, name, photo_url, date_of_birth, country, governorate, grade, performance', { count: 'exact' })
+      .select('id, name, photo_url, date_of_birth, country, governorate, grade, performance, payments(*)', { count: 'exact' })
       .eq('organization_id', profile.organization_id);
 
     if (profile.role === 'sponsor') {
@@ -572,7 +549,7 @@ export async function fetchOrphansPaginatedData(
         .eq('sponsor_id', profile.id);
 
       if (!sponsorOrphans || sponsorOrphans.length === 0) {
-        return { orphansData: [], totalCount: 0, paymentsData: [] };
+        return { orphansData: [], totalCount: 0 };
       }
       const orphanIds = sponsorOrphans.map(so => so.orphan_id);
       orphansQuery = orphansQuery.in('id', orphanIds);
@@ -595,23 +572,13 @@ export async function fetchOrphansPaginatedData(
     const { data: orphansData, error: orphansError, count } = await orphansQuery.range(from, to);
 
     if (orphansError) {
-      return { orphansData: null, orphansError, totalCount: 0, paymentsData: [] };
+      return { orphansData: null, orphansError, totalCount: 0 };
     }
     if (!orphansData || orphansData.length === 0) {
-      return { orphansData: [], totalCount: count ?? 0, paymentsData: [] };
+      return { orphansData: [], totalCount: count ?? 0 };
     }
 
-    const orphanIds = orphansData.map(o => o.id);
-    const { data: paymentsData } = await supabase
-      .from('payments')
-      .select('*')
-      .in('orphan_id', orphanIds);
-
-    return {
-      orphansData,
-      totalCount: count ?? orphansData.length,
-      paymentsData: paymentsData || [],
-    };
+    return { orphansData, totalCount: count ?? orphansData.length };
   });
 
   if (result.orphansError) throw result.orphansError;
@@ -619,14 +586,8 @@ export async function fetchOrphansPaginatedData(
     return { orphans: [], totalCount: result.totalCount };
   }
 
-  const paymentsByOrphan = new Map<string, any[]>();
-  (result.paymentsData || []).forEach(p => {
-    if (!paymentsByOrphan.has(p.orphan_id)) paymentsByOrphan.set(p.orphan_id, []);
-    paymentsByOrphan.get(p.orphan_id)!.push(p);
-  });
-
   const orphans = result.orphansData.map((orphan) => {
-    const orphanPayments = paymentsByOrphan.get(orphan.id) || [];
+    const orphanPayments = Array.isArray(orphan.payments) ? (orphan.payments as any[]) : [];
     const today = new Date();
     const birthDate = new Date(orphan.date_of_birth);
     const age = today.getFullYear() - birthDate.getFullYear();
