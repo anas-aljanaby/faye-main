@@ -240,18 +240,6 @@ export const useOrphans = () => {
         const orphanPrograms = programsByOrphan.get(orphanId) || [];
         const sponsorId = sponsorByOrphan.get(orphanId);
 
-          // Helper function to convert UUID to numeric ID for compatibility
-          const uuidToNumber = (uuid: string): number => {
-            // Use a simple hash of the UUID to get a consistent number
-            let hash = 0;
-            for (let i = 0; i < uuid.length; i++) {
-              const char = uuid.charCodeAt(i);
-              hash = ((hash << 5) - hash) + char;
-              hash = hash & hash; // Convert to 32bit integer
-            }
-            return Math.abs(hash) % 1000000;
-          };
-
         // Transform data to match Orphan type
         const payments: Payment[] = orphanPayments
           .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
@@ -799,17 +787,6 @@ export const useOrphanDetail = (orphanId?: string | null) => {
           sponsorOrphansData,
         },
       } = result;
-
-      // Helper function to convert UUID to numeric ID for compatibility
-      const uuidToNumber = (uuid: string): number => {
-        let hash = 0;
-        for (let i = 0; i < uuid.length; i++) {
-          const char = uuid.charCodeAt(i);
-          hash = ((hash << 5) - hash) + char;
-          hash = hash & hash;
-        }
-        return Math.abs(hash) % 1000000;
-      };
 
       // Transform related data
       const orphanPayments = (paymentsData.data || []).map(p => ({

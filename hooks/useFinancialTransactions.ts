@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { FinancialTransaction, TransactionType, TransactionStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { cache, getCacheKey } from '../utils/cache';
+import { uuidToNumber } from '../utils/idMapper';
 
 // Extended transaction type with approval info
 export interface FinancialTransactionWithApproval extends FinancialTransaction {
@@ -10,17 +11,6 @@ export interface FinancialTransactionWithApproval extends FinancialTransaction {
   rejectedBy?: string;
   rejectionReason?: string;
 }
-
-// Helper function to convert UUID to numeric ID for compatibility
-const uuidToNumber = (uuid: string): number => {
-  let hash = 0;
-  for (let i = 0; i < uuid.length; i++) {
-    const char = uuid.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash) % 1000000;
-};
 
 // Helper function to convert numeric ID to UUID (for lookups)
 // This is a simplified approach - in production you'd want a proper mapping

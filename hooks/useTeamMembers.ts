@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { TeamMember, Task } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { cache, getCacheKey } from '../utils/cache';
+import { uuidToNumber } from '../utils/idMapper';
 
 export const useTeamMembers = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -56,17 +57,6 @@ export const useTeamMembers = () => {
         cache.set(cacheKey, [], 2 * 60 * 1000);
         return;
       }
-
-      // Helper function to convert UUID to numeric ID for compatibility
-      const uuidToNumber = (uuid: string): number => {
-        let hash = 0;
-        for (let i = 0; i < uuid.length; i++) {
-          const char = uuid.charCodeAt(i);
-          hash = ((hash << 5) - hash) + char;
-          hash = hash & hash;
-        }
-        return Math.abs(hash) % 1000000;
-      };
 
       const teamMemberIds = teamMembersData.map(m => m.id);
 
@@ -171,15 +161,7 @@ export const useTeamMembersBasic = () => {
         return;
       }
 
-      const uuidToNumber = (uuid: string): number => {
-        let hash = 0;
-        for (let i = 0; i < uuid.length; i++) {
-          const char = uuid.charCodeAt(i);
-          hash = ((hash << 5) - hash) + char;
-          hash = hash & hash;
-        }
-        return Math.abs(hash) % 1000000;
-      };      const basicMembers: TeamMember[] = teamMembersData.map((member) => ({
+      const basicMembers: TeamMember[] = teamMembersData.map((member) => ({
         id: uuidToNumber(member.id),
         uuid: member.id,
         name: member.name,
