@@ -86,27 +86,24 @@ export const useOrphans = () => {
 
         const orphanIds = orphansData.map(o => o.id);
 
-        // Batch fetch all related data at once
-        const [paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = await Promise.all([
-          // Fetch all payments for all orphans
+        // Batch fetch all related data; use allSettled so one failure doesn't lose the whole batch
+        const queryNames = ['payments', 'achievements', 'occasions', 'occasion_orphans', 'gifts', 'update_logs', 'family_members', 'program_participations', 'sponsor_orphans'];
+        const settled = await Promise.allSettled([
           supabase.from('payments').select('*').in('orphan_id', orphanIds),
-          // Fetch all achievements
           supabase.from('achievements').select('*').in('orphan_id', orphanIds),
-          // Fetch all special occasions linked to orphans (via orphan_id or junction table)
           supabase.from('special_occasions').select('*').in('orphan_id', orphanIds).not('orphan_id', 'is', null),
-          // Fetch occasions linked via junction table
           supabase.from('occasion_orphans').select('occasion_id, orphan_id, occasion:special_occasions(*)').in('orphan_id', orphanIds),
-          // Fetch all gifts
           supabase.from('gifts').select('*').in('orphan_id', orphanIds),
-          // Fetch all update logs
           supabase.from('update_logs').select('*, user_profiles(name)').in('orphan_id', orphanIds),
-          // Fetch all family members
           supabase.from('family_members').select('*').in('orphan_id', orphanIds),
-          // Fetch all program participations
           supabase.from('program_participations').select('*').in('orphan_id', orphanIds),
-          // Fetch all sponsor relationships
           supabase.from('sponsor_orphans').select('orphan_id, sponsor_id').in('orphan_id', orphanIds),
         ]);
+        const [paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = settled.map((outcome, i) => {
+          if (outcome.status === 'fulfilled') return outcome.value;
+          console.warn(`Orphans related fetch failed (${queryNames[i]}):`, outcome.reason);
+          return { data: null, error: outcome.reason };
+        });
 
         return {
           orphansData,
@@ -713,44 +710,24 @@ export const useOrphanDetail = (orphanId?: string | null) => {
           };
         }
 
-        // Fetch related data only for this orphan
-        const [
-          paymentsData,
-          achievementsData,
-          occasionsData,
-          occasionOrphansData,
-          giftsData,
-          logsData,
-          familyData,
-          programsData,
-          sponsorOrphansData,
-        ] = await Promise.all([
+        // Fetch related data only for this orphan; use allSettled for partial failure resilience
+        const detailQueryNames = ['payments', 'achievements', 'occasions', 'occasion_orphans', 'gifts', 'update_logs', 'family_members', 'program_participations', 'sponsor_orphans'];
+        const detailSettled = await Promise.allSettled([
           supabase.from('payments').select('*').eq('orphan_id', orphanId),
           supabase.from('achievements').select('*').eq('orphan_id', orphanId),
-          supabase
-            .from('special_occasions')
-            .select('*')
-            .eq('orphan_id', orphanId)
-            .not('orphan_id', 'is', null),
-          supabase
-            .from('occasion_orphans')
-            .select('occasion_id, orphan_id, occasion:special_occasions(*)')
-            .eq('orphan_id', orphanId),
+          supabase.from('special_occasions').select('*').eq('orphan_id', orphanId).not('orphan_id', 'is', null),
+          supabase.from('occasion_orphans').select('occasion_id, orphan_id, occasion:special_occasions(*)').eq('orphan_id', orphanId),
           supabase.from('gifts').select('*').eq('orphan_id', orphanId),
-          supabase
-            .from('update_logs')
-            .select('*, user_profiles(name)')
-            .eq('orphan_id', orphanId),
+          supabase.from('update_logs').select('*, user_profiles(name)').eq('orphan_id', orphanId),
           supabase.from('family_members').select('*').eq('orphan_id', orphanId),
-          supabase
-            .from('program_participations')
-            .select('*')
-            .eq('orphan_id', orphanId),
-          supabase
-            .from('sponsor_orphans')
-            .select('orphan_id, sponsor_id')
-            .eq('orphan_id', orphanId),
+          supabase.from('program_participations').select('*').eq('orphan_id', orphanId),
+          supabase.from('sponsor_orphans').select('orphan_id, sponsor_id').eq('orphan_id', orphanId),
         ]);
+        const [paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = detailSettled.map((outcome, i) => {
+          if (outcome.status === 'fulfilled') return outcome.value;
+          console.warn(`Orphan detail fetch failed (${detailQueryNames[i]}):`, outcome.reason);
+          return { data: null, error: outcome.reason };
+        });
 
         return {
           orphanRow,
