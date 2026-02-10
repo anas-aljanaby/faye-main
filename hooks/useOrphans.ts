@@ -10,6 +10,40 @@ import { uuidToNumber } from '../utils/idMapper';
 /** Profile shape needed for orphans basic fetch (from AuthContext userProfile) */
 type OrphansBasicProfile = { organization_id: string; id: string; role: 'team_member' | 'sponsor' };
 
+export type CreateOrphanInput = {
+  organizationId: string;
+  name: string;
+  dateOfBirth: Date;
+  gender: 'ذكر' | 'أنثى';
+  grade?: string;
+  country?: string;
+  governorate?: string;
+};
+
+// Simple helper to create a new orphan row
+export async function createOrphan(input: CreateOrphanInput) {
+  const { data, error } = await supabase
+    .from('orphans')
+    .insert({
+      organization_id: input.organizationId,
+      name: input.name,
+      date_of_birth: input.dateOfBirth.toISOString().slice(0, 10),
+      gender: input.gender,
+      grade: input.grade ?? null,
+      country: input.country ?? null,
+      governorate: input.governorate ?? null,
+    })
+    .select('id')
+    .single();
+
+  if (error) {
+    console.error('Error creating orphan:', error);
+    throw error;
+  }
+
+  return data;
+}
+
 export const useOrphans = () => {
   const [orphans, setOrphans] = useState<Orphan[]>([]);
   const [loading, setLoading] = useState(true);

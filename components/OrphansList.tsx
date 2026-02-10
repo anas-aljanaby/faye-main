@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useOrphansPaginated } from '../hooks/useOrphans';
+import { useMutation } from '@tanstack/react-query';
+import { useAuth } from '../contexts/AuthContext';
+import { useOrphansPaginated, createOrphan } from '../hooks/useOrphans';
 import { Orphan } from '../types';
 import EntityCard, { EntityCardField } from './EntityCard';
 import { DataTable } from './DataTable';
@@ -144,6 +146,7 @@ const FilterSortPopover: React.FC<{
 const ITEMS_PER_PAGE = 12;
 
 const OrphansList: React.FC = () => {
+    const { userProfile } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -158,7 +161,7 @@ const OrphansList: React.FC = () => {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
 
-    const { orphans: orphanList, totalCount, loading } = useOrphansPaginated({
+    const { orphans: orphanList, totalCount, loading, refetch } = useOrphansPaginated({
         page: currentPage,
         pageSize: ITEMS_PER_PAGE,
         search: searchQuery,
@@ -304,9 +307,34 @@ const OrphansList: React.FC = () => {
         setIsMessageModalOpen(false);
         setSelectedIds(new Set());
     };
-    
-    const handleSaveNewOrphan = (_data: { name: string; age: number; grade: string; country: string }) => {
-        // TODO: persist new orphan via API then refetch paginated list
+
+    const createOrphanMutation = useMutation({
+        mutationFn: async (data: { name: string; age: number; grade: string; country: string }) => {
+            if (!userProfile) {
+                throw new Error('User not authenticated');
+            }
+
+            // Derive approximate date of birth from age input
+            const birthDate = new Date();
+            birthDate.setFullYear(birthDate.getFullYear() - data.age);
+
+            return createOrphan({
+                organizationId: userProfile.organization_id,
+                name: data.name,
+                dateOfBirth: birthDate,
+                gender: 'ذكر', // Default; could be extended in modal later
+                grade: data.grade,
+                country: data.country,
+            });
+        },
+        onSuccess: () => {
+            // Reload current page so the newly created orphan appears in the list
+            refetch();
+        },
+    });
+
+    const handleSaveNewOrphan = (data: { name: string; age: number; grade: string; country: string }) => {
+        createOrphanMutation.mutate(data);
         setIsAddModalOpen(false);
     };
 
