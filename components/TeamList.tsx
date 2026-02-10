@@ -570,6 +570,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
     const [sortBy, setSortBy] = useState('name-asc');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [memberFilter, setMemberFilter] = useState<'all' | 'employees' | 'volunteers' | 'delegates'>('all');
+    const [teamViewMode, setTeamViewMode] = useState<'table' | 'grid'>('grid');
 
     const handleTogglePermission = async (userId: string, permissionKey: string): Promise<{ success: boolean; error?: string }> => {
         const result = await togglePermission(userId, permissionKey as any);
@@ -709,52 +710,24 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                 </header>
             )}
 
-            {/* Toolbar - aligned with faye-new OrphansList header/search styling */}
+            {/* Toolbar */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div className="relative w-full md:w-80">
-                    <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    </div>
-                    <input
-                        type="text"
-                        placeholder="البحث في الموظفين..."
+                <div className="relative w-full md:w-80 group">
+                    <input 
+                        type="text" 
+                        placeholder="البحث في الموظفين..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pr-10 pl-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white outline-none transition-colors"
+                        className="w-full pr-10 pl-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
                         ref={searchInputRef}
                     />
                 </div>
                 <div className="flex items-center gap-3 w-full md:w-auto">
-                    {!embedded && (
-                        <div className="bg-gray-100 p-1 rounded-xl flex flex-1 md:flex-none overflow-x-auto scrollbar-hide">
-                            {([
-                                { key: 'all', label: 'الكل' },
-                                { key: 'employees', label: 'الموظفون' },
-                                { key: 'volunteers', label: 'المتطوعون' },
-                                { key: 'delegates', label: 'المندوبين' },
-                            ] as const).map(option => (
-                                <button
-                                    key={option.key}
-                                    onClick={() => setMemberFilter(option.key)}
-                                    className={`px-3 py-2 rounded-lg transition-all text-sm whitespace-nowrap ${
-                                        memberFilter === option.key
-                                            ? 'bg-white text-primary shadow-sm font-bold'
-                                            : 'text-gray-500 hover:text-gray-700'
-                                    }`}
-                                >
-                                    {option.label}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    <button
-                        type="button"
-                        onClick={() => setIsAddModalOpen(true)}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm whitespace-nowrap"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                        إضافة موظف
-                    </button>
+                    <div className="bg-gray-100 p-1 rounded-xl flex">
+                        <button onClick={() => setTeamViewMode('table')} className={`px-3 py-2 rounded-lg transition-all ${teamViewMode === 'table' ? 'bg-white text-primary shadow-sm font-bold' : 'text-gray-500'}`}>جدول</button>
+                        <button onClick={() => setTeamViewMode('grid')} className={`px-3 py-2 rounded-lg transition-all ${teamViewMode === 'grid' ? 'bg-white text-primary shadow-sm font-bold' : 'text-gray-500'}`}>بطاقات</button>
+                    </div>
+                    <button className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-lg" onClick={() => setIsAddModalOpen(true)}>إضافة موظف</button>
                 </div>
             </div>
 
