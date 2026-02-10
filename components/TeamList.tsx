@@ -709,7 +709,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                 </header>
             )}
 
-            {/* Toolbar - faye-new style */}
+            {/* Toolbar - aligned with faye-new OrphansList header/search styling */}
             <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                 <div className="relative w-full md:w-80">
                     <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -720,7 +720,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                         placeholder="البحث في الموظفين..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pr-10 pl-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                        className="w-full pr-10 pl-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white outline-none transition-colors"
                         ref={searchInputRef}
                     />
                 </div>
@@ -748,10 +748,11 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                         </div>
                     )}
                     <button
+                        type="button"
                         onClick={() => setIsAddModalOpen(true)}
-                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 whitespace-nowrap flex items-center gap-2"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm whitespace-nowrap"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                         إضافة موظف
                     </button>
                 </div>
