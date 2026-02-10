@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTeamMembersBasic } from '../hooks/useTeamMembers';
 import { usePermissions, TeamMemberWithPermissions, UserPermissions } from '../hooks/usePermissions';
 import { useAuth } from '../contexts/AuthContext';
@@ -731,103 +732,58 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                 </div>
             </div>
 
-            {/* Sub-toolbar: sort, select all, total */}
-            <div className="flex flex-wrap items-center gap-4">
-                <div className="relative">
-                    <button 
-                        onClick={() => setIsPopoverOpen(prev => !prev)}
-                        className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary"
-                        aria-label="الفرز"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                    </button>
-                    {isPopoverOpen && (
-                        <SortPopover 
-                            onClose={() => setIsPopoverOpen(false)}
-                            sortBy={sortBy}
-                            setSortBy={setSortBy}
-                            onReset={handleResetSort}
-                        />
-                    )}
-                </div>
-                <div className="flex items-center gap-3">
-                    <input 
-                        type="checkbox" 
-                        id="selectAllCheckbox"
-                        checked={filteredTeamMembers.length > 0 && selectedIds.size === filteredTeamMembers.length}
-                        onChange={handleSelectAll}
-                        className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                        disabled={filteredTeamMembers.length === 0}
-                        aria-label="تحديد الكل"
-                    />
-                    <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
-                        تحديد الكل
-                    </label>
-                </div>
-                <span className="text-sm text-text-secondary">
-                    تم العثور على {filteredTeamMembers.length} عضو
-                </span>
-            </div>
-
-            <div>
-                
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {filteredTeamMembers.map(member => {
-                        const isSelected = selectedIds.has(member.id);
-                        return (
-                            <div key={member.id} className={`relative bg-white rounded-lg border p-4 flex items-center gap-4 transition-all duration-200 cursor-pointer ${isSelected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-md hover:border-gray-300'}`} onClick={() => navigate(`/team/${member.id}`)}>
-                                 <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => handleSelect(member.id)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer flex-shrink-0"
-                                    aria-label={`تحديد ${member.name}`}
-                                />
-                                <Avatar src={member.avatarUrl} name={member.name} size="xl" />
-                                <div className="flex-1">
-                                    <h3 className="text-xl font-semibold text-gray-800">{member.name}</h3>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                        {(() => {
-                                            const memberPerms = getMemberPermissions(member.id);
-                                            if (!memberPerms?.permissions) {
-                                                return <p className="text-sm text-text-secondary">عضو فريق</p>;
-                                            }
-                                            const p = memberPerms.permissions;
-                                            // Simplified: don't show role/permission badges in card list
-                                            return <p className="text-sm text-text-secondary">عضو فريق</p>;
-                                        })()}
+            <AnimatePresence mode="wait">
+                {teamViewMode === 'table' ? (
+                    <motion.div key="table" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table className="w-full text-right border-collapse">
+                            <thead className="bg-gray-50 text-gray-500 text-xs font-bold uppercase">
+                                <tr>
+                                    <th className="p-4 border-b">الاسم</th>
+                                    <th className="p-4 border-b">الدور</th>
+                                    <th className="p-4 border-b">الحالة</th>
+                                    <th className="p-4 border-b text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {filteredTeamMembers.map(member => {
+                                    const memberPerms = getMemberPermissions(member.id);
+                                    const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
+                                    return (
+                                        <tr key={member.id} className="hover:bg-gray-50 transition-all text-sm cursor-pointer" onClick={() => navigate(`/team/${member.id}`)}>
+                                            <td className="p-4 font-bold">{member.name}</td>
+                                            <td className="p-4 text-gray-600">{role}</td>
+                                            <td className="p-4"><span className="text-[10px] font-bold text-green-600">نشط</span></td>
+                                            <td className="p-4 text-center">
+                                                <Link to={`/team/${member.id}`} onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-primary transition-colors">عرض</Link>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </motion.div>
+                ) : (
+                    <motion.div key="grid" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {filteredTeamMembers.map(member => {
+                            const memberPerms = getMemberPermissions(member.id);
+                            const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
+                            return (
+                                <div key={member.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer" onClick={() => navigate(`/team/${member.id}`)}>
+                                    <div className="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center text-2xl font-bold mb-3">
+                                        {member.name.charAt(0)}
+                                    </div>
+                                    <h4 className="font-bold text-gray-800">{member.name}</h4>
+                                    <p className="text-xs text-gray-500 mb-4">{role}</p>
+                                    <div className="flex gap-2 w-full mt-auto">
+                                        <span className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-green-50 text-green-600">نشط</span>
+                                        <Link to={`/team/${member.id}`} onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 bg-primary-light text-primary rounded-lg text-xs font-bold">عرض</Link>
                                     </div>
                                 </div>
-                                <div className="relative">
-                                    <button onClick={(e) => { e.stopPropagation(); setActiveMenuId(member.id === activeMenuId ? null : member.id); }} className="p-2 text-text-secondary hover:bg-gray-200 rounded-full" aria-label={`خيارات لـ ${member.name}`}>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
-                                    </button>
-                                    {activeMenuId === member.id && (
-                                        <div ref={menuRef} className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg shadow-xl z-10 border">
-                                            <Link to={`/team/${member.id}`} onClick={(e) => e.stopPropagation()} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">عرض الملف</Link>
-                                            <button onClick={(e) => { e.stopPropagation(); setEditingMember(member); setActiveMenuId(null); }} className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">تعديل</button>
-                                            <button 
-                                                onClick={(e) => { 
-                                                    e.stopPropagation(); 
-                                                    const memberPerms = getMemberPermissions(member.id);
-                                                    if (memberPerms) {
-                                                        setPermissionsMember(memberPerms);
-                                                    }
-                                                    setActiveMenuId(null); 
-                                                }} 
-                                                className="block w-full text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                            >
-                                                الصلاحيات
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </section>
-            </div>
+                            );
+                        })}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
 
         {selectedIds.size > 0 && (
