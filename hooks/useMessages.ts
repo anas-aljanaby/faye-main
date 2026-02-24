@@ -20,7 +20,7 @@ export const useMessages = (conversationId: string | null) => {
 
     let channel: RealtimeChannel | null = null;
 
-    const fetchMessages = async (useCache = true) => {
+    const fetchMessages = async (useCache = true, silent = false) => {
       const cacheKey = getCacheKey.messages(conversationId);
       
       // Check cache first
@@ -29,14 +29,14 @@ export const useMessages = (conversationId: string | null) => {
         if (cachedData) {
           setMessages(cachedData);
           setLoading(false);
-          // Still fetch in background to update cache (stale-while-revalidate)
-          fetchMessages(false).catch(() => {});
+          // Revalidate in the background without toggling the loading spinner
+          fetchMessages(false, true).catch(() => {});
           return;
         }
       }
 
       try {
-        setLoading(true);
+        if (!silent) setLoading(true);
         setError(null);
 
         // Fetch messages with sender info

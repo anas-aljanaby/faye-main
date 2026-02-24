@@ -59,7 +59,7 @@ export const useOrphans = () => {
     fetchOrphans();
   }, [userProfile]);
 
-  const fetchOrphans = async (useCache = true) => {
+  const fetchOrphans = async (useCache = true, silent = false) => {
     if (!userProfile) return;
 
     const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
@@ -70,14 +70,14 @@ export const useOrphans = () => {
       if (cachedData) {
         setOrphans(cachedData);
         setLoading(false);
-        // Still fetch in background to update cache (stale-while-revalidate)
-        fetchOrphans(false).catch(() => {});
+        // Revalidate in the background without toggling the loading spinner
+        fetchOrphans(false, true).catch(() => {});
         return;
       }
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Batch all queries into a single withUserContext call to avoid multiple RPC overhead

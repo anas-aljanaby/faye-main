@@ -19,7 +19,7 @@ export const useConversations = () => {
     fetchConversations();
   }, [userProfile, user]);
 
-  const fetchConversations = async (useCache = true) => {
+  const fetchConversations = async (useCache = true, silent = false) => {
     if (!userProfile || !user) return;
 
     const cacheKey = getCacheKey.conversations(userProfile.organization_id, user.id);
@@ -30,14 +30,14 @@ export const useConversations = () => {
       if (cachedData) {
         setConversations(cachedData);
         setLoading(false);
-        // Still fetch in background to update cache (stale-while-revalidate)
-        fetchConversations(false).catch(() => {});
+        // Revalidate in the background without toggling the loading spinner
+        fetchConversations(false, true).catch(() => {});
         return;
       }
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Fetch conversations where user is either user1 or user2

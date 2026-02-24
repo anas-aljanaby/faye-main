@@ -20,7 +20,7 @@ export const useTeamMembers = () => {
     fetchTeamMembers();
   }, [userProfile]);
 
-  const fetchTeamMembers = async (useCache = true) => {
+  const fetchTeamMembers = async (useCache = true, silent = false) => {
     if (!userProfile) return;
 
     const cacheKey = getCacheKey.teamMembers(userProfile.organization_id);
@@ -31,14 +31,14 @@ export const useTeamMembers = () => {
       if (cachedData) {
         setTeamMembers(cachedData);
         setLoading(false);
-        // Still fetch in background to update cache (stale-while-revalidate)
-        fetchTeamMembers(false).catch(() => {});
+        // Revalidate in the background without toggling the loading spinner
+        fetchTeamMembers(false, true).catch(() => {});
         return;
       }
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Fetch team members from user_profiles (excluding system admin)
@@ -127,7 +127,7 @@ export const useTeamMembersBasic = () => {
     fetchTeamMembers();
   }, [userProfile]);
 
-  const fetchTeamMembers = async (useCache = true) => {
+  const fetchTeamMembers = async (useCache = true, silent = false) => {
     if (!userProfile) return;
 
     const cacheKey = `team-members-basic:${userProfile.organization_id}`;
@@ -137,13 +137,14 @@ export const useTeamMembersBasic = () => {
       if (cachedData) {
         setTeamMembers(cachedData);
         setLoading(false);
-        fetchTeamMembers(false).catch(() => {});
+        // Revalidate in the background without toggling the loading spinner
+        fetchTeamMembers(false, true).catch(() => {});
         return;
       }
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       const { data: teamMembersData, error: teamMembersError } = await supabase

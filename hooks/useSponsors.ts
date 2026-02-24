@@ -21,7 +21,7 @@ export const useSponsors = () => {
     fetchSponsors();
   }, [userProfile]);
 
-  const fetchSponsors = async (useCache = true) => {
+  const fetchSponsors = async (useCache = true, silent = false) => {
     if (!userProfile) return;
 
     const cacheKey = getCacheKey.sponsors(userProfile.organization_id);
@@ -32,14 +32,14 @@ export const useSponsors = () => {
       if (cachedData) {
         setSponsors(cachedData);
         setLoading(false);
-        // Still fetch in background to update cache (stale-while-revalidate)
-        fetchSponsors(false).catch(() => {});
+        // Revalidate in the background without toggling the loading spinner
+        fetchSponsors(false, true).catch(() => {});
         return;
       }
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Fetch sponsors from user_profiles (excluding system admin)

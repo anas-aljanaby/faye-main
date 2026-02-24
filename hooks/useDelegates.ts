@@ -32,7 +32,7 @@ export const useDelegates = () => {
     fetchDelegates();
   }, [userProfile]);
 
-  const fetchDelegates = async (useCache = true) => {
+  const fetchDelegates = async (useCache = true, silent = false) => {
     if (!userProfile) return;
 
     const cacheKey = `delegates_${userProfile.organization_id}`;
@@ -43,14 +43,14 @@ export const useDelegates = () => {
       if (cachedData) {
         setDelegates(cachedData);
         setLoading(false);
-        // Still fetch in background to update cache (stale-while-revalidate)
-        fetchDelegates(false).catch(() => {});
+        // Revalidate in the background without toggling the loading spinner
+        fetchDelegates(false, true).catch(() => {});
         return;
       }
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       const { data, error: fetchError } = await withUserContext(async () => {

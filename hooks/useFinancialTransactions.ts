@@ -33,7 +33,7 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
     fetchTransactions();
   }, [userProfile]);
 
-  const fetchTransactions = async (useCache = true) => {
+  const fetchTransactions = async (useCache = true, silent = false) => {
     if (!userProfile) return;
 
     const baseCacheKey = getCacheKey.financialTransactions(userProfile.organization_id);
@@ -45,14 +45,14 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
       if (cachedData) {
         setTransactions(cachedData);
         setLoading(false);
-        // Still fetch in background to update cache (stale-while-revalidate)
-        fetchTransactions(false).catch(() => {});
+        // Revalidate in the background without toggling the loading spinner
+        fetchTransactions(false, true).catch(() => {});
         return;
       }
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // For dashboard widgets we only need basic transaction data (no receipts/payments joins)

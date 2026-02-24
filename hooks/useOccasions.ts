@@ -25,7 +25,7 @@ export const useOccasions = () => {
     dateFrom?: Date;
     dateTo?: Date;
     occasionType?: 'orphan_specific' | 'organization_wide' | 'multi_orphan';
-  }) => {
+  }, silent = false) => {
     if (!userProfile) return;
 
     const cacheKey = getCacheKey.occasions(userProfile.organization_id, userProfile.id, userProfile.role);
@@ -36,14 +36,14 @@ export const useOccasions = () => {
       if (cachedData) {
         setOccasions(cachedData);
         setLoading(false);
-        // Still fetch in background to update cache (stale-while-revalidate)
-        fetchOccasions(false).catch(() => {});
+        // Revalidate in the background without toggling the loading spinner
+        fetchOccasions(false, undefined, true).catch(() => {});
         return;
       }
     }
 
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
 
       // Batch all queries into a single withUserContext call to avoid multiple RPC overhead
