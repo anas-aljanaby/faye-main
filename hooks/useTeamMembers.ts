@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { TeamMember, Task } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -111,73 +112,47 @@ export const useTeamMembers = () => {
   return { teamMembers, loading, error, refetch: fetchTeamMembers };
 };
 
+const EMPTY_TEAM_MEMBERS: TeamMember[] = [];
+
+async function fetchTeamMembersBasicData(organizationId: string): Promise<TeamMember[]> {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('id, name, avatar_url')
+    .eq('organization_id', organizationId)
+    .eq('role', 'team_member')
+    .eq('is_system_admin', false);
+
+  if (error) throw error;
+  if (!data) return [];
+
+  return data.map((member) => ({
+    id: uuidToNumber(member.id),
+    uuid: member.id,
+    name: member.name,
+    avatarUrl: member.avatar_url || '',
+    assignedOrphanIds: [],
+    tasks: [],
+  }));
+}
+
 // Lightweight hook for lists/dashboards - no tasks fetched
 export const useTeamMembersBasic = () => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { userProfile } = useAuth();
+  const {
+    data: teamMembers = EMPTY_TEAM_MEMBERS,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['team-members-basic', userProfile?.organization_id],
+    queryFn: () => fetchTeamMembersBasicData(userProfile!.organization_id),
+    enabled: !!userProfile,
+  });
 
-  useEffect(() => {
-    if (!userProfile) {
-      setLoading(false);
-      return;
-    }
-
-    fetchTeamMembers();
-  }, [userProfile]);
-
-  const fetchTeamMembers = async (useCache = true, silent = false) => {
-    if (!userProfile) return;
-
-    const cacheKey = `team-members-basic:${userProfile.organization_id}`;
-
-    if (useCache) {
-      const cachedData = cache.get<TeamMember[]>(cacheKey);
-      if (cachedData) {
-        setTeamMembers(cachedData);
-        setLoading(false);
-        // Revalidate in the background without toggling the loading spinner
-        fetchTeamMembers(false, true).catch(() => {});
-        return;
-      }
-    }
-
-    try {
-      if (!silent) setLoading(true);
-      setError(null);
-
-      const { data: teamMembersData, error: teamMembersError } = await supabase
-        .from('user_profiles')
-        .select('id, name, avatar_url')
-        .eq('organization_id', userProfile.organization_id)
-        .eq('role', 'team_member')
-        .eq('is_system_admin', false);
-
-      if (teamMembersError) throw teamMembersError;
-      if (!teamMembersData) {
-        setTeamMembers([]);
-        setLoading(false);
-        cache.set(cacheKey, [], 2 * 60 * 1000);
-        return;
-      }
-
-      const basicMembers: TeamMember[] = teamMembersData.map((member) => ({
-        id: uuidToNumber(member.id),
-        uuid: member.id,
-        name: member.name,
-        avatarUrl: member.avatar_url || '',
-        assignedOrphanIds: [],
-        tasks: [],
-      }));
-
-      setTeamMembers(basicMembers);
-      cache.set(cacheKey, basicMembers, 5 * 60 * 1000);
-    } catch (err) {
-      console.error('Error fetching basic team members:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch team members');
-    } finally {
-      setLoading(false);
-    }
-  };  return { teamMembers, loading, error, refetch: fetchTeamMembers };
+  return {
+    teamMembers,
+    loading,
+    error: error ? (error instanceof Error ? error.message : 'Failed to fetch team members') : null,
+    refetch,
+  };
 };
