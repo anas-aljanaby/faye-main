@@ -685,6 +685,7 @@ const AddTransactionModal: React.FC<{
                                                                             [orphanId]: {
                                                                                 ...prev[orphanId],
                                                                                 paymentType: 'month',
+                                                                                amount: '50',
                                                                                 month: undefined // Keep empty, user must select
                                                                             }
                                                                         }));
@@ -704,7 +705,8 @@ const AddTransactionModal: React.FC<{
                                                                             ...prev,
                                                                             [orphanId]: {
                                                                                 ...prev[orphanId],
-                                                                                paymentType: 'year'
+                                                                                paymentType: 'year',
+                                                                                amount: '600'
                                                                             }
                                                                         }));
                                                                     }}

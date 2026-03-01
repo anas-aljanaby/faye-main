@@ -13,6 +13,8 @@ import OrphansList from './components/OrphansList';
 import SponsorsList from './components/SponsorsList';
 import Messages from './components/Messages';
 import HumanResources from './components/HumanResources';
+import { PoliciesPage } from './components/policies/PoliciesPage';
+import { PoliciesNavProvider } from './components/policies/PoliciesNavContext';
 import SignIn from './components/SignIn';
 import ProtectedRoute from './components/ProtectedRoute';
 import TeamMemberRoute from './components/TeamMemberRoute';
@@ -29,6 +31,7 @@ function App() {
             path="/*"
             element={
               <ProtectedRoute>
+                <PoliciesNavProvider>
                 <div className="relative flex h-screen bg-bg-page text-text-primary overflow-hidden">
                   <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
                   <main className="flex-1 flex flex-col overflow-y-auto">
@@ -46,12 +49,13 @@ function App() {
                         <Route path="/team" element={<Navigate to="/human-resources" replace />} />
                         <Route path="/messages" element={<Messages />} />
                         <Route path="/human-resources" element={<TeamMemberRoute><HumanResources /></TeamMemberRoute>} />
-                        <Route path="/policies" element={<div className="text-3xl font-bold">صفحة سياسات فيء</div>} />
+                        <Route path="/policies" element={<PoliciesPage />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
                       </Routes>
                     </div>
                   </main>
                 </div>
+                </PoliciesNavProvider>
               </ProtectedRoute>
             }
           />
