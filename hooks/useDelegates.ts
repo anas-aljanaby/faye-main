@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase, withUserContext } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 
 export interface Delegate {
@@ -45,20 +45,18 @@ export const useDelegates = () => {
     try {
       setMutationError(null);
 
-      const { data, error: insertError } = await withUserContext(async () => {
-        return await supabase
-          .from('delegates')
-          .insert({
-            organization_id: userProfile.organization_id,
-            name: delegate.name,
-            task: delegate.task,
-            address: delegate.address,
-            emails: delegate.emails,
-            phones: delegate.phones,
-          })
-          .select()
-          .single();
-      });
+      const { data, error: insertError } = await supabase
+        .from('delegates')
+        .insert({
+          organization_id: userProfile.organization_id,
+          name: delegate.name,
+          task: delegate.task,
+          address: delegate.address,
+          emails: delegate.emails,
+          phones: delegate.phones,
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
@@ -89,14 +87,12 @@ export const useDelegates = () => {
     try {
       setMutationError(null);
 
-      const { data, error: updateError } = await withUserContext(async () => {
-        return await supabase
-          .from('delegates')
-          .update(updates)
-          .eq('id', id)
-          .select()
-          .single();
-      });
+      const { data, error: updateError } = await supabase
+        .from('delegates')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
 
       if (updateError) throw updateError;
 
@@ -128,12 +124,10 @@ export const useDelegates = () => {
     try {
       setMutationError(null);
 
-      const { error: deleteError } = await withUserContext(async () => {
-        return await supabase
-          .from('delegates')
-          .delete()
-          .eq('id', id);
-      });
+      const { error: deleteError } = await supabase
+        .from('delegates')
+        .delete()
+        .eq('id', id);
 
       if (deleteError) throw deleteError;
 
@@ -164,13 +158,11 @@ export const useDelegates = () => {
 const EMPTY_DELEGATES: Delegate[] = [];
 
 async function fetchDelegatesData(organizationId: string): Promise<Delegate[]> {
-  const { data, error } = await withUserContext(async () => {
-    return await supabase
-      .from('delegates')
-      .select('*')
-      .eq('organization_id', organizationId)
-      .order('name', { ascending: true });
-  });
+  const { data, error } = await supabase
+    .from('delegates')
+    .select('*')
+    .eq('organization_id', organizationId)
+    .order('name', { ascending: true });
 
   if (error) throw error;
 

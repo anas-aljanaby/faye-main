@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { withUserContext } from '../lib/supabaseClient';
 import { Orphan, Payment, Achievement, SpecialOccasion, Gift, UpdateLog, ProgramParticipation, PaymentStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { uuidToNumber } from '../utils/idMapper';
@@ -65,9 +64,8 @@ export const useOrphans = () => {
       if (!silent) setLoading(true);
       setError(null);
 
-      // Batch all queries into a single withUserContext call to avoid multiple RPC overhead
-      const result = await withUserContext(async () => {
-        // Fetch orphans based on user role and organization
+      // Fetch orphans based on user role and organization
+      const result = await (async () => {
         let orphansQuery = supabase
           .from('orphans')
           .select('*')
@@ -139,7 +137,7 @@ export const useOrphans = () => {
             sponsorOrphansData,
           }
         };
-      });
+      })();
 
       if (result.orphansError) throw result.orphansError;
 
@@ -418,7 +416,7 @@ export const useOrphans = () => {
 
 /** Fetches basic orphans data (for lists/dashboards). Used by useOrphansBasic with React Query. Uses Supabase relationship syntax (orphans + payments in one query). */
 export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promise<Orphan[]> {
-  const result = await withUserContext(async () => {
+  const result = await (async () => {
     let orphansQuery = supabase
       .from('orphans')
       .select('id, name, photo_url, date_of_birth, country, performance, payments(*)')
@@ -449,7 +447,7 @@ export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promi
     }
 
     return { orphansData, orphansError: null };
-  });
+  })();
 
   if (result.orphansError) throw result.orphansError;
   if (!result.orphansData || result.orphansData.length === 0) return [];
@@ -534,7 +532,7 @@ export async function fetchOrphansPaginatedData(
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-    const result = await withUserContext(async () => {
+  const result = await (async () => {
     let orphansQuery = supabase
       .from('orphans')
       .select('id, name, photo_url, date_of_birth, country, governorate, grade, performance, payments(*)', { count: 'exact' })
@@ -577,7 +575,7 @@ export async function fetchOrphansPaginatedData(
     }
 
     return { orphansData, totalCount: count ?? orphansData.length };
-  });
+  })();
 
   if (result.orphansError) throw result.orphansError;
   if (!result.orphansData || result.orphansData.length === 0) {
@@ -684,7 +682,7 @@ export const useOrphansPaginated = (filters: OrphansPaginatedFilters) => {
 
 /** Fetches a single orphan with all related data. Used by useOrphanDetail with React Query. */
 export async function fetchOrphanDetailData(organizationId: string, orphanId: string): Promise<Orphan> {
-  const result = await withUserContext(async () => {
+  const result = await (async () => {
     const { data: orphanRow, error: orphanError } = await supabase
       .from('orphans')
       .select('*')
@@ -733,7 +731,7 @@ export async function fetchOrphanDetailData(organizationId: string, orphanId: st
         sponsorOrphansData,
       },
     };
-  });
+  })();
 
   if (result.orphanError || !result.orphanRow) {
     throw result.orphanError || new Error('Orphan not found');

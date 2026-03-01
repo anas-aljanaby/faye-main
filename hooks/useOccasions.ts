@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import { withUserContext } from '../lib/supabaseClient';
 import { SpecialOccasion } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -210,8 +209,7 @@ async function fetchOccasionsData(
   userProfile: OccasionProfile,
   filters?: OccasionFilters
 ): Promise<SpecialOccasion[]> {
-  // Batch all queries into a single withUserContext call.
-  const result = await withUserContext(async () => {
+  const result = await (async () => {
     let occasionsQuery = supabase
       .from('special_occasions')
       .select('*')
@@ -307,7 +305,7 @@ async function fetchOccasionsData(
     }
 
     return { occasionsList, occasionOrphansData };
-  });
+  })();
 
   const occasionsList: SpecialOccasion[] = result.occasionsList || [];
   const occasionOrphansData = result.occasionOrphansData;

@@ -13,7 +13,6 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
-import { withUserContext } from '../lib/supabaseClient';
 import Avatar from './Avatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
@@ -748,27 +747,23 @@ const OrphanProfile: React.FC = () => {
 
       try {
         // Check if user sponsors this orphan
-        const { data: sponsorOrphan } = await withUserContext(async () => {
-          return await supabase
-            .from('sponsor_orphans')
-            .select('orphan_id')
-            .eq('sponsor_id', userProfile.id)
-            .eq('orphan_id', orphan.uuid)
-            .single();
-        });
+        const { data: sponsorOrphan } = await supabase
+          .from('sponsor_orphans')
+          .select('orphan_id')
+          .eq('sponsor_id', userProfile.id)
+          .eq('orphan_id', orphan.uuid)
+          .single();
 
         if (sponsorOrphan) {
           setIsSponsorOfOrphan(true);
           
           // Fetch existing note
-          const { data: noteData } = await withUserContext(async () => {
-            return await supabase
-              .from('sponsor_notes')
-              .select('note')
-              .eq('sponsor_id', userProfile.id)
-              .eq('orphan_id', orphan.uuid)
-              .single();
-          });
+          const { data: noteData } = await supabase
+            .from('sponsor_notes')
+            .select('note')
+            .eq('sponsor_id', userProfile.id)
+            .eq('orphan_id', orphan.uuid)
+            .single();
 
           if (noteData) {
             setSponsorNote(noteData.note);
@@ -796,17 +791,15 @@ const OrphanProfile: React.FC = () => {
       }
 
       try {
-        const { data: noteData } = await withUserContext(async () => {
-          return await supabase
-            .from('sponsor_notes')
-            .select(`
-              note,
-              updated_at,
-              sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
-            `)
-            .eq('orphan_id', orphan.uuid)
-            .single();
-        });
+        const { data: noteData } = await supabase
+          .from('sponsor_notes')
+          .select(`
+            note,
+            updated_at,
+            sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
+          `)
+          .eq('orphan_id', orphan.uuid)
+          .single();
 
         if (noteData) {
           setDisplayNote({
@@ -831,34 +824,30 @@ const OrphanProfile: React.FC = () => {
 
     setIsNoteLoading(true);
     try {
-      const { error } = await withUserContext(async () => {
-        return await supabase
-          .from('sponsor_notes')
-          .upsert({
-            orphan_id: orphan.uuid,
-            sponsor_id: userProfile.id,
-            note: sponsorNote,
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'orphan_id,sponsor_id'
-          });
-      });
+      const { error } = await supabase
+        .from('sponsor_notes')
+        .upsert({
+          orphan_id: orphan.uuid,
+          sponsor_id: userProfile.id,
+          note: sponsorNote,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'orphan_id,sponsor_id'
+        });
 
       if (error) throw error;
 
       setIsNoteModalOpen(false);
       // Refresh display note
-      const { data: noteData } = await withUserContext(async () => {
-        return await supabase
-          .from('sponsor_notes')
-          .select(`
-            note,
-            updated_at,
-            sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
-          `)
-          .eq('orphan_id', orphan.uuid)
-          .single();
-      });
+      const { data: noteData } = await supabase
+        .from('sponsor_notes')
+        .select(`
+          note,
+          updated_at,
+          sponsor:user_profiles!sponsor_notes_sponsor_id_fkey(name)
+        `)
+        .eq('orphan_id', orphan.uuid)
+        .single();
 
       if (noteData) {
         setDisplayNote({

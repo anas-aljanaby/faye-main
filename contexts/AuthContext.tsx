@@ -107,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchPermissions = async (userId: string) => {
     try {
-      // RLS is disabled on user_permissions, so no need for withUserContext
+      // RLS is disabled on user_permissions; tenant isolation is via organization_id
       const { data: permissionsData, error: permissionsError } = await supabase
         .from('user_permissions')
         .select('can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager')
