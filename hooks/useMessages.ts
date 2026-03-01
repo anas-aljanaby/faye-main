@@ -214,12 +214,16 @@ export const useMessages = (conversationId: string | null) => {
       if (insertError) {
         return { error: insertError };
       }
+
+      // Keep sender-side thread and conversation preview in sync.
+      await queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      await queryClient.invalidateQueries({ queryKey: ['conversations'] });
       
       return { error: null };
     } catch (err) {
       return { error: err instanceof Error ? err : new Error('Failed to send message') };
     }
-  }, [conversationId, user]);
+  }, [conversationId, queryClient, user]);
 
   return {
     messages,

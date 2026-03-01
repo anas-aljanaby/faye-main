@@ -171,18 +171,18 @@ This file tracks the plan and status for fixing the intermittent data-loading is
 
 ### Latest Completed Change
 
-- **Change**: removed custom in-memory cache usage from two additional hooks:
-  - `useDelegates` migrated to React Query (`['delegates', organizationId]`) with mutation invalidation
-  - full `useSponsors` migrated to React Query (`['sponsors', organizationId]`)
+- **Change**: hardened cross-view consistency by expanding key-based invalidation in mutation paths:
+  - invalidate `['messages', conversationId]`
+  - invalidate `['conversations']`
+  - invalidate `['financial-transactions']` after successful `addTransaction`
 - **Why this is good**:
-  - Further shrinks runtime reliance on `utils/cache.ts` and aligns these hooks with query-key-driven consistency.
-  - Preserves both hooks' existing APIs (including `refetch(useCache?, silent?)` compatibility).
-  - Keeps delegate UI responsiveness via cache update + invalidation after mutations.
+  - Ensures sender-side message list and conversation previews refresh immediately after send.
+  - Ensures newly created transactions are visible across all transaction consumers (dashboard + financial screens).
+  - Aligns mutation behavior across domains to shared query-key invalidation instead of local-only refresh assumptions.
 - **Expected outcome**:
-  - Delegates table should still load/edit/add/delete as before, with consistent sorted results.
-  - Sponsor lists should load identically while now benefiting from shared React Query behavior.
+  - After sending a message, sender thread and conversation preview update promptly.
+  - After adding a transaction, both financial list and dashboard-derived summaries converge without stale mismatch windows.
 - **Manual test**:
-  1. Open Human Resources delegates section and confirm initial list loads.
-  2. Add/edit/delete delegates and verify immediate UI updates and no hard refresh required.
-  3. Open sponsor-related views and confirm sponsor lists still render and filter correctly.
-  4. Reload and confirm both delegates and sponsors restore/load without regressions.
+  1. Open Messages, send a message in an existing conversation, and verify it appears right away.
+  2. Return to conversation list and verify preview/timestamp updates for that conversation.
+  3. Add a new transaction in Financial System and verify dashboard financial widgets reflect it after navigation/refetch cycle.

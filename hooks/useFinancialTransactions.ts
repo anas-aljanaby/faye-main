@@ -245,6 +245,7 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
 
       // Don't refresh here - let the component handle it to avoid double refresh
       // This also prevents hanging if fetchTransactions has issues
+      await queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       console.log('Transaction creation complete, returning ID:', newTransaction.id);
       return newTransaction.id;
     } catch (err) {
