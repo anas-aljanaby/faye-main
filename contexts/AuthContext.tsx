@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { authenticate, signOut as authSignOut, getSession, AuthSession, setCurrentUserId } from '../lib/auth';
 import { supabase } from '../lib/supabaseClient';
-import { cache } from '../utils/cache';
 
 interface UserProfile {
   id: string;
@@ -223,8 +222,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionState(null);
     setUserProfile(null);
     setPermissions(null);
-    // Clear cache on sign out
-    cache.clear();
+    // Clear persisted React Query snapshots on sign out.
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const key = window.localStorage.key(i);
+        if (key && key.startsWith('FAYE_REACT_QUERY_CACHE_v')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => window.localStorage.removeItem(key));
+    }
   };
 
   const value = useMemo(() => {

@@ -1,10 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { withUserContext } from '../lib/supabaseClient';
 import { Orphan, Payment, Achievement, SpecialOccasion, Gift, UpdateLog, ProgramParticipation, PaymentStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { cache, getCacheKey } from '../utils/cache';
 import { uuidToNumber } from '../utils/idMapper';
 
 /** Profile shape needed for orphans basic fetch (from AuthContext userProfile) */
@@ -61,20 +60,6 @@ export const useOrphans = () => {
 
   const fetchOrphans = async (useCache = true, silent = false) => {
     if (!userProfile) return;
-
-    const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
-    
-    // Check cache first
-    if (useCache) {
-      const cachedData = cache.get<Orphan[]>(cacheKey);
-      if (cachedData) {
-        setOrphans(cachedData);
-        setLoading(false);
-        // Revalidate in the background without toggling the loading spinner
-        fetchOrphans(false, true).catch(() => {});
-        return;
-      }
-    }
 
     try {
       if (!silent) setLoading(true);
@@ -161,7 +146,6 @@ export const useOrphans = () => {
       if (!result.orphansData || result.orphansData.length === 0) {
         setOrphans([]);
         setLoading(false);
-        cache.set(cacheKey, [], 2 * 60 * 1000);
         return;
       }
 
@@ -169,7 +153,6 @@ export const useOrphans = () => {
       if (!relatedData) {
         setOrphans([]);
         setLoading(false);
-        cache.set(cacheKey, [], 2 * 60 * 1000);
         return;
       }
 
@@ -386,8 +369,6 @@ export const useOrphans = () => {
       });
 
       setOrphans(enrichedOrphans);
-      // Cache the result for 5 minutes
-      cache.set(cacheKey, enrichedOrphans, 5 * 60 * 1000);
     } catch (err) {
       console.error('Error fetching orphans:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch orphans');
@@ -424,9 +405,7 @@ export const useOrphans = () => {
 
       if (updateError) throw updateError;
 
-      // Clear cache and refetch orphans to get updated data
-      const cacheKey = getCacheKey.orphans(userProfile.organization_id, userProfile.id, userProfile.role);
-      cache.delete(cacheKey);
+      // Refetch orphans to get updated data
       await fetchOrphans(false);
     } catch (err) {
       console.error('Error updating orphan:', err);
@@ -971,17 +950,6 @@ export const useOrphanDetail = (orphanId?: string | null) => {
         .eq('organization_id', userProfile.organization_id);
 
       if (updateError) throw updateError;
-
-      // Clear list caches so other views pick up changes
-      const fullKey = getCacheKey.orphans(
-        userProfile.organization_id,
-        userProfile.id,
-        userProfile.role
-      );
-      cache.delete(fullKey);
-
-      const basicKey = `orphans-basic:${userProfile.organization_id}:${userProfile.id}:${userProfile.role}`;
-      cache.delete(basicKey);
 
       await fetchOrphan();
     } catch (err) {

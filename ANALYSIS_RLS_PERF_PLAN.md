@@ -78,6 +78,7 @@ This file tracks the plan and status for fixing the intermittent data-loading is
 
 3. **Remove `utils/cache.ts`**
    - Only after all runtime `import { cache }` usages are eliminated.
+   - **Status**: ✅ _Implemented (all imports removed from hooks/AuthContext, file deleted)._
    - **Validation**: no imports of `utils/cache` remain in the codebase.
 
 ### Observability and Regression Guardrails
@@ -171,18 +172,18 @@ This file tracks the plan and status for fixing the intermittent data-loading is
 
 ### Latest Completed Change
 
-- **Change**: hardened cross-view consistency by expanding key-based invalidation in mutation paths:
-  - invalidate `['messages', conversationId]`
-  - invalidate `['conversations']`
-  - invalidate `['financial-transactions']` after successful `addTransaction`
+- **Change**: completed legacy cache retirement:
+  - removed remaining `utils/cache` usage from `useOrphans` read/update paths
+  - replaced `AuthContext` sign-out cache clear with persisted React Query key cleanup (`FAYE_REACT_QUERY_CACHE_v*`)
+  - deleted `utils/cache.ts` after confirming zero imports
 - **Why this is good**:
-  - Ensures sender-side message list and conversation previews refresh immediately after send.
-  - Ensures newly created transactions are visible across all transaction consumers (dashboard + financial screens).
-  - Aligns mutation behavior across domains to shared query-key invalidation instead of local-only refresh assumptions.
+  - Removes the dual-cache architecture (React Query + custom in-memory) that caused divergence/invalidation complexity.
+  - Ensures sign-out clears persisted query snapshots without relying on removed custom cache APIs.
+  - Simplifies data flow and makes all runtime caching behavior React Query-based.
 - **Expected outcome**:
-  - After sending a message, sender thread and conversation preview update promptly.
-  - After adding a transaction, both financial list and dashboard-derived summaries converge without stale mismatch windows.
+  - No runtime references to `utils/cache` remain, and app builds/runs with a single cache strategy.
+  - Orphans and auth flows continue working without custom cache regressions.
 - **Manual test**:
-  1. Open Messages, send a message in an existing conversation, and verify it appears right away.
-  2. Return to conversation list and verify preview/timestamp updates for that conversation.
-  3. Add a new transaction in Financial System and verify dashboard financial widgets reflect it after navigation/refetch cycle.
+  1. Run a search for `utils/cache` and confirm zero TypeScript/TSX imports.
+  2. Open Orphans list/detail and verify loading and update flows still work.
+  3. Sign in, then sign out; sign back in and verify no stale restored state from a prior user persists.
