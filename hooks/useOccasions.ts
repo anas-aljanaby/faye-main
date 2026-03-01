@@ -1,196 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { withUserContext } from '../lib/supabaseClient';
 import { SpecialOccasion } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { cache, getCacheKey } from '../utils/cache';
+
+type OccasionFilters = {
+  orphanId?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+  occasionType?: 'orphan_specific' | 'organization_wide' | 'multi_orphan';
+};
+
+type OccasionProfile = {
+  organization_id: string;
+  id: string;
+  role: string;
+};
+
+const EMPTY_OCCASIONS: SpecialOccasion[] = [];
 
 export const useOccasions = () => {
-  const [occasions, setOccasions] = useState<SpecialOccasion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [filteredOccasions, setFilteredOccasions] = useState<SpecialOccasion[] | null>(null);
   const { userProfile } = useAuth();
+  const {
+    data: baseOccasions = EMPTY_OCCASIONS,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['occasions', userProfile?.organization_id, userProfile?.id, userProfile?.role],
+    queryFn: () => fetchOccasionsData(userProfile as OccasionProfile),
+    enabled: !!userProfile,
+  });
 
-  useEffect(() => {
-    if (!userProfile) {
-      setLoading(false);
-      return;
-    }
-
-    fetchOccasions();
-  }, [userProfile]);
-
-  const fetchOccasions = async (useCache = true, filters?: {
-    orphanId?: string;
-    dateFrom?: Date;
-    dateTo?: Date;
-    occasionType?: 'orphan_specific' | 'organization_wide' | 'multi_orphan';
-  }, silent = false) => {
-    if (!userProfile) return;
-
-    const cacheKey = getCacheKey.occasions(userProfile.organization_id, userProfile.id, userProfile.role);
-    
-    // Check cache first
-    if (useCache && !filters) {
-      const cachedData = cache.get<SpecialOccasion[]>(cacheKey);
-      if (cachedData) {
-        setOccasions(cachedData);
-        setLoading(false);
-        // Revalidate in the background without toggling the loading spinner
-        fetchOccasions(false, undefined, true).catch(() => {});
+  const fetchOccasions = useCallback(
+    async (_useCache = true, filters?: OccasionFilters, _silent = false) => {
+      if (!userProfile) return;
+      if (!filters) {
+        setFilteredOccasions(null);
+        await refetch();
         return;
       }
-    }
-
-    try {
-      if (!silent) setLoading(true);
-      setError(null);
-
-      // Batch all queries into a single withUserContext call to avoid multiple RPC overhead
-      const result = await withUserContext(async () => {
-        // Fetch occasions based on user role and organization
-        let occasionsQuery = supabase
-          .from('special_occasions')
-          .select('*')
-          .eq('organization_id', userProfile.organization_id)
-          .order('date', { ascending: true });
-
-        // Apply filters
-        if (filters?.dateFrom) {
-          occasionsQuery = occasionsQuery.gte('date', filters.dateFrom.toISOString().split('T')[0]);
-        }
-        if (filters?.dateTo) {
-          occasionsQuery = occasionsQuery.lte('date', filters.dateTo.toISOString().split('T')[0]);
-        }
-        if (filters?.occasionType) {
-          occasionsQuery = occasionsQuery.eq('occasion_type', filters.occasionType);
-        }
-
-        // Execute the base query
-        const occasionsResult = await occasionsQuery;
-        if (occasionsResult.error) throw occasionsResult.error;
-
-        let finalOccasions = occasionsResult.data || [];
-
-        // If user is a sponsor, filter to only show occasions for their sponsored orphans or organization-wide
-        if (userProfile.role === 'sponsor') {
-          const { data: sponsorOrphans } = await supabase
-            .from('sponsor_orphans')
-            .select('orphan_id')
-            .eq('sponsor_id', userProfile.id);
-
-          if (sponsorOrphans && sponsorOrphans.length > 0) {
-            const orphanIds = sponsorOrphans.map(so => so.orphan_id);
-            // Filter occasions that are organization-wide or linked to sponsored orphans
-            finalOccasions = finalOccasions.filter((occ: any) => 
-              occ.occasion_type === 'organization_wide' || 
-              (occ.orphan_id && orphanIds.includes(occ.orphan_id))
-            );
-            // Also fetch multi-orphan occasions linked via junction table
-            const { data: junctionOccasions } = await supabase
-              .from('occasion_orphans')
-              .select('occasion_id, occasion:special_occasions(*)')
-              .in('orphan_id', orphanIds);
-            
-            if (junctionOccasions) {
-              const junctionOccIds = new Set(finalOccasions.map((o: any) => o.id));
-              junctionOccasions.forEach((j: any) => {
-                if (j.occasion && typeof j.occasion === 'object' && !Array.isArray(j.occasion) && !junctionOccIds.has(j.occasion.id)) {
-                  finalOccasions.push(j.occasion);
-                }
-              });
-            }
-          } else {
-            // No sponsored orphans, only show organization-wide
-            finalOccasions = finalOccasions.filter((occ: any) => occ.occasion_type === 'organization_wide');
-          }
-        }
-
-        // If filtering by specific orphan
-        if (filters?.orphanId) {
-          finalOccasions = finalOccasions.filter((occ: any) => 
-            occ.orphan_id === filters.orphanId || 
-            occ.occasion_type === 'organization_wide'
-          );
-          // Also fetch multi-orphan occasions linked via junction table
-          const { data: junctionOccasions } = await supabase
-            .from('occasion_orphans')
-            .select('occasion_id, occasion:special_occasions(*)')
-            .eq('orphan_id', filters.orphanId);
-          
-          if (junctionOccasions) {
-            const junctionOccIds = new Set(finalOccasions.map((o: any) => o.id));
-            junctionOccasions.forEach((j: any) => {
-              if (j.occasion && typeof j.occasion === 'object' && !Array.isArray(j.occasion) && !junctionOccIds.has(j.occasion.id)) {
-                finalOccasions.push(j.occasion);
-              }
-            });
-          }
-        }
-
-        const occasionsList: SpecialOccasion[] = finalOccasions;
-        const occasionIds = occasionsList.map(o => o.id);
-
-        // Fetch linked orphans for multi-orphan occasions (if any)
-        let occasionOrphansData = null;
-        if (occasionIds.length > 0) {
-          const { data } = await supabase
-            .from('occasion_orphans')
-            .select('occasion_id, orphan:orphans(id, name)')
-            .in('occasion_id', occasionIds);
-          occasionOrphansData = data;
-        }
-
-        return { occasionsList, occasionOrphansData };
-      });
-
-      const occasionsList: SpecialOccasion[] = result.occasionsList || [];
-      const occasionOrphansData = result.occasionOrphansData;
-
-      // Group linked orphans by occasion
-      const linkedOrphansByOccasion = new Map<string, Array<{ id: string; name: string }>>();
-      if (occasionOrphansData) {
-        occasionOrphansData.forEach((item: any) => {
-          const occasionId = item.occasion_id;
-          const orphan = item.orphan;
-          if (orphan && typeof orphan === 'object' && !Array.isArray(orphan)) {
-            if (!linkedOrphansByOccasion.has(occasionId)) {
-              linkedOrphansByOccasion.set(occasionId, []);
-            }
-            linkedOrphansByOccasion.get(occasionId)!.push({
-              id: orphan.id,
-              name: orphan.name
-            });
-          }
-        });
-      }
-
-      // Attach linked orphans to occasions
-      occasionsList.forEach(occasion => {
-        const linked = linkedOrphansByOccasion.get(occasion.id);
-        if (linked && linked.length > 0) {
-          occasion.linked_orphans = linked;
-        }
-      });
-
-      // Convert date strings to Date objects
-      const occasionsWithDates = occasionsList.map(occ => ({
-        ...occ,
-        date: new Date(occ.date),
-        created_at: new Date(occ.created_at)
-      }));
-
-      setOccasions(occasionsWithDates);
-      if (!filters) {
-        cache.set(cacheKey, occasionsWithDates, 2 * 60 * 1000);
-      }
-    } catch (err: any) {
-      console.error('Error fetching occasions:', err);
-      setError(err.message || 'Failed to fetch occasions');
-    } finally {
-      setLoading(false);
-    }
-  };
+      const filtered = await fetchOccasionsData(userProfile as OccasionProfile, filters);
+      setFilteredOccasions(filtered);
+    },
+    [refetch, userProfile]
+  );
 
   const addOccasion = async (
     title: string,
@@ -241,10 +97,7 @@ export const useOccasions = () => {
         if (junctionError) throw junctionError;
       }
 
-      // Clear cache and refetch
-      const cacheKey = getCacheKey.occasions?.(userProfile.organization_id, userProfile.id, userProfile.role) || 
-                       `occasions_${userProfile.organization_id}_${userProfile.id}_${userProfile.role}`;
-      cache.delete(cacheKey);
+      setFilteredOccasions(null);
       await fetchOccasions(false);
     } catch (err: any) {
       console.error('Error adding occasion:', err);
@@ -323,10 +176,7 @@ export const useOccasions = () => {
         });
       }
 
-      // Clear cache and refetch
-      const cacheKey = getCacheKey.occasions?.(userProfile.organization_id, userProfile.id, userProfile.role) || 
-                       `occasions_${userProfile.organization_id}_${userProfile.id}_${userProfile.role}`;
-      cache.delete(cacheKey);
+      setFilteredOccasions(null);
       await fetchOccasions(false);
     } catch (err: any) {
       console.error('Error updating occasion:', err);
@@ -350,10 +200,7 @@ export const useOccasions = () => {
 
       if (deleteError) throw deleteError;
 
-      // Clear cache and refetch
-      const cacheKey = getCacheKey.occasions?.(userProfile.organization_id, userProfile.id, userProfile.role) || 
-                       `occasions_${userProfile.organization_id}_${userProfile.id}_${userProfile.role}`;
-      cache.delete(cacheKey);
+      setFilteredOccasions(null);
       await fetchOccasions(false);
     } catch (err: any) {
       console.error('Error deleting occasion:', err);
@@ -362,13 +209,150 @@ export const useOccasions = () => {
   };
 
   return {
-    occasions,
+    occasions: filteredOccasions ?? baseOccasions,
     loading,
-    error,
+    error: error ? (error instanceof Error ? error.message : 'Failed to fetch occasions') : null,
     refetch: fetchOccasions,
     addOccasion,
     updateOccasion,
     deleteOccasion,
   };
 };
+
+async function fetchOccasionsData(
+  userProfile: OccasionProfile,
+  filters?: OccasionFilters
+): Promise<SpecialOccasion[]> {
+  // Batch all queries into a single withUserContext call.
+  const result = await withUserContext(async () => {
+    let occasionsQuery = supabase
+      .from('special_occasions')
+      .select('*')
+      .eq('organization_id', userProfile.organization_id)
+      .order('date', { ascending: true });
+
+    if (filters?.dateFrom) {
+      occasionsQuery = occasionsQuery.gte('date', filters.dateFrom.toISOString().split('T')[0]);
+    }
+    if (filters?.dateTo) {
+      occasionsQuery = occasionsQuery.lte('date', filters.dateTo.toISOString().split('T')[0]);
+    }
+    if (filters?.occasionType) {
+      occasionsQuery = occasionsQuery.eq('occasion_type', filters.occasionType);
+    }
+
+    const occasionsResult = await occasionsQuery;
+    if (occasionsResult.error) throw occasionsResult.error;
+
+    let finalOccasions = occasionsResult.data || [];
+
+    if (userProfile.role === 'sponsor') {
+      const { data: sponsorOrphans } = await supabase
+        .from('sponsor_orphans')
+        .select('orphan_id')
+        .eq('sponsor_id', userProfile.id);
+
+      if (sponsorOrphans && sponsorOrphans.length > 0) {
+        const orphanIds = sponsorOrphans.map(so => so.orphan_id);
+        finalOccasions = finalOccasions.filter((occ: any) =>
+          occ.occasion_type === 'organization_wide' ||
+          (occ.orphan_id && orphanIds.includes(occ.orphan_id))
+        );
+
+        const { data: junctionOccasions } = await supabase
+          .from('occasion_orphans')
+          .select('occasion_id, occasion:special_occasions(*)')
+          .in('orphan_id', orphanIds);
+
+        if (junctionOccasions) {
+          const junctionOccIds = new Set(finalOccasions.map((o: any) => o.id));
+          junctionOccasions.forEach((j: any) => {
+            if (
+              j.occasion &&
+              typeof j.occasion === 'object' &&
+              !Array.isArray(j.occasion) &&
+              !junctionOccIds.has(j.occasion.id)
+            ) {
+              finalOccasions.push(j.occasion);
+            }
+          });
+        }
+      } else {
+        finalOccasions = finalOccasions.filter((occ: any) => occ.occasion_type === 'organization_wide');
+      }
+    }
+
+    if (filters?.orphanId) {
+      finalOccasions = finalOccasions.filter((occ: any) =>
+        occ.orphan_id === filters.orphanId ||
+        occ.occasion_type === 'organization_wide'
+      );
+      const { data: junctionOccasions } = await supabase
+        .from('occasion_orphans')
+        .select('occasion_id, occasion:special_occasions(*)')
+        .eq('orphan_id', filters.orphanId);
+
+      if (junctionOccasions) {
+        const junctionOccIds = new Set(finalOccasions.map((o: any) => o.id));
+        junctionOccasions.forEach((j: any) => {
+          if (
+            j.occasion &&
+            typeof j.occasion === 'object' &&
+            !Array.isArray(j.occasion) &&
+            !junctionOccIds.has(j.occasion.id)
+          ) {
+            finalOccasions.push(j.occasion);
+          }
+        });
+      }
+    }
+
+    const occasionsList: SpecialOccasion[] = finalOccasions;
+    const occasionIds = occasionsList.map(o => o.id);
+
+    let occasionOrphansData = null;
+    if (occasionIds.length > 0) {
+      const { data } = await supabase
+        .from('occasion_orphans')
+        .select('occasion_id, orphan:orphans(id, name)')
+        .in('occasion_id', occasionIds);
+      occasionOrphansData = data;
+    }
+
+    return { occasionsList, occasionOrphansData };
+  });
+
+  const occasionsList: SpecialOccasion[] = result.occasionsList || [];
+  const occasionOrphansData = result.occasionOrphansData;
+
+  const linkedOrphansByOccasion = new Map<string, Array<{ id: string; name: string }>>();
+  if (occasionOrphansData) {
+    occasionOrphansData.forEach((item: any) => {
+      const occasionId = item.occasion_id;
+      const orphan = item.orphan;
+      if (orphan && typeof orphan === 'object' && !Array.isArray(orphan)) {
+        if (!linkedOrphansByOccasion.has(occasionId)) {
+          linkedOrphansByOccasion.set(occasionId, []);
+        }
+        linkedOrphansByOccasion.get(occasionId)!.push({
+          id: orphan.id,
+          name: orphan.name,
+        });
+      }
+    });
+  }
+
+  occasionsList.forEach(occasion => {
+    const linked = linkedOrphansByOccasion.get(occasion.id);
+    if (linked && linked.length > 0) {
+      occasion.linked_orphans = linked;
+    }
+  });
+
+  return occasionsList.map(occ => ({
+    ...occ,
+    date: new Date(occ.date),
+    created_at: new Date(occ.created_at),
+  }));
+}
 

@@ -63,7 +63,7 @@ This file tracks the plan and status for fixing the intermittent data-loading is
 ### Next Steps (Remaining Work)
 
 1. **Migrate remaining high-traffic hooks to React Query**
-   - Priority order: `useOccasions`, `useFinancialTransactions`, `useConversations`, `useMessages`.
+   - Priority order: `useFinancialTransactions`, `useConversations`, `useMessages`.
    - For each: extract a standalone `fetch*Data` async function, replace hook body with `useQuery`, use stable empty-array defaults.
    - **Validation**: each migrated hook benefits from localStorage persistence, dedup, and the shouldDehydrateQuery empty-guard.
 
@@ -164,3 +164,19 @@ This file tracks the plan and status for fixing the intermittent data-loading is
    - Manual test:
      - Run a repo search for `utils/cache` and verify no active app imports remain.
      - Smoke test Dashboard, Team Member page, Occasions, Financial, and Messages.
+
+### Latest Completed Change
+
+- **Change**: migrated `useOccasions` read path from custom in-memory cache to React Query (`useQuery` key: `['occasions', organizationId, userId, role]`).
+- **Why this is good**:
+  - Preserves existing consumer API (`occasions`, `loading`, `error`, `refetch`, `addOccasion`, `updateOccasion`, `deleteOccasion`).
+  - Keeps mutation behavior intact by refetching after create/update/delete.
+  - Retains sponsor/team-member visibility/filtering logic in a shared fetch function.
+- **Expected outcome**:
+  - Dashboard upcoming occasions and occasions management modal now share/deduplicate the same query cache in-session.
+  - No regression in role-based occasion visibility or multi-orphan linkage rendering.
+- **Manual test**:
+  1. Open Dashboard and wait for upcoming occasions.
+  2. Open Occasions Management modal; verify occasions load without logic regressions.
+  3. As sponsor user, confirm only permitted occasions appear (organization-wide + sponsored-orphan related).
+  4. Add/edit/delete an occasion and confirm list updates after each action.
