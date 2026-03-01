@@ -63,7 +63,7 @@ This file tracks the plan and status for fixing the intermittent data-loading is
 ### Next Steps (Remaining Work)
 
 1. **Migrate remaining high-traffic hooks to React Query**
-   - Priority order: `useMessages`.
+   - Priority order: _Completed_.
    - For each: extract a standalone `fetch*Data` async function, replace hook body with `useQuery`, use stable empty-array defaults.
    - **Validation**: each migrated hook benefits from localStorage persistence, dedup, and the shouldDehydrateQuery empty-guard.
 
@@ -167,16 +167,16 @@ This file tracks the plan and status for fixing the intermittent data-loading is
 
 ### Latest Completed Change
 
-- **Change**: migrated `useConversations` read path from custom in-memory cache to React Query (`useQuery` key: `['conversations', organizationId, userId]`).
+- **Change**: migrated `useMessages` read path from custom in-memory cache to React Query (`useQuery` key: `['messages', conversationId]`), while preserving real-time behavior.
 - **Why this is good**:
-  - Preserves existing consumer API (`conversations`, `loading`, `error`, `refetch`) used by `Messages` page.
-  - Keeps `refetch(useCache?, silent?)` compatibility while removing legacy custom cache dependency.
-  - Maintains unread-count and last-message derivation logic in a shared fetch function.
+  - Preserves existing consumer API (`messages`, `loading`, `error`, `sendMessage`, `markMessagesAsRead`) used by `Messages` UI.
+  - Keeps realtime insert/update behavior by updating React Query cache via `queryClient.setQueryData`.
+  - Maintains polling fallback on realtime channel errors/timeouts without depending on `utils/cache`.
 - **Expected outcome**:
-  - Conversations list should benefit from React Query dedup/cache behavior with no change in ordering or unread counts.
-  - Starting a new conversation or sending a message should still refresh conversation previews via refetch.
+  - Opening a conversation shows message history with the same ordering and sender metadata.
+  - New incoming messages and read-state updates still appear in near real-time, with polling fallback if subscription fails.
 - **Manual test**:
-  1. Open Messages page and verify conversation list loads in expected order.
-  2. Open a conversation and verify unread badge/last message preview behavior remains correct.
-  3. Start a new conversation and confirm it appears in the list after refresh.
-  4. Send a message and confirm conversation preview updates (last message + timestamp).
+  1. Open a conversation and verify existing messages load in chronological order.
+  2. Send a message and verify it appears immediately in the thread.
+  3. From another account/session, send a message in the same conversation and verify live update appears.
+  4. Re-open the conversation and verify unread messages are marked as read correctly.
