@@ -4,6 +4,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import './index.css';
+import { ThemeProvider } from './contexts/ThemeContext';
 import App from './App';
 
 // Increment this when persistence schema or query shapes change incompatibly.
@@ -55,7 +56,9 @@ root.render(
         },
       }}
     >
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </PersistQueryClientProvider>
   </React.StrictMode>
 );

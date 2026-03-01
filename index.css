@@ -4,12 +4,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Light mode defaults */
+:root {
+  --color-primary: #8c1c3e;
+  --color-primary-hover: #701631;
+  --color-primary-light: #fbe9ef;
+
+  --bg-page: #fdfaf6;
+  --bg-sidebar: #fcf8f3;
+  --bg-card: #ffffff;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+}
+
+/* Dark mode overrides */
+html.dark {
+  --color-primary: #b93c66;
+  --color-primary-hover: #d65d85;
+  --color-primary-light: #3a1d26;
+
+  --bg-page: #111827;
+  --bg-sidebar: #1f2937;
+  --bg-card: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+}
+
 @layer base {
   body {
     font-family: 'Tajawal', sans-serif;
-    background-color: #fdfaf6;
-    color: #1f2937;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
+}
+
+/* Smooth theme transitions */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
 }
 
 @media print {
@@ -39,15 +73,25 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background-color: #fff;
-  border-color: #d1d5db; /* gray-300 */
+  background-color: var(--bg-card);
+  border-color: #d1d5db;
   border-width: 1px;
-  border-radius: 0.375rem; /* rounded-md */
-  padding: 0.5rem 0.75rem; /* py-2 px-3 */
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
   font-size: 1rem;
   line-height: 1.5rem;
-  color: #1f2937; /* text-primary */
+  color: var(--text-primary);
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+html.dark input[type="text"],
+html.dark input[type="number"],
+html.dark input[type="date"],
+html.dark input[type="datetime-local"],
+html.dark textarea,
+html.dark select {
+  border-color: #374151;
+  background-color: #374151;
 }
 
 input[type="text"]:focus,
@@ -58,8 +102,8 @@ textarea:focus,
 select:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
-  border-color: #8c1c3e; /* primary */
-  box-shadow: 0 0 0 2px #fbe9ef; /* primary-light ring */
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
 /* Custom arrow for select dropdowns */
