@@ -55,8 +55,8 @@ All demo passwords: **`admin`**
 
 ### 2. Orphans and relationships (008)
 
-- **7 orphans:** 4 joined Jan 2026, 2 Feb, 1 Mar (أحمد، سارة، يوسف، ليلى، عمر، هيا، نور)  
-- **Sponsor–orphan:** Every orphan has at least one sponsor; سعد sponsors only نور (new sponsor in March).  
+- **20 orphans:** 12 joined Jan 2026, 5 Feb, 3 Mar (أحمد، سارة، يوسف، ليلى، رامي، مريم، كريم، دانة، فادي، لمى، ريم، وائل، عمر، هيا، تالا، ناصر، جنى، نور، ياسر، لمياء).  
+- **Sponsor–orphan:** Every orphan has at least one sponsor; sponsors have 2–5 orphans each.  
 - **Team–orphan assignments:** Khaled and Noora each have assigned orphans for tasks.  
 - **Sponsor–team member:** Each sponsor linked to a primary contact (Khaled or Noora).  
 
@@ -105,7 +105,7 @@ All demo passwords: **`admin`**
 
 | Area | Jan 2026 | Feb 2026 | Mar 2026 |
 |------|----------|----------|----------|
-| Orphans joining | 4 | 2 | 1 |
+| Orphans joining | 12 | 5 | 3 |
 | Sponsors joining | 2 | 2 | 1 |
 | Payments | Mostly paid | Mostly paid; one late (سارة) | Mix: paid, مستحق, قيد المعالجة; نور مستحق only |
 | Financial tx | Income + expense (completed) | Income + expense (completed + rejected) | Income (pending) + expenses (completed + pending) |
