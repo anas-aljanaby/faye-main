@@ -22,8 +22,8 @@ export function PoliciesLayout({ header, sidebar, children, footer, contentRef }
         }
       `}</style>
       {header}
-      <div className="flex flex-col lg:flex-row gap-2 p-4 sm:p-6 md:p-8 max-w-6xl ms-0 me-auto print:gap-0 print:p-0 print:flex-col print:mx-auto">
-        <main ref={contentRef} className="flex-1 min-w-0 max-w-3xl print:max-w-none">
+      <div className="flex flex-col lg:flex-row gap-2 max-w-[2000px] mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 print:gap-0 print:p-0 print:flex-col print:mx-auto">
+        <main ref={contentRef} className="flex-1 min-w-0 print:max-w-none">
           {children}
         </main>
         {sidebar != null && (

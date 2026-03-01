@@ -109,6 +109,11 @@ const NavItem = React.memo(({ to, text, icon, count, isCollapsed, onClose }: Nav
   );
 });
 
+const SIDEBAR_COLLAPSED_WIDTH = 80;
+const SIDEBAR_EXPANDED_DEFAULT = 288;
+const SIDEBAR_MIN_WIDTH = 220;
+const SIDEBAR_MAX_WIDTH = 400;
+
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { signOut, userProfile } = useAuth();
@@ -122,6 +127,65 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       return false;
     }
   });
+
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sidebar_width');
+      if (saved) {
+        const w = parseInt(saved, 10);
+        if (!Number.isNaN(w) && w >= SIDEBAR_MIN_WIDTH && w <= SIDEBAR_MAX_WIDTH) return w;
+      }
+    } catch {
+      // ignore
+    }
+    return SIDEBAR_EXPANDED_DEFAULT;
+  });
+
+  const [isResizing, setIsResizing] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(min-width: 768px)');
+    setIsDesktop(mql.matches);
+    const listener = () => setIsDesktop(mql.matches);
+    mql.addEventListener('change', listener);
+    return () => mql.removeEventListener('change', listener);
+  }, []);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    const onMove = (e: MouseEvent) => {
+      const rightEdge = window.innerWidth;
+      const newWidth = rightEdge - e.clientX;
+      const clamped = Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, newWidth));
+      setSidebarWidth(clamped);
+      try {
+        localStorage.setItem('sidebar_width', String(clamped));
+      } catch {
+        // ignore
+      }
+    };
+    const onUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
 
   useEffect(() => {
     try {
@@ -176,12 +240,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       />
 
       <aside 
-        className={`fixed inset-y-0 right-0 z-50 bg-bg-sidebar shadow-2xl border-l border-white/50 flex flex-col h-full transition-all duration-300 ease-in-out
+        className={`fixed inset-y-0 right-0 z-50 bg-bg-sidebar shadow-2xl border-l border-white/50 flex flex-col h-full
         ${isOpen ? 'translate-x-0' : 'translate-x-full'} 
         md:relative md:translate-x-0
-        ${isCollapsed ? 'md:w-20' : 'md:w-72'}`}
+        ${!isResizing && !isCollapsed ? 'transition-[width] duration-200 ease-out' : ''}`}
+        style={isDesktop ? { width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth } : undefined}
         aria-label="القائمة الجانبية"
       >
+        {isDesktop && !isCollapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="تغيير عرض القائمة الجانبية"
+            onMouseDown={handleResizeStart}
+            className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/40 z-10 flex items-center justify-center group"
+          >
+            <span className="w-0.5 h-12 rounded-full bg-gray-300 group-hover:bg-primary/60 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+          </div>
+        )}
+
         <div className={`flex items-center p-4 border-b border-gray-200/50 h-16 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           {!isCollapsed && (
             <div className="flex items-center gap-3 overflow-hidden">
@@ -224,11 +301,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-gray-200/50 bg-gray-50/50">
+        <div className="p-4 border-t border-gray-200/50 bg-gray-50/50 flex flex-col items-center">
           <button 
             onClick={handleSignOut}
-            className={`group flex items-center gap-3 p-3 rounded-xl text-text-secondary w-full text-right hover:bg-red-50 hover:text-red-600 transition-all duration-300 font-medium
-            ${isCollapsed ? 'justify-center' : ''}`}
+            className="group flex items-center justify-center gap-3 p-3 rounded-xl text-text-secondary w-full hover:bg-red-50 hover:text-red-600 transition-all duration-300 font-medium"
             title={isCollapsed ? 'تسجيل الخروج' : ''}
           >
             <div className="transition-transform group-hover:-translate-x-1">

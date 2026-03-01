@@ -11,7 +11,7 @@ interface PoliciesHeaderProps {
 export function PoliciesHeader({ onPrint }: PoliciesHeaderProps) {
   return (
     <header className="bg-bg-card border-b border-gray-200 shadow-sm print:border-0">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 md:px-8 py-4 md:py-5">
+      <div className="max-w-[2000px] mx-auto px-4 sm:px-6 md:px-8 py-4 md:py-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-primary leading-tight">
