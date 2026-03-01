@@ -3,8 +3,6 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { conversations, financialTransactions } from '../data';
 import { TransactionStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { usePoliciesNav } from './policies/PoliciesNavContext';
-import { POLICIES_TOC } from './policies/data';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -114,9 +112,6 @@ const NavItem = React.memo(({ to, text, icon, count, isCollapsed, onClose }: Nav
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { signOut, userProfile } = useAuth();
-  const { policiesNav } = usePoliciesNav();
-  const isOnPolicies = location.pathname === '/policies';
-  const [policiesTocOpen, setPoliciesTocOpen] = useState(true);
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
@@ -216,102 +211,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 scrollbar-hide">
-          {visibleNavItems.map((item) => {
-            if (item.to === '/policies') {
-              return (
-                <div key={item.to} className="space-y-1">
-                  {isOnPolicies ? (
-                    <div
-                      className={`group relative flex items-center rounded-xl transition-all duration-300 ease-in-out font-medium overflow-hidden bg-primary text-white shadow-lg shadow-primary/30 translate-x-1 ${isCollapsed ? 'justify-center w-12 h-12 px-0 mx-auto' : ''}`}
-                    >
-                      <NavLink
-                        to={item.to}
-                        onClick={onClose}
-                        className={`flex-1 flex items-center gap-4 p-3 overflow-hidden min-w-0 ${isCollapsed ? 'justify-center' : ''}`}
-                      >
-                        <div className="transition-transform duration-300 flex-shrink-0">{item.icon}</div>
-                        {!isCollapsed && (
-                          <span className="whitespace-nowrap opacity-100 transition-opacity duration-300 truncate">
-                            {item.text}
-                          </span>
-                        )}
-                      </NavLink>
-                      {!isCollapsed && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setPoliciesTocOpen((open) => !open);
-                          }}
-                          className="flex-shrink-0 p-2 rounded-lg text-white/90 hover:bg-white/20 transition-colors"
-                          aria-expanded={policiesTocOpen}
-                          aria-label={policiesTocOpen ? 'إخفاء فهرس السياسات' : 'عرض فهرس السياسات'}
-                          title={policiesTocOpen ? 'إخفاء فهرس السياسات' : 'عرض فهرس السياسات'}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="18"
-                            height="18"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className={`transition-transform duration-200 ${policiesTocOpen ? 'rotate-180' : ''}`}
-                          >
-                            <path d="M6 9l6 6 6-6" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <NavItem
-                      to={item.to}
-                      text={item.text}
-                      icon={item.icon}
-                      isCollapsed={isCollapsed}
-                      onClose={onClose}
-                    />
-                  )}
-                  {!isCollapsed && isOnPolicies && policiesNav && policiesTocOpen && (
-                    <ul className="pr-4 pl-2 space-y-0.5 border-r-2 border-primary/20" aria-label="فهرس السياسات">
-                      {POLICIES_TOC.map((tocItem, i) => (
-                        <li key={tocItem.id}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              policiesNav.onSelectSection(tocItem.id);
-                              onClose();
-                            }}
-                            className={`w-full text-right py-2 px-3 rounded-lg text-sm transition-colors ${
-                              policiesNav.activeId === tocItem.id
-                                ? 'bg-primary-light text-primary font-semibold'
-                                : 'text-gray-600 hover:bg-primary-light hover:text-primary'
-                            }`}
-                          >
-                            <span className="font-medium text-primary ml-1">{i + 1}.</span>
-                            {tocItem.label}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              );
-            }
-            return (
-              <NavItem
-                key={item.to}
-                to={item.to}
-                text={item.text}
-                icon={item.icon}
-                count={item.countKey ? notificationCounts[item.countKey] : undefined}
-                isCollapsed={isCollapsed}
-                onClose={onClose}
-              />
-            );
-          })}
+          {visibleNavItems.map((item) => (
+            <NavItem
+              key={item.to}
+              to={item.to}
+              text={item.text}
+              icon={item.icon}
+              count={item.countKey ? notificationCounts[item.countKey] : undefined}
+              isCollapsed={isCollapsed}
+              onClose={onClose}
+            />
+          ))}
         </nav>
 
         <div className="p-4 border-t border-gray-200/50 bg-gray-50/50">

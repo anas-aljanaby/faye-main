@@ -526,7 +526,7 @@ export function PoliciesContent() {
           <IconList items={complaintRights} />
         </PolicySubSection>
         <PolicySubSection title="ثانياً: مراحل معالجة الشكوى">
-          <ProcessStepper steps={complaintSteps} orientation="horizontal" />
+          <ProcessStepper steps={complaintSteps} />
         </PolicySubSection>
       </PolicySection>
 

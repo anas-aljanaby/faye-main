@@ -9,8 +9,8 @@ interface PoliciesLayoutProps {
 }
 
 /**
- * RTL layout for the Policies guide: hero header, main content, and footer.
- * TOC is shown under the policy tab in the app sidebar; no inline sidebar when omitted.
+ * RTL layout for the Policies guide: hero header, main content with sidebar TOC, and footer.
+ * Two-column on desktop, single column on mobile.
  */
 export function PoliciesLayout({ header, sidebar, children, footer, contentRef }: PoliciesLayoutProps) {
   return (
@@ -22,12 +22,12 @@ export function PoliciesLayout({ header, sidebar, children, footer, contentRef }
         }
       `}</style>
       {header}
-      <div className="flex flex-col gap-8 p-4 sm:p-6 md:p-8 max-w-[1600px] mx-auto print:gap-0 print:p-0">
-        <main ref={contentRef} className="flex-1 min-w-0 print:max-w-none">
+      <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto print:gap-0 print:p-0 print:flex-col">
+        <main ref={contentRef} className="flex-1 min-w-0 max-w-3xl print:max-w-none">
           {children}
         </main>
         {sidebar != null && (
-          <aside className="w-full lg:w-72 flex-shrink-0 lg:sticky lg:top-6 lg:self-start print:hidden">
+          <aside className="w-full lg:w-72 flex-shrink-0 lg:sticky lg:top-20 lg:self-start print:hidden">
             {sidebar}
           </aside>
         )}

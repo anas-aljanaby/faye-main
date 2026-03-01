@@ -29,7 +29,7 @@ export function ComparisonGrid({
         <ul className="space-y-2 text-gray-600 list-none">
           {leftItems.map((item, i) => (
             <li key={i} className="flex items-start gap-2">
-              <span className="text-amber-600 mt-0.5">⚡</span>
+              <span className="text-amber-600 mt-0.5 font-bold">•</span>
               <span>{item}</span>
             </li>
           ))}

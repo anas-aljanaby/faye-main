@@ -3,12 +3,14 @@ import { PoliciesLayout } from './PoliciesLayout';
 import { PoliciesHeader } from './PoliciesHeader';
 import { PoliciesFooter } from './PoliciesFooter';
 import { PoliciesContent } from './PoliciesContent';
+import { PoliciesSidebar } from './PoliciesSidebar';
 import { POLICIES_TOC } from './data';
 import { usePoliciesNav } from './PoliciesNavContext';
 
 export function PoliciesPage() {
   const [activeId, setActiveId] = useState(POLICIES_TOC[0].id);
   const [printMode, setPrintMode] = useState(false);
+  const [readingProgress, setReadingProgress] = useState(0);
   const contentRef = useRef<HTMLElement | null>(null);
   const { setPoliciesNav } = usePoliciesNav();
 
@@ -38,6 +40,18 @@ export function PoliciesPage() {
   }, []);
 
   useEffect(() => {
+    const handleScroll = () => {
+      const winScroll = document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const progress = height > 0 ? (winScroll / height) * 100 : 0;
+      setReadingProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
     const main = contentRef.current;
     if (!main) return;
     const sections = main.querySelectorAll('section[id^="policy-"]');
@@ -61,12 +75,19 @@ export function PoliciesPage() {
   }, []);
 
   return (
-    <PoliciesLayout
-      header={<PoliciesHeader onPrint={handlePrint} />}
-      footer={<PoliciesFooter />}
-      contentRef={contentRef}
-    >
-      <PoliciesContent />
-    </PoliciesLayout>
+    <>
+      <div
+        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-light to-primary z-50 print:hidden"
+        style={{ width: `${readingProgress}%`, transition: 'width 0.1s ease-out' }}
+      />
+      <PoliciesLayout
+        header={<PoliciesHeader onPrint={handlePrint} />}
+        sidebar={<PoliciesSidebar activeId={activeId} onSelect={handleSelectSection} />}
+        footer={<PoliciesFooter />}
+        contentRef={contentRef}
+      >
+        <PoliciesContent />
+      </PoliciesLayout>
+    </>
   );
 }
