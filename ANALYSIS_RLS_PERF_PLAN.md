@@ -67,6 +67,10 @@ This file tracks the plan and status for fixing the intermittent data-loading is
    - For each: extract a standalone `fetch*Data` async function, replace hook body with `useQuery`, use stable empty-array defaults.
    - **Validation**: each migrated hook benefits from localStorage persistence, dedup, and the shouldDehydrateQuery empty-guard.
 
+2. **Migrate remaining low-traffic cache hooks**
+   - **Goal**: keep reducing custom in-memory cache surface before full `utils/cache.ts` removal.
+   - **Status**: ✅ _Implemented for `useDelegates` and full `useSponsors` hooks._
+
 2. **Replace manual cache invalidation with `queryClient.invalidateQueries`**
    - Currently, create/update/delete operations call `cache.delete(key)` + `refetch()` manually.
    - After migration, replace with targeted `queryClient.invalidateQueries({ queryKey: [...] })`.
@@ -167,16 +171,18 @@ This file tracks the plan and status for fixing the intermittent data-loading is
 
 ### Latest Completed Change
 
-- **Change**: migrated `useMessages` read path from custom in-memory cache to React Query (`useQuery` key: `['messages', conversationId]`), while preserving real-time behavior.
+- **Change**: removed custom in-memory cache usage from two additional hooks:
+  - `useDelegates` migrated to React Query (`['delegates', organizationId]`) with mutation invalidation
+  - full `useSponsors` migrated to React Query (`['sponsors', organizationId]`)
 - **Why this is good**:
-  - Preserves existing consumer API (`messages`, `loading`, `error`, `sendMessage`, `markMessagesAsRead`) used by `Messages` UI.
-  - Keeps realtime insert/update behavior by updating React Query cache via `queryClient.setQueryData`.
-  - Maintains polling fallback on realtime channel errors/timeouts without depending on `utils/cache`.
+  - Further shrinks runtime reliance on `utils/cache.ts` and aligns these hooks with query-key-driven consistency.
+  - Preserves both hooks' existing APIs (including `refetch(useCache?, silent?)` compatibility).
+  - Keeps delegate UI responsiveness via cache update + invalidation after mutations.
 - **Expected outcome**:
-  - Opening a conversation shows message history with the same ordering and sender metadata.
-  - New incoming messages and read-state updates still appear in near real-time, with polling fallback if subscription fails.
+  - Delegates table should still load/edit/add/delete as before, with consistent sorted results.
+  - Sponsor lists should load identically while now benefiting from shared React Query behavior.
 - **Manual test**:
-  1. Open a conversation and verify existing messages load in chronological order.
-  2. Send a message and verify it appears immediately in the thread.
-  3. From another account/session, send a message in the same conversation and verify live update appears.
-  4. Re-open the conversation and verify unread messages are marked as read correctly.
+  1. Open Human Resources delegates section and confirm initial list loads.
+  2. Add/edit/delete delegates and verify immediate UI updates and no hard refresh required.
+  3. Open sponsor-related views and confirm sponsor lists still render and filter correctly.
+  4. Reload and confirm both delegates and sponsors restore/load without regressions.

@@ -968,7 +968,7 @@ const Dashboard: React.FC = () => {
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
                     <div>
-                      {countsLoading ? <div className="h-8 w-16 bg-gray-200/60 animate-pulse rounded-md mb-1" /> : <p className="text-2xl font-bold text-gray-800">{orphansData.length}</p>}
+                      {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className="text-2xl font-bold text-gray-800">{orphansData.length}</p>}
                       <p className="text-sm text-text-secondary">يتيم</p>
                     </div>
                   </div>
@@ -980,7 +980,7 @@ const Dashboard: React.FC = () => {
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </div>
                     <div>
-                      {countsLoading ? <div className="h-8 w-16 bg-gray-200/60 animate-pulse rounded-md mb-1" /> : <p className="text-2xl font-bold text-gray-800">{sponsorsData.length}</p>}
+                      {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className="text-2xl font-bold text-gray-800">{sponsorsData.length}</p>}
                       <p className="text-sm text-text-secondary">كافل</p>
                     </div>
                   </div>
@@ -992,7 +992,7 @@ const Dashboard: React.FC = () => {
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
                     <div>
-                      {countsLoading ? <div className="h-8 w-16 bg-gray-200/60 animate-pulse rounded-md mb-1" /> : <p className="text-2xl font-bold text-gray-800">{duePayments}</p>}
+                      {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className="text-2xl font-bold text-gray-800">{duePayments}</p>}
                       <p className="text-sm text-text-secondary">دفعة مستحقة</p>
                     </div>
                   </div>
@@ -1004,7 +1004,7 @@ const Dashboard: React.FC = () => {
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     </div>
                     <div>
-                      {countsLoading ? <div className="h-8 w-16 bg-gray-200/60 animate-pulse rounded-md mb-1" /> : <p className={`text-2xl font-bold ${overduePayments > 0 ? 'text-red-600' : 'text-gray-800'}`}>{overduePayments}</p>}
+                      {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className={`text-2xl font-bold ${overduePayments > 0 ? 'text-red-600' : 'text-gray-800'}`}>{overduePayments}</p>}
                       <p className="text-sm text-text-secondary">دفعة متأخرة</p>
                     </div>
                   </div>

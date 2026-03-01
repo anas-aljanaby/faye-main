@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { FinancialTransaction, TransactionType, TransactionStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,6 +20,7 @@ const numberToUuid = (num: number, uuidMap: Map<number, string>): string | undef
 
 export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') => {
   const { userProfile, canCreateExpense, canApproveExpense, canEditTransactions } = useAuth();
+  const queryClient = useQueryClient();
   const {
     data: transactions = EMPTY_TRANSACTIONS,
     isLoading: loading,
@@ -314,7 +315,7 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
 
       if (error) throw error;
 
-      await fetchTransactions(false);
+      await queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       return { success: true };
     } catch (err) {
       console.error('Error approving transaction:', err);
@@ -339,7 +340,7 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
 
       if (error) throw error;
 
-      await fetchTransactions(false);
+      await queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       return { success: true };
     } catch (err) {
       console.error('Error rejecting transaction:', err);
@@ -359,7 +360,7 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
 
       if (error) throw error;
 
-      await fetchTransactions(false);
+      await queryClient.invalidateQueries({ queryKey: ['financial-transactions'] });
       return { success: true };
     } catch (err) {
       console.error('Error deleting transaction:', err);

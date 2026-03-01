@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { withUserContext } from '../lib/supabaseClient';
 import { SpecialOccasion } from '../types';
@@ -23,6 +23,7 @@ const EMPTY_OCCASIONS: SpecialOccasion[] = [];
 export const useOccasions = () => {
   const [filteredOccasions, setFilteredOccasions] = useState<SpecialOccasion[] | null>(null);
   const { userProfile } = useAuth();
+  const queryClient = useQueryClient();
   const {
     data: baseOccasions = EMPTY_OCCASIONS,
     isLoading: loading,
@@ -98,7 +99,7 @@ export const useOccasions = () => {
       }
 
       setFilteredOccasions(null);
-      await fetchOccasions(false);
+      await queryClient.invalidateQueries({ queryKey: ['occasions'] });
     } catch (err: any) {
       console.error('Error adding occasion:', err);
       throw err;
@@ -177,7 +178,7 @@ export const useOccasions = () => {
       }
 
       setFilteredOccasions(null);
-      await fetchOccasions(false);
+      await queryClient.invalidateQueries({ queryKey: ['occasions'] });
     } catch (err: any) {
       console.error('Error updating occasion:', err);
       throw err;
@@ -201,7 +202,7 @@ export const useOccasions = () => {
       if (deleteError) throw deleteError;
 
       setFilteredOccasions(null);
-      await fetchOccasions(false);
+      await queryClient.invalidateQueries({ queryKey: ['occasions'] });
     } catch (err: any) {
       console.error('Error deleting occasion:', err);
       throw err;
