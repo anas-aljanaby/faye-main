@@ -13,6 +13,13 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import Avatar from './Avatar';
 
+/** Normalize date from API (may be Date or ISO string) to Date; return null if invalid. */
+function ensureDate(d: Date | string | undefined | null): Date | null {
+    if (d == null) return null;
+    const date = d instanceof Date ? d : new Date(d);
+    return isNaN(date.getTime()) ? null : date;
+}
+
 // Approve Transaction Modal
 const ApproveTransactionModal: React.FC<{
     isOpen: boolean;
@@ -73,7 +80,7 @@ const ApproveTransactionModal: React.FC<{
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600 mb-1">التاريخ</p>
-                                <p className="font-semibold text-gray-800">{transaction.date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                <p className="font-semibold text-gray-800">{ensureDate(transaction.date)?.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) ?? '-'}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600 mb-1">أنشئت بواسطة</p>
@@ -877,7 +884,7 @@ const ReceiptModal: React.FC<{ transaction: FinancialTransaction | null; onClose
                     <div className="flex justify-between mb-6 text-sm">
                         <div>
                             <p><strong>رقم الإيصال:</strong> {receipt.transactionId}</p>
-                            <p><strong>التاريخ:</strong> {receipt.date.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            <p><strong>التاريخ:</strong> {ensureDate(receipt.date)?.toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }) ?? '-'}</p>
                         </div>
                         <div className="text-left">
                             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor" className="text-primary inline-block">
@@ -1215,7 +1222,7 @@ const FinancialSystem: React.FC = () => {
             transaction.receipt?.relatedOrphanIds) {
             
             // Use the transaction's date to match payments that were marked as paid by this transaction
-            const transactionDate = transaction.date.toISOString().split('T')[0];
+            const transactionDate = ensureDate(transaction.date)?.toISOString().split('T')[0] ?? '';
             
             for (const orphanId of transaction.receipt.relatedOrphanIds) {
                 const orphan = orphansData.find(o => o.id === orphanId);
@@ -1478,7 +1485,7 @@ const FinancialSystem: React.FC = () => {
                 data.receipt.relatedOrphanIds.length > 0) {
                 
                 // Use the receipt date (transaction date) for paid_date to match when deleting
-                const paidDate = data.receipt.date.toISOString().split('T')[0];
+                const paidDate = ensureDate(data.receipt.date)?.toISOString().split('T')[0] ?? '';
                 
                 // Update payment status for each related orphan
                 for (const orphanId of data.receipt.relatedOrphanIds) {
@@ -1603,7 +1610,7 @@ const FinancialSystem: React.FC = () => {
                         // Fallback: find the most recent income transaction with receipt
                         const latestIncome = transactions
                             .filter(tx => tx.type === TransactionType.Income && tx.receipt)
-                            .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+                            .sort((a, b) => (ensureDate(b.date)?.getTime() ?? 0) - (ensureDate(a.date)?.getTime() ?? 0))[0];
                         if (latestIncome) {
                             setReceiptToShow(latestIncome);
                         }
@@ -1629,7 +1636,7 @@ const FinancialSystem: React.FC = () => {
             headers.join(','),
             ...filteredTransactions.map(tx => [
                 tx.id,
-                tx.date.toISOString().split('T')[0],
+                ensureDate(tx.date)?.toISOString().split('T')[0] ?? '',
                 `"${tx.description.replace(/"/g, '""')}"`,
                 `"${tx.createdBy}"`,
                 tx.amount,
@@ -1939,7 +1946,7 @@ const FinancialSystem: React.FC = () => {
                                     
                                     return (
                                     <tr key={tx.id} className="border-b hover:bg-gray-50">
-                                        <td className="p-3">{tx.date.toLocaleDateString('en-CA')}</td>
+                                        <td className="p-3">{ensureDate(tx.date)?.toLocaleDateString('en-CA') ?? '-'}</td>
                                         <td className="p-3 font-semibold">
                                             <div className="flex items-center gap-2">
                                                 <span>{tx.description}</span>
