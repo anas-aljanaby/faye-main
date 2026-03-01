@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { withUserContext } from '../lib/supabaseClient';
 import { Orphan, Payment, Achievement, SpecialOccasion, Gift, UpdateLog, ProgramParticipation, PaymentStatus } from '../types';
@@ -682,267 +682,247 @@ export const useOrphansPaginated = (filters: OrphansPaginatedFilters) => {
   };
 };
 
-// Detail hook - fetches a single orphan with all related data
-export const useOrphanDetail = (orphanId?: string | null) => {
-  const [orphan, setOrphan] = useState<Orphan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { userProfile } = useAuth();
+/** Fetches a single orphan with all related data. Used by useOrphanDetail with React Query. */
+export async function fetchOrphanDetailData(organizationId: string, orphanId: string): Promise<Orphan> {
+  const result = await withUserContext(async () => {
+    const { data: orphanRow, error: orphanError } = await supabase
+      .from('orphans')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .eq('id', orphanId)
+      .single();
 
-  useEffect(() => {
-    if (!userProfile || !orphanId) {
-      setLoading(false);
-      return;
+    if (orphanError || !orphanRow) {
+      return {
+        orphanRow: null,
+        orphanError: orphanError || new Error('Orphan not found'),
+        relatedData: null,
+      };
     }
 
-    fetchOrphan();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userProfile, orphanId]);
+    const detailQueryNames = ['payments', 'achievements', 'occasions', 'occasion_orphans', 'gifts', 'update_logs', 'family_members', 'program_participations', 'sponsor_orphans'];
+    const detailSettled = await Promise.allSettled([
+      supabase.from('payments').select('*').eq('orphan_id', orphanId),
+      supabase.from('achievements').select('*').eq('orphan_id', orphanId),
+      supabase.from('special_occasions').select('*').eq('orphan_id', orphanId).not('orphan_id', 'is', null),
+      supabase.from('occasion_orphans').select('occasion_id, orphan_id, occasion:special_occasions(*)').eq('orphan_id', orphanId),
+      supabase.from('gifts').select('*').eq('orphan_id', orphanId),
+      supabase.from('update_logs').select('*, user_profiles(name)').eq('orphan_id', orphanId),
+      supabase.from('family_members').select('*').eq('orphan_id', orphanId),
+      supabase.from('program_participations').select('*').eq('orphan_id', orphanId),
+      supabase.from('sponsor_orphans').select('orphan_id, sponsor_id').eq('orphan_id', orphanId),
+    ]);
+    const [paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = detailSettled.map((outcome, i) => {
+      if (outcome.status === 'fulfilled') return outcome.value;
+      console.warn(`Orphan detail fetch failed (${detailQueryNames[i]}):`, outcome.reason);
+      return { data: null, error: outcome.reason };
+    });
 
-  const fetchOrphan = async () => {
-    if (!userProfile || !orphanId) return;
+    return {
+      orphanRow,
+      orphanError: null,
+      relatedData: {
+        paymentsData,
+        achievementsData,
+        occasionsData,
+        occasionOrphansData,
+        giftsData,
+        logsData,
+        familyData,
+        programsData,
+        sponsorOrphansData,
+      },
+    };
+  });
 
-    try {
-      setLoading(true);
-      setError(null);
+  if (result.orphanError || !result.orphanRow) {
+    throw result.orphanError || new Error('Orphan not found');
+  }
 
-      const result = await withUserContext(async () => {
-        // Fetch single orphan
-        const { data: orphanRow, error: orphanError } = await supabase
-          .from('orphans')
-          .select('*')
-          .eq('organization_id', userProfile.organization_id)
-          .eq('id', orphanId)
-          .single();
+  const {
+    orphanRow,
+    relatedData: {
+      paymentsData,
+      achievementsData,
+      occasionsData,
+      occasionOrphansData,
+      giftsData,
+      logsData,
+      familyData,
+      programsData,
+      sponsorOrphansData,
+    },
+  } = result;
 
-        if (orphanError || !orphanRow) {
-          return {
-            orphanRow: null,
-            orphanError: orphanError || new Error('Orphan not found'),
-            relatedData: null,
-          };
-        }
+  const orphanPayments = (paymentsData.data || []).map(p => ({
+    id: p.id,
+    amount: parseFloat(p.amount),
+    dueDate: new Date(p.due_date),
+    paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
+    status: p.status as PaymentStatus,
+  })).sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime());
 
-        // Fetch related data only for this orphan; use allSettled for partial failure resilience
-        const detailQueryNames = ['payments', 'achievements', 'occasions', 'occasion_orphans', 'gifts', 'update_logs', 'family_members', 'program_participations', 'sponsor_orphans'];
-        const detailSettled = await Promise.allSettled([
-          supabase.from('payments').select('*').eq('orphan_id', orphanId),
-          supabase.from('achievements').select('*').eq('orphan_id', orphanId),
-          supabase.from('special_occasions').select('*').eq('orphan_id', orphanId).not('orphan_id', 'is', null),
-          supabase.from('occasion_orphans').select('occasion_id, orphan_id, occasion:special_occasions(*)').eq('orphan_id', orphanId),
-          supabase.from('gifts').select('*').eq('orphan_id', orphanId),
-          supabase.from('update_logs').select('*, user_profiles(name)').eq('orphan_id', orphanId),
-          supabase.from('family_members').select('*').eq('orphan_id', orphanId),
-          supabase.from('program_participations').select('*').eq('orphan_id', orphanId),
-          supabase.from('sponsor_orphans').select('orphan_id, sponsor_id').eq('orphan_id', orphanId),
-        ]);
-        const [paymentsData, achievementsData, occasionsData, occasionOrphansData, giftsData, logsData, familyData, programsData, sponsorOrphansData] = detailSettled.map((outcome, i) => {
-          if (outcome.status === 'fulfilled') return outcome.value;
-          console.warn(`Orphan detail fetch failed (${detailQueryNames[i]}):`, outcome.reason);
-          return { data: null, error: outcome.reason };
+  const orphanAchievements = (achievementsData.data || []).map(a => ({
+    id: a.id,
+    title: a.title,
+    description: a.description || '',
+    date: new Date(a.date),
+    mediaUrl: a.media_url || undefined,
+    mediaType: a.media_type as 'image' | 'video' | undefined,
+  })).sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  const orphanOccasionsFromDirect = (occasionsData.data || []).map(o => ({
+    id: o.id,
+    title: o.title,
+    date: new Date(o.date),
+    organization_id: o.organization_id,
+    occasion_type: o.occasion_type,
+    orphan_id: o.orphan_id,
+    created_at: new Date(o.created_at),
+  }));
+
+  const orphanOccasionsFromJunction: any[] = [];
+  (occasionOrphansData.data || []).forEach((item: any) => {
+    const occ = item.occasion;
+    if (occ && typeof occ === 'object' && !Array.isArray(occ)) {
+      const exists = orphanOccasionsFromJunction.find(o => o.id === occ.id);
+      if (!exists) {
+        orphanOccasionsFromJunction.push({
+          id: occ.id,
+          title: occ.title,
+          date: new Date(occ.date),
+          organization_id: occ.organization_id,
+          occasion_type: occ.occasion_type,
+          orphan_id: occ.orphan_id,
+          created_at: new Date(occ.created_at),
         });
+      }
+    }
+  });
 
-        return {
-          orphanRow,
-          orphanError: null,
-          relatedData: {
-            paymentsData,
-            achievementsData,
-            occasionsData,
-            occasionOrphansData,
-            giftsData,
-            logsData,
-            familyData,
-            programsData,
-            sponsorOrphansData,
-          },
-        };
-      });
+  const specialOccasions = [...orphanOccasionsFromDirect, ...orphanOccasionsFromJunction]
+    .sort((a, b) => b.date.getTime() - a.date.getTime());
 
-      if (result.orphanError || !result.orphanRow) {
-        throw result.orphanError || new Error('Orphan not found');
+  const gifts = (giftsData.data || []).map(g => ({
+    id: g.id,
+    from: g.from,
+    item: g.item,
+    date: new Date(g.date),
+  })).sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  const updateLogs: UpdateLog[] = (logsData.data || []).map(l => ({
+    id: l.id,
+    date: new Date(l.date),
+    author: (l.user_profiles as any)?.name || 'غير معروف',
+    note: l.note,
+  })).sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  const familyMembers = (familyData.data || []).map(f => ({
+    relationship: f.relationship,
+    age: f.age || undefined,
+  }));
+
+  const educationalProgramRow = (programsData.data || []).find(p => p.program_type === 'educational') || null;
+  const psychologicalChildRow = (programsData.data || []).find(p => p.program_type === 'psychological_child') || null;
+  const psychologicalGuardianRow = (programsData.data || []).find(p => p.program_type === 'psychological_guardian') || null;
+
+  const today = new Date();
+  const birthDate = new Date(orphanRow.date_of_birth);
+  const age = today.getFullYear() - birthDate.getFullYear();
+  const monthDiff = today.getMonth() - birthDate.getMonth();
+  const adjustedAge =
+    monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())
+      ? age - 1
+      : age;
+
+  const sponsorIdRow = (sponsorOrphansData.data || [])[0]?.sponsor_id as string | undefined;
+
+  return {
+    id: uuidToNumber(orphanRow.id),
+    uuid: orphanRow.id,
+    name: orphanRow.name,
+    photoUrl: orphanRow.photo_url || '',
+    age: adjustedAge,
+    dateOfBirth: new Date(orphanRow.date_of_birth),
+    gender: orphanRow.gender as 'ذكر' | 'أنثى',
+    healthStatus: orphanRow.health_status || '',
+    grade: orphanRow.grade || '',
+    country: orphanRow.country || '',
+    governorate: orphanRow.governorate || '',
+    attendance: orphanRow.attendance || '',
+    performance: orphanRow.performance || '',
+    familyStatus: orphanRow.family_status || '',
+    housingStatus: orphanRow.housing_status || '',
+    guardian: orphanRow.guardian || '',
+    sponsorId: sponsorIdRow ? uuidToNumber(sponsorIdRow) : 0,
+    sponsorshipType: orphanRow.sponsorship_type || '',
+    teamMemberId: 0,
+    familyMembers,
+    hobbies: [],
+    needsAndWishes: [],
+    updateLogs,
+    educationalProgram: educationalProgramRow
+      ? {
+          status: educationalProgramRow.status as ProgramParticipation['status'],
+          details: educationalProgramRow.details || '',
+        }
+      : { status: 'غير ملتحق', details: '' },
+    psychologicalSupport: {
+      child: psychologicalChildRow
+        ? {
+            status: psychologicalChildRow.status as ProgramParticipation['status'],
+            details: psychologicalChildRow.details || '',
+          }
+        : { status: 'غير ملتحق', details: '' },
+      guardian: psychologicalGuardianRow
+        ? {
+            status: psychologicalGuardianRow.status as ProgramParticipation['status'],
+            details: psychologicalGuardianRow.details || '',
+          }
+        : { status: 'غير ملتحق', details: '' },
+    },
+    payments: orphanPayments,
+    achievements: orphanAchievements,
+    specialOccasions,
+    gifts,
+  };
+}
+
+// Detail hook - fetches a single orphan with all related data (React Query)
+export const useOrphanDetail = (orphanId?: string | null) => {
+  const { userProfile } = useAuth();
+  const queryClient = useQueryClient();
+  const {
+    data: orphan = null,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['orphan-detail', userProfile?.organization_id, orphanId],
+    queryFn: () => fetchOrphanDetailData(userProfile!.organization_id, orphanId!),
+    enabled: !!userProfile && !!orphanId,
+  });
+
+  const updateOrphan = useCallback(
+    async (updates: Partial<{
+      name: string;
+      date_of_birth: string;
+      gender: 'ذكر' | 'أنثى';
+      health_status: string;
+      grade: string;
+      country: string;
+      governorate: string;
+      attendance: string;
+      performance: string;
+      family_status: string;
+      housing_status: string;
+      guardian: string;
+      sponsorship_type: string;
+    }>) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
       }
 
-      const {
-        orphanRow,
-        relatedData: {
-          paymentsData,
-          achievementsData,
-          occasionsData,
-          occasionOrphansData,
-          giftsData,
-          logsData,
-          familyData,
-          programsData,
-          sponsorOrphansData,
-        },
-      } = result;
-
-      // Transform related data
-      const orphanPayments = (paymentsData.data || []).map(p => ({
-        id: p.id,
-        amount: parseFloat(p.amount),
-        dueDate: new Date(p.due_date),
-        paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
-        status: p.status as PaymentStatus,
-      })).sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime());
-
-      const orphanAchievements = (achievementsData.data || []).map(a => ({
-        id: a.id,
-        title: a.title,
-        description: a.description || '',
-        date: new Date(a.date),
-        mediaUrl: a.media_url || undefined,
-        mediaType: a.media_type as 'image' | 'video' | undefined,
-      })).sort((a, b) => b.date.getTime() - a.date.getTime());
-
-      const orphanOccasionsFromDirect = (occasionsData.data || []).map(o => ({
-        id: o.id,
-        title: o.title,
-        date: new Date(o.date),
-        organization_id: o.organization_id,
-        occasion_type: o.occasion_type,
-        orphan_id: o.orphan_id,
-        created_at: new Date(o.created_at),
-      }));
-
-      const orphanOccasionsFromJunction: any[] = [];
-      (occasionOrphansData.data || []).forEach((item: any) => {
-        const occ = item.occasion;
-        if (occ && typeof occ === 'object' && !Array.isArray(occ)) {
-          const exists = orphanOccasionsFromJunction.find(o => o.id === occ.id);
-          if (!exists) {
-            orphanOccasionsFromJunction.push({
-              id: occ.id,
-              title: occ.title,
-              date: new Date(occ.date),
-              organization_id: occ.organization_id,
-              occasion_type: occ.occasion_type,
-              orphan_id: occ.orphan_id,
-              created_at: new Date(occ.created_at),
-            });
-          }
-        }
-      });
-
-      const specialOccasions = [...orphanOccasionsFromDirect, ...orphanOccasionsFromJunction]
-        .sort((a, b) => b.date.getTime() - a.date.getTime());
-
-      const gifts = (giftsData.data || []).map(g => ({
-        id: g.id,
-        from: g.from,
-        item: g.item,
-        date: new Date(g.date),
-      })).sort((a, b) => b.date.getTime() - a.date.getTime());
-
-      const updateLogs: UpdateLog[] = (logsData.data || []).map(l => ({
-        id: l.id,
-        date: new Date(l.date),
-        author: (l.user_profiles as any)?.name || 'غير معروف',
-        note: l.note,
-      })).sort((a, b) => b.date.getTime() - a.date.getTime());
-
-      const familyMembers = (familyData.data || []).map(f => ({
-        relationship: f.relationship,
-        age: f.age || undefined,
-      }));
-
-      const educationalProgramRow = (programsData.data || []).find(p => p.program_type === 'educational') || null;
-      const psychologicalChildRow = (programsData.data || []).find(p => p.program_type === 'psychological_child') || null;
-      const psychologicalGuardianRow = (programsData.data || []).find(p => p.program_type === 'psychological_guardian') || null;
-
-      // Calculate age from date_of_birth
-      const today = new Date();
-      const birthDate = new Date(orphanRow.date_of_birth);
-      const age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      const adjustedAge =
-        monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())
-          ? age - 1
-          : age;
-
-      const sponsorIdRow = (sponsorOrphansData.data || [])[0]?.sponsor_id as string | undefined;
-
-      const enrichedOrphan: Orphan = {
-        id: uuidToNumber(orphanRow.id),
-        uuid: orphanRow.id,
-        name: orphanRow.name,
-        photoUrl: orphanRow.photo_url || '',
-        age: adjustedAge,
-        dateOfBirth: new Date(orphanRow.date_of_birth),
-        gender: orphanRow.gender as 'ذكر' | 'أنثى',
-        healthStatus: orphanRow.health_status || '',
-        grade: orphanRow.grade || '',
-        country: orphanRow.country || '',
-        governorate: orphanRow.governorate || '',
-        attendance: orphanRow.attendance || '',
-        performance: orphanRow.performance || '',
-        familyStatus: orphanRow.family_status || '',
-        housingStatus: orphanRow.housing_status || '',
-        guardian: orphanRow.guardian || '',
-        sponsorId: sponsorIdRow ? uuidToNumber(sponsorIdRow) : 0,
-        sponsorshipType: orphanRow.sponsorship_type || '',
-        teamMemberId: 0,
-        familyMembers,
-        hobbies: [],
-        needsAndWishes: [],
-        updateLogs,
-        educationalProgram: educationalProgramRow
-          ? {
-              status: educationalProgramRow.status as ProgramParticipation['status'],
-              details: educationalProgramRow.details || '',
-            }
-          : { status: 'غير ملتحق', details: '' },
-        psychologicalSupport: {
-          child: psychologicalChildRow
-            ? {
-                status: psychologicalChildRow.status as ProgramParticipation['status'],
-                details: psychologicalChildRow.details || '',
-              }
-            : { status: 'غير ملتحق', details: '' },
-          guardian: psychologicalGuardianRow
-            ? {
-                status: psychologicalGuardianRow.status as ProgramParticipation['status'],
-                details: psychologicalGuardianRow.details || '',
-              }
-            : { status: 'غير ملتحق', details: '' },
-        },
-        payments: orphanPayments,
-        achievements: orphanAchievements,
-        specialOccasions,
-        gifts,
-      };
-
-      setOrphan(enrichedOrphan);
-    } catch (err) {
-      console.error('Error fetching orphan detail:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch orphan');
-      setOrphan(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateOrphan = async (updates: Partial<{
-    name: string;
-    date_of_birth: string;
-    gender: 'ذكر' | 'أنثى';
-    health_status: string;
-    grade: string;
-    country: string;
-    governorate: string;
-    attendance: string;
-    performance: string;
-    family_status: string;
-    housing_status: string;
-    guardian: string;
-    sponsorship_type: string;
-  }>) => {
-    if (!userProfile || !orphanId) {
-      throw new Error('User not authenticated or orphan not loaded');
-    }
-
-    try {
       const { error: updateError } = await supabase
         .from('orphans')
         .update(updates)
@@ -951,12 +931,18 @@ export const useOrphanDetail = (orphanId?: string | null) => {
 
       if (updateError) throw updateError;
 
-      await fetchOrphan();
-    } catch (err) {
-      console.error('Error updating orphan detail:', err);
-      throw err;
-    }
-  };
+      await queryClient.invalidateQueries({
+        queryKey: ['orphan-detail', userProfile.organization_id, orphanId],
+      });
+    },
+    [userProfile, orphanId, queryClient]
+  );
 
-  return { orphan, loading, error, refetch: fetchOrphan, updateOrphan };
+  return {
+    orphan,
+    loading,
+    error: error ? (error instanceof Error ? error.message : 'Failed to fetch orphan') : null,
+    refetch,
+    updateOrphan,
+  };
 };

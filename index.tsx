@@ -11,7 +11,7 @@ import App from './App';
 // Doing so invalidates any snapshots saved under a previous version key.
 const CACHE_VERSION = 2;
 const PERSIST_MAX_AGE = 4 * 60 * 60 * 1000;  // 4 hours — avoids stale-empty snapshots persisting all day
-const GC_TIME = 24 * 60 * 60 * 1000;          // GC must be >= persist maxAge to avoid premature eviction
+const GC_TIME = 30 * 60 * 1000;               // 30 minutes — in-memory cache aligned with persistence window
 
 const queryClient = new QueryClient({
   defaultOptions: {

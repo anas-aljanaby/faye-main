@@ -66,34 +66,30 @@ export const useOccasions = () => {
         orphanId = orphanIds[0];
       }
 
-      const { data: newOccasion, error: insertError } = await withUserContext(async () => {
-        return await supabase
-          .from('special_occasions')
-          .insert({
-            organization_id: userProfile.organization_id,
-            title: title,
-            date: date.toISOString().split('T')[0],
-            occasion_type: occasionType,
-            orphan_id: orphanId,
-          })
-          .select()
-          .single();
-      });
+      const { data: newOccasion, error: insertError } = await supabase
+        .from('special_occasions')
+        .insert({
+          organization_id: userProfile.organization_id,
+          title: title,
+          date: date.toISOString().split('T')[0],
+          occasion_type: occasionType,
+          orphan_id: orphanId,
+        })
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
       // If multi-orphan, create junction table entries
       if (occasionType === 'multi_orphan' && orphanIds && orphanIds.length > 0) {
-        const { error: junctionError } = await withUserContext(async () => {
-          return await supabase
-            .from('occasion_orphans')
-            .insert(
-              orphanIds.map(orphanId => ({
-                occasion_id: newOccasion.id,
-                orphan_id: orphanId,
-              }))
-            );
-        });
+        const { error: junctionError } = await supabase
+          .from('occasion_orphans')
+          .insert(
+            orphanIds.map(oid => ({
+              occasion_id: newOccasion.id,
+              orphan_id: oid,
+            }))
+          );
 
         if (junctionError) throw junctionError;
       }
@@ -133,48 +129,40 @@ export const useOccasions = () => {
         }
       }
 
-      const { error: updateError } = await withUserContext(async () => {
-        return await supabase
-          .from('special_occasions')
-          .update(updateData)
-          .eq('id', occasionId);
-      });
+      const { error: updateError } = await supabase
+        .from('special_occasions')
+        .update(updateData)
+        .eq('id', occasionId);
 
       if (updateError) throw updateError;
 
       // Handle junction table for multi-orphan occasions
       if (updates.occasionType === 'multi_orphan' && updates.orphanIds) {
         // Delete existing links
-        await withUserContext(async () => {
-          return await supabase
-            .from('occasion_orphans')
-            .delete()
-            .eq('occasion_id', occasionId);
-        });
+        await supabase
+          .from('occasion_orphans')
+          .delete()
+          .eq('occasion_id', occasionId);
 
         // Insert new links
         if (updates.orphanIds.length > 0) {
-          const { error: junctionError } = await withUserContext(async () => {
-            return await supabase
-              .from('occasion_orphans')
-              .insert(
-                updates.orphanIds.map(orphanId => ({
-                  occasion_id: occasionId,
-                  orphan_id: orphanId,
-                }))
-              );
-          });
+          const { error: junctionError } = await supabase
+            .from('occasion_orphans')
+            .insert(
+              updates.orphanIds.map(oid => ({
+                occasion_id: occasionId,
+                orphan_id: oid,
+              }))
+            );
 
           if (junctionError) throw junctionError;
         }
       } else if (updates.occasionType && updates.occasionType !== 'multi_orphan') {
         // Remove junction table entries if changing from multi-orphan
-        await withUserContext(async () => {
-          return await supabase
-            .from('occasion_orphans')
-            .delete()
-            .eq('occasion_id', occasionId);
-        });
+        await supabase
+          .from('occasion_orphans')
+          .delete()
+          .eq('occasion_id', occasionId);
       }
 
       setFilteredOccasions(null);
@@ -192,12 +180,10 @@ export const useOccasions = () => {
 
     try {
       // Junction table entries will be deleted automatically due to CASCADE
-      const { error: deleteError } = await withUserContext(async () => {
-        return await supabase
-          .from('special_occasions')
-          .delete()
-          .eq('id', occasionId);
-      });
+      const { error: deleteError } = await supabase
+        .from('special_occasions')
+        .delete()
+        .eq('id', occasionId);
 
       if (deleteError) throw deleteError;
 
