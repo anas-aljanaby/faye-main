@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { FinancialTransaction, TransactionType, TransactionStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { cache, getCacheKey } from '../utils/cache';
 import { uuidToNumber } from '../utils/idMapper';
 
 // Extended transaction type with approval info
@@ -19,284 +19,21 @@ const numberToUuid = (num: number, uuidMap: Map<number, string>): string | undef
 };
 
 export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') => {
-  const [transactions, setTransactions] = useState<FinancialTransactionWithApproval[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { userProfile, canCreateExpense, canApproveExpense, canEditTransactions } = useAuth();
+  const {
+    data: transactions = EMPTY_TRANSACTIONS,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['financial-transactions', mode, userProfile?.organization_id],
+    queryFn: () => fetchFinancialTransactionsData(userProfile!.organization_id, mode),
+    enabled: !!userProfile,
+  });
 
-  useEffect(() => {
-    if (!userProfile) {
-      setLoading(false);
-      return;
-    }
-
-    fetchTransactions();
-  }, [userProfile]);
-
-  const fetchTransactions = async (useCache = true, silent = false) => {
-    if (!userProfile) return;
-
-    const baseCacheKey = getCacheKey.financialTransactions(userProfile.organization_id);
-    const cacheKey = mode === 'full' ? baseCacheKey : `${baseCacheKey}:dashboard`;
-    
-    // Check cache first
-    if (useCache) {
-      const cachedData = cache.get<FinancialTransactionWithApproval[]>(cacheKey);
-      if (cachedData) {
-        setTransactions(cachedData);
-        setLoading(false);
-        // Revalidate in the background without toggling the loading spinner
-        fetchTransactions(false, true).catch(() => {});
-        return;
-      }
-    }
-
-    try {
-      if (!silent) setLoading(true);
-      setError(null);
-
-      // For dashboard widgets we only need basic transaction data (no receipts/payments joins)
-      if (mode === 'dashboard') {
-        const { data: transactionsData, error: transactionsError } = await supabase
-          .from('financial_transactions')
-          .select('*')
-          .eq('organization_id', userProfile.organization_id)
-          .order('date', { ascending: false });
-
-        if (transactionsError) throw transactionsError;
-        if (!transactionsData) {
-          setTransactions([]);
-          setLoading(false);
-          cache.set(cacheKey, [], 2 * 60 * 1000);
-          return;
-        }
-
-        const summaryTransactions: FinancialTransactionWithApproval[] = transactionsData.map((tx) => ({
-          id: tx.id,
-          date: new Date(tx.date),
-          description: tx.description,
-          // We don't join created_by for dashboard mode; it's not used there
-          createdBy: 'مدير النظام',
-          amount: parseFloat(tx.amount),
-          status: tx.status as TransactionStatus,
-          type: tx.type as TransactionType,
-          ...(tx.orphan_id && { orphanId: uuidToNumber(tx.orphan_id) }),
-        }));
-
-        setTransactions(summaryTransactions);
-        cache.set(cacheKey, summaryTransactions, 2 * 60 * 1000);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch transactions with related data including approval info
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from('financial_transactions')
-        .select(`
-          *,
-          created_by:user_profiles!financial_transactions_created_by_id_fkey(name),
-          approved_by:user_profiles!financial_transactions_approved_by_id_fkey(name),
-          rejected_by:user_profiles!financial_transactions_rejected_by_id_fkey(name),
-          orphan:orphans(id)
-        `)
-        .eq('organization_id', userProfile.organization_id)
-        .order('date', { ascending: false });
-
-      if (transactionsError) throw transactionsError;
-      if (!transactionsData) {
-        setTransactions([]);
-        setLoading(false);
-        cache.set(cacheKey, [], 2 * 60 * 1000);
-        return;
-      }
-
-      // Fetch receipts for income transactions
-      const incomeTransactionIds = transactionsData
-        .filter(tx => tx.type === 'إيرادات')
-        .map(tx => tx.id);
-
-      let receiptsData: any[] = [];
-      let receiptOrphansData: any[] = [];
-      let paymentsData: any[] = [];
-
-      if (incomeTransactionIds.length > 0) {
-        const { data: receipts } = await supabase
-          .from('receipts')
-          .select(`
-            *,
-            sponsor:user_profiles!receipts_sponsor_id_fkey(name)
-          `)
-          .in('transaction_id', incomeTransactionIds);
-
-        receiptsData = receipts || [];
-
-        const receiptIds = receiptsData.map(r => r.id);
-        if (receiptIds.length > 0) {
-          const { data: receiptOrphans } = await supabase
-            .from('receipt_orphans')
-            .select('*')
-            .in('receipt_id', receiptIds);
-
-          receiptOrphansData = receiptOrphans || [];
-          
-          // Fetch payments that were marked as paid by these transactions
-          // We match by paid_date matching transaction date and orphan_id matching receipt_orphans
-          const transactionDates = transactionsData
-            .filter(tx => incomeTransactionIds.includes(tx.id))
-            .map(tx => new Date(tx.date).toISOString().split('T')[0]);
-          
-          const orphanIdsFromReceipts = receiptOrphansData.map(ro => ro.orphan_id);
-          
-          if (orphanIdsFromReceipts.length > 0 && transactionDates.length > 0) {
-            const { data: payments } = await supabase
-              .from('payments')
-              .select('*')
-              .in('orphan_id', orphanIdsFromReceipts)
-              .in('paid_date', transactionDates)
-              .eq('status', 'مدفوع');
-            
-            paymentsData = payments || [];
-          }
-        }
-      }
-
-      // Group receipt orphans by receipt_id
-      const orphansByReceipt = new Map<string, any[]>();
-      receiptOrphansData.forEach(ro => {
-        if (!orphansByReceipt.has(ro.receipt_id)) {
-          orphansByReceipt.set(ro.receipt_id, []);
-        }
-        orphansByReceipt.get(ro.receipt_id)!.push(ro);
-      });
-
-      // Build UUID to number mapping for orphans
-      const orphanUuidMap = new Map<string, number>();
-      transactionsData.forEach(tx => {
-        if (tx.orphan_id && !orphanUuidMap.has(tx.orphan_id)) {
-          orphanUuidMap.set(tx.orphan_id, uuidToNumber(tx.orphan_id));
-        }
-      });
-      // Also add orphans from receipt_orphans
-      receiptOrphansData.forEach(ro => {
-        if (!orphanUuidMap.has(ro.orphan_id)) {
-          orphanUuidMap.set(ro.orphan_id, uuidToNumber(ro.orphan_id));
-        }
-      });
-
-      // Build transactions with receipts
-      const transactionsWithReceipts = transactionsData.map((tx) => {
-        const receipt = receiptsData.find(r => r.transaction_id === tx.id);
-        
-        let receiptData = undefined;
-        if (receipt) {
-          const receiptOrphans = orphansByReceipt.get(receipt.id) || [];
-          const relatedOrphanIds = receiptOrphans
-            .map(ro => {
-              const numId = orphanUuidMap.get(ro.orphan_id);
-              return numId !== undefined ? numId : uuidToNumber(ro.orphan_id);
-            });
-
-          // Build orphanPaymentMonths from payments table
-          // Match payments by: orphan_id from receipt_orphans AND paid_date matching transaction date
-          const transactionDateStr = new Date(tx.date).toISOString().split('T')[0];
-          const orphanPaymentMonths: Record<number, { month?: number; year: number; isYear: boolean }> = {};
-          const orphanAmounts: Record<number, number> = {};
-          
-          receiptOrphans.forEach(ro => {
-            const numId = orphanUuidMap.get(ro.orphan_id);
-            const orphanId = numId !== undefined ? numId : uuidToNumber(ro.orphan_id);
-            
-            // Find payments for this orphan that were paid on this transaction date
-            const relatedPayments = paymentsData.filter(p => 
-              p.orphan_id === ro.orphan_id && 
-              p.paid_date === transactionDateStr
-            );
-            
-            if (relatedPayments.length > 0) {
-              // Group payments by year to determine if it's a full year payment
-              const paymentsByYear = new Map<number, any[]>();
-              relatedPayments.forEach(p => {
-                const dueDate = new Date(p.due_date);
-                const year = dueDate.getFullYear();
-                if (!paymentsByYear.has(year)) {
-                  paymentsByYear.set(year, []);
-                }
-                paymentsByYear.get(year)!.push(p);
-              });
-              
-              // For each year, check if it's a full year (12 months) or specific month(s)
-              paymentsByYear.forEach((payments, year) => {
-                if (payments.length === 12) {
-                  // Full year payment
-                  orphanPaymentMonths[orphanId] = {
-                    year,
-                    isYear: true,
-                  };
-                } else if (payments.length === 1) {
-                  // Single month payment
-                  const dueDate = new Date(payments[0].due_date);
-                  orphanPaymentMonths[orphanId] = {
-                    month: dueDate.getMonth(),
-                    year,
-                    isYear: false,
-                  };
-                } else {
-                  // Multiple months but not full year - use the first month as reference
-                  const dueDate = new Date(payments[0].due_date);
-                  orphanPaymentMonths[orphanId] = {
-                    month: dueDate.getMonth(),
-                    year,
-                    isYear: false,
-                  };
-                }
-              });
-            }
-            
-            if (ro.amount !== null && ro.amount !== undefined) {
-              orphanAmounts[orphanId] = parseFloat(ro.amount.toString());
-            }
-          });
-          
-          receiptData = {
-            sponsorName: receipt.sponsor?.name || '',
-            donationCategory: receipt.donation_category,
-            amount: parseFloat(receipt.amount),
-            date: new Date(receipt.date),
-            description: receipt.description || '',
-            transactionId: tx.id,
-            relatedOrphanIds,
-            orphanPaymentMonths: Object.keys(orphanPaymentMonths).length > 0 ? orphanPaymentMonths : undefined,
-            orphanAmounts: Object.keys(orphanAmounts).length > 0 ? orphanAmounts : undefined,
-          };
-        }
-
-        return {
-          id: tx.id,
-          date: new Date(tx.date),
-          description: tx.description,
-          createdBy: (tx.created_by as any)?.name || 'مدير النظام',
-          amount: parseFloat(tx.amount),
-          status: tx.status as TransactionStatus,
-          type: tx.type as TransactionType,
-          ...(tx.orphan_id && { orphanId: uuidToNumber(tx.orphan_id) }),
-          ...(receiptData && { receipt: receiptData }),
-          // Approval info
-          ...(tx.approved_by && { approvedBy: (tx.approved_by as any)?.name }),
-          ...(tx.rejected_by && { rejectedBy: (tx.rejected_by as any)?.name }),
-          ...(tx.rejection_reason && { rejectionReason: tx.rejection_reason }),
-        } as FinancialTransactionWithApproval;
-      });
-
-      setTransactions(transactionsWithReceipts);
-      // Cache the result for 2 minutes
-      cache.set(cacheKey, transactionsWithReceipts, 2 * 60 * 1000);
-    } catch (err) {
-      console.error('Error fetching financial transactions:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch financial transactions');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchTransactions = useCallback(async (_useCache = true, _silent = false) => {
+    await refetch();
+  }, [refetch]);
 
   const addTransaction = async (transactionData: Omit<FinancialTransaction, 'id' | 'date' | 'status'>) => {
     if (!userProfile) throw new Error('User not authenticated');
@@ -633,7 +370,7 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
   return { 
     transactions, 
     loading, 
-    error, 
+    error: error ? (error instanceof Error ? error.message : 'Failed to fetch financial transactions') : null, 
     refetch: fetchTransactions,
     addTransaction,
     addSponsor,
@@ -646,4 +383,212 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
     canCreateExpenseDirectly: canCreateExpense(),
   };
 };
+
+const EMPTY_TRANSACTIONS: FinancialTransactionWithApproval[] = [];
+
+async function fetchFinancialTransactionsData(
+  organizationId: string,
+  mode: 'full' | 'dashboard'
+): Promise<FinancialTransactionWithApproval[]> {
+  // For dashboard widgets we only need basic transaction data (no receipts/payments joins)
+  if (mode === 'dashboard') {
+    const { data: transactionsData, error: transactionsError } = await supabase
+      .from('financial_transactions')
+      .select('*')
+      .eq('organization_id', organizationId)
+      .order('date', { ascending: false });
+
+    if (transactionsError) throw transactionsError;
+    if (!transactionsData) return [];
+
+    return transactionsData.map((tx) => ({
+      id: tx.id,
+      date: new Date(tx.date),
+      description: tx.description,
+      // We don't join created_by for dashboard mode; it's not used there
+      createdBy: 'مدير النظام',
+      amount: parseFloat(tx.amount),
+      status: tx.status as TransactionStatus,
+      type: tx.type as TransactionType,
+      ...(tx.orphan_id && { orphanId: uuidToNumber(tx.orphan_id) }),
+    }));
+  }
+
+  // Fetch transactions with related data including approval info
+  const { data: transactionsData, error: transactionsError } = await supabase
+    .from('financial_transactions')
+    .select(`
+      *,
+      created_by:user_profiles!financial_transactions_created_by_id_fkey(name),
+      approved_by:user_profiles!financial_transactions_approved_by_id_fkey(name),
+      rejected_by:user_profiles!financial_transactions_rejected_by_id_fkey(name),
+      orphan:orphans(id)
+    `)
+    .eq('organization_id', organizationId)
+    .order('date', { ascending: false });
+
+  if (transactionsError) throw transactionsError;
+  if (!transactionsData) return [];
+
+  // Fetch receipts for income transactions
+  const incomeTransactionIds = transactionsData
+    .filter(tx => tx.type === 'إيرادات')
+    .map(tx => tx.id);
+
+  let receiptsData: any[] = [];
+  let receiptOrphansData: any[] = [];
+  let paymentsData: any[] = [];
+
+  if (incomeTransactionIds.length > 0) {
+    const { data: receipts } = await supabase
+      .from('receipts')
+      .select(`
+        *,
+        sponsor:user_profiles!receipts_sponsor_id_fkey(name)
+      `)
+      .in('transaction_id', incomeTransactionIds);
+
+    receiptsData = receipts || [];
+
+    const receiptIds = receiptsData.map(r => r.id);
+    if (receiptIds.length > 0) {
+      const { data: receiptOrphans } = await supabase
+        .from('receipt_orphans')
+        .select('*')
+        .in('receipt_id', receiptIds);
+
+      receiptOrphansData = receiptOrphans || [];
+
+      const transactionDates = transactionsData
+        .filter(tx => incomeTransactionIds.includes(tx.id))
+        .map(tx => new Date(tx.date).toISOString().split('T')[0]);
+
+      const orphanIdsFromReceipts = receiptOrphansData.map(ro => ro.orphan_id);
+
+      if (orphanIdsFromReceipts.length > 0 && transactionDates.length > 0) {
+        const { data: payments } = await supabase
+          .from('payments')
+          .select('*')
+          .in('orphan_id', orphanIdsFromReceipts)
+          .in('paid_date', transactionDates)
+          .eq('status', 'مدفوع');
+
+        paymentsData = payments || [];
+      }
+    }
+  }
+
+  const orphansByReceipt = new Map<string, any[]>();
+  receiptOrphansData.forEach(ro => {
+    if (!orphansByReceipt.has(ro.receipt_id)) {
+      orphansByReceipt.set(ro.receipt_id, []);
+    }
+    orphansByReceipt.get(ro.receipt_id)!.push(ro);
+  });
+
+  const orphanUuidMap = new Map<string, number>();
+  transactionsData.forEach(tx => {
+    if (tx.orphan_id && !orphanUuidMap.has(tx.orphan_id)) {
+      orphanUuidMap.set(tx.orphan_id, uuidToNumber(tx.orphan_id));
+    }
+  });
+  receiptOrphansData.forEach(ro => {
+    if (!orphanUuidMap.has(ro.orphan_id)) {
+      orphanUuidMap.set(ro.orphan_id, uuidToNumber(ro.orphan_id));
+    }
+  });
+
+  return transactionsData.map((tx) => {
+    const receipt = receiptsData.find(r => r.transaction_id === tx.id);
+
+    let receiptData = undefined;
+    if (receipt) {
+      const receiptOrphans = orphansByReceipt.get(receipt.id) || [];
+      const relatedOrphanIds = receiptOrphans
+        .map(ro => {
+          const numId = orphanUuidMap.get(ro.orphan_id);
+          return numId !== undefined ? numId : uuidToNumber(ro.orphan_id);
+        });
+
+      const transactionDateStr = new Date(tx.date).toISOString().split('T')[0];
+      const orphanPaymentMonths: Record<number, { month?: number; year: number; isYear: boolean }> = {};
+      const orphanAmounts: Record<number, number> = {};
+
+      receiptOrphans.forEach(ro => {
+        const numId = orphanUuidMap.get(ro.orphan_id);
+        const orphanId = numId !== undefined ? numId : uuidToNumber(ro.orphan_id);
+        const relatedPayments = paymentsData.filter(p =>
+          p.orphan_id === ro.orphan_id &&
+          p.paid_date === transactionDateStr
+        );
+
+        if (relatedPayments.length > 0) {
+          const paymentsByYear = new Map<number, any[]>();
+          relatedPayments.forEach(p => {
+            const dueDate = new Date(p.due_date);
+            const year = dueDate.getFullYear();
+            if (!paymentsByYear.has(year)) {
+              paymentsByYear.set(year, []);
+            }
+            paymentsByYear.get(year)!.push(p);
+          });
+
+          paymentsByYear.forEach((payments, year) => {
+            if (payments.length === 12) {
+              orphanPaymentMonths[orphanId] = {
+                year,
+                isYear: true,
+              };
+            } else if (payments.length === 1) {
+              const dueDate = new Date(payments[0].due_date);
+              orphanPaymentMonths[orphanId] = {
+                month: dueDate.getMonth(),
+                year,
+                isYear: false,
+              };
+            } else {
+              const dueDate = new Date(payments[0].due_date);
+              orphanPaymentMonths[orphanId] = {
+                month: dueDate.getMonth(),
+                year,
+                isYear: false,
+              };
+            }
+          });
+        }
+
+        if (ro.amount !== null && ro.amount !== undefined) {
+          orphanAmounts[orphanId] = parseFloat(ro.amount.toString());
+        }
+      });
+
+      receiptData = {
+        sponsorName: receipt.sponsor?.name || '',
+        donationCategory: receipt.donation_category,
+        amount: parseFloat(receipt.amount),
+        date: new Date(receipt.date),
+        description: receipt.description || '',
+        transactionId: tx.id,
+        relatedOrphanIds,
+        orphanPaymentMonths: Object.keys(orphanPaymentMonths).length > 0 ? orphanPaymentMonths : undefined,
+        orphanAmounts: Object.keys(orphanAmounts).length > 0 ? orphanAmounts : undefined,
+      };
+    }
+
+    return {
+      id: tx.id,
+      date: new Date(tx.date),
+      description: tx.description,
+      createdBy: (tx.created_by as any)?.name || 'مدير النظام',
+      amount: parseFloat(tx.amount),
+      status: tx.status as TransactionStatus,
+      type: tx.type as TransactionType,
+      ...(tx.orphan_id && { orphanId: uuidToNumber(tx.orphan_id) }),
+      ...(receiptData && { receipt: receiptData }),
+      ...(tx.approved_by && { approvedBy: (tx.approved_by as any)?.name }),
+      ...(tx.rejected_by && { rejectedBy: (tx.rejected_by as any)?.name }),
+      ...(tx.rejection_reason && { rejectionReason: tx.rejection_reason }),
+    } as FinancialTransactionWithApproval;
+  });
+}
 
