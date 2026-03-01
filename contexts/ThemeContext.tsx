@@ -35,9 +35,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [mode, setMode] = useState<ThemeMode>(() => {
     try {
       const saved = localStorage.getItem('theme_mode');
-      return (saved as ThemeMode) || 'system';
+      return (saved as ThemeMode) || 'light';
     } catch {
-      return 'system';
+      return 'light';
     }
   });
 
