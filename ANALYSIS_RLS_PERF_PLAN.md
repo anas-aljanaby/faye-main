@@ -55,15 +55,15 @@ This file tracks the plan and status for fixing the intermittent data-loading is
 7. **Consolidate on a single caching strategy (React Query)**
    - **Goal**: Remove the custom in-memory cache once all key hooks are migrated to React Query.
    - **Approach**:
-     - Gradually migrate remaining hooks (`useTeamMembersBasic` done; `useTeamMembers`, `useOccasions`, `useFinancialTransactions`, etc. still pending).
+    - Gradually migrate remaining hooks (`useTeamMembersBasic` and `useTeamMembers` done; `useOccasions`, `useFinancialTransactions`, etc. still pending).
      - Replace manual cache invalidation with `queryClient.invalidateQueries`.
      - Remove `utils/cache.ts` after all usages are migrated.
-   - **Status**: _Partially done — `useTeamMembersBasic` migrated to React Query. Remaining full hooks still use in-memory cache._
+   - **Status**: _Partially done — `useTeamMembersBasic` and full `useTeamMembers` migrated to React Query. Remaining full hooks still use in-memory cache._
 
 ### Next Steps (Remaining Work)
 
 1. **Migrate remaining high-traffic hooks to React Query**
-   - Priority order: `useOccasions`, `useFinancialTransactions`, `useTeamMembers` (full), `useConversations`, `useMessages`.
+   - Priority order: `useOccasions`, `useFinancialTransactions`, `useConversations`, `useMessages`.
    - For each: extract a standalone `fetch*Data` async function, replace hook body with `useQuery`, use stable empty-array defaults.
    - **Validation**: each migrated hook benefits from localStorage persistence, dedup, and the shouldDehydrateQuery empty-guard.
 
@@ -120,3 +120,47 @@ This file tracks the plan and status for fixing the intermittent data-loading is
   - Now uses `useQuery` with key `['team-members-basic', organizationId]`, matching the other two basic hooks.
   - Benefits from localStorage persistence, `shouldDehydrateQuery` empty-guard, and React Query deduplication.
   - Effect: consistent cache behavior across all three Dashboard basic hooks; team member count survives a page reload like orphans and sponsors.
+
+- **Full `useTeamMembers` hook migrated to React Query**
+  - The full team-members hook now uses `useQuery` (`['team-members', organizationId]`) instead of the custom in-memory `cache`.
+  - A dedicated `fetchTeamMembersData()` function now handles team members + tasks fetch/transform.
+  - Legacy `refetch(useCache?, silent?)` call shape is preserved (arguments ignored) so existing callsites do not break.
+  - Effect: team-member detail loading now uses unified React Query caching/dedup semantics and no longer depends on `utils/cache.ts`.
+
+### Incremental Execution Plan (with manual checks after each change)
+
+1. **Change: migrate `useOccasions` read path to React Query**
+   - Why this is safe: it is read-heavy and already used by multiple pages that benefit from shared dedup/caching.
+   - Expected outcome: opening Dashboard + Occasions modal in the same session should not issue duplicate cold fetches for identical params.
+   - Manual test:
+     - Open Dashboard (load upcoming occasions), then open the occasions management modal.
+     - In Network/console, verify the second view reuses cache/refetches predictably instead of full duplicate load.
+     - Confirm sponsor/team-member visibility rules are unchanged.
+
+2. **Change: migrate `useFinancialTransactions` to React Query**
+   - Why this is safe: data shape is list-oriented, no custom optimistic writes required for first pass.
+   - Expected outcome: transactions list appears from cache immediately after reload when data is warm; no spinner flicker on background refresh.
+   - Manual test:
+     - Visit financial screen, reload, then navigate away/back.
+     - Confirm data remains visible and updates in background without hard loading state regressions.
+
+3. **Change: migrate `useConversations` + `useMessages` to React Query**
+   - Why this is safe: chat fetches are read-centric and can benefit from key-based invalidation after send/delete mutations.
+   - Expected outcome: opening the same conversation repeatedly should feel snappier and avoid redundant full fetches.
+   - Manual test:
+     - Open conversations list, enter a conversation, go back, re-enter.
+     - Confirm message history is stable and no stale-empty screen persists after refresh.
+
+4. **Change: replace remaining manual cache invalidation with `queryClient.invalidateQueries`**
+   - Why this is safe: invalidation is explicit and key-scoped, avoiding custom cache divergence.
+   - Expected outcome: after create/update/delete, all dependent views refresh consistently without manual `cache.delete(...)`.
+   - Manual test:
+     - Perform one mutation in each area (occasion, transaction, message when available).
+     - Confirm list and detail views both refresh to the same state.
+
+5. **Change: remove `utils/cache.ts` once no runtime imports remain**
+   - Why this is safe: only done after all usage is eliminated and validated.
+   - Expected outcome: search shows zero runtime imports of `utils/cache`; app behavior remains unchanged.
+   - Manual test:
+     - Run a repo search for `utils/cache` and verify no active app imports remain.
+     - Smoke test Dashboard, Team Member page, Occasions, Financial, and Messages.

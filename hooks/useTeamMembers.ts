@@ -1,118 +1,84 @@
-import { useState, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
 import { TeamMember, Task } from '../types';
 import { useAuth } from '../contexts/AuthContext';
-import { cache, getCacheKey } from '../utils/cache';
 import { uuidToNumber } from '../utils/idMapper';
 
 export const useTeamMembers = () => {
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { userProfile } = useAuth();
+  const {
+    data: teamMembers = EMPTY_TEAM_MEMBERS,
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['team-members', userProfile?.organization_id],
+    queryFn: () => fetchTeamMembersData(userProfile!.organization_id),
+    enabled: !!userProfile,
+  });
 
-  useEffect(() => {
-    if (!userProfile) {
-      setLoading(false);
-      return;
-    }
+  // Keep the legacy refetch signature stable for existing callsites.
+  const refetchTeamMembers = useCallback(async (_useCache = true, _silent = false) => {
+    await refetch();
+  }, [refetch]);
 
-    fetchTeamMembers();
-  }, [userProfile]);
-
-  const fetchTeamMembers = async (useCache = true, silent = false) => {
-    if (!userProfile) return;
-
-    const cacheKey = getCacheKey.teamMembers(userProfile.organization_id);
-    
-    // Check cache first
-    if (useCache) {
-      const cachedData = cache.get<TeamMember[]>(cacheKey);
-      if (cachedData) {
-        setTeamMembers(cachedData);
-        setLoading(false);
-        // Revalidate in the background without toggling the loading spinner
-        fetchTeamMembers(false, true).catch(() => {});
-        return;
-      }
-    }
-
-    try {
-      if (!silent) setLoading(true);
-      setError(null);
-
-      // Fetch team members from user_profiles (excluding system admin)
-      const { data: teamMembersData, error: teamMembersError } = await supabase
-        .from('user_profiles')
-        .select('id, name, avatar_url')
-        .eq('organization_id', userProfile.organization_id)
-        .eq('role', 'team_member')
-        .eq('is_system_admin', false);
-
-
-      if (teamMembersError) throw teamMembersError;
-      if (!teamMembersData) {
-        setTeamMembers([]);
-        setLoading(false);
-        cache.set(cacheKey, [], 2 * 60 * 1000);
-        return;
-      }
-
-      const teamMemberIds = teamMembersData.map(m => m.id);
-
-      // Batch fetch all tasks for all team members at once
-      const { data: allTasksData } = await supabase
-        .from('tasks')
-        .select('*')
-        .in('team_member_id', teamMemberIds)
-        .order('due_date', { ascending: false });
-
-      // Group tasks by team member
-      const tasksByMember = new Map<string, any[]>();
-      (allTasksData || []).forEach(t => {
-        if (!tasksByMember.has(t.team_member_id)) {
-          tasksByMember.set(t.team_member_id, []);
-        }
-        tasksByMember.get(t.team_member_id)!.push(t);
-      });
-
-      // Build team members with their tasks
-      const teamMembersWithData = teamMembersData.map((member) => {
-        const memberTasks = tasksByMember.get(member.id) || [];
-        const tasks: Task[] = memberTasks.map(t => ({
-          id: uuidToNumber(t.id),
-          title: t.title,
-          dueDate: new Date(t.due_date),
-          completed: t.completed,
-          orphanId: t.orphan_id ? uuidToNumber(t.orphan_id) : undefined,
-        }));
-
-        return {
-          id: uuidToNumber(member.id),
-          uuid: member.id, // Store UUID for database operations
-          name: member.name,
-          avatarUrl: member.avatar_url || '',
-          assignedOrphanIds: [], // Team members don't have direct relationships with orphans
-          tasks,
-        } as TeamMember;
-      });
-
-      setTeamMembers(teamMembersWithData);
-      // Cache the result for 5 minutes
-      cache.set(cacheKey, teamMembersWithData, 5 * 60 * 1000);
-    } catch (err) {
-      console.error('Error fetching team members:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch team members');
-    } finally {
-      setLoading(false);
-    }
+  return {
+    teamMembers,
+    loading,
+    error: error ? (error instanceof Error ? error.message : 'Failed to fetch team members') : null,
+    refetch: refetchTeamMembers,
   };
-
-  return { teamMembers, loading, error, refetch: fetchTeamMembers };
 };
 
 const EMPTY_TEAM_MEMBERS: TeamMember[] = [];
+
+async function fetchTeamMembersData(organizationId: string): Promise<TeamMember[]> {
+  const { data: teamMembersData, error: teamMembersError } = await supabase
+    .from('user_profiles')
+    .select('id, name, avatar_url')
+    .eq('organization_id', organizationId)
+    .eq('role', 'team_member')
+    .eq('is_system_admin', false);
+
+  if (teamMembersError) throw teamMembersError;
+  if (!teamMembersData || teamMembersData.length === 0) return [];
+
+  const teamMemberIds = teamMembersData.map(m => m.id);
+  const { data: allTasksData } = await supabase
+    .from('tasks')
+    .select('*')
+    .in('team_member_id', teamMemberIds)
+    .order('due_date', { ascending: false });
+
+  const tasksByMember = new Map<string, any[]>();
+  (allTasksData || []).forEach(t => {
+    if (!tasksByMember.has(t.team_member_id)) {
+      tasksByMember.set(t.team_member_id, []);
+    }
+    tasksByMember.get(t.team_member_id)!.push(t);
+  });
+
+  return teamMembersData.map((member) => {
+    const memberTasks = tasksByMember.get(member.id) || [];
+    const tasks: Task[] = memberTasks.map(t => ({
+      id: uuidToNumber(t.id),
+      title: t.title,
+      dueDate: new Date(t.due_date),
+      completed: t.completed,
+      orphanId: t.orphan_id ? uuidToNumber(t.orphan_id) : undefined,
+    }));
+
+    return {
+      id: uuidToNumber(member.id),
+      uuid: member.id,
+      name: member.name,
+      avatarUrl: member.avatar_url || '',
+      assignedOrphanIds: [],
+      tasks,
+    } as TeamMember;
+  });
+}
 
 async function fetchTeamMembersBasicData(organizationId: string): Promise<TeamMember[]> {
   const { data, error } = await supabase
