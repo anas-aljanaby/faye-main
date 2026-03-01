@@ -18,6 +18,7 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: GC_TIME,
+      retry: 2, // Retry failed fetches up to 2 times (e.g. transient RLS/network)
     },
   },
 });

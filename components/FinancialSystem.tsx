@@ -322,8 +322,12 @@ const AddTransactionModal: React.FC<{
     
     useEffect(() => {
         if (type === TransactionType.Income && selectedSponsorId) {
-            const sponsorId = parseInt(selectedSponsorId);
-            const relatedOrphans = orphans.filter(o => o.sponsorId === sponsorId);
+            const sponsorId = parseInt(selectedSponsorId, 10);
+            const selectedSponsor = sponsors.find(s => s.id === sponsorId);
+            // Use sponsor's sponsoredOrphanIds (orphans from useOrphansBasic have sponsorId: 0)
+            const relatedOrphans = selectedSponsor
+                ? orphans.filter(o => selectedSponsor.sponsoredOrphanIds.includes(o.id))
+                : [];
             setSponsoredOrphans(relatedOrphans);
             setSelectedOrphans([]);
             setOrphanPaymentInfo({});
@@ -332,7 +336,7 @@ const AddTransactionModal: React.FC<{
             setSelectedOrphans([]);
             setOrphanPaymentInfo({});
         }
-    }, [selectedSponsorId, type, orphans]);
+    }, [selectedSponsorId, type, orphans, sponsors]);
 
     useEffect(() => {
         if (type === TransactionType.Income && donationCategory === 'كفالة يتيم') {
@@ -545,9 +549,11 @@ const AddTransactionModal: React.FC<{
                                 <div className="flex items-center gap-2">
                                     <select value={selectedSponsorId} onChange={(e) => setSelectedSponsorId(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" required>
                                         <option value="" disabled>-- اختر الكافل --</option>
-                                        {sponsors.map(sponsor => (
-                                            <option key={sponsor.id} value={sponsor.id}>{sponsor.name}</option>
-                                        ))}
+                                        {[...sponsors]
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map(sponsor => (
+                                                <option key={sponsor.id} value={sponsor.id}>{sponsor.name}</option>
+                                            ))}
                                     </select>
                                     <button type="button" onClick={() => setIsQuickAddSponsorOpen(true)} className="flex-shrink-0 h-10 w-10 bg-primary-light text-primary rounded-md flex items-center justify-center hover:bg-primary-hover hover:text-white transition-colors">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>

@@ -96,27 +96,24 @@ export const usePermissions = () => {
 
     try {
       // Check if permissions exist for this user
-      const { data: existingPermissions, error: checkError } = await supabase
+      const { data: existingPermissions } = await supabase
         .from('user_permissions')
         .select('id')
         .eq('user_id', userId)
         .maybeSingle();
 
-      console.log('Existing permissions check:', { existingPermissions, checkError });
-
       if (existingPermissions) {
         // Update existing permissions
-        const { error, data } = await supabase
+        const { error } = await supabase
           .from('user_permissions')
           .update(newPermissions)
           .eq('user_id', userId)
           .select();
 
-        console.log('Update result:', { error, data });
         if (error) throw error;
       } else {
         // Insert new permissions
-        const { error, data } = await supabase
+        const { error } = await supabase
           .from('user_permissions')
           .insert({
             user_id: userId,
@@ -131,7 +128,6 @@ export const usePermissions = () => {
           })
           .select();
 
-        console.log('Insert result:', { error, data });
         if (error) throw error;
       }
 
