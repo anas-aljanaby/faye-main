@@ -308,15 +308,13 @@ const AddTransactionModal: React.FC<{
     onAdd: (data: Omit<FinancialTransaction, 'id' | 'date' | 'status'>) => void;
     sponsors: Sponsor[];
     orphans: Orphan[];
-    onAddSponsor: (name: string) => Promise<Sponsor>;
-}> = ({ isOpen, onClose, onAdd, sponsors, orphans, onAddSponsor }) => {
+}> = ({ isOpen, onClose, onAdd, sponsors, orphans }) => {
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
     const [type, setType] = useState<TransactionType>(TransactionType.Expense);
     const [selectedSponsorId, setSelectedSponsorId] = useState('');
     const [selectedOrphanId, setSelectedOrphanId] = useState('');
     const [donationCategory, setDonationCategory] = useState('');
-    const [isQuickAddSponsorOpen, setIsQuickAddSponsorOpen] = useState(false);
     const [orphanAmounts, setOrphanAmounts] = useState<Record<number, string>>({});
     const [sponsoredOrphans, setSponsoredOrphans] = useState<Orphan[]>([]);
     const [selectedOrphans, setSelectedOrphans] = useState<number[]>([]);
@@ -326,7 +324,9 @@ const AddTransactionModal: React.FC<{
         month?: number;
         year: number;
     }>>({});
-    
+    const [sponsorSearchQuery, setSponsorSearchQuery] = useState('');
+    const [orphanSearchQuery, setOrphanSearchQuery] = useState('');
+
     useEffect(() => {
         if (type === TransactionType.Income && selectedSponsorId) {
             const sponsorId = parseInt(selectedSponsorId, 10);
@@ -338,10 +338,12 @@ const AddTransactionModal: React.FC<{
             setSponsoredOrphans(relatedOrphans);
             setSelectedOrphans([]);
             setOrphanPaymentInfo({});
+            setOrphanSearchQuery('');
         } else {
             setSponsoredOrphans([]);
             setSelectedOrphans([]);
             setOrphanPaymentInfo({});
+            setOrphanSearchQuery('');
         }
     }, [selectedSponsorId, type, orphans, sponsors]);
 
@@ -358,7 +360,7 @@ const AddTransactionModal: React.FC<{
 
     // Form validation
     const isFormValid = useMemo(() => {
-        if (!description.trim() || !amount || parseFloat(amount) <= 0) {
+        if (!amount || parseFloat(amount) <= 0) {
             return false;
         }
         
@@ -386,13 +388,44 @@ const AddTransactionModal: React.FC<{
         }
         
         return true;
-    }, [description, amount, type, selectedSponsorId, donationCategory, orphanPaymentInfo]);
+    }, [amount, type, selectedSponsorId, donationCategory, orphanPaymentInfo]);
+
+    const sortedSponsors = useMemo(
+        () => [...sponsors].sort((a, b) => a.name.localeCompare(b.name, 'ar')),
+        [sponsors]
+    );
+
+    const filteredSponsorsForPicker = useMemo(() => {
+        const q = sponsorSearchQuery.trim();
+        if (!q) return sortedSponsors;
+        const lower = q.toLowerCase();
+        return sortedSponsors.filter(
+            (s) => s.name.includes(q) || s.name.toLowerCase().includes(lower)
+        );
+    }, [sortedSponsors, sponsorSearchQuery]);
+
+    const sortedSponsoredOrphans = useMemo(
+        () => [...sponsoredOrphans].sort((a, b) => a.name.localeCompare(b.name, 'ar')),
+        [sponsoredOrphans]
+    );
+
+    const filteredOrphansForPicker = useMemo(() => {
+        const available = sortedSponsoredOrphans.filter((o) => !selectedOrphans.includes(o.id));
+        const q = orphanSearchQuery.trim();
+        if (!q) return available;
+        const lower = q.toLowerCase();
+        return available.filter(
+            (o) => o.name.includes(q) || o.name.toLowerCase().includes(lower)
+        );
+    }, [sortedSponsoredOrphans, selectedOrphans, orphanSearchQuery]);
 
     const resetForm = () => {
         setDescription('');
         setAmount('');
         setType(TransactionType.Expense);
         setSelectedSponsorId('');
+        setSponsorSearchQuery('');
+        setOrphanSearchQuery('');
         setSelectedOrphanId('');
         setDonationCategory('');
         setOrphanAmounts({});
@@ -411,18 +444,17 @@ const AddTransactionModal: React.FC<{
             console.log('Form already submitting, ignoring duplicate submit');
             return;
         }
-        
-        if (!description.trim() || !amount) {
-            alert('الرجاء ملء جميع الحقول المطلوبة.');
-            return;
-        }
-        
-        setIsSubmitting(true);
 
-        let transactionData: Omit<FinancialTransaction, 'id' | 'date' | 'status'>;
+        const amountValue = parseFloat(amount);
+        const hasValidAmount = amount !== '' && !isNaN(amountValue) && amountValue > 0;
 
-        if (type === TransactionType.Income) {
-             if (!selectedSponsorId) {
+        if (type === TransactionType.Expense) {
+            if (!hasValidAmount) {
+                alert('الرجاء إدخال مبلغ صالح.');
+                return;
+            }
+        } else {
+            if (!selectedSponsorId) {
                 alert('الرجاء اختيار الكافل.');
                 return;
             }
@@ -430,70 +462,82 @@ const AddTransactionModal: React.FC<{
                 alert('الرجاء اختيار تصنيف التبرع.');
                 return;
             }
-            
-            // Validate orphan payment info if category is كفالة يتيم
             if (donationCategory === 'كفالة يتيم') {
-                const hasValidOrphanInfo = Object.keys(orphanPaymentInfo).some(orphanIdStr => {
-                    const info = orphanPaymentInfo[parseInt(orphanIdStr)];
-                    const amount = parseFloat(info.amount);
-                    return !isNaN(amount) && amount > 0;
+                const hasValidOrphanInfo = Object.keys(orphanPaymentInfo).some((orphanIdStr) => {
+                    const info = orphanPaymentInfo[parseInt(orphanIdStr, 10)];
+                    const rowAmount = parseFloat(info.amount);
+                    return !isNaN(rowAmount) && rowAmount > 0;
                 });
-                
                 if (!hasValidOrphanInfo) {
                     alert('الرجاء إضافة يتيم واحد على الأقل مع المبلغ.');
                     return;
                 }
-            }
-            
-            const sponsorName = sponsors.find(s => s.id === parseInt(selectedSponsorId))?.name || 'كافل غير محدد';
-            const finalDescription = `[${donationCategory}] - ${description}`;
-            
-            // Convert orphanPaymentInfo to the format needed
-            const orphanAmountsMap: Record<number, number> = {};
-            const orphanPaymentMonths: Record<number, { month?: number; year: number; isYear: boolean }> = {};
-            
-            Object.keys(orphanPaymentInfo).forEach(orphanIdStr => {
-                const orphanId = parseInt(orphanIdStr);
-                const info = orphanPaymentInfo[orphanId];
-                const amount = parseFloat(info.amount);
-                if (!isNaN(amount) && amount > 0) {
-                    orphanAmountsMap[orphanId] = amount;
-                    orphanPaymentMonths[orphanId] = {
-                        month: info.paymentType === 'month' ? info.month : undefined,
-                        year: info.year,
-                        isYear: info.paymentType === 'year'
-                    };
+                if (!hasValidAmount) {
+                    alert('الرجاء إدخال مبالغ صالحة للأيتام.');
+                    return;
                 }
-            });
-
-            transactionData = {
-                description: finalDescription,
-                amount: parseFloat(amount),
-                type,
-                createdBy: 'خالد الغامدي', // Hardcoded team member name as requested
-                receipt: {
-                    sponsorName: sponsorName,
-                    donationCategory: donationCategory,
-                    amount: parseFloat(amount),
-                    date: new Date(), // Will be overwritten by parent, but good to have
-                    description: description, // Original description
-                    relatedOrphanIds: Object.keys(orphanAmountsMap).map(id => parseInt(id)),
-                    orphanAmounts: orphanAmountsMap,
-                    transactionId: '', // Will be set in parent
-                    orphanPaymentMonths: orphanPaymentMonths,
-                } as any
-            };
-        } else { // Expense
-            transactionData = {
-                description,
-                amount: parseFloat(amount),
-                type,
-                createdBy: 'مدير النظام',
-                ...(selectedOrphanId && { orphanId: parseInt(selectedOrphanId) })
-            };
+            } else if (!hasValidAmount) {
+                alert('الرجاء إدخال مبلغ صالح.');
+                return;
+            }
         }
         
+        setIsSubmitting(true);
+
+        let transactionData: Omit<FinancialTransaction, 'id' | 'date' | 'status'>;
+
         try {
+            if (type === TransactionType.Income) {
+                const sponsorName = sponsors.find(s => s.id === parseInt(selectedSponsorId, 10))?.name || 'كافل غير محدد';
+                const trimmedNote = description.trim();
+                const finalDescription = trimmedNote
+                    ? `[${donationCategory}] - ${trimmedNote}`
+                    : `[${donationCategory}]`;
+
+                const orphanAmountsMap: Record<number, number> = {};
+                const orphanPaymentMonths: Record<number, { month?: number; year: number; isYear: boolean }> = {};
+
+                Object.keys(orphanPaymentInfo).forEach((orphanIdStr) => {
+                    const orphanId = parseInt(orphanIdStr, 10);
+                    const info = orphanPaymentInfo[orphanId];
+                    const rowAmount = parseFloat(info.amount);
+                    if (!isNaN(rowAmount) && rowAmount > 0) {
+                        orphanAmountsMap[orphanId] = rowAmount;
+                        orphanPaymentMonths[orphanId] = {
+                            month: info.paymentType === 'month' ? info.month : undefined,
+                            year: info.year,
+                            isYear: info.paymentType === 'year',
+                        };
+                    }
+                });
+
+                transactionData = {
+                    description: finalDescription,
+                    amount: parseFloat(amount),
+                    type,
+                    createdBy: 'خالد الغامدي', // Hardcoded team member name as requested
+                    receipt: {
+                        sponsorName,
+                        donationCategory,
+                        amount: parseFloat(amount),
+                        date: new Date(), // Will be overwritten by parent, but good to have
+                        description: trimmedNote,
+                        relatedOrphanIds: Object.keys(orphanAmountsMap).map((id) => parseInt(id, 10)),
+                        orphanAmounts: orphanAmountsMap,
+                        transactionId: '', // Will be set in parent
+                        orphanPaymentMonths,
+                    } as any,
+                };
+            } else {
+                transactionData = {
+                    description: description.trim(),
+                    amount: parseFloat(amount),
+                    type,
+                    createdBy: 'مدير النظام',
+                    ...(selectedOrphanId && { orphanId: parseInt(selectedOrphanId, 10) }),
+                };
+            }
+
             await onAdd(transactionData);
             resetForm();
         } catch (error) {
@@ -504,17 +548,6 @@ const AddTransactionModal: React.FC<{
         }
     };
     
-    const handleSaveNewSponsor = async (name: string) => {
-        try {
-            const newSponsor = await onAddSponsor(name);
-            setIsQuickAddSponsorOpen(false);
-            setSelectedSponsorId(newSponsor.id.toString());
-        } catch (error) {
-            console.error('Error saving sponsor:', error);
-            alert('حدث خطأ أثناء إضافة الكافل. الرجاء المحاولة مرة أخرى.');
-        }
-    };
-
     if (!isOpen) return null;
 
     return (
@@ -529,6 +562,7 @@ const AddTransactionModal: React.FC<{
                             onClick={() => {
                                 setType(TransactionType.Expense);
                                 setSelectedSponsorId('');
+                                setSponsorSearchQuery('');
                                 setDonationCategory('');
                                 setAmount('');
                             }}
@@ -553,18 +587,39 @@ const AddTransactionModal: React.FC<{
                          <>
                             <div className="space-y-1">
                                 <label className="text-sm font-medium text-gray-700">الكافل</label>
-                                <div className="flex items-center gap-2">
-                                    <select value={selectedSponsorId} onChange={(e) => setSelectedSponsorId(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" required>
-                                        <option value="" disabled>-- اختر الكافل --</option>
-                                        {[...sponsors]
-                                            .sort((a, b) => a.name.localeCompare(b.name))
-                                            .map(sponsor => (
-                                                <option key={sponsor.id} value={sponsor.id}>{sponsor.name}</option>
-                                            ))}
-                                    </select>
-                                    <button type="button" onClick={() => setIsQuickAddSponsorOpen(true)} className="flex-shrink-0 h-10 w-10 bg-primary-light text-primary rounded-md flex items-center justify-center hover:bg-primary-hover hover:text-white transition-colors">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                                    </button>
+                                <input
+                                    type="search"
+                                    value={sponsorSearchQuery}
+                                    onChange={(e) => setSponsorSearchQuery(e.target.value)}
+                                    placeholder="بحث بالاسم..."
+                                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+                                    autoComplete="off"
+                                />
+                                <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-white">
+                                    {filteredSponsorsForPicker.length === 0 ? (
+                                        <p className="px-3 py-2 text-sm text-gray-500 text-center">لا نتائج</p>
+                                    ) : (
+                                        <ul className="divide-y divide-gray-100">
+                                            {filteredSponsorsForPicker.map((sponsor) => {
+                                                const isSelected = selectedSponsorId === String(sponsor.id);
+                                                return (
+                                                    <li key={sponsor.id}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedSponsorId(String(sponsor.id))}
+                                                            className={`w-full text-right px-3 py-2 text-sm transition-colors ${
+                                                                isSelected
+                                                                    ? 'bg-primary-light text-primary font-semibold'
+                                                                    : 'hover:bg-gray-50 text-gray-800'
+                                                            }`}
+                                                        >
+                                                            {sponsor.name}
+                                                        </button>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    )}
                                 </div>
                             </div>
                             <div className="space-y-1">
@@ -585,33 +640,50 @@ const AddTransactionModal: React.FC<{
                                     <div>
                                         <label className="text-sm font-medium text-gray-700 mb-2 block">اختر الأيتام</label>
                                         {sponsoredOrphans.length > 0 ? (
-                                            <select
-                                                value=""
-                                                onChange={(e) => {
-                                                    const orphanId = parseInt(e.target.value);
-                                                    if (orphanId && !selectedOrphans.includes(orphanId)) {
-                                                        setSelectedOrphans(prev => [...prev, orphanId]);
-                                                        setOrphanPaymentInfo(prev => ({
-                                                            ...prev,
-                                                            [orphanId]: {
-                                                                amount: '',
-                                                                paymentType: null,
-                                                                year: new Date().getFullYear()
-                                                            }
-                                                        }));
-                                                    }
-                                                }}
-                                                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm"
-                                            >
-                                                <option value="">-- اختر يتيم --</option>
-                                                {sponsoredOrphans
-                                                    .filter(o => !selectedOrphans.includes(o.id))
-                                                    .map(orphan => (
-                                                        <option key={orphan.id} value={orphan.id}>
-                                                            {orphan.name}
-                                                        </option>
-                                                    ))}
-                                            </select>
+                                            <div className="space-y-1">
+                                                <input
+                                                    type="search"
+                                                    value={orphanSearchQuery}
+                                                    onChange={(e) => setOrphanSearchQuery(e.target.value)}
+                                                    placeholder="بحث بالاسم..."
+                                                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm"
+                                                    autoComplete="off"
+                                                />
+                                                <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-white">
+                                                    {filteredOrphansForPicker.length === 0 ? (
+                                                        <p className="px-3 py-2 text-sm text-gray-500 text-center">
+                                                            {orphanSearchQuery.trim()
+                                                                ? 'لا نتائج'
+                                                                : 'تم اختيار جميع الأيتام المتاحين'}
+                                                        </p>
+                                                    ) : (
+                                                        <ul className="divide-y divide-gray-100">
+                                                            {filteredOrphansForPicker.map((orphan) => (
+                                                                <li key={orphan.id}>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            if (selectedOrphans.includes(orphan.id)) return;
+                                                                            setSelectedOrphans((prev) => [...prev, orphan.id]);
+                                                                            setOrphanPaymentInfo((prev) => ({
+                                                                                ...prev,
+                                                                                [orphan.id]: {
+                                                                                    amount: '',
+                                                                                    paymentType: null,
+                                                                                    year: new Date().getFullYear(),
+                                                                                },
+                                                                            }));
+                                                                        }}
+                                                                        className="w-full text-right px-3 py-2 text-sm transition-colors hover:bg-gray-50 text-gray-800"
+                                                                    >
+                                                                        {orphan.name}
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            </div>
                                         ) : (
                                             <p className="text-center text-sm text-gray-500 bg-gray-50 p-3 rounded-md">
                                                 لم يتم العثور على أيتام مكفولين لهذا الكافل.
@@ -824,8 +896,18 @@ const AddTransactionModal: React.FC<{
                         </div>
                     )}
 
-                    <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="البيان" className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" required autoFocus/>
-                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="المبلغ" className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" required disabled={type === TransactionType.Income && donationCategory === 'كفالة يتيم'} />
+                    <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="البيان (اختياري)" className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" autoFocus/>
+                    {!(type === TransactionType.Income && donationCategory === 'كفالة يتيم') && (
+                        <input
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            placeholder="المبلغ"
+                            dir="ltr"
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+                            required
+                        />
+                    )}
                     
                     <div className="flex justify-end gap-3 pt-4">
                         <button type="button" onClick={resetForm} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
@@ -844,11 +926,6 @@ const AddTransactionModal: React.FC<{
                 </form>
             </div>
         </div>
-        <AddSponsorQuickModal 
-            isOpen={isQuickAddSponsorOpen}
-            onClose={() => setIsQuickAddSponsorOpen(false)}
-            onSave={handleSaveNewSponsor}
-        />
         </>
     );
 };
@@ -2459,7 +2536,6 @@ const FinancialSystem: React.FC = () => {
             onAdd={handleAddTransaction}
             sponsors={sponsorsList}
             orphans={orphansData}
-            onAddSponsor={handleAddSponsor}
         />
         <ReceiptModal
             transaction={receiptToShow}

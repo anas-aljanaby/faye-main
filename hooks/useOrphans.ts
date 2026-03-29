@@ -305,8 +305,9 @@ export const useOrphans = () => {
           }));
 
         const familyMembers = orphanFamily.map(f => ({
+            id: f.id,
             relationship: f.relationship,
-            age: f.age || undefined,
+            age: f.age ?? undefined,
           }));
 
         // Transform program participations
@@ -342,8 +343,12 @@ export const useOrphans = () => {
           sponsorshipType: orphan.sponsorship_type || '',
           teamMemberId: 0, // Team members don't have direct relationships with orphans
           familyMembers,
-          hobbies: [], // Not stored in DB yet
-          needsAndWishes: [], // Not stored in DB yet
+          hobbies: Array.isArray((orphan as { hobbies?: string[] }).hobbies)
+            ? [...(orphan as { hobbies: string[] }).hobbies]
+            : [],
+          needsAndWishes: Array.isArray((orphan as { needs_wishes?: string[] }).needs_wishes)
+            ? [...(orphan as { needs_wishes: string[] }).needs_wishes]
+            : [],
           updateLogs,
           educationalProgram: educationalProgram ? {
             status: educationalProgram.status as ProgramParticipation['status'],
@@ -635,6 +640,28 @@ export async function fetchOrphansPaginatedData(
   return { orphans, totalCount: result.totalCount };
 }
 
+/** Persisted React Query cache (localStorage) stores Dates as strings — coerce back for UI. */
+function asDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+function asOptionalDate(value: Date | string | undefined | null): Date | undefined {
+  if (value == null) return undefined;
+  return value instanceof Date ? value : new Date(value);
+}
+
+function normalizeOrphansBasicFromCache(orphans: Orphan[]): Orphan[] {
+  return orphans.map((o) => ({
+    ...o,
+    dateOfBirth: asDate(o.dateOfBirth as Date | string),
+    payments: o.payments.map((p) => ({
+      ...p,
+      dueDate: asDate(p.dueDate as Date | string),
+      paidDate: asOptionalDate(p.paidDate as Date | string | undefined | null),
+    })),
+  }));
+}
+
 // Lightweight hook for lists/dashboards - uses React Query for shared cache and request deduplication
 export const useOrphansBasic = () => {
   const { userProfile } = useAuth();
@@ -647,6 +674,7 @@ export const useOrphansBasic = () => {
     queryKey: ['orphans-basic', userProfile?.organization_id, userProfile?.id, userProfile?.role],
     queryFn: () => fetchOrphansBasicData(userProfile!),
     enabled: !!userProfile,
+    select: normalizeOrphansBasicFromCache,
   });
 
   return {
@@ -816,8 +844,9 @@ export async function fetchOrphanDetailData(organizationId: string, orphanId: st
   })).sort((a, b) => b.date.getTime() - a.date.getTime());
 
   const familyMembers = (familyData.data || []).map(f => ({
+    id: f.id,
     relationship: f.relationship,
-    age: f.age || undefined,
+    age: f.age ?? undefined,
   }));
 
   const educationalProgramRow = (programsData.data || []).find(p => p.program_type === 'educational') || null;
@@ -856,8 +885,12 @@ export async function fetchOrphanDetailData(organizationId: string, orphanId: st
     sponsorshipType: orphanRow.sponsorship_type || '',
     teamMemberId: 0,
     familyMembers,
-    hobbies: [],
-    needsAndWishes: [],
+    hobbies: Array.isArray((orphanRow as { hobbies?: string[] }).hobbies)
+      ? [...(orphanRow as { hobbies: string[] }).hobbies]
+      : [],
+    needsAndWishes: Array.isArray((orphanRow as { needs_wishes?: string[] }).needs_wishes)
+      ? [...(orphanRow as { needs_wishes: string[] }).needs_wishes]
+      : [],
     updateLogs,
     educationalProgram: educationalProgramRow
       ? {
@@ -901,6 +934,13 @@ export const useOrphanDetail = (orphanId?: string | null) => {
     enabled: !!userProfile && !!orphanId,
   });
 
+  const invalidateDetail = useCallback(async () => {
+    if (!userProfile?.organization_id || !orphanId) return;
+    await queryClient.invalidateQueries({
+      queryKey: ['orphan-detail', userProfile.organization_id, orphanId],
+    });
+  }, [userProfile?.organization_id, orphanId, queryClient]);
+
   const updateOrphan = useCallback(
     async (updates: Partial<{
       name: string;
@@ -916,6 +956,8 @@ export const useOrphanDetail = (orphanId?: string | null) => {
       housing_status: string;
       guardian: string;
       sponsorship_type: string;
+      hobbies: string[];
+      needs_wishes: string[];
     }>) => {
       if (!userProfile || !orphanId) {
         throw new Error('User not authenticated or orphan not loaded');
@@ -929,11 +971,229 @@ export const useOrphanDetail = (orphanId?: string | null) => {
 
       if (updateError) throw updateError;
 
-      await queryClient.invalidateQueries({
-        queryKey: ['orphan-detail', userProfile.organization_id, orphanId],
-      });
+      await invalidateDetail();
     },
-    [userProfile, orphanId, queryClient]
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const insertUpdateLog = useCallback(
+    async (note: string) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const { error: insertError } = await supabase.from('update_logs').insert({
+        orphan_id: orphanId,
+        author_id: userProfile.id,
+        note,
+      });
+      if (insertError) throw insertError;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const updateUpdateLog = useCallback(
+    async (logId: string, updates: { note?: string; date?: string }) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const patch: Record<string, unknown> = {};
+      if (updates.note !== undefined) patch.note = updates.note;
+      if (updates.date !== undefined) patch.date = updates.date;
+      const { error } = await supabase
+        .from('update_logs')
+        .update(patch)
+        .eq('id', logId)
+        .eq('orphan_id', orphanId);
+      if (error) throw error;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const deleteUpdateLog = useCallback(
+    async (logId: string) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const { error } = await supabase
+        .from('update_logs')
+        .delete()
+        .eq('id', logId)
+        .eq('orphan_id', orphanId);
+      if (error) throw error;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const insertAchievement = useCallback(
+    async (payload: {
+      title: string;
+      description: string;
+      date: string;
+      mediaUrl?: string | null;
+      mediaType?: 'image' | 'video' | null;
+    }) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const { error: insertError } = await supabase.from('achievements').insert({
+        orphan_id: orphanId,
+        title: payload.title,
+        description: payload.description || null,
+        date: payload.date,
+        media_url: payload.mediaUrl ?? null,
+        media_type: payload.mediaType ?? null,
+      });
+      if (insertError) throw insertError;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const updateAchievement = useCallback(
+    async (
+      achievementId: string,
+      updates: {
+        title?: string;
+        description?: string | null;
+        date?: string;
+        media_url?: string | null;
+        media_type?: string | null;
+      }
+    ) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const patch: Record<string, unknown> = {};
+      if (updates.title !== undefined) patch.title = updates.title;
+      if (updates.description !== undefined) patch.description = updates.description;
+      if (updates.date !== undefined) patch.date = updates.date;
+      if (updates.media_url !== undefined) patch.media_url = updates.media_url;
+      if (updates.media_type !== undefined) patch.media_type = updates.media_type;
+      const { error } = await supabase
+        .from('achievements')
+        .update(patch)
+        .eq('id', achievementId)
+        .eq('orphan_id', orphanId);
+      if (error) throw error;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const deleteAchievement = useCallback(
+    async (achievementId: string) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const { error } = await supabase
+        .from('achievements')
+        .delete()
+        .eq('id', achievementId)
+        .eq('orphan_id', orphanId);
+      if (error) throw error;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const upsertProgramParticipation = useCallback(
+    async (input: {
+      program_type: 'educational' | 'psychological_child' | 'psychological_guardian';
+      status: ProgramParticipation['status'];
+      details: string;
+    }) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const { error: upsertError } = await supabase.from('program_participations').upsert(
+        {
+          orphan_id: orphanId,
+          program_type: input.program_type,
+          status: input.status,
+          details: input.details.trim() ? input.details : null,
+        },
+        { onConflict: 'orphan_id,program_type' }
+      );
+      if (upsertError) throw upsertError;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const insertFamilyMember = useCallback(
+    async (relationship: string, age: number | null) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const { error: insertError } = await supabase.from('family_members').insert({
+        orphan_id: orphanId,
+        relationship,
+        age,
+      });
+      if (insertError) throw insertError;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const updateFamilyMember = useCallback(
+    async (memberId: string, relationship: string, age: number | null) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const { error: updateError } = await supabase
+        .from('family_members')
+        .update({ relationship, age })
+        .eq('id', memberId)
+        .eq('orphan_id', orphanId);
+      if (updateError) throw updateError;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const deleteFamilyMember = useCallback(
+    async (memberId: string) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const { error: deleteError } = await supabase
+        .from('family_members')
+        .delete()
+        .eq('id', memberId)
+        .eq('orphan_id', orphanId);
+      if (deleteError) throw deleteError;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
+  );
+
+  const updatePaymentRow = useCallback(
+    async (
+      paymentId: string,
+      updates: {
+        amount?: number;
+        due_date?: string;
+        paid_date?: string | null;
+        status?: PaymentStatus | string;
+      }
+    ) => {
+      if (!userProfile || !orphanId) {
+        throw new Error('User not authenticated or orphan not loaded');
+      }
+      const patch: Record<string, unknown> = {};
+      if (updates.amount !== undefined) patch.amount = updates.amount;
+      if (updates.due_date !== undefined) patch.due_date = updates.due_date;
+      if (updates.paid_date !== undefined) patch.paid_date = updates.paid_date;
+      if (updates.status !== undefined) patch.status = updates.status;
+      const { error: updateError } = await supabase.from('payments').update(patch).eq('id', paymentId);
+      if (updateError) throw updateError;
+      await invalidateDetail();
+    },
+    [userProfile, orphanId, invalidateDetail]
   );
 
   return {
@@ -942,5 +1202,16 @@ export const useOrphanDetail = (orphanId?: string | null) => {
     error: error ? (error instanceof Error ? error.message : 'Failed to fetch orphan') : null,
     refetch,
     updateOrphan,
+    insertUpdateLog,
+    updateUpdateLog,
+    deleteUpdateLog,
+    insertAchievement,
+    updateAchievement,
+    deleteAchievement,
+    upsertProgramParticipation,
+    insertFamilyMember,
+    updateFamilyMember,
+    deleteFamilyMember,
+    updatePaymentRow,
   };
 };

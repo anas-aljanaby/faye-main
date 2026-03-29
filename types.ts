@@ -81,8 +81,9 @@ export interface Orphan {
   sponsorshipType: string;
   teamMemberId: number;
   familyMembers: {
+    id: string;
     relationship: string;
-    age: number;
+    age?: number;
   }[];
   hobbies: string[];
   needsAndWishes: string[];

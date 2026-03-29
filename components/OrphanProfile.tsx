@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { findById } from '../utils/idMapper';
 import { financialTransactions } from '../data';
 import { Payment, PaymentStatus, Achievement, SpecialOccasion, Gift, TransactionType, Orphan, UpdateLog, ProgramParticipation } from '../types';
+import { uploadOrphanAchievementMedia } from '../utils/orphanAchievementUpload';
 import { GoogleGenAI } from "@google/genai";
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -18,10 +19,33 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import OptimizedImage from './OptimizedImage';
 
+/** React Query persistence (or other hydration) may restore dates as strings — normalize before calling Date methods. */
+function coerceToDate(value: unknown): Date | null {
+    if (value == null || value === '') return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+    const d = new Date(value as string | number);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function formatDateArEG(value: unknown): string {
+    const d = coerceToDate(value);
+    return d ? d.toLocaleDateString('ar-EG') : '—';
+}
+
+function toDateInputString(value: unknown): string {
+    const d = coerceToDate(value);
+    return d ? d.toISOString().split('T')[0] : '';
+}
+
+function formatDateArShort(value: unknown): string {
+    const d = coerceToDate(value);
+    return d ? d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+}
+
 const AddAchievementModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
-    onSave: (achievement: Omit<Achievement, 'id'>) => void;
+    onSave: (achievement: Omit<Achievement, 'id'> & { mediaFile?: File | null }) => void;
 }> = ({ isOpen, onClose, onSave }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -56,14 +80,15 @@ const AddAchievementModal: React.FC<{
             return;
         }
         
-        const newAchievement: Omit<Achievement, 'id'> = {
+        const newAchievement: Omit<Achievement, 'id'> & { mediaFile?: File | null } = {
             title,
             description,
             date: new Date(date),
             ...(mediaFile && {
                 mediaUrl: mediaPreview!,
                 mediaType: mediaFile.type.startsWith('image/') ? 'image' : 'video'
-            })
+            }),
+            mediaFile,
         };
         onSave(newAchievement);
         resetAndClose();
@@ -160,7 +185,9 @@ const EventModal: React.FC<{
     onDelete: (occasionId: string) => void;
     date: Date | null;
     existingEvents: { id: string; title: string; type: string }[];
-}> = ({ isOpen, onClose, onAdd, onUpdate, onDelete, date, existingEvents }) => {
+    /** When false, day details are view-only (sponsors / no edit permission). */
+    allowManage?: boolean;
+}> = ({ isOpen, onClose, onAdd, onUpdate, onDelete, date, existingEvents, allowManage = true }) => {
     const [newTitle, setNewTitle] = useState('');
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState('');
@@ -236,7 +263,12 @@ const EventModal: React.FC<{
                         <h4 className="text-sm font-semibold text-gray-600 mb-2">المناسبات المسجلة</h4>
                         {editableEvents.map(event => (
                             <div key={event.id} className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                {editingId === event.id ? (
+                                {!allowManage ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                        <span className="text-gray-800">{event.title}</span>
+                                    </div>
+                                ) : editingId === event.id ? (
                                     <form onSubmit={handleEditSubmit} className="space-y-2">
                                         <input
                                             type="text"
@@ -322,7 +354,8 @@ const EventModal: React.FC<{
                 )}
 
                 {/* Add New Event */}
-                {isAdding ? (
+                {allowManage &&
+                    (isAdding ? (
                     <form onSubmit={handleAddSubmit} className="space-y-3 border-t pt-4">
                         <h4 className="text-sm font-semibold text-gray-600">إضافة مناسبة جديدة</h4>
                         <input
@@ -343,13 +376,14 @@ const EventModal: React.FC<{
                     </form>
                 ) : (
                     <button
+                        type="button"
                         onClick={() => { setIsAdding(true); setEditingId(null); setDeleteConfirmId(null); }}
                         className="w-full py-2.5 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:border-primary hover:text-primary font-semibold flex items-center justify-center gap-2 transition-colors"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         إضافة مناسبة جديدة
                     </button>
-                )}
+                ))}
 
                 {existingEvents.length === 0 && !isAdding && (
                     <p className="text-center text-gray-500 text-sm mt-4">لا توجد أحداث في هذا اليوم</p>
@@ -378,10 +412,11 @@ const YearlyPaymentSummary: React.FC<{ payments: Payment[] }> = ({ payments }) =
     const months = Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
 
     const getStatusForMonth = (month: Date) => {
-        const paymentForMonth = payments.find(p => 
-            p.dueDate.getFullYear() === month.getFullYear() &&
-            p.dueDate.getMonth() === month.getMonth()
-        );
+        const paymentForMonth = payments.find(p => {
+            const due = coerceToDate(p.dueDate);
+            if (!due) return false;
+            return due.getFullYear() === month.getFullYear() && due.getMonth() === month.getMonth();
+        });
 
         if (!paymentForMonth) {
             return { status: 'لا يوجد', color: 'bg-gray-200', textColor: 'text-gray-500' };
@@ -394,6 +429,8 @@ const YearlyPaymentSummary: React.FC<{ payments: Payment[] }> = ({ payments }) =
                 return { status: 'مستحق', color: 'bg-yellow-100', textColor: 'text-yellow-700' };
             case PaymentStatus.Overdue:
                 return { status: 'متأخر', color: 'bg-red-100', textColor: 'text-red-700' };
+            case PaymentStatus.Processing:
+                return { status: 'قيد المعالجة', color: 'bg-blue-100', textColor: 'text-blue-700' };
             default:
                 return { status: 'غير معروف', color: 'bg-gray-200', textColor: 'text-gray-500' };
         }
@@ -480,8 +517,10 @@ const InteractiveCalendar: React.FC<{
 
     const events = useMemo(() => {
         const allEvents = new Map<string, { id: string; type: string; title: string }[]>();
-        const addEvent = (date: Date, type: string, title: string, id: string) => {
-            const dateString = date.toISOString().split('T')[0];
+        const addEvent = (date: Date | string, type: string, title: string, id: string) => {
+            const d = coerceToDate(date);
+            if (!d) return;
+            const dateString = d.toISOString().split('T')[0];
             if (!allEvents.has(dateString)) {
                 allEvents.set(dateString, []);
             }
@@ -612,14 +651,20 @@ const TabButton: React.FC<{ active: boolean; label: string; onClick: () => void;
     </button>
 );
 
+const PROGRAM_STATUS_OPTIONS: ProgramParticipation['status'][] = ['ملتحق', 'غير ملتحق', 'مكتمل', 'بحاجة للتقييم'];
+const PERFORMANCE_OPTIONS = ['', 'ممتاز', 'جيد جداً', 'جيد'];
+const ATTENDANCE_OPTIONS = ['', 'منتظم', 'منتظمة', 'غير منتظم', 'ضعيف'];
+const HEALTH_STATUS_PRESETS = ['', 'جيدة', 'جيدة مع ملاحظات', 'تحتاج متابعة', 'غير محدد'];
+
 const EditableField: React.FC<{ 
     label: string; 
     value: string | number; 
     isEditing: boolean; 
     onChange: (val: string) => void;
-    type?: 'text' | 'number' | 'date' | 'select';
+    type?: 'text' | 'number' | 'date' | 'select' | 'textarea';
     options?: string[];
-}> = ({ label, value, isEditing, onChange, type = 'text', options }) => {
+    textareaRows?: number;
+}> = ({ label, value, isEditing, onChange, type = 'text', options, textareaRows = 3 }) => {
     return (
         <div className="mb-1">
             <span className="text-xs text-gray-500 block mb-0.5">{label}</span>
@@ -628,24 +673,78 @@ const EditableField: React.FC<{
                     <select 
                         value={value} 
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-full p-1.5 border rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary"
+                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary"
                     >
-                        {options.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        {options.map(opt => (
+                            <option key={opt || 'empty'} value={opt}>{opt || '—'}</option>
+                        ))}
                     </select>
+                ) : type === 'textarea' ? (
+                    <textarea
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        rows={textareaRows}
+                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary resize-y min-h-[4rem]"
+                    />
                 ) : (
                     <input 
                         type={type} 
                         value={value} 
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-full p-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-primary"
+                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary"
                     />
                 )
             ) : (
-                <p className="font-semibold text-gray-800 text-sm min-h-[1.25rem]">{value || '—'}</p>
+                <p className="font-semibold text-gray-800 text-sm min-h-[1.25rem] whitespace-pre-wrap">{value === '' || value === null || value === undefined ? '—' : value}</p>
             )}
         </div>
     );
 };
+
+type FamilyDraftRow = { id?: string; relationship: string; age: string };
+
+const ProgramParticipationFields: React.FC<{
+    isEditing: boolean;
+    title: string;
+    status: ProgramParticipation['status'];
+    details: string;
+    onStatus: (s: ProgramParticipation['status']) => void;
+    onDetails: (d: string) => void;
+}> = ({ isEditing, title, status, details, onStatus, onDetails }) => (
+    <div className="space-y-2">
+        {title ? <h4 className="font-bold text-gray-700 text-sm">{title}</h4> : null}
+        {isEditing ? (
+            <>
+                <div>
+                    <span className="text-xs text-gray-500 block mb-0.5">الحالة</span>
+                    <select
+                        value={status}
+                        onChange={(e) => onStatus(e.target.value as ProgramParticipation['status'])}
+                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary"
+                    >
+                        {PROGRAM_STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                        ))}
+                    </select>
+                </div>
+                <div>
+                    <span className="text-xs text-gray-500 block mb-0.5">التفاصيل</span>
+                    <textarea
+                        value={details}
+                        onChange={(e) => onDetails(e.target.value)}
+                        rows={3}
+                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary resize-y"
+                    />
+                </div>
+            </>
+        ) : (
+            <div className="flex items-start gap-3 flex-wrap">
+                <ProgramStatusPill status={status} />
+                <p className="text-sm text-gray-600 flex-1 min-w-0">{details || '—'}</p>
+            </div>
+        )}
+    </div>
+);
 
 const OrphanProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -654,7 +753,23 @@ const OrphanProfile: React.FC = () => {
   const { orphans: orphansIndex, loading: orphansLoading } = useOrphansBasic();
   const orphanFromIndex = useMemo(() => findById(orphansIndex, id || ''), [orphansIndex, id]);
   const orphanUuid = orphanFromIndex?.uuid || null;
-  const { orphan, loading: orphanLoading, error: orphanError, updateOrphan } = useOrphanDetail(orphanUuid);
+  const {
+    orphan,
+    loading: orphanLoading,
+    error: orphanError,
+    updateOrphan,
+    insertUpdateLog,
+    updateUpdateLog,
+    deleteUpdateLog,
+    insertAchievement,
+    updateAchievement,
+    deleteAchievement,
+    upsertProgramParticipation,
+    insertFamilyMember,
+    updateFamilyMember,
+    deleteFamilyMember,
+    updatePaymentRow,
+  } = useOrphanDetail(orphanUuid);
   const { occasions: allOccasions, addOccasion, updateOccasion, deleteOccasion } = useOccasions();
   const { sponsors: sponsorsData } = useSponsorsBasic();
   const { userProfile, canEditOrphans } = useAuth();
@@ -692,6 +807,29 @@ const OrphanProfile: React.FC = () => {
     housingStatus: '',
     guardian: '',
     sponsorshipType: '',
+    hobbies: [] as string[],
+    needsAndWishes: [] as string[],
+    eduProgramStatus: 'غير ملتحق' as ProgramParticipation['status'],
+    eduProgramDetails: '',
+    psychChildStatus: 'غير ملتحق' as ProgramParticipation['status'],
+    psychChildDetails: '',
+    psychGuardianStatus: 'غير ملتحق' as ProgramParticipation['status'],
+    psychGuardianDetails: '',
+  });
+  const [familyDraft, setFamilyDraft] = useState<FamilyDraftRow[]>([]);
+  const [hobbyInput, setHobbyInput] = useState('');
+  const [needInput, setNeedInput] = useState('');
+  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
+  const [paymentEditDraft, setPaymentEditDraft] = useState<{
+    amount: string;
+    dueDate: string;
+    paidDate: string;
+    status: PaymentStatus;
+  }>({
+    amount: '',
+    dueDate: '',
+    paidDate: '',
+    status: PaymentStatus.Due,
   });
   
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
@@ -716,12 +854,20 @@ const OrphanProfile: React.FC = () => {
   const [isNoteLoading, setIsNoteLoading] = useState(false);
   const [isSponsorOfOrphan, setIsSponsorOfOrphan] = useState(false);
 
+  const [timelineEditKey, setTimelineEditKey] = useState<string | null>(null);
+  const [timelineDraft, setTimelineDraft] = useState({
+    note: '',
+    title: '',
+    description: '',
+    date: '',
+  });
+
   // Initialize edit form data when orphan loads or edit mode is enabled
   React.useEffect(() => {
     if (orphan && isEditMode) {
       setEditFormData({
         name: orphan.name,
-        dateOfBirth: orphan.dateOfBirth.toISOString().split('T')[0],
+        dateOfBirth: toDateInputString(orphan.dateOfBirth),
         gender: orphan.gender,
         healthStatus: orphan.healthStatus,
         grade: orphan.grade,
@@ -733,7 +879,24 @@ const OrphanProfile: React.FC = () => {
         housingStatus: orphan.housingStatus,
         guardian: orphan.guardian,
         sponsorshipType: orphan.sponsorshipType,
+        hobbies: [...orphan.hobbies],
+        needsAndWishes: [...orphan.needsAndWishes],
+        eduProgramStatus: orphan.educationalProgram.status,
+        eduProgramDetails: orphan.educationalProgram.details,
+        psychChildStatus: orphan.psychologicalSupport.child.status,
+        psychChildDetails: orphan.psychologicalSupport.child.details,
+        psychGuardianStatus: orphan.psychologicalSupport.guardian.status,
+        psychGuardianDetails: orphan.psychologicalSupport.guardian.details,
       });
+      setFamilyDraft(
+        orphan.familyMembers.map((m) => ({
+          id: m.id,
+          relationship: m.relationship,
+          age: m.age != null ? String(m.age) : '',
+        }))
+      );
+      setHobbyInput('');
+      setNeedInput('');
     }
   }, [orphan, isEditMode]);
 
@@ -878,14 +1041,15 @@ const OrphanProfile: React.FC = () => {
 
   const handleCancelEdit = () => {
     setIsEditMode(false);
+    setEditingPaymentId(null);
   };
 
   const handleSaveEdit = async () => {
     if (!orphan?.uuid) return;
-    
+
     setIsSaving(true);
     try {
-      await updateOrphan(orphan.uuid, {
+      await updateOrphan({
         name: editFormData.name,
         date_of_birth: editFormData.dateOfBirth,
         gender: editFormData.gender,
@@ -899,7 +1063,51 @@ const OrphanProfile: React.FC = () => {
         housing_status: editFormData.housingStatus,
         guardian: editFormData.guardian,
         sponsorship_type: editFormData.sponsorshipType,
+        hobbies: editFormData.hobbies,
+        needs_wishes: editFormData.needsAndWishes,
       });
+
+      await upsertProgramParticipation({
+        program_type: 'educational',
+        status: editFormData.eduProgramStatus,
+        details: editFormData.eduProgramDetails,
+      });
+      await upsertProgramParticipation({
+        program_type: 'psychological_child',
+        status: editFormData.psychChildStatus,
+        details: editFormData.psychChildDetails,
+      });
+      await upsertProgramParticipation({
+        program_type: 'psychological_guardian',
+        status: editFormData.psychGuardianStatus,
+        details: editFormData.psychGuardianDetails,
+      });
+
+      const originalIds = new Set(orphan.familyMembers.map((m) => m.id));
+      const draftWithIds = familyDraft.filter((r): r is FamilyDraftRow & { id: string } => Boolean(r.id));
+      const draftIdSet = new Set(draftWithIds.map((r) => r.id));
+      for (const oid of originalIds) {
+        if (!draftIdSet.has(oid)) {
+          await deleteFamilyMember(oid);
+        }
+      }
+      for (const row of familyDraft) {
+        const rel = row.relationship.trim();
+        const ageNum = row.age.trim() === '' ? null : parseInt(row.age, 10);
+        const ageVal = ageNum != null && !Number.isNaN(ageNum) ? ageNum : null;
+        if (!row.id) {
+          if (rel) await insertFamilyMember(rel, ageVal);
+        } else {
+          const orig = orphan.familyMembers.find((m) => m.id === row.id);
+          if (
+            orig &&
+            (orig.relationship !== rel || (orig.age ?? null) !== ageVal)
+          ) {
+            await updateFamilyMember(row.id, rel, ageVal);
+          }
+        }
+      }
+
       setIsEditMode(false);
     } catch (error) {
       console.error('Error saving orphan:', error);
@@ -909,18 +1117,142 @@ const OrphanProfile: React.FC = () => {
     }
   };
 
-  const handleAddAchievement = async (newAchievementData: Omit<Achievement, 'id'>) => {
-    // TODO: Implement API call to save achievement to database
-    // For now, this is a placeholder
-    console.log('Adding achievement:', newAchievementData);
+  const handleAddAchievement = async (
+    newAchievementData: Omit<Achievement, 'id'> & { mediaFile?: File | null }
+  ) => {
+    if (!orphan?.uuid) return;
+    try {
+      let mediaUrl: string | null = null;
+      let mediaType: 'image' | 'video' | null = null;
+      const desc = newAchievementData.description;
+      const dateStr = newAchievementData.date.toISOString().split('T')[0];
+      const file = newAchievementData.mediaFile;
+      if (file) {
+        const uploaded = await uploadOrphanAchievementMedia(file, orphan.uuid);
+        mediaUrl = uploaded.publicUrl;
+        mediaType = uploaded.mediaType;
+      }
+      await insertAchievement({
+        title: newAchievementData.title,
+        description: desc,
+        date: dateStr,
+        mediaUrl,
+        mediaType,
+      });
+      setIsAddAchievementModalOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert('حدث خطأ أثناء حفظ الإنجاز');
+    }
   };
-  
-    const handleAddUpdateLog = async (note: string) => {
-        // TODO: Implement API call to save update log to database
-        // For now, this is a placeholder
-        console.log('Adding update log:', note);
-        setIsAddLogModalOpen(false);
-    };
+
+  const handleAddUpdateLog = async (note: string) => {
+    try {
+      await insertUpdateLog(note);
+      setIsAddLogModalOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert('حدث خطأ أثناء حفظ الملاحظة');
+    }
+  };
+
+  const startTimelineEdit = (item: {
+    type: 'log' | 'achievement' | 'occasion';
+    id: string;
+    note?: string;
+    title?: string;
+    description?: string;
+    date: Date | string;
+  }) => {
+    setTimelineEditKey(`${item.type}:${item.id}`);
+    if (item.type === 'log') {
+      setTimelineDraft({
+        note: item.note || '',
+        title: '',
+        description: '',
+        date: toDateInputString(item.date),
+      });
+    } else if (item.type === 'achievement') {
+      setTimelineDraft({
+        note: '',
+        title: item.title || '',
+        description: item.description || '',
+        date: toDateInputString(item.date),
+      });
+    } else {
+      setTimelineDraft({
+        note: '',
+        title: item.title || '',
+        description: '',
+        date: toDateInputString(item.date),
+      });
+    }
+  };
+
+  const cancelTimelineEdit = () => setTimelineEditKey(null);
+
+  const saveTimelineEdit = async (item: { type: 'log' | 'achievement' | 'occasion'; id: string }) => {
+    try {
+      if (item.type === 'log') {
+        if (!timelineDraft.note.trim()) {
+          alert('نص التحديث مطلوب');
+          return;
+        }
+        if (!timelineDraft.date) {
+          alert('التاريخ مطلوب');
+          return;
+        }
+        await updateUpdateLog(item.id, {
+          note: timelineDraft.note.trim(),
+          date: new Date(timelineDraft.date + 'T12:00:00.000Z').toISOString(),
+        });
+      } else if (item.type === 'achievement') {
+        if (!timelineDraft.title.trim()) {
+          alert('عنوان الإنجاز مطلوب');
+          return;
+        }
+        if (!timelineDraft.date) {
+          alert('التاريخ مطلوب');
+          return;
+        }
+        await updateAchievement(item.id, {
+          title: timelineDraft.title.trim(),
+          description: timelineDraft.description.trim() || null,
+          date: timelineDraft.date,
+        });
+      } else {
+        const d = coerceToDate(timelineDraft.date);
+        if (!timelineDraft.title.trim() || !d) {
+          alert('عنوان المناسبة والتاريخ مطلوبان');
+          return;
+        }
+        await updateOccasion(item.id, { title: timelineDraft.title.trim(), date: d });
+      }
+      cancelTimelineEdit();
+    } catch (e) {
+      console.error(e);
+      alert('تعذر حفظ التعديل');
+    }
+  };
+
+  const removeTimelineItem = async (item: {
+    type: 'log' | 'achievement' | 'occasion';
+    id: string;
+    title?: string;
+    note?: string;
+  }) => {
+    const label = (item.note || item.title || 'هذا العنصر').slice(0, 80);
+    if (!confirm(`حذف «${label}»؟`)) return;
+    try {
+      if (item.type === 'log') await deleteUpdateLog(item.id);
+      else if (item.type === 'achievement') await deleteAchievement(item.id);
+      else await deleteOccasion(item.id);
+      if (timelineEditKey === `${item.type}:${item.id}`) cancelTimelineEdit();
+    } catch (e) {
+      console.error(e);
+      alert('تعذر حذف العنصر');
+    }
+  };
 
     const handleDayClickForEvent = (date: Date, events: { id: string; type: string; title: string }[]) => {
         setSelectedDateForEvent(date);
@@ -984,7 +1316,7 @@ const OrphanProfile: React.FC = () => {
                 attendance: orphan.attendance,
                 familyStatus: orphan.familyStatus,
                 guardian: orphan.guardian,
-                payments: orphan.payments.map(p => ({ status: p.status, amount: `$${p.amount}`, dueDate: p.dueDate.toISOString().split('T')[0] })),
+                payments: orphan.payments.map(p => ({ status: p.status, amount: `$${p.amount}`, dueDate: toDateInputString(p.dueDate) })),
                 achievements: orphan.achievements.map(a => a.title),
             };
 
@@ -1030,9 +1362,9 @@ const OrphanProfile: React.FC = () => {
             // Collect comprehensive data
             const orphanData = {
                 ...orphan,
-                payments: orphan.payments.map(p => ({ status: p.status, amount: p.amount, dueDate: p.dueDate.toISOString().split('T')[0] })),
-                achievements: orphan.achievements.map(a => ({ ...a, date: a.date.toISOString().split('T')[0] })),
-                specialOccasions: orphanOccasions.map(o => ({ ...o, date: o.date.toISOString().split('T')[0] })),
+                payments: orphan.payments.map(p => ({ status: p.status, amount: p.amount, dueDate: toDateInputString(p.dueDate) })),
+                achievements: orphan.achievements.map(a => ({ ...a, date: toDateInputString(a.date) })),
+                specialOccasions: orphanOccasions.map(o => ({ ...o, date: toDateInputString(o.date) })),
             };
 
             const prompt = `
@@ -1174,22 +1506,8 @@ const OrphanProfile: React.FC = () => {
         <div className="relative h-48 bg-gradient-to-r from-primary to-primary-hover rounded-b-[2.5rem] shadow-lg mb-16">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,_white,_transparent_60%)]" />
             
-            {/* Actions Toolbar */}
+            {/* Actions Toolbar — edit/save primary control is sticky bar below header */}
             <div className="absolute top-4 left-4 flex gap-2 no-print">
-                {hasEditPermission && (
-                    <>
-                        {isEditMode ? (
-                            <>
-                                <button onClick={handleCancelEdit} className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition text-sm font-semibold">إلغاء</button>
-                                <button onClick={handleSaveEdit} disabled={isSaving} className="bg-white text-primary px-3 py-2 rounded-lg transition text-sm font-semibold disabled:opacity-70">
-                                    {isSaving ? 'جاري الحفظ...' : 'حفظ'}
-                                </button>
-                            </>
-                        ) : (
-                            <button onClick={handleEdit} className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition text-sm font-semibold">تعديل</button>
-                        )}
-                    </>
-                )}
                 {isSponsorOfOrphan && (
                     <button onClick={() => setIsNoteModalOpen(true)} className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition text-sm font-semibold">ملاحظة</button>
                 )}
@@ -1233,12 +1551,33 @@ const OrphanProfile: React.FC = () => {
                     ) : (
                         <h1 className="text-3xl md:text-4xl font-bold">{orphan.name}</h1>
                     )}
-                    <p className="opacity-90 text-sm md:text-base font-medium">{orphan.grade} • {orphan.age} سنوات</p>
+                    <p className="opacity-90 text-sm md:text-base font-medium">{(isEditMode ? editFormData.grade : orphan.grade) || '—'} • {orphan.age} سنوات</p>
                 </div>
             </div>
         </div>
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            {hasEditPermission && (
+                <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-2 bg-bg-page/95 backdrop-blur-sm border-b border-gray-200/80 no-print flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-semibold text-gray-600">ملف اليتيم</span>
+                    <div className="flex gap-2">
+                        {isEditMode ? (
+                            <>
+                                <button type="button" onClick={handleCancelEdit} className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50">
+                                    إلغاء
+                                </button>
+                                <button type="button" onClick={handleSaveEdit} disabled={isSaving} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover disabled:opacity-60">
+                                    {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+                                </button>
+                            </>
+                        ) : (
+                            <button type="button" onClick={handleEdit} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover">
+                                تعديل الملف
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
             {/* Tabs Navigation */}
             <div className="flex overflow-x-auto border-b border-gray-200 mb-6 no-print" style={{ scrollbarWidth: 'none' }}>
                 <TabButton active={activeTab === 'overview'} label="نظرة عامة" onClick={() => setActiveTab('overview')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>} />
@@ -1256,10 +1595,38 @@ const OrphanProfile: React.FC = () => {
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                             <div className="flex justify-between items-center mb-4 border-b pb-2">
                                 <h3 className="font-bold text-lg text-gray-800">البيانات الشخصية</h3>
-                                <span className={`px-2 py-1 rounded text-xs ${orphan.healthStatus.includes('جيدة') ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>{orphan.healthStatus}</span>
+                                {!isEditMode && (orphan.healthStatus || '').trim() !== '' && (
+                                    <span className={`px-2 py-1 rounded text-xs ${(orphan.healthStatus || '').includes('جيدة') ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                        {orphan.healthStatus}
+                                    </span>
+                                )}
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <EditableField label="تاريخ الميلاد" value={isEditMode ? editFormData.dateOfBirth : orphan.dateOfBirth.toLocaleDateString('ar-EG')} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, dateOfBirth: v })} type="date" />
+                                <div className="col-span-2">
+                                    <EditableField
+                                        label="الحالة الصحية"
+                                        value={isEditMode ? editFormData.healthStatus : orphan.healthStatus}
+                                        isEditing={isEditMode}
+                                        onChange={(v) => setEditFormData({ ...editFormData, healthStatus: v })}
+                                        type="textarea"
+                                        textareaRows={2}
+                                    />
+                                    {isEditMode && (
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {HEALTH_STATUS_PRESETS.filter(Boolean).map((preset) => (
+                                                <button
+                                                    key={preset}
+                                                    type="button"
+                                                    onClick={() => setEditFormData({ ...editFormData, healthStatus: preset })}
+                                                    className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 hover:bg-primary-light"
+                                                >
+                                                    {preset}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <EditableField label="تاريخ الميلاد" value={isEditMode ? editFormData.dateOfBirth : formatDateArEG(orphan.dateOfBirth)} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, dateOfBirth: v })} type="date" />
                                 <EditableField label="الجنس" value={isEditMode ? editFormData.gender : orphan.gender} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, gender: v as 'ذكر' | 'أنثى' })} options={['ذكر', 'أنثى']} type="select" />
                                 <EditableField label="الدولة" value={isEditMode ? editFormData.country : orphan.country} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, country: v })} />
                                 <EditableField label="المحافظة" value={isEditMode ? editFormData.governorate : orphan.governorate} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, governorate: v })} />
@@ -1305,16 +1672,66 @@ const OrphanProfile: React.FC = () => {
                                 <EditableField label="العائلة" value={isEditMode ? editFormData.familyStatus : orphan.familyStatus} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, familyStatus: v })} />
                                 <EditableField label="السكن" value={isEditMode ? editFormData.housingStatus : orphan.housingStatus} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, housingStatus: v })} />
                             </div>
-                            {orphan.familyMembers.length > 0 && (
-                                <div className="mt-4 pt-3 border-t">
-                                    <h4 className="text-xs text-gray-500 mb-2">أفراد الأسرة</h4>
-                                    <div className="space-y-1">
-                                        {orphan.familyMembers.map((member, index) => (
-                                            <p key={index} className="text-sm text-gray-700">- {member.relationship} (العمر: {member.age})</p>
+                            <div className="mt-4 pt-3 border-t">
+                                <h4 className="text-xs text-gray-500 mb-2">أفراد الأسرة</h4>
+                                {isEditMode && hasEditPermission ? (
+                                    <div className="space-y-3">
+                                        {familyDraft.map((row, idx) => (
+                                            <div key={row.id || `new-${idx}`} className="flex flex-wrap gap-2 items-center">
+                                                <input
+                                                    type="text"
+                                                    className="flex-1 min-w-[140px] p-1.5 border border-gray-200 rounded-lg text-sm"
+                                                    placeholder="صلة القرابة"
+                                                    value={row.relationship}
+                                                    onChange={(e) => {
+                                                        const next = [...familyDraft];
+                                                        next[idx] = { ...next[idx], relationship: e.target.value };
+                                                        setFamilyDraft(next);
+                                                    }}
+                                                />
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    className="w-24 p-1.5 border border-gray-200 rounded-lg text-sm"
+                                                    placeholder="العمر"
+                                                    value={row.age}
+                                                    onChange={(e) => {
+                                                        const next = [...familyDraft];
+                                                        next[idx] = { ...next[idx], age: e.target.value };
+                                                        setFamilyDraft(next);
+                                                    }}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="text-sm text-red-600 hover:underline px-2"
+                                                    onClick={() => setFamilyDraft(familyDraft.filter((_, i) => i !== idx))}
+                                                >
+                                                    حذف
+                                                </button>
+                                            </div>
                                         ))}
+                                        <button
+                                            type="button"
+                                            className="text-sm font-semibold text-primary hover:underline"
+                                            onClick={() => setFamilyDraft([...familyDraft, { relationship: '', age: '' }])}
+                                        >
+                                            + إضافة فرد
+                                        </button>
                                     </div>
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="space-y-1">
+                                        {orphan.familyMembers.length > 0 ? (
+                                            orphan.familyMembers.map((member) => (
+                                                <p key={member.id} className="text-sm text-gray-700">
+                                                    - {member.relationship} (العمر: {member.age ?? '—'})
+                                                </p>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-gray-400">لا يوجد أفراد مسجلون</p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Interests & Needs */}
@@ -1326,11 +1743,68 @@ const OrphanProfile: React.FC = () => {
                                         الهوايات والاهتمامات
                                     </h4>
                                     <div className="flex flex-wrap gap-2">
-                                        {orphan.hobbies.length > 0 ? orphan.hobbies.map((hobby, i) => (
-                                            <span key={i} className="px-3 py-1 bg-yellow-50 text-yellow-800 rounded-full text-sm font-medium border border-yellow-100">{hobby}</span>
-                                        )) : <span className="text-sm text-gray-400">لا توجد بيانات</span>}
-                                        {isEditMode && <button className="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm hover:bg-gray-200">+</button>}
+                                        {(isEditMode ? editFormData.hobbies : orphan.hobbies).length > 0 ? (
+                                            (isEditMode ? editFormData.hobbies : orphan.hobbies).map((hobby, i) => (
+                                                <span
+                                                    key={`${hobby}-${i}`}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-50 text-yellow-800 rounded-full text-sm font-medium border border-yellow-100"
+                                                >
+                                                    {hobby}
+                                                    {isEditMode && (
+                                                        <button
+                                                            type="button"
+                                                            className="text-yellow-900 hover:text-red-600 font-bold leading-none"
+                                                            aria-label="إزالة"
+                                                            onClick={() =>
+                                                                setEditFormData({
+                                                                    ...editFormData,
+                                                                    hobbies: editFormData.hobbies.filter((_, j) => j !== i),
+                                                                })
+                                                            }
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    )}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-sm text-gray-400">لا توجد بيانات</span>
+                                        )}
                                     </div>
+                                    {isEditMode && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            <input
+                                                type="text"
+                                                value={hobbyInput}
+                                                onChange={(e) => setHobbyInput(e.target.value)}
+                                                placeholder="أضف هواية..."
+                                                className="flex-1 min-w-[160px] p-1.5 border border-gray-200 rounded-lg text-sm"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        const t = hobbyInput.trim();
+                                                        if (t) {
+                                                            setEditFormData({ ...editFormData, hobbies: [...editFormData.hobbies, t] });
+                                                            setHobbyInput('');
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-semibold hover:bg-gray-200"
+                                                onClick={() => {
+                                                    const t = hobbyInput.trim();
+                                                    if (t) {
+                                                        setEditFormData({ ...editFormData, hobbies: [...editFormData.hobbies, t] });
+                                                        setHobbyInput('');
+                                                    }
+                                                }}
+                                            >
+                                                إضافة
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="border-t pt-3">
                                     <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -1338,14 +1812,71 @@ const OrphanProfile: React.FC = () => {
                                         الاحتياجات والأمنيات
                                     </h4>
                                     <ul className="space-y-2">
-                                        {orphan.needsAndWishes.length > 0 ? orphan.needsAndWishes.map((need, i) => (
-                                            <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                                                <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
-                                                {need}
-                                            </li>
-                                        )) : <li className="text-sm text-gray-400">لا توجد بيانات</li>}
-                                        {isEditMode && <li className="text-sm text-gray-400 italic cursor-pointer hover:text-primary">+ أضف احتياج</li>}
+                                        {(isEditMode ? editFormData.needsAndWishes : orphan.needsAndWishes).length > 0 ? (
+                                            (isEditMode ? editFormData.needsAndWishes : orphan.needsAndWishes).map((need, i) => (
+                                                <li key={`${need}-${i}`} className="flex items-center gap-2 text-sm text-gray-700">
+                                                    <span className="w-1.5 h-1.5 bg-red-400 rounded-full flex-shrink-0"></span>
+                                                    <span className="flex-1">{need}</span>
+                                                    {isEditMode && (
+                                                        <button
+                                                            type="button"
+                                                            className="text-red-600 text-xs hover:underline"
+                                                            onClick={() =>
+                                                                setEditFormData({
+                                                                    ...editFormData,
+                                                                    needsAndWishes: editFormData.needsAndWishes.filter((_, j) => j !== i),
+                                                                })
+                                                            }
+                                                        >
+                                                            حذف
+                                                        </button>
+                                                    )}
+                                                </li>
+                                            ))
+                                        ) : (
+                                            <li className="text-sm text-gray-400">لا توجد بيانات</li>
+                                        )}
                                     </ul>
+                                    {isEditMode && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            <input
+                                                type="text"
+                                                value={needInput}
+                                                onChange={(e) => setNeedInput(e.target.value)}
+                                                placeholder="أضف احتياجاً أو أمنية..."
+                                                className="flex-1 min-w-[160px] p-1.5 border border-gray-200 rounded-lg text-sm"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        const t = needInput.trim();
+                                                        if (t) {
+                                                            setEditFormData({
+                                                                ...editFormData,
+                                                                needsAndWishes: [...editFormData.needsAndWishes, t],
+                                                            });
+                                                            setNeedInput('');
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-semibold hover:bg-gray-200"
+                                                onClick={() => {
+                                                    const t = needInput.trim();
+                                                    if (t) {
+                                                        setEditFormData({
+                                                            ...editFormData,
+                                                            needsAndWishes: [...editFormData.needsAndWishes, t],
+                                                        });
+                                                        setNeedInput('');
+                                                    }
+                                                }}
+                                            >
+                                                إضافة
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1354,29 +1885,38 @@ const OrphanProfile: React.FC = () => {
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
                             <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">برامج فيء</h3>
                             <div className="space-y-4">
-                                <div>
-                                    <h4 className="font-bold text-gray-700 text-sm mb-2">البرنامج التربوي</h4>
-                                    <div className="flex items-center gap-3">
-                                        <ProgramStatusPill status={orphan.educationalProgram.status} />
-                                        <p className="text-sm text-gray-600">{orphan.educationalProgram.details}</p>
-                                    </div>
-                                </div>
+                                <ProgramParticipationFields
+                                    isEditing={isEditMode && hasEditPermission}
+                                    title="البرنامج التربوي"
+                                    status={isEditMode ? editFormData.eduProgramStatus : orphan.educationalProgram.status}
+                                    details={isEditMode ? editFormData.eduProgramDetails : orphan.educationalProgram.details}
+                                    onStatus={(s) => setEditFormData({ ...editFormData, eduProgramStatus: s })}
+                                    onDetails={(d) => setEditFormData({ ...editFormData, eduProgramDetails: d })}
+                                />
                                 <div className="border-t pt-4">
-                                    <h4 className="font-bold text-gray-700 text-sm mb-2">الدعم النفسي</h4>
+                                    <h4 className="font-bold text-gray-700 text-sm mb-3">الدعم النفسي</h4>
                                     <div className="grid sm:grid-cols-2 gap-4">
-                                        <div className="bg-gray-50 p-3 rounded-lg">
-                                            <p className="font-semibold text-gray-700 text-xs mb-2">للطفل ({orphan.name})</p>
-                                            <div className="flex items-center gap-3">
-                                                <ProgramStatusPill status={orphan.psychologicalSupport.child.status} />
-                                                <p className="text-sm">{orphan.psychologicalSupport.child.details}</p>
-                                            </div>
+                                        <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                                            <p className="font-semibold text-gray-700 text-xs">للطفل ({orphan.name})</p>
+                                            <ProgramParticipationFields
+                                                isEditing={isEditMode && hasEditPermission}
+                                                title=""
+                                                status={isEditMode ? editFormData.psychChildStatus : orphan.psychologicalSupport.child.status}
+                                                details={isEditMode ? editFormData.psychChildDetails : orphan.psychologicalSupport.child.details}
+                                                onStatus={(s) => setEditFormData({ ...editFormData, psychChildStatus: s })}
+                                                onDetails={(d) => setEditFormData({ ...editFormData, psychChildDetails: d })}
+                                            />
                                         </div>
-                                        <div className="bg-gray-50 p-3 rounded-lg">
-                                            <p className="font-semibold text-gray-700 text-xs mb-2">للقائم بالرعاية ({orphan.guardian})</p>
-                                            <div className="flex items-center gap-3">
-                                                <ProgramStatusPill status={orphan.psychologicalSupport.guardian.status} />
-                                                <p className="text-sm">{orphan.psychologicalSupport.guardian.details}</p>
-                                            </div>
+                                        <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                                            <p className="font-semibold text-gray-700 text-xs">للقائم بالرعاية ({isEditMode ? editFormData.guardian || orphan.guardian : orphan.guardian})</p>
+                                            <ProgramParticipationFields
+                                                isEditing={isEditMode && hasEditPermission}
+                                                title=""
+                                                status={isEditMode ? editFormData.psychGuardianStatus : orphan.psychologicalSupport.guardian.status}
+                                                details={isEditMode ? editFormData.psychGuardianDetails : orphan.psychologicalSupport.guardian.details}
+                                                onStatus={(s) => setEditFormData({ ...editFormData, psychGuardianStatus: s })}
+                                                onDetails={(d) => setEditFormData({ ...editFormData, psychGuardianDetails: d })}
+                                            />
                                         </div>
                                     </div>
                                 </div>
@@ -1390,7 +1930,7 @@ const OrphanProfile: React.FC = () => {
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
                                         <p className="text-sm text-gray-600">من: <span className="font-semibold text-gray-800">{displayNote.sponsorName}</span></p>
-                                        <p className="text-xs text-gray-500">آخر تحديث: {displayNote.updatedAt.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                        <p className="text-xs text-gray-500">آخر تحديث: {formatDateArShort(displayNote.updatedAt)}</p>
                                     </div>
                                     <div className="bg-white p-4 rounded-lg border border-blue-200">
                                         <p className="text-gray-800 whitespace-pre-wrap">{displayNote.note}</p>
@@ -1432,41 +1972,38 @@ const OrphanProfile: React.FC = () => {
                                         <div>
                                             <EditableField label="المرحلة" value={isEditMode ? editFormData.grade : orphan.grade} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, grade: v })} />
                                         </div>
-                                        <div>
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span className="text-gray-600">الانتظام</span>
-                                                <span className="font-bold text-green-600">{orphan.attendance}</span>
-                                            </div>
-                                            {isEditMode && (
-                                                <input type="text" value={editFormData.attendance} onChange={(e) => setEditFormData({ ...editFormData, attendance: e.target.value })} className="w-full p-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-primary" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="flex justify-between text-sm mb-1">
-                                                <span className="text-gray-600">المستوى</span>
-                                                <span className="font-bold text-primary">{orphan.performance}</span>
-                                            </div>
-                                            {isEditMode && (
-                                                <input type="text" value={editFormData.performance} onChange={(e) => setEditFormData({ ...editFormData, performance: e.target.value })} className="w-full p-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-primary" />
-                                            )}
-                                        </div>
-                                        <div className="pt-2">
-                                            <p className="text-sm text-gray-500 mb-1">ملاحظات المعلم:</p>
-                                            <p className="text-sm italic bg-gray-50 p-2 rounded text-gray-700">"{orphan.name} طالب مجتهد جداً ويشارك بفاعلية في الأنشطة الصفية."</p>
+                                        <EditableField
+                                            label="الانتظام"
+                                            value={isEditMode ? editFormData.attendance : orphan.attendance}
+                                            isEditing={isEditMode}
+                                            onChange={(v) => setEditFormData({ ...editFormData, attendance: v })}
+                                            type="select"
+                                            options={[...new Set([...ATTENDANCE_OPTIONS, orphan.attendance, editFormData.attendance].filter((x) => x !== undefined && x !== null))] as string[]}
+                                        />
+                                        <EditableField
+                                            label="المستوى (الأداء)"
+                                            value={isEditMode ? editFormData.performance : orphan.performance}
+                                            isEditing={isEditMode}
+                                            onChange={(v) => setEditFormData({ ...editFormData, performance: v })}
+                                            type="select"
+                                            options={[...new Set([...PERFORMANCE_OPTIONS, orphan.performance, editFormData.performance].filter((x) => x !== undefined && x !== null))] as string[]}
+                                        />
+                                        <div className="pt-2 border-t border-gray-100">
+                                            <p className="text-sm text-gray-500 mb-1">ملاحظات المعلم</p>
+                                            <p className="text-sm text-gray-400 italic">لا يوجد حقل مخصص لملاحظات المعلم في النظام حالياً.</p>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                                     <h3 className="font-bold text-gray-800 mb-3">البرنامج التعليمي</h3>
-                                    <div className="flex items-start gap-3">
-                                        <div className="mt-1">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500"><path d="M22 10v6M2 10v6"/><path d="M2 10l10-5 10 5-10 5z"/><path d="M12 12v9"/></svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-sm">{orphan.educationalProgram.status}</p>
-                                            <p className="text-xs text-gray-500 mt-1">{orphan.educationalProgram.details}</p>
-                                        </div>
-                                    </div>
+                                    <ProgramParticipationFields
+                                        isEditing={isEditMode && hasEditPermission}
+                                        title=""
+                                        status={isEditMode ? editFormData.eduProgramStatus : orphan.educationalProgram.status}
+                                        details={isEditMode ? editFormData.eduProgramDetails : orphan.educationalProgram.details}
+                                        onStatus={(s) => setEditFormData({ ...editFormData, eduProgramStatus: s })}
+                                        onDetails={(d) => setEditFormData({ ...editFormData, eduProgramDetails: d })}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -1475,19 +2012,27 @@ const OrphanProfile: React.FC = () => {
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                             <h3 className="font-bold text-lg text-gray-800 mb-4">الدعم النفسي</h3>
                             <div className="grid sm:grid-cols-2 gap-4">
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <p className="font-semibold text-gray-700 text-sm mb-2">للطفل ({orphan.name})</p>
-                                    <div className="flex items-center gap-3">
-                                        <ProgramStatusPill status={orphan.psychologicalSupport.child.status} />
-                                        <p className="text-sm">{orphan.psychologicalSupport.child.details}</p>
-                                    </div>
+                                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                                    <p className="font-semibold text-gray-700 text-sm">للطفل ({orphan.name})</p>
+                                    <ProgramParticipationFields
+                                        isEditing={isEditMode && hasEditPermission}
+                                        title=""
+                                        status={isEditMode ? editFormData.psychChildStatus : orphan.psychologicalSupport.child.status}
+                                        details={isEditMode ? editFormData.psychChildDetails : orphan.psychologicalSupport.child.details}
+                                        onStatus={(s) => setEditFormData({ ...editFormData, psychChildStatus: s })}
+                                        onDetails={(d) => setEditFormData({ ...editFormData, psychChildDetails: d })}
+                                    />
                                 </div>
-                                <div className="bg-gray-50 p-4 rounded-lg">
-                                    <p className="font-semibold text-gray-700 text-sm mb-2">للقائم بالرعاية ({orphan.guardian})</p>
-                                    <div className="flex items-center gap-3">
-                                        <ProgramStatusPill status={orphan.psychologicalSupport.guardian.status} />
-                                        <p className="text-sm">{orphan.psychologicalSupport.guardian.details}</p>
-                                    </div>
+                                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                                    <p className="font-semibold text-gray-700 text-sm">للقائم بالرعاية ({isEditMode ? editFormData.guardian || orphan.guardian : orphan.guardian})</p>
+                                    <ProgramParticipationFields
+                                        isEditing={isEditMode && hasEditPermission}
+                                        title=""
+                                        status={isEditMode ? editFormData.psychGuardianStatus : orphan.psychologicalSupport.guardian.status}
+                                        details={isEditMode ? editFormData.psychGuardianDetails : orphan.psychologicalSupport.guardian.details}
+                                        onStatus={(s) => setEditFormData({ ...editFormData, psychGuardianStatus: s })}
+                                        onDetails={(d) => setEditFormData({ ...editFormData, psychGuardianDetails: d })}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -1501,34 +2046,160 @@ const OrphanProfile: React.FC = () => {
                         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-lg text-gray-800">سجل النشاطات والأحداث</h3>
-                                <button onClick={() => setIsAddLogModalOpen(true)} className="text-sm font-semibold py-1.5 px-4 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
+                                {hasEditPermission && (
+                                <button type="button" onClick={() => setIsAddLogModalOpen(true)} className="text-sm font-semibold py-1.5 px-4 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                     إضافة تحديث
                                 </button>
+                                )}
                             </div>
                             <div className="relative border-r-2 border-gray-200 mr-3 space-y-8">
                                 {[
-                                    ...orphan.updateLogs.map(l => ({ ...l, type: 'log' as const })),
-                                    ...orphan.achievements.map(a => ({ ...a, type: 'achievement' as const })),
-                                    ...orphanOccasions.map(o => ({ ...o, type: 'occasion' as const })),
+                                    ...orphan.updateLogs.map((l) => ({ ...l, type: 'log' as const })),
+                                    ...orphan.achievements.map((a) => ({ ...a, type: 'achievement' as const })),
+                                    ...orphanOccasions.map((o) => ({ ...o, type: 'occasion' as const })),
                                 ]
-                                    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                                    .map((item: any, idx) => (
-                                        <div key={idx} className="relative pr-8">
-                                            <div className={`absolute -right-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm
+                                    .sort((a, b) => {
+                                        const tb = coerceToDate(b.date)?.getTime() ?? 0;
+                                        const ta = coerceToDate(a.date)?.getTime() ?? 0;
+                                        return tb - ta;
+                                    })
+                                    .map((item) => {
+                                        const rowKey = `${item.type}:${item.id}`;
+                                        const isEditingRow = timelineEditKey === rowKey;
+                                        return (
+                                            <div key={rowKey} className="relative pr-8">
+                                                <div
+                                                    className={`absolute -right-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm
                                                 ${item.type === 'achievement' ? 'bg-green-500' : item.type === 'occasion' ? 'bg-purple-500' : 'bg-blue-500'}
-                                            `}></div>
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
-                                                <span className="text-xs font-bold text-gray-400">{new Date(item.date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                                {item.type === 'achievement' && <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">إنجاز</span>}
-                                                {item.type === 'occasion' && <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">مناسبة</span>}
+                                            `}
+                                                ></div>
+                                                <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                                                    <div className="flex flex-wrap items-center gap-2">
+                                                        <span className="text-xs font-bold text-gray-400">
+                                                            {formatDateArEG(item.date)}
+                                                        </span>
+                                                        {item.type === 'achievement' && (
+                                                            <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+                                                                إنجاز
+                                                            </span>
+                                                        )}
+                                                        {item.type === 'occasion' && (
+                                                            <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
+                                                                مناسبة
+                                                            </span>
+                                                        )}
+                                                        {item.type === 'log' && (
+                                                            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">
+                                                                تحديث
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {hasEditPermission && !isEditingRow && (
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => startTimelineEdit(item)}
+                                                                className="text-xs font-semibold text-primary hover:underline"
+                                                            >
+                                                                تعديل
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeTimelineItem(item)}
+                                                                className="text-xs font-semibold text-red-600 hover:underline"
+                                                            >
+                                                                حذف
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {isEditingRow ? (
+                                                    <div className="mt-2 space-y-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                        {item.type === 'log' && (
+                                                            <>
+                                                                <label className="text-xs text-gray-500 block">نص التحديث</label>
+                                                                <textarea
+                                                                    value={timelineDraft.note}
+                                                                    onChange={(e) =>
+                                                                        setTimelineDraft({ ...timelineDraft, note: e.target.value })
+                                                                    }
+                                                                    rows={4}
+                                                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm resize-y"
+                                                                />
+                                                            </>
+                                                        )}
+                                                        {(item.type === 'achievement' || item.type === 'occasion') && (
+                                                            <>
+                                                                <label className="text-xs text-gray-500 block">العنوان</label>
+                                                                <input
+                                                                    type="text"
+                                                                    value={timelineDraft.title}
+                                                                    onChange={(e) =>
+                                                                        setTimelineDraft({ ...timelineDraft, title: e.target.value })
+                                                                    }
+                                                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                                                                />
+                                                            </>
+                                                        )}
+                                                        {item.type === 'achievement' && (
+                                                            <>
+                                                                <label className="text-xs text-gray-500 block">الوصف</label>
+                                                                <textarea
+                                                                    value={timelineDraft.description}
+                                                                    onChange={(e) =>
+                                                                        setTimelineDraft({
+                                                                            ...timelineDraft,
+                                                                            description: e.target.value,
+                                                                        })
+                                                                    }
+                                                                    rows={3}
+                                                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm resize-y"
+                                                                />
+                                                            </>
+                                                        )}
+                                                        <label className="text-xs text-gray-500 block">التاريخ</label>
+                                                        <input
+                                                            type="date"
+                                                            value={timelineDraft.date}
+                                                            onChange={(e) =>
+                                                                setTimelineDraft({ ...timelineDraft, date: e.target.value })
+                                                            }
+                                                            className="w-full max-w-xs p-2 border border-gray-200 rounded-lg text-sm"
+                                                        />
+                                                        <div className="flex gap-2 pt-1">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => saveTimelineEdit(item)}
+                                                                className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-hover"
+                                                            >
+                                                                حفظ
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={cancelTimelineEdit}
+                                                                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                                                            >
+                                                                إلغاء
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <h4 className="font-bold text-gray-800">
+                                                            {item.title || item.note || 'تحديث'}
+                                                        </h4>
+                                                        {item.description && (
+                                                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                                                        )}
+                                                        {item.author && (
+                                                            <p className="text-xs text-gray-500 mt-1">بواسطة: {item.author}</p>
+                                                        )}
+                                                    </>
+                                                )}
                                             </div>
-                                            <h4 className="font-bold text-gray-800">{item.title || item.note || 'تحديث'}</h4>
-                                            {item.description && <p className="text-sm text-gray-600 mt-1">{item.description}</p>}
-                                            {item.author && <p className="text-xs text-gray-500 mt-1">بواسطة: {item.author}</p>}
-                                        </div>
-                                    ))
-                                }
+                                        );
+                                    })}
                                 {orphan.updateLogs.length === 0 && orphan.achievements.length === 0 && orphanOccasions.length === 0 && (
                                     <p className="text-center text-gray-400 py-8">لا توجد أحداث مسجلة</p>
                                 )}
@@ -1549,7 +2220,7 @@ const OrphanProfile: React.FC = () => {
                                     <div key={occ.id} className="flex items-center gap-2 py-2 border-b last:border-0">
                                         <span className="w-2 h-2 rounded-full bg-purple-500"></span>
                                         <span className="font-semibold text-sm text-gray-800">{occ.title}</span>
-                                        <span className="text-xs text-gray-500 mr-auto">{occ.date.toLocaleDateString('ar-EG')}</span>
+                                        <span className="text-xs text-gray-500 mr-auto">{formatDateArEG(occ.date)}</span>
                                     </div>
                                 )) : <p className="text-sm text-gray-400">لا توجد مناسبات.</p>}
                             </div>
@@ -1572,10 +2243,12 @@ const OrphanProfile: React.FC = () => {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                         <div className="flex justify-between items-center mb-2">
                             <h3 className="font-bold text-lg text-gray-800">معرض الصور والإنجازات</h3>
-                            <button onClick={() => setIsAddAchievementModalOpen(true)} className="text-sm font-semibold py-1.5 px-4 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
+                            {hasEditPermission && (
+                            <button type="button" onClick={() => setIsAddAchievementModalOpen(true)} className="text-sm font-semibold py-1.5 px-4 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                 إضافة إنجاز
                             </button>
+                            )}
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {orphan.achievements.filter(a => a.mediaUrl).map((achievement, idx) => (
@@ -1612,7 +2285,7 @@ const OrphanProfile: React.FC = () => {
                                         <div key={ach.id} className="p-3 bg-gray-50 rounded-lg flex items-start gap-3">
                                             <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0"></div>
                                             <div>
-                                                <p className="font-bold text-gray-800 text-sm">{ach.title} <span className="font-normal text-gray-500">- {ach.date.toLocaleDateString('ar-EG')}</span></p>
+                                                <p className="font-bold text-gray-800 text-sm">{ach.title} <span className="font-normal text-gray-500">- {formatDateArEG(ach.date)}</span></p>
                                                 {ach.description && <p className="text-sm text-gray-600">{ach.description}</p>}
                                             </div>
                                         </div>
@@ -1637,28 +2310,149 @@ const OrphanProfile: React.FC = () => {
                                                 <th className="p-3 rounded-r-lg">التاريخ المستحق</th>
                                                 <th className="p-3">المبلغ</th>
                                                 <th className="p-3">الحالة</th>
-                                                <th className="p-3 rounded-l-lg">تاريخ الدفع</th>
+                                                <th className="p-3">تاريخ الدفع</th>
+                                                {hasEditPermission && <th className="p-3 rounded-l-lg w-28">إجراءات</th>}
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {orphan.payments.map((payment, i) => (
-                                                <tr key={i} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                                                    <td className="p-3">{payment.dueDate.toLocaleDateString('ar-EG')}</td>
-                                                    <td className="p-3 font-bold">${payment.amount}</td>
-                                                    <td className="p-3">
-                                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                                                            payment.status === PaymentStatus.Paid ? 'bg-green-100 text-green-700' :
-                                                            payment.status === PaymentStatus.Overdue ? 'bg-red-100 text-red-700' :
-                                                            'bg-yellow-100 text-yellow-700'
-                                                        }`}>
-                                                            {payment.status}
-                                                        </span>
-                                                    </td>
-                                                    <td className="p-3 text-gray-500">{payment.paidDate ? payment.paidDate.toLocaleDateString('ar-EG') : '-'}</td>
+                                            {orphan.payments.map((payment) => (
+                                                <tr key={payment.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                                                    {editingPaymentId === payment.id ? (
+                                                        <>
+                                                            <td className="p-2 align-middle">
+                                                                <input
+                                                                    type="date"
+                                                                    className="w-full p-1 border border-gray-200 rounded text-xs"
+                                                                    value={paymentEditDraft.dueDate}
+                                                                    onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, dueDate: e.target.value })}
+                                                                />
+                                                            </td>
+                                                            <td className="p-2 align-middle">
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    min={0}
+                                                                    className="w-full p-1 border border-gray-200 rounded text-xs"
+                                                                    value={paymentEditDraft.amount}
+                                                                    onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, amount: e.target.value })}
+                                                                />
+                                                            </td>
+                                                            <td className="p-2 align-middle">
+                                                                <select
+                                                                    className="w-full p-1 border border-gray-200 rounded text-xs bg-white"
+                                                                    value={paymentEditDraft.status}
+                                                                    onChange={(e) =>
+                                                                        setPaymentEditDraft({
+                                                                            ...paymentEditDraft,
+                                                                            status: e.target.value as PaymentStatus,
+                                                                        })
+                                                                    }
+                                                                >
+                                                                    {Object.values(PaymentStatus).map((s) => (
+                                                                        <option key={s} value={s}>{s}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </td>
+                                                            <td className="p-2 align-middle">
+                                                                <input
+                                                                    type="date"
+                                                                    className="w-full p-1 border border-gray-200 rounded text-xs"
+                                                                    value={paymentEditDraft.paidDate}
+                                                                    onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, paidDate: e.target.value })}
+                                                                />
+                                                            </td>
+                                                            {hasEditPermission && (
+                                                                <td className="p-2 align-middle whitespace-nowrap">
+                                                                    <button
+                                                                        type="button"
+                                                                        className="text-xs font-semibold text-primary hover:underline ml-2"
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                const amt = parseFloat(paymentEditDraft.amount);
+                                                                                if (Number.isNaN(amt)) {
+                                                                                    alert('مبلغ غير صالح');
+                                                                                    return;
+                                                                                }
+                                                                                await updatePaymentRow(payment.id, {
+                                                                                    amount: amt,
+                                                                                    due_date: paymentEditDraft.dueDate,
+                                                                                    paid_date: paymentEditDraft.paidDate.trim()
+                                                                                        ? paymentEditDraft.paidDate
+                                                                                        : null,
+                                                                                    status: paymentEditDraft.status,
+                                                                                });
+                                                                                setEditingPaymentId(null);
+                                                                            } catch (e) {
+                                                                                console.error(e);
+                                                                                alert('تعذر حفظ الدفعة');
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        حفظ
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="text-xs text-gray-600 hover:underline"
+                                                                        onClick={() => setEditingPaymentId(null)}
+                                                                    >
+                                                                        إلغاء
+                                                                    </button>
+                                                                </td>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <td className="p-3">{formatDateArEG(payment.dueDate)}</td>
+                                                            <td className="p-3 font-bold">${payment.amount}</td>
+                                                            <td className="p-3">
+                                                                <span
+                                                                    className={`px-2 py-1 rounded text-xs font-semibold ${
+                                                                        payment.status === PaymentStatus.Paid
+                                                                            ? 'bg-green-100 text-green-700'
+                                                                            : payment.status === PaymentStatus.Overdue
+                                                                              ? 'bg-red-100 text-red-700'
+                                                                              : payment.status === PaymentStatus.Processing
+                                                                                ? 'bg-blue-100 text-blue-700'
+                                                                                : 'bg-yellow-100 text-yellow-700'
+                                                                    }`}
+                                                                >
+                                                                    {payment.status}
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-3 text-gray-500">
+                                                                {payment.paidDate ? formatDateArEG(payment.paidDate) : '-'}
+                                                            </td>
+                                                            {hasEditPermission && (
+                                                                <td className="p-3">
+                                                                    <button
+                                                                        type="button"
+                                                                        className="text-xs font-semibold text-primary hover:underline"
+                                                                        onClick={() => {
+                                                                            setEditingPaymentId(payment.id);
+                                                                            setPaymentEditDraft({
+                                                                                amount: String(payment.amount),
+                                                                                dueDate: toDateInputString(payment.dueDate),
+                                                                                paidDate: payment.paidDate
+                                                                                    ? toDateInputString(payment.paidDate)
+                                                                                    : '',
+                                                                                status: payment.status,
+                                                                            });
+                                                                        }}
+                                                                    >
+                                                                        تعديل
+                                                                    </button>
+                                                                </td>
+                                                            )}
+                                                        </>
+                                                    )}
                                                 </tr>
                                             ))}
                                             {orphan.payments.length === 0 && (
-                                                <tr><td colSpan={4} className="p-6 text-center text-gray-400">لا توجد دفعات مسجلة</td></tr>
+                                                <tr>
+                                                    <td colSpan={hasEditPermission ? 5 : 4} className="p-6 text-center text-gray-400">
+                                                        لا توجد دفعات مسجلة
+                                                    </td>
+                                                </tr>
                                             )}
                                         </tbody>
                                     </table>
@@ -1758,6 +2552,7 @@ const OrphanProfile: React.FC = () => {
         onDelete={handleDeleteEvent}
         date={selectedDateForEvent}
         existingEvents={selectedDateEvents}
+        allowManage={hasEditPermission}
     />
 
     {/* Sponsor Note Modal */}

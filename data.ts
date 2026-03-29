@@ -26,8 +26,8 @@ export const orphans: Orphan[] = [
     sponsorshipType: 'كفالة شهرية شاملة',
     teamMemberId: 0, // Team members don't have direct relationships with orphans
     familyMembers: [
-        { relationship: 'الأم', age: 35 },
-        { relationship: 'أخت', age: 8 }
+        { id: 'fm-demo-1', relationship: 'الأم', age: 35 },
+        { id: 'fm-demo-2', relationship: 'أخت', age: 8 }
     ],
     hobbies: ['قراءة القرآن', 'الرسم', 'كرة القدم'],
     needsAndWishes: ['جهاز لابتوب للدراسة', 'دروس تقوية في اللغة الإنجليزية'],
@@ -84,7 +84,7 @@ export const orphans: Orphan[] = [
     sponsorshipType: 'كفالة تعليمية',
     teamMemberId: 2,
     familyMembers: [
-        { relationship: 'الجدة', age: 62 }
+        { id: 'fm-demo-3', relationship: 'الجدة', age: 62 }
     ],
     hobbies: ['قراءة القصص', 'التلوين'],
     needsAndWishes: ['نظارة طبية جديدة', 'ملابس شتوية', 'دمية'],
@@ -131,8 +131,8 @@ export const orphans: Orphan[] = [
     sponsorshipType: 'كفالة شهرية شاملة',
     teamMemberId: 0, // Team members don't have direct relationships with orphans
     familyMembers: [
-        { relationship: 'العم', age: 45 },
-        { relationship: 'ابن العم', age: 14 }
+        { id: 'fm-demo-4', relationship: 'العم', age: 45 },
+        { id: 'fm-demo-5', relationship: 'ابن العم', age: 14 }
     ],
     hobbies: ['ألعاب الفيديو', 'ركوب الدراجة'],
     needsAndWishes: ['حذاء كرة قدم جديد', 'ساعة يد'],
