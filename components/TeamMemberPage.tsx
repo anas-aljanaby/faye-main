@@ -10,8 +10,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
-import { useAccountStatus } from '../hooks/useAccountStatus';
-import { AccountStatusBadge } from './account/AccountStatusBadge';
 import { AccountAccessSection } from './account/AccountAccessSection';
 
 
@@ -82,10 +80,6 @@ const TeamMemberPage: React.FC = () => {
   const { sponsors: sponsorsData, refetch: refetchSponsors } = useSponsorsBasic();
   const { userProfile, canEditOrphans, canEditSponsors, isManager, isSystemAdmin } = useAuth();
   const member = useMemo(() => findById(teamMembersData, id || ''), [teamMembersData, id]);
-  const accountStatusQuery = useAccountStatus(
-    member?.uuid,
-    isSystemAdmin() && Boolean(member?.uuid)
-  );
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
@@ -347,14 +341,6 @@ const TeamMemberPage: React.FC = () => {
             <div>
                 <h1 className="text-3xl font-bold text-gray-800">{member.name}</h1>
                 <p className="text-text-secondary">عضو فريق العمل</p>
-                {isSystemAdmin() && member.uuid && (
-                  <div className="mt-2">
-                    <AccountStatusBadge
-                      status={accountStatusQuery.data?.status}
-                      loading={accountStatusQuery.isLoading}
-                    />
-                  </div>
-                )}
             </div>
             <div className="ms-auto">
                 <BellIcon count={pendingTasks.length} />

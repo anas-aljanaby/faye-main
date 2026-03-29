@@ -819,7 +819,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                                 e.stopPropagation();
                                                                 setCreateLoginTarget({ profileId: member.uuid!, name: member.name });
                                                             }}
-                                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800"
+                                                            className="text-xs font-bold text-primary hover:text-primary-hover"
                                                         >
                                                             إنشاء حساب
                                                         </button>
@@ -841,7 +841,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                             const canQuickCreate =
                                 isSysAdmin && member.uuid && acc?.status === 'no_login';
                             return (
-                                <div key={member.id} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer" onClick={() => navigate(`/team/${member.id}`)}>
+                                <div key={member.id} className="group bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/team/${member.id}`)}>
                                     <div className="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center text-2xl font-bold mb-3">
                                         {member.name.charAt(0)}
                                     </div>
@@ -856,10 +856,17 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                             />
                                         </div>
                                     )}
-                                    <div className="flex gap-2 w-full mt-auto">
+                                    <div className="flex flex-col sm:flex-row gap-2 w-full mt-auto">
                                         {!isSysAdmin && (
                                             <span className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-green-50 text-green-600">نشط</span>
                                         )}
+                                        <Link
+                                            to={`/team/${member.id}`}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="flex-1 min-w-0 px-3 py-2.5 bg-primary-light text-primary rounded-xl text-xs font-bold text-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm"
+                                        >
+                                            عرض
+                                        </Link>
                                         {canQuickCreate && (
                                             <button
                                                 type="button"
@@ -867,12 +874,11 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                     e.stopPropagation();
                                                     setCreateLoginTarget({ profileId: member.uuid!, name: member.name });
                                                 }}
-                                                className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700"
+                                                className="flex-1 min-w-0 py-2.5 px-2 border-2 border-slate-300 bg-white text-slate-800 rounded-xl text-xs font-bold hover:bg-slate-50 shadow-sm"
                                             >
                                                 إنشاء حساب
                                             </button>
                                         )}
-                                        <Link to={`/team/${member.id}`} onClick={(e) => e.stopPropagation()} className="px-3 py-1.5 bg-primary-light text-primary rounded-lg text-xs font-bold">عرض</Link>
                                     </div>
                                 </div>
                             );

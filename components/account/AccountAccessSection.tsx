@@ -40,13 +40,13 @@ export const AccountAccessSection: React.FC<{
   return (
     <>
       <section
-        className="rounded-xl border-2 border-indigo-200/70 bg-gradient-to-br from-indigo-50/80 to-slate-50 p-6 shadow-sm"
+        className="rounded-xl border border-stone-200 bg-gradient-to-br from-stone-50/90 to-neutral-50 p-6 shadow-sm"
         aria-label="إدارة حساب الدخول"
       >
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
           <div>
-            <h2 className="text-lg font-bold text-indigo-950">حساب الدخول إلى المنصة</h2>
-            <p className="text-sm text-indigo-900/70 mt-1">
+            <h2 className="text-lg font-bold text-text-primary">حساب الدخول إلى المنصة</h2>
+            <p className="text-sm text-text-secondary mt-1">
               منفصلة عن تعديل بيانات الملف الشخصي في الأعلى.
             </p>
           </div>
@@ -60,12 +60,14 @@ export const AccountAccessSection: React.FC<{
         )}
 
         {!isLoading && !isError && data?.status === 'no_login' && (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <p className="text-sm text-gray-700 flex-1">لا يوجد حساب دخول مرتبط. يمكنك إنشاء حساب وتسليم البيانات للمستخدم بشكل آمن.</p>
+          <div className="rounded-lg bg-white/80 border border-stone-200 px-4 py-4 sm:px-5 sm:py-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <p className="text-sm text-gray-700 flex-1 leading-relaxed">
+              لم يتم إنشاء حساب دخول لهذا العضو بعد. يمكنك إنشاء حساباً وتسليم بيانات الدخول بشكل آمن.
+            </p>
             <button
               type="button"
               onClick={() => setModalOpen(true)}
-              className="shrink-0 py-2.5 px-5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold shadow-sm"
+              className="shrink-0 w-full sm:w-auto py-2.5 px-5 border-2 border-primary text-primary bg-white rounded-lg hover:bg-primary-light font-semibold shadow-sm text-center"
             >
               إنشاء حساب دخول
             </button>
@@ -75,13 +77,13 @@ export const AccountAccessSection: React.FC<{
         {!isLoading && !isError && data && data.status !== 'no_login' && (
           <div className="space-y-4">
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div className="bg-white/80 rounded-lg px-4 py-3 border border-indigo-100">
+              <div className="bg-white/80 rounded-lg px-4 py-3 border border-stone-200">
                 <dt className="font-semibold text-gray-600">البريد المرتبط</dt>
                 <dd className="mt-1 font-mono text-gray-900 break-all" dir="ltr">
                   {data.email ?? '—'}
                 </dd>
               </div>
-              <div className="bg-white/80 rounded-lg px-4 py-3 border border-indigo-100">
+              <div className="bg-white/80 rounded-lg px-4 py-3 border border-stone-200">
                 <dt className="font-semibold text-gray-600">آخر تسجيل دخول</dt>
                 <dd className="mt-1 text-gray-900">{formatLastSignIn(data.lastSignInAt)}</dd>
               </div>
@@ -91,7 +93,7 @@ export const AccountAccessSection: React.FC<{
                 type="button"
                 disabled
                 title="سيُفعّل لاحقاً عند تهيئة البريد"
-                className="py-2 px-4 rounded-lg border border-gray-200 bg-white text-gray-400 text-sm font-semibold cursor-not-allowed"
+                className="py-2 px-4 rounded-lg border border-gray-300 bg-white text-gray-400 text-sm font-semibold cursor-not-allowed"
               >
                 إعادة تعيين كلمة المرور
               </button>
@@ -107,7 +109,7 @@ export const AccountAccessSection: React.FC<{
                   setUnlinkError(null);
                   setUnlinkConfirmOpen(true);
                 }}
-                className="py-2 px-4 rounded-lg border border-red-200 bg-white text-red-700 text-sm font-semibold hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-200 disabled:hover:bg-white"
+                className="py-2 px-4 rounded-lg border-2 border-red-600 bg-white text-red-600 text-sm font-semibold hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-200 disabled:hover:bg-white"
               >
                 فك الربط وتعطيل الدخول
               </button>
@@ -115,7 +117,7 @@ export const AccountAccessSection: React.FC<{
                 type="button"
                 disabled
                 title="سيُفعّل لاحقاً مع SMTP"
-                className="py-2 px-4 rounded-lg border border-gray-200 bg-white text-gray-400 text-sm font-semibold cursor-not-allowed"
+                className="py-2 px-4 rounded-lg border border-gray-300 bg-white text-gray-400 text-sm font-semibold cursor-not-allowed"
               >
                 إعادة إرسال الدعوة
               </button>

@@ -7,7 +7,7 @@ interface AvatarProps {
   className?: string;
 }
 
-// Generate a consistent color based on the name
+// Consistent color per name (same person always gets the same swatch)
 function getColorFromName(name: string): string {
   const colors = [
     'bg-blue-500',
@@ -21,12 +21,12 @@ function getColorFromName(name: string): string {
     'bg-orange-500',
     'bg-cyan-500',
   ];
-  
+
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
+
   return colors[Math.abs(hash) % colors.length];
 }
 

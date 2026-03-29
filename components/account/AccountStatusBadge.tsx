@@ -9,8 +9,8 @@ const LABELS: Record<AccountStatusKey, string> = {
 
 const STYLES: Record<AccountStatusKey, string> = {
   no_login: 'bg-gray-100 text-gray-700 border-gray-200',
-  pending_first_login: 'bg-amber-50 text-amber-900 border-amber-200',
-  active: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  pending_first_login: 'bg-amber-100 text-amber-800 border-amber-300',
+  active: 'bg-emerald-100 text-emerald-800 border-emerald-300',
 };
 
 export const AccountStatusBadge: React.FC<{

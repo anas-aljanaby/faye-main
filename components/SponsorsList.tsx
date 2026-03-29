@@ -300,7 +300,7 @@ const SponsorsList: React.FC = () => {
                                 e.stopPropagation();
                                 setCreateLoginTarget({ profileId: uuid, name: row.original.name });
                             }}
-                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 whitespace-nowrap"
+                            className="text-xs font-bold text-primary hover:text-primary-hover whitespace-nowrap"
                         >
                             إنشاء حساب
                         </button>
@@ -612,42 +612,39 @@ const SponsorsList: React.FC = () => {
                                         type: 'pill',
                                         pillClass:
                                             acc?.status === 'active'
-                                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
                                                 : acc?.status === 'pending_first_login'
-                                                  ? 'bg-amber-50 text-amber-900 border-amber-200'
+                                                  ? 'bg-amber-100 text-amber-800 border-amber-300'
                                                   : 'bg-gray-100 text-gray-700 border-gray-200',
                                     });
                                 }
                                 return (
-                                    <div key={sponsor.id} className="flex flex-col gap-2">
-                                        <EntityCard
-                                            variant="card"
-                                            title={sponsor.name}
-                                            subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
-                                            imageUrl={sponsor.avatarUrl}
-                                            imageAlt={sponsor.name}
-                                            fields={cardFields}
-                                            actionLabel="عرض الملف الكامل"
-                                            onClick={() => navigate(`/sponsor/${sponsor.id}`)}
-                                            selected={isSelected}
-                                            onSelect={() => handleSelect(sponsor.id)}
-                                            showCheckbox={true}
-                                        />
-                                        {canQuickCreate && (
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setCreateLoginTarget({
-                                                        profileId: sponsor.uuid!,
-                                                        name: sponsor.name,
-                                                    })
-                                                }
-                                                className="w-full py-2 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-                                            >
-                                                إنشاء حساب دخول
-                                            </button>
-                                        )}
-                                    </div>
+                                    <EntityCard
+                                        key={sponsor.id}
+                                        variant="card"
+                                        title={sponsor.name}
+                                        subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
+                                        imageUrl={sponsor.avatarUrl}
+                                        imageAlt={sponsor.name}
+                                        fields={cardFields}
+                                        actionLabel="عرض الملف الكامل"
+                                        onClick={() => navigate(`/sponsor/${sponsor.id}`)}
+                                        secondaryAction={
+                                            canQuickCreate
+                                                ? {
+                                                      label: 'إنشاء حساب دخول',
+                                                      onClick: () =>
+                                                          setCreateLoginTarget({
+                                                              profileId: sponsor.uuid!,
+                                                              name: sponsor.name,
+                                                          }),
+                                                  }
+                                                : undefined
+                                        }
+                                        selected={isSelected}
+                                        onSelect={() => handleSelect(sponsor.id)}
+                                        showCheckbox={true}
+                                    />
                                 );
                             })}
                         </section>

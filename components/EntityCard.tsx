@@ -22,6 +22,11 @@ export interface EntityCardProps {
   /** Button label at bottom of card */
   actionLabel: string;
   onClick: () => void;
+  /** Optional secondary action (e.g. create login); shown beside primary in footer, outline style */
+  secondaryAction?: {
+    label: string;
+    onClick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  };
   variant: 'card' | 'row';
   /** Selection (row and card) */
   selected?: boolean;
@@ -53,6 +58,7 @@ const EntityCard: React.FC<EntityCardProps> = ({
   location,
   actionLabel,
   onClick,
+  secondaryAction,
   variant,
   selected = false,
   onSelect,
@@ -177,13 +183,32 @@ const EntityCard: React.FC<EntityCardProps> = ({
         )}
       </div>
 
-      <div className="mt-6 pt-4 border-t border-gray-50">
+      <div
+        className={`mt-6 pt-4 border-t border-gray-50 flex gap-2 ${secondaryAction ? 'flex-col sm:flex-row' : ''}`}
+      >
+        {/* Primary first in DOM so in RTL it sits on the right (start) */}
         <button
           type="button"
-          className="w-full py-2.5 bg-primary-light text-primary text-sm font-bold rounded-xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm"
+          className={`${secondaryAction ? 'flex-1 min-w-0' : 'w-full'} py-2.5 bg-primary-light text-primary text-sm font-bold rounded-xl group-hover:bg-primary group-hover:text-white transition-all shadow-sm`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
         >
           {actionLabel}
         </button>
+        {secondaryAction && (
+          <button
+            type="button"
+            className="flex-1 min-w-0 py-2.5 px-2 border-2 border-slate-300 bg-white text-slate-800 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all shadow-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              secondaryAction.onClick(e);
+            }}
+          >
+            {secondaryAction.label}
+          </button>
+        )}
       </div>
     </div>
   );
