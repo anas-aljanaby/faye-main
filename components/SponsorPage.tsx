@@ -10,6 +10,9 @@ import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
+import { useAccountStatus } from '../hooks/useAccountStatus';
+import { AccountStatusBadge } from './account/AccountStatusBadge';
+import { AccountAccessSection } from './account/AccountAccessSection';
 
 // A simple SendMessageModal for this component
 const SendMessageModal: React.FC<{
@@ -176,11 +179,13 @@ const SponsorPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { sponsor, assignedOrphanIds, setAssignedOrphanIds, loading: sponsorsLoading, refetch: refetchSponsors } = useSponsorDetail(id);
     const { orphans: orphansData } = useOrphansBasic();
-    const { canEditOrphans, canEditSponsors, isManager, userProfile } = useAuth();
+    const { canEditOrphans, canEditSponsors, isManager, userProfile, isSystemAdmin } = useAuth();
     // Check if current user is viewing their own sponsor page
     const isViewingOwnPage = useMemo(() => {
         return userProfile?.role === 'sponsor' && userProfile?.id === sponsor?.uuid;
     }, [userProfile, sponsor]);
+    const showAdminAccountUi = isSystemAdmin() && !isViewingOwnPage && Boolean(sponsor?.uuid);
+    const accountStatusQuery = useAccountStatus(sponsor?.uuid, showAdminAccountUi);
     const [showAssignOrphansModal, setShowAssignOrphansModal] = useState(false);
     
     const sponsoredOrphans = useMemo(() => {
@@ -267,6 +272,14 @@ const SponsorPage: React.FC = () => {
                         <div className="text-center sm:text-right flex-grow">
                             <h1 className="text-3xl font-bold text-gray-800">{sponsor.name}</h1>
                             <p className="text-text-secondary">كافل مميز في فيء</p>
+                            {showAdminAccountUi && sponsor.uuid && (
+                                <div className="mt-2 flex justify-center sm:justify-end">
+                                    <AccountStatusBadge
+                                        status={accountStatusQuery.data?.status}
+                                        loading={accountStatusQuery.isLoading}
+                                    />
+                                </div>
+                            )}
                         </div>
                          <div className="flex items-center gap-3">
                             <button onClick={() => setIsMessageModalOpen(true)} className="p-3 bg-primary-light text-primary rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center gap-2 font-semibold">
@@ -279,6 +292,10 @@ const SponsorPage: React.FC = () => {
                             </button>
                         </div>
                     </div>
+
+                    {showAdminAccountUi && sponsor.uuid && (
+                        <AccountAccessSection profileId={sponsor.uuid} displayName={sponsor.name} />
+                    )}
 
                     <div ref={orphansSectionRef}>
                         <div className="flex justify-between items-center mb-4">

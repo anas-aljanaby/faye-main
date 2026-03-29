@@ -10,6 +10,7 @@ interface UserProfile {
   name: string;
   avatar_url?: string;
   member_id?: string;
+  is_system_admin: boolean;
 }
 
 interface UserPermissions {
@@ -48,6 +49,7 @@ interface AuthContextType {
   canApproveExpense: () => boolean;
   canViewFinancials: () => boolean;
   isManager: () => boolean;
+  isSystemAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -104,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
-        .select('id, organization_id, role, name, avatar_url, member_id')
+        .select('id, organization_id, role, name, avatar_url, member_id, is_system_admin')
         .eq('auth_user_id', nextSession.user.id)
         .maybeSingle();
 
@@ -130,7 +132,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      const profile = profileData as UserProfile;
+      const profile = {
+        ...(profileData as UserProfile),
+        is_system_admin: Boolean((profileData as UserProfile).is_system_admin),
+      };
       setUser({ id: profile.id });
       setUserProfile(profile);
 
@@ -196,6 +201,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return permissions?.can_view_financials || permissions?.is_manager || false;
   }, [permissions]);
 
+  const isSystemAdmin = useCallback(() => {
+    return userProfile?.is_system_admin === true;
+  }, [userProfile]);
+
   const signIn = useCallback(
     async (email: string, password: string) => {
       const { error } = await signInWithEmail(email, password);
@@ -244,6 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       canApproveExpense,
       canViewFinancials,
       isManager,
+      isSystemAdmin,
     };
   }, [
     user,
@@ -261,6 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     canApproveExpense,
     canViewFinancials,
     isManager,
+    isSystemAdmin,
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -32,6 +32,22 @@ A comprehensive orphan care management system built with React, TypeScript, and 
 
 4. Open your browser and navigate to `http://localhost:3000`
 
+### Admin login provisioning (Edge Function)
+
+Team/sponsor login creation from the app is handled by the Supabase Edge Function `admin-provision-login` ([`supabase/functions/admin-provision-login/index.ts`](supabase/functions/admin-provision-login/index.ts)). It uses the **service role** to create Auth users and set `user_profiles.auth_user_id`. Only users with `user_profiles.is_system_admin = true` may call it.
+
+**Deploy (Supabase CLI):**
+
+```bash
+supabase functions deploy admin-provision-login
+```
+
+On hosted Supabase, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are available to the function automatically. The handler validates the caller’s JWT and checks `is_system_admin` before running any admin action.
+
+**Local development:** run `supabase start`, link your project if needed, then serve or deploy the function per [Supabase Edge Functions docs](https://supabase.com/docs/guides/functions).
+
+The Vite app only needs the existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; never put the service role key in the frontend.
+
 ## Build for Production
 
 ```bash

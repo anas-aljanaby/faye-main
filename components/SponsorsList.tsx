@@ -9,6 +9,10 @@ import Avatar from './Avatar';
 import EntityCard, { EntityCardField } from './EntityCard';
 import { DataTable } from './DataTable';
 import { ColumnDef } from '@tanstack/react-table';
+import { useAccountStatusesMap } from '../hooks/useAccountStatus';
+import { AccountStatusBadge } from './account/AccountStatusBadge';
+import { CreateLoginModal } from './account/CreateLoginModal';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AddSponsorModal: React.FC<{
     isOpen: boolean;
@@ -163,6 +167,8 @@ const SponsorsList: React.FC = () => {
     const { sponsors: sponsorsData, loading, refetch: refetchSponsors } = useSponsorsBasic();
     const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
     const { userProfile, canEditSponsors, canEditOrphans, isManager } = useAuth();
+    const queryClient = useQueryClient();
+    const isSysAdmin = userProfile?.is_system_admin === true;
     const hasEditPermission = userProfile?.role === 'team_member' && canEditSponsors();
     const canAssignOrphansToSponsors = useMemo(() => {
         return (isManager() || (canEditOrphans() && canEditSponsors()));
@@ -188,62 +194,124 @@ const SponsorsList: React.FC = () => {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
+    const [filterOnlyNoAccount, setFilterOnlyNoAccount] = useState(false);
+    const [createLoginTarget, setCreateLoginTarget] = useState<{ profileId: string; name: string } | null>(null);
     const ITEMS_PER_PAGE = 12;
 
+    const sponsorProfileIds = useMemo(
+        () => sponsorList.map((s) => s.uuid).filter(Boolean) as string[],
+        [sponsorList]
+    );
+    const { data: accountsMap = {}, isLoading: accountsLoading } = useAccountStatusesMap(
+        sponsorProfileIds,
+        isSysAdmin
+    );
+
     // Column definitions for DataTable (list view)
-    const tableColumns = useMemo<ColumnDef<Sponsor>[]>(() => [
-        {
-            id: 'select',
-            header: ({ table }) => (
-                <div className="px-1">
-                    <input
-                        type="checkbox"
-                        checked={table.getIsAllPageRowsSelected()}
-                        onChange={table.getToggleAllPageRowsSelectedHandler()}
-                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
-                    />
-                </div>
-            ),
-            cell: ({ row }) => (
-                <div className="px-1">
-                    <input
-                        type="checkbox"
-                        checked={row.getIsSelected()}
-                        disabled={!row.getCanSelect()}
-                        onChange={row.getToggleSelectedHandler()}
-                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
-                        onClick={(e) => e.stopPropagation()}
-                    />
-                </div>
-            ),
-            enableSorting: false,
-            enableHiding: false,
-            size: 40,
-        },
-        {
-            accessorKey: 'name',
-            header: 'الكافل',
-            cell: ({ row }) => (
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
-                        <Avatar src={row.original.avatarUrl} name={row.original.name} size="md" className="!w-full !h-full !text-sm" />
+    const tableColumns = useMemo<ColumnDef<Sponsor>[]>(() => {
+        const cols: ColumnDef<Sponsor>[] = [
+            {
+                id: 'select',
+                header: ({ table }) => (
+                    <div className="px-1">
+                        <input
+                            type="checkbox"
+                            checked={table.getIsAllPageRowsSelected()}
+                            onChange={table.getToggleAllPageRowsSelectedHandler()}
+                            className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                        />
                     </div>
-                    <div>
-                        <div className="font-bold text-gray-900">{row.original.name}</div>
+                ),
+                cell: ({ row }) => (
+                    <div className="px-1">
+                        <input
+                            type="checkbox"
+                            checked={row.getIsSelected()}
+                            disabled={!row.getCanSelect()}
+                            onChange={row.getToggleSelectedHandler()}
+                            className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                            onClick={(e) => e.stopPropagation()}
+                        />
                     </div>
-                </div>
-            ),
-            size: 200,
-        },
-        {
-            accessorKey: 'sponsoredOrphanIds',
-            header: 'عدد الأيتام',
-            cell: ({ row }) => (
-                <span className="text-gray-600">{row.original.sponsoredOrphanIds.length} {row.original.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</span>
-            ),
-            sortingFn: (rowA, rowB) => rowA.original.sponsoredOrphanIds.length - rowB.original.sponsoredOrphanIds.length,
-        },
-    ], []);
+                ),
+                enableSorting: false,
+                enableHiding: false,
+                size: 40,
+            },
+            {
+                accessorKey: 'name',
+                header: 'الكافل',
+                cell: ({ row }) => (
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
+                            <Avatar src={row.original.avatarUrl} name={row.original.name} size="md" className="!w-full !h-full !text-sm" />
+                        </div>
+                        <div>
+                            <div className="font-bold text-gray-900">{row.original.name}</div>
+                        </div>
+                    </div>
+                ),
+                size: 200,
+            },
+            {
+                accessorKey: 'sponsoredOrphanIds',
+                header: 'عدد الأيتام',
+                cell: ({ row }) => (
+                    <span className="text-gray-600">
+                        {row.original.sponsoredOrphanIds.length}{' '}
+                        {row.original.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}
+                    </span>
+                ),
+                sortingFn: (rowA, rowB) =>
+                    rowA.original.sponsoredOrphanIds.length - rowB.original.sponsoredOrphanIds.length,
+            },
+        ];
+        if (isSysAdmin) {
+            cols.push({
+                id: 'platform_account',
+                header: 'حساب الدخول',
+                cell: ({ row }) => {
+                    const uuid = row.original.uuid;
+                    if (!uuid) {
+                        return <span className="text-xs text-gray-400">—</span>;
+                    }
+                    return (
+                        <AccountStatusBadge
+                            status={accountsMap[uuid]?.status}
+                            loading={accountsLoading}
+                            className="!text-[10px]"
+                        />
+                    );
+                },
+                enableSorting: false,
+            });
+            cols.push({
+                id: 'create_login_shortcut',
+                header: '',
+                cell: ({ row }) => {
+                    const uuid = row.original.uuid;
+                    if (!uuid || accountsMap[uuid]?.status !== 'no_login') {
+                        return null;
+                    }
+                    return (
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setCreateLoginTarget({ profileId: uuid, name: row.original.name });
+                            }}
+                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 whitespace-nowrap"
+                        >
+                            إنشاء حساب
+                        </button>
+                    );
+                },
+                enableSorting: false,
+                size: 100,
+            });
+        }
+        return cols;
+    }, [isSysAdmin, accountsMap, accountsLoading]);
 
     const renderBulkActions = (selectedRows: Sponsor[]) => {
         return (
@@ -301,13 +369,20 @@ const SponsorsList: React.FC = () => {
                 break;
         }
 
+        if (isSysAdmin && filterOnlyNoAccount) {
+            sortedAndFiltered = sortedAndFiltered.filter((s) => {
+                if (!s.uuid) return true;
+                return accountsMap[s.uuid]?.status === 'no_login';
+            });
+        }
+
         return sortedAndFiltered;
-    }, [searchQuery, sponsorList, sortBy]);
+    }, [searchQuery, sponsorList, sortBy, isSysAdmin, filterOnlyNoAccount, accountsMap]);
 
     // Reset to first page when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, sortBy]);
+    }, [searchQuery, sortBy, filterOnlyNoAccount]);
 
     const totalPages = Math.ceil(filteredSponsors.length / ITEMS_PER_PAGE);
     const paginatedSponsors = useMemo(() => {
@@ -475,6 +550,17 @@ const SponsorsList: React.FC = () => {
                             تحديد الكل
                         </label>
                     </div>
+                    {isSysAdmin && (
+                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer whitespace-nowrap">
+                            <input
+                                type="checkbox"
+                                checked={filterOnlyNoAccount}
+                                onChange={(e) => setFilterOnlyNoAccount(e.target.checked)}
+                                className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4"
+                            />
+                            بدون حساب دخول فقط
+                        </label>
+                    )}
                     {canAssignOrphansToSponsors && (
                         <button
                             onClick={() => setShowAssignOrphansModal(true)}
@@ -485,14 +571,14 @@ const SponsorsList: React.FC = () => {
                         </button>
                     )}
                     <span className="text-sm text-text-secondary">
-                        تم العثور على {viewMode === 'grid' ? filteredSponsors.length : sponsorList.length} كافل
+                        تم العثور على {filteredSponsors.length} كافل
                     </span>
                 </div>
 
                 {viewMode === 'list' ? (
                     <DataTable
                         columns={tableColumns}
-                        data={sponsorList}
+                        data={filteredSponsors}
                         onRowClick={(row) => navigate(`/sponsor/${row.id}`)}
                         renderBulkActions={renderBulkActions}
                         storageKey="sponsors_table"
@@ -503,24 +589,65 @@ const SponsorsList: React.FC = () => {
                         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {paginatedSponsors.map(sponsor => {
                                 const isSelected = selectedIds.has(sponsor.id);
+                                const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
+                                const canQuickCreate =
+                                    isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
                                 const cardFields: EntityCardField[] = [
                                     { label: 'عدد الأيتام:', value: `${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}` },
                                 ];
+                                if (isSysAdmin && sponsor.uuid) {
+                                    const statusLabel =
+                                        accountsLoading
+                                            ? '…'
+                                            : acc?.status === 'no_login'
+                                              ? 'لا يوجد حساب دخول'
+                                              : acc?.status === 'pending_first_login'
+                                                ? 'بانتظار أول دخول'
+                                                : acc?.status === 'active'
+                                                  ? 'حساب فعّال'
+                                                  : '—';
+                                    cardFields.push({
+                                        label: 'حساب المنصة:',
+                                        value: statusLabel,
+                                        type: 'pill',
+                                        pillClass:
+                                            acc?.status === 'active'
+                                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                                : acc?.status === 'pending_first_login'
+                                                  ? 'bg-amber-50 text-amber-900 border-amber-200'
+                                                  : 'bg-gray-100 text-gray-700 border-gray-200',
+                                    });
+                                }
                                 return (
-                                    <EntityCard
-                                        key={sponsor.id}
-                                        variant="card"
-                                        title={sponsor.name}
-                                        subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
-                                        imageUrl={sponsor.avatarUrl}
-                                        imageAlt={sponsor.name}
-                                        fields={cardFields}
-                                        actionLabel="عرض الملف الكامل"
-                                        onClick={() => navigate(`/sponsor/${sponsor.id}`)}
-                                        selected={isSelected}
-                                        onSelect={() => handleSelect(sponsor.id)}
-                                        showCheckbox={true}
-                                    />
+                                    <div key={sponsor.id} className="flex flex-col gap-2">
+                                        <EntityCard
+                                            variant="card"
+                                            title={sponsor.name}
+                                            subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
+                                            imageUrl={sponsor.avatarUrl}
+                                            imageAlt={sponsor.name}
+                                            fields={cardFields}
+                                            actionLabel="عرض الملف الكامل"
+                                            onClick={() => navigate(`/sponsor/${sponsor.id}`)}
+                                            selected={isSelected}
+                                            onSelect={() => handleSelect(sponsor.id)}
+                                            showCheckbox={true}
+                                        />
+                                        {canQuickCreate && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setCreateLoginTarget({
+                                                        profileId: sponsor.uuid!,
+                                                        name: sponsor.name,
+                                                    })
+                                                }
+                                                className="w-full py-2 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                                            >
+                                                إنشاء حساب دخول
+                                            </button>
+                                        )}
+                                    </div>
                                 );
                             })}
                         </section>
@@ -614,6 +741,19 @@ const SponsorsList: React.FC = () => {
         />
 
         {/* Assign Orphans Modal */}
+        {createLoginTarget && (
+            <CreateLoginModal
+                isOpen
+                onClose={() => setCreateLoginTarget(null)}
+                profileId={createLoginTarget.profileId}
+                displayName={createLoginTarget.name}
+                onSuccess={() => {
+                    void queryClient.invalidateQueries({ queryKey: ['account-statuses'] });
+                    void queryClient.invalidateQueries({ queryKey: ['account-status'] });
+                }}
+            />
+        )}
+
         {showAssignOrphansModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => {
                 setShowAssignOrphansModal(false);
