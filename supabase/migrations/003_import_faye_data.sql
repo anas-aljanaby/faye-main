@@ -3,7 +3,7 @@
 -- Generated at: 2025-12-24T15:20:34.604Z
 -- ============================================================================
 -- This script imports real organization data from the Excel file
--- Run this in Supabase SQL Editor after running 001_initial_schema.sql
+-- Run after 001_initial_schema.sql and 002_storage.sql
 -- ============================================================================
 
 DO $$

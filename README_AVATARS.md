@@ -13,7 +13,7 @@ Run the migration script to create the avatars storage bucket:
 supabase migration up
 
 # Or manually in Supabase Dashboard SQL Editor
-# Copy and paste the contents of supabase/migrations/004_create_avatars_storage_bucket.sql
+# Copy and paste the contents of supabase/migrations/002_storage.sql
 ```
 
 ### 2. Verify Storage Bucket

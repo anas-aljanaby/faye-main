@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { authenticate, signOut as authSignOut, getSession, AuthSession, setCurrentUserId } from '../lib/auth';
+import type { Session } from '@supabase/supabase-js';
+import { signInWithEmail, signOutAuth } from '../lib/auth';
 import { supabase } from '../lib/supabaseClient';
 
 interface UserProfile {
@@ -21,7 +22,6 @@ interface UserPermissions {
   is_manager: boolean;
 }
 
-// Default permissions for users without explicit permissions (backward compatibility)
 const DEFAULT_PERMISSIONS: UserPermissions = {
   can_edit_orphans: false,
   can_edit_sponsors: false,
@@ -34,14 +34,13 @@ const DEFAULT_PERMISSIONS: UserPermissions = {
 
 interface AuthContextType {
   user: { id: string } | null;
-  session: AuthSession | null;
+  session: Session | null;
   userProfile: UserProfile | null;
   permissions: UserPermissions | null;
   loading: boolean;
-  signIn: (loginIdentifier: string, password: string) => Promise<{ error: string | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   refreshPermissions: () => Promise<void>;
-  // Helper functions for permission checks
   canEditOrphans: () => boolean;
   canEditSponsors: () => boolean;
   canEditTransactions: () => boolean;
@@ -63,54 +62,18 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<{ id: string } | null>(null);
-  const [session, setSessionState] = useState<AuthSession | null>(null);
+  const [session, setSessionState] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [permissions, setPermissions] = useState<UserPermissions | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for existing session on mount
-    const existingSession = getSession();
-    if (existingSession) {
-      loadSession(existingSession);
-    } else {
-      setLoading(false);
-    }
-  }, []);
-
-  const loadSession = async (authSession: AuthSession) => {
+  const fetchPermissions = useCallback(async (userId: string) => {
     try {
-      // Set current user ID for RLS policies
-      await setCurrentUserId(authSession.userProfileId);
-      
-      setSessionState(authSession);
-      setUser({ id: authSession.userProfileId });
-      setUserProfile(authSession.userProfile);
-
-      // Fetch user permissions (only for team members)
-      // Note: RLS is disabled on user_permissions, so no need to set user context
-      if (authSession.userProfile.role === 'team_member') {
-        await fetchPermissions(authSession.userProfileId);
-      } else {
-        setPermissions(null);
-      }
-    } catch (error) {
-      console.error('Error loading session:', error);
-      setSessionState(null);
-      setUser(null);
-      setUserProfile(null);
-      setPermissions(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPermissions = async (userId: string) => {
-    try {
-      // RLS is disabled on user_permissions; tenant isolation is via organization_id
       const { data: permissionsData, error: permissionsError } = await supabase
         .from('user_permissions')
-        .select('can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager')
+        .select(
+          'can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager'
+        )
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -118,7 +81,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error fetching user permissions:', permissionsError);
         setPermissions(DEFAULT_PERMISSIONS);
       } else if (!permissionsData) {
-        // No explicit permissions record yet - use defaults
         setPermissions(DEFAULT_PERMISSIONS);
       } else {
         setPermissions(permissionsData as UserPermissions);
@@ -127,52 +89,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Error fetching permissions:', error);
       setPermissions(DEFAULT_PERMISSIONS);
     }
-  };
+  }, []);
 
-  const fetchUserProfileAndPermissions = async (userId: string) => {
-    try {
-      // Set current user ID for RLS policies
-      await setCurrentUserId(userId);
-      
-      // Fetch user profile (now with RLS enabled, we need the user ID set)
+  const syncFromSession = useCallback(
+    async (nextSession: Session | null): Promise<{ error: string | null }> => {
+      setSessionState(nextSession);
+
+      if (!nextSession) {
+        setUser(null);
+        setUserProfile(null);
+        setPermissions(null);
+        return { error: null };
+      }
+
       const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('id, organization_id, role, name, avatar_url, member_id')
-        .eq('id', userId)
+        .eq('auth_user_id', nextSession.user.id)
         .maybeSingle();
 
       if (profileError) {
         console.error('Error fetching user profile:', profileError);
+        await supabase.auth.signOut();
+        setUser(null);
         setUserProfile(null);
         setPermissions(null);
-      } else if (!profileData) {
-        console.error('User profile not found for id:', userId);
-        setUserProfile(null);
-        setPermissions(null);
-      } else {
-        setUserProfile(profileData as UserProfile);
-
-        // Fetch user permissions (only for team members)
-        if (profileData.role === 'team_member') {
-          await fetchPermissions(userId);
-        } else {
-          setPermissions(null);
-        }
+        setSessionState(null);
+        return { error: 'فشل في جلب بيانات المستخدم' };
       }
-    } catch (error) {
-      console.error('Error fetching user profile and permissions:', error);
-      setUserProfile(null);
-      setPermissions(null);
-    }
-  };
 
-  const refreshPermissions = async () => {
+      if (!profileData) {
+        await supabase.auth.signOut();
+        setUser(null);
+        setUserProfile(null);
+        setPermissions(null);
+        setSessionState(null);
+        return {
+          error:
+            'لم يتم ربط حساب الدخول بملف مستخدم في المنظمة. اطلب من المسؤول ربط بريدك الإلكتروني بملفك.',
+        };
+      }
+
+      const profile = profileData as UserProfile;
+      setUser({ id: profile.id });
+      setUserProfile(profile);
+
+      if (profile.role === 'team_member') {
+        await fetchPermissions(profile.id);
+      } else {
+        setPermissions(null);
+      }
+
+      return { error: null };
+    },
+    [fetchPermissions]
+  );
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      void (async () => {
+        await syncFromSession(nextSession);
+        if (event === 'INITIAL_SESSION') {
+          setLoading(false);
+        }
+      })();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [syncFromSession]);
+
+  const refreshPermissions = useCallback(async () => {
     if (user) {
       await fetchPermissions(user.id);
     }
-  };
+  }, [user, fetchPermissions]);
 
-  // Helper functions for permission checks (stable identities via useCallback)
   const isManager = useCallback(() => {
     return permissions?.is_manager || false;
   }, [permissions]);
@@ -201,28 +196,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return permissions?.can_view_financials || permissions?.is_manager || false;
   }, [permissions]);
 
-  const signIn = async (loginIdentifier: string, password: string) => {
-    const { session: authSession, error } = await authenticate(loginIdentifier, password);
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      const { error } = await signInWithEmail(email, password);
+      if (error) {
+        return { error: error.message || 'فشل تسجيل الدخول' };
+      }
 
-    if (error) {
-      return { error };
-    }
+      const {
+        data: { session: nextSession },
+      } = await supabase.auth.getSession();
+      const { error: syncError } = await syncFromSession(nextSession);
+      return { error: syncError };
+    },
+    [syncFromSession]
+  );
 
-    if (authSession) {
-      await loadSession(authSession);
-    }
-
-    return { error: null };
-  };
-
-  const signOut = async () => {
-    await authSignOut();
-    await setCurrentUserId(null); // Clear current user ID for RLS
-    setUser(null);
-    setSessionState(null);
-    setUserProfile(null);
-    setPermissions(null);
-    // Clear persisted React Query snapshots on sign out.
+  const signOut = useCallback(async () => {
+    await signOutAuth();
+    await syncFromSession(null);
     if (typeof window !== 'undefined' && window.localStorage) {
       const keysToRemove: string[] = [];
       for (let i = 0; i < window.localStorage.length; i++) {
@@ -233,7 +225,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       keysToRemove.forEach((key) => window.localStorage.removeItem(key));
     }
-  };
+  }, [syncFromSession]);
 
   const value = useMemo(() => {
     return {

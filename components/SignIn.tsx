@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const SignIn: React.FC = () => {
-  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ const SignIn: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error } = await signIn(loginIdentifier, password);
+      const { error } = await signIn(email.trim(), password);
       
       if (error) {
         setError(error || 'حدث خطأ أثناء تسجيل الدخول');
@@ -57,19 +57,19 @@ const SignIn: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="loginIdentifier" className="block text-sm font-medium text-gray-700 mb-2">
-                اسم المستخدم أو البريد الإلكتروني
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                البريد الإلكتروني
               </label>
               <input
-                id="loginIdentifier"
-                type="text"
-                value={loginIdentifier}
-                onChange={(e) => setLoginIdentifier(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition"
-                placeholder="username@email.com أو username"
+                placeholder="you@example.com"
                 dir="ltr"
-                autoComplete="username"
+                autoComplete="email"
               />
             </div>
 

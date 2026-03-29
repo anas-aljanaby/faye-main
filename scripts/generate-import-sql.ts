@@ -475,7 +475,7 @@ END $$;
 `;
 
   // Write SQL file
-  const sqlPath = path.join(__dirname, '..', 'supabase', 'migrations', '006_import_faye_data.sql');
+  const sqlPath = path.join(__dirname, '..', 'supabase', 'migrations', '003_import_faye_data.sql');
   fs.writeFileSync(sqlPath, sql, 'utf-8');
   console.log(`\n✅ SQL file generated: ${sqlPath}`);
 
@@ -510,7 +510,7 @@ END $$;
   console.log('═'.repeat(60));
   console.log('\n📝 Next steps:');
   console.log('   1. Open Supabase SQL Editor');
-  console.log('   2. Copy and paste the contents of 006_import_faye_data.sql');
+  console.log('   2. Copy and paste the contents of 003_import_faye_data.sql');
   console.log('   3. Run the SQL');
   console.log('   4. Use credentials from user-credentials.json to log in');
   console.log('═'.repeat(60));
