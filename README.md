@@ -34,7 +34,7 @@ A comprehensive orphan care management system built with React, TypeScript, and 
 
 ### Admin login provisioning (Edge Function)
 
-Team/sponsor login creation from the app is handled by the Supabase Edge Function `admin-provision-login` ([`supabase/functions/admin-provision-login/index.ts`](supabase/functions/admin-provision-login/index.ts)). It uses the **service role** to create Auth users and set `user_profiles.auth_user_id`. Only users with `user_profiles.is_system_admin = true` may call it.
+Team/sponsor login creation and **unlinking** (delete Auth user + clear `user_profiles.auth_user_id`, keeping the profile) are handled by the Supabase Edge Function `admin-provision-login` ([`supabase/functions/admin-provision-login/index.ts`](supabase/functions/admin-provision-login/index.ts)). It uses the **service role** for Auth Admin and profile updates. Only users with `user_profiles.is_system_admin = true` may call it.
 
 **Deploy (Supabase CLI):**
 

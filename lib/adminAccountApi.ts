@@ -19,6 +19,14 @@ type CreateResponse = {
   lastSignInAt: string | null;
 };
 
+type UnlinkResponse = {
+  ok: boolean;
+  profileId: string;
+  status: AccountStatusKey;
+  email: null;
+  lastSignInAt: null;
+};
+
 type ErrorBody = { error?: string; message?: string };
 
 async function getAccessToken(): Promise<string> {
@@ -65,6 +73,12 @@ export async function mapAdminAccountError(error: unknown): Promise<string> {
     unknown_action: 'إجراء غير معروف.',
     internal_error: 'حدث خطأ داخلي.',
     no_session: 'لا توجد جلسة نشطة.',
+    cannot_unlink_self: 'لا يمكنك فك ربط حسابك الخاص من هنا.',
+    no_login_to_unlink: 'لا يوجد حساب دخول مرتبط بهذا الملف.',
+    unlink_failed: 'فشل تحديث الملف بعد فك الربط.',
+    delete_auth_failed: body?.message
+      ? `فشل حذف مستخدم المصادقة: ${body.message}`
+      : 'فشل حذف مستخدم المصادقة.',
   };
   if (code && messages[code]) {
     return messages[code];
@@ -92,6 +106,24 @@ export async function fetchAccountStatuses(
     throw new Error('استجابة غير صالحة من الخادم.');
   }
   return data.accounts;
+}
+
+export async function unlinkProfileLogin(profileId: string): Promise<AccountStatusPayload> {
+  await getAccessToken();
+  const { data, error } = await supabase.functions.invoke<UnlinkResponse>('admin-provision-login', {
+    body: { action: 'unlink', profileId },
+  });
+  if (error) {
+    throw new Error(await mapAdminAccountError(error));
+  }
+  if (!data?.ok) {
+    throw new Error('فشل فك ربط حساب الدخول.');
+  }
+  return {
+    status: 'no_login',
+    email: null,
+    lastSignInAt: null,
+  };
 }
 
 export async function createProfileLogin(

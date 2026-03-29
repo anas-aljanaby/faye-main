@@ -266,6 +266,97 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === 'unlink') {
+      const profileId = body.profileId as string | undefined;
+      if (!profileId) {
+        return new Response(JSON.stringify({ error: 'invalid_body' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (profileId === caller.id) {
+        return new Response(JSON.stringify({ error: 'cannot_unlink_self' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: target, error: targetErr } = await adminClient
+        .from('user_profiles')
+        .select('id, organization_id, role, auth_user_id')
+        .eq('id', profileId)
+        .maybeSingle();
+
+      if (targetErr || !target) {
+        return new Response(JSON.stringify({ error: 'profile_not_found' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (target.organization_id !== caller.organization_id) {
+        return new Response(JSON.stringify({ error: 'forbidden' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (target.role !== 'team_member' && target.role !== 'sponsor') {
+        return new Response(JSON.stringify({ error: 'invalid_role' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const authUserId = target.auth_user_id as string | null;
+      if (!authUserId) {
+        return new Response(JSON.stringify({ error: 'no_login_to_unlink' }), {
+          status: 409,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { error: delErr } = await adminClient.auth.admin.deleteUser(authUserId);
+      if (delErr) {
+        const msg = delErr.message?.toLowerCase() ?? '';
+        if (!msg.includes('not found') && !msg.includes('user not found')) {
+          console.error('unlink deleteUser', delErr);
+          return new Response(
+            JSON.stringify({ error: 'delete_auth_failed', message: delErr.message }),
+            {
+              status: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            }
+          );
+        }
+      }
+
+      const { error: clearErr } = await adminClient
+        .from('user_profiles')
+        .update({ auth_user_id: null, updated_at: new Date().toISOString() })
+        .eq('id', profileId);
+
+      if (clearErr) {
+        console.error('unlink clear profile', clearErr);
+        return new Response(JSON.stringify({ error: 'unlink_failed' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          profileId,
+          status: 'no_login' as AccountStatus,
+          email: null,
+          lastSignInAt: null,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(JSON.stringify({ error: 'unknown_action' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
