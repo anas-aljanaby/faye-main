@@ -13,6 +13,9 @@
 
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS conversations CASCADE;
+DROP TABLE IF EXISTS notification_preferences CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS payment_status_history CASCADE;
 DROP TABLE IF EXISTS receipt_orphans CASCADE;
 DROP TABLE IF EXISTS receipts CASCADE;
 DROP TABLE IF EXISTS sponsor_notes CASCADE;
@@ -52,6 +55,14 @@ DROP FUNCTION IF EXISTS hash_password(TEXT) CASCADE;
 
 DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
 DROP FUNCTION IF EXISTS update_conversation_last_message() CASCADE;
+DROP FUNCTION IF EXISTS send_payment_reminders() CASCADE;
+DROP FUNCTION IF EXISTS mark_overdue_payments() CASCADE;
+DROP FUNCTION IF EXISTS generate_monthly_payments() CASCADE;
+DROP FUNCTION IF EXISTS trigger_notification_dispatch() CASCADE;
+DROP FUNCTION IF EXISTS handle_payment_status_change() CASCADE;
+DROP FUNCTION IF EXISTS handle_payment_insert_notification() CASCADE;
+DROP FUNCTION IF EXISTS get_payment_organization_id(UUID) CASCADE;
+DROP FUNCTION IF EXISTS enqueue_payment_notification(UUID, UUID, TEXT, TEXT, TEXT, TEXT, UUID) CASCADE;
 
 DROP FUNCTION IF EXISTS get_user_organization_id() CASCADE;
 DROP FUNCTION IF EXISTS is_team_member() CASCADE;

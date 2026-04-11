@@ -11,6 +11,53 @@ export interface Payment {
   dueDate: Date;
   paidDate?: Date;
   status: PaymentStatus;
+  sponsorId?: string;
+  month?: number;
+  year?: number;
+  reminderSentAt?: Date;
+  overdueNotifiedAt?: Date;
+  notes?: string;
+}
+
+export interface PaymentStatusHistory {
+  id: string;
+  paymentId: string;
+  oldStatus?: PaymentStatus;
+  newStatus: PaymentStatus;
+  changedBy?: string;
+  changedBySource: 'system' | 'user';
+  notes?: string;
+  changedAt: Date;
+}
+
+export type NotificationType =
+  | 'payment_due'
+  | 'payment_overdue'
+  | 'payment_received'
+  | 'payment_reminder'
+  | 'payment_status_changed'
+  | 'general';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  organizationId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  relatedEntityType?: string;
+  relatedEntityId?: string;
+  readAt?: Date;
+  emailSentAt?: Date;
+  createdAt: Date;
+}
+
+export interface NotificationPreference {
+  userId: string;
+  inAppEnabled: boolean;
+  emailEnabled: boolean;
+  paymentDueReminderDays: number;
+  overdueReminderFrequencyDays: number;
 }
 
 export interface Achievement {

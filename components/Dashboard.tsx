@@ -581,13 +581,27 @@ const Dashboard: React.FC = () => {
     const sponsorPaymentStats = useMemo(() => {
         let overdue = 0;
         let due = 0;
+        let overdueAmount = 0;
+        let dueAmount = 0;
+        let recentlyReceived = 0;
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         sponsoredOrphans.forEach(orphan => {
             orphan.payments.forEach(p => {
-                if (p.status === PaymentStatus.Overdue) overdue++;
-                if (p.status === PaymentStatus.Due) due++;
+                if (p.status === PaymentStatus.Overdue) {
+                    overdue++;
+                    overdueAmount += p.amount;
+                }
+                if (p.status === PaymentStatus.Due) {
+                    due++;
+                    dueAmount += p.amount;
+                }
+                if (p.status === PaymentStatus.Paid && p.paidDate && p.paidDate >= thirtyDaysAgo) {
+                    recentlyReceived++;
+                }
             });
         });
-        return { overdue, due };
+        return { overdue, due, overdueAmount, dueAmount, recentlyReceived };
     }, [sponsoredOrphans]);
 
     // Fetch assigned team members, manager, and assigned orphans for sponsor
@@ -766,7 +780,7 @@ const Dashboard: React.FC = () => {
                                         </div>
                                         <div>
                                             <p className="text-2xl font-bold text-gray-800">{sponsorPaymentStats.due}</p>
-                                            <p className="text-sm text-text-secondary">دفعة مستحقة</p>
+                                            <p className="text-sm text-text-secondary">دفعة مستحقة (${sponsorPaymentStats.dueAmount.toLocaleString()})</p>
                                         </div>
                                     </div>
                                 </div>
@@ -778,11 +792,12 @@ const Dashboard: React.FC = () => {
                                         </div>
                                         <div>
                                             <p className={`text-2xl font-bold ${sponsorPaymentStats.overdue > 0 ? 'text-red-600' : 'text-gray-800'}`}>{sponsorPaymentStats.overdue}</p>
-                                            <p className="text-sm text-text-secondary">دفعة متأخرة</p>
+                                            <p className="text-sm text-text-secondary">دفعة متأخرة (${sponsorPaymentStats.overdueAmount.toLocaleString()})</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            <p className="mt-3 text-sm text-text-secondary">تم استلام {sponsorPaymentStats.recentlyReceived} دفعة خلال آخر 30 يوماً.</p>
                         </div>
                     </section>
 
@@ -920,6 +935,17 @@ const Dashboard: React.FC = () => {
     const duePayments = orphansData.reduce((count, orphan) => 
         count + orphan.payments.filter(p => p.status === PaymentStatus.Due).length, 0
     );
+    const duePaymentsAmount = orphansData.reduce((sum, orphan) =>
+        sum + orphan.payments.filter(p => p.status === PaymentStatus.Due).reduce((acc, p) => acc + p.amount, 0), 0
+    );
+    const overduePaymentsAmount = orphansData.reduce((sum, orphan) =>
+        sum + orphan.payments.filter(p => p.status === PaymentStatus.Overdue).reduce((acc, p) => acc + p.amount, 0), 0
+    );
+    const recentlyReceivedPayments = orphansData.reduce((count, orphan) => {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return count + orphan.payments.filter(p => p.status === PaymentStatus.Paid && p.paidDate && p.paidDate >= thirtyDaysAgo).length;
+    }, 0);
 
     // Get current time greeting
     const getGreeting = () => {
@@ -993,7 +1019,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div>
                       {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className="text-2xl font-bold text-gray-800">{duePayments}</p>}
-                      <p className="text-sm text-text-secondary">دفعة مستحقة</p>
+                      <p className="text-sm text-text-secondary">دفعة مستحقة (${duePaymentsAmount.toLocaleString()})</p>
                     </div>
                   </div>
                 </div>
@@ -1005,11 +1031,12 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div>
                       {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className={`text-2xl font-bold ${overduePayments > 0 ? 'text-red-600' : 'text-gray-800'}`}>{overduePayments}</p>}
-                      <p className="text-sm text-text-secondary">دفعة متأخرة</p>
+                      <p className="text-sm text-text-secondary">دفعة متأخرة (${overduePaymentsAmount.toLocaleString()})</p>
                     </div>
                   </div>
                 </div>
               </div>
+              <p className="mt-3 text-sm text-text-secondary">دفعات تم استلامها خلال آخر 30 يوماً: {recentlyReceivedPayments}</p>
             </div>
           </section>
 

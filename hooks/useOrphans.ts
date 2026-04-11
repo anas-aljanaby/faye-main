@@ -261,6 +261,12 @@ export const useOrphans = () => {
             dueDate: new Date(p.due_date),
             paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
             status: p.status as PaymentStatus,
+            sponsorId: p.sponsor_id ?? undefined,
+            month: p.month ?? undefined,
+            year: p.year ?? undefined,
+            reminderSentAt: p.reminder_sent_at ? new Date(p.reminder_sent_at) : undefined,
+            overdueNotifiedAt: p.overdue_notified_at ? new Date(p.overdue_notified_at) : undefined,
+            notes: p.notes ?? undefined,
           }));
 
         const achievements = orphanAchievements
@@ -473,6 +479,12 @@ export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promi
         dueDate: new Date(p.due_date),
         paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
         status: p.status as PaymentStatus,
+        sponsorId: p.sponsor_id ?? undefined,
+        month: p.month ?? undefined,
+        year: p.year ?? undefined,
+        reminderSentAt: p.reminder_sent_at ? new Date(p.reminder_sent_at) : undefined,
+        overdueNotifiedAt: p.overdue_notified_at ? new Date(p.overdue_notified_at) : undefined,
+        notes: p.notes ?? undefined,
       }));
 
     return {
@@ -602,6 +614,12 @@ export async function fetchOrphansPaginatedData(
         dueDate: new Date(p.due_date),
         paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
         status: p.status as PaymentStatus,
+        sponsorId: p.sponsor_id ?? undefined,
+        month: p.month ?? undefined,
+        year: p.year ?? undefined,
+        reminderSentAt: p.reminder_sent_at ? new Date(p.reminder_sent_at) : undefined,
+        overdueNotifiedAt: p.overdue_notified_at ? new Date(p.overdue_notified_at) : undefined,
+        notes: p.notes ?? undefined,
       }));
 
     return {
@@ -786,6 +804,12 @@ export async function fetchOrphanDetailData(organizationId: string, orphanId: st
     dueDate: new Date(p.due_date),
     paidDate: p.paid_date ? new Date(p.paid_date) : undefined,
     status: p.status as PaymentStatus,
+    sponsorId: p.sponsor_id ?? undefined,
+    month: p.month ?? undefined,
+    year: p.year ?? undefined,
+    reminderSentAt: p.reminder_sent_at ? new Date(p.reminder_sent_at) : undefined,
+    overdueNotifiedAt: p.overdue_notified_at ? new Date(p.overdue_notified_at) : undefined,
+    notes: p.notes ?? undefined,
   })).sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime());
 
   const orphanAchievements = (achievementsData.data || []).map(a => ({
