@@ -32,7 +32,7 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-light/20 via-bg-page to-primary-light/10 flex items-center justify-center p-4">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-primary-light/20 via-bg-page to-primary-light/10 p-4 py-6 sm:py-8">
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
@@ -46,8 +46,8 @@ const SignIn: React.FC = () => {
         </div>
 
         {/* Sign In Form */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">تسجيل الدخول</h2>
+        <div className="rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+          <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">تسجيل الدخول</h2>
           
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
@@ -123,4 +123,3 @@ const SignIn: React.FC = () => {
 };
 
 export default SignIn;
-

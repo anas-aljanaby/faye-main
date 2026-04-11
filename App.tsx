@@ -32,11 +32,11 @@ function App() {
             element={
               <ProtectedRoute>
                 <PoliciesNavProvider>
-                <div className="relative flex h-screen bg-bg-page text-text-primary overflow-hidden">
+                <div className="relative flex min-h-[100dvh] overflow-hidden bg-bg-page text-text-primary md:h-screen">
                   <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-                  <main className="flex-1 flex flex-col overflow-y-auto">
+                  <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                     <Header onMenuClick={() => setIsSidebarOpen(true)} />
-                    <div className="p-4 sm:p-6 md:p-8 flex-1">
+                    <div className="flex-1 p-4 sm:p-6 md:p-8">
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/financial-system" element={<TeamMemberRoute><FinancialSystem /></TeamMemberRoute>} />

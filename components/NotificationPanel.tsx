@@ -46,10 +46,10 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
   return (
     <>
-      <div className="w-80 overflow-hidden rounded-lg border border-gray-200 bg-bg-card shadow-2xl">
+      <div className="w-full max-w-full overflow-hidden rounded-lg border border-gray-200 bg-bg-card shadow-2xl sm:w-80">
         <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
           <p className="text-lg font-semibold text-text-primary">إشعارات جديدة</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-1 text-right sm:gap-2">
             <button onClick={() => setShowPreferences(true)} className="text-xs font-semibold text-primary">
               الإعدادات
             </button>

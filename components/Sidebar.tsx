@@ -240,9 +240,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       />
 
       <aside 
-        className={`fixed inset-y-0 right-0 z-50 bg-bg-sidebar shadow-2xl border-l border-white/50 flex flex-col h-full
+        className={`fixed inset-y-0 right-0 z-50 flex h-full w-[calc(100vw-1rem)] max-w-sm flex-col border-l border-white/50 bg-bg-sidebar shadow-2xl
         ${isOpen ? 'translate-x-0' : 'translate-x-full'} 
-        md:relative md:translate-x-0
+        md:relative md:w-auto md:max-w-none md:translate-x-0
         ${!isResizing && !isCollapsed ? 'transition-[width] duration-200 ease-out' : ''}`}
         style={isDesktop ? { width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth } : undefined}
         aria-label="القائمة الجانبية"
@@ -329,4 +329,3 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 };
 
 export default Sidebar;
-
