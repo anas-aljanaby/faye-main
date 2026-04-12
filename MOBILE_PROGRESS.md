@@ -75,7 +75,7 @@ the shell even though the header no longer exposes a mobile menu trigger; Task
 
 ---
 
-### Task 1.3: Hide Sidebar on Mobile `[ ]`
+### Task 1.3: Hide Sidebar on Mobile `[x]`
 **Priority:** P0
 **Files likely involved:** `components/Sidebar.tsx`, `App.tsx`
 **Depends on:** Task 1.1
@@ -87,9 +87,17 @@ the shell even though the header no longer exposes a mobile menu trigger; Task
 - Clean up any related state (e.g., mobile sidebar open/close state)
   so there are no orphaned handlers
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Removed the remaining mobile sidebar drawer plumbing by
+making `components/Sidebar.tsx` render only on desktop, deleting its old
+mobile overlay/slide-in behavior and close button, and preserving the
+existing desktop resize/collapse logic. Cleaned up `App.tsx` by removing the
+unused mobile sidebar open state, and simplified `components/Header.tsx` to
+drop the orphaned menu callback so mobile navigation now relies solely on the
+bottom navigation introduced in Task 1.1.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** No new functional issues were found during code review, but
+`npm run build` still reports the existing Vite chunk-size warning for the
+large main bundle.
 
 ---
 

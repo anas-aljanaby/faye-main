@@ -39,11 +39,7 @@ const BellIcon: React.FC<BellIconProps> = ({ onClick, unreadCount, buttonRef }) 
     </button>
 );
 
-interface HeaderProps {
-  onMenuClick: () => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ onMenuClick: _onMenuClick }) => {
+const Header: React.FC = () => {
   const { userProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);

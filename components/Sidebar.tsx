@@ -3,25 +3,18 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getSidebarNavItems, useNavigationCounts, type AppNavItemConfig } from './navigationConfig';
 
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
 type NavItemProps = Pick<AppNavItemConfig, 'to' | 'text' | 'icon'> & {
   count?: number;
   isCollapsed: boolean;
-  onClose: () => void;
 };
 
-const NavItem = React.memo(({ to, text, icon, count, isCollapsed, onClose }: NavItemProps) => {
+const NavItem = React.memo(({ to, text, icon, count, isCollapsed }: NavItemProps) => {
   const Icon = icon;
 
   return (
     <NavLink
       to={to}
       end={to === '/'}
-      onClick={onClose}
       className={({ isActive }) =>
         `group relative flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ease-in-out font-medium overflow-hidden
         ${isActive 
@@ -78,7 +71,7 @@ const clampSidebarWidthForViewport = (preferredWidth: number, viewportWidth: num
   return Math.min(viewportMax, Math.max(SIDEBAR_MIN_WIDTH, preferredWidth));
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+const Sidebar: React.FC = () => {
   const location = useLocation();
   const { signOut, userProfile } = useAuth();
 
@@ -108,14 +101,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   });
 
   const [isResizing, setIsResizing] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => window.matchMedia('(min-width: 768px)').matches);
 
   useEffect(() => {
     const mql = window.matchMedia('(min-width: 768px)');
-    setIsDesktop(mql.matches);
-    const listener = () => setIsDesktop(mql.matches);
-    mql.addEventListener('change', listener);
-    return () => mql.removeEventListener('change', listener);
+    const syncDesktop = () => setIsDesktop(mql.matches);
+    syncDesktop();
+    mql.addEventListener('change', syncDesktop);
+    return () => mql.removeEventListener('change', syncDesktop);
   }, []);
 
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -177,101 +170,82 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const visibleNavItems = useMemo(() => getSidebarNavItems(userProfile?.role), [userProfile?.role]);
 
-  return (
-    <>
-      <div 
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ease-in-out
-        ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
+  if (!isDesktop) {
+    return null;
+  }
 
-      <aside 
-        className={`fixed inset-y-0 right-0 z-50 flex h-full w-[calc(100vw-1rem)] max-w-sm flex-col border-l border-white/50 bg-bg-sidebar shadow-2xl
-        ${isOpen ? 'translate-x-0' : 'translate-x-full'} 
-        md:relative md:w-auto md:max-w-none md:translate-x-0
-        ${!isResizing && !isCollapsed ? 'transition-[width] duration-200 ease-out' : ''}`}
-        style={isDesktop ? { width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : clampSidebarWidthForViewport(sidebarWidth, window.innerWidth) } : undefined}
-        aria-label="القائمة الجانبية"
-      >
-        {isDesktop && !isCollapsed && (
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="تغيير عرض القائمة الجانبية"
-            onMouseDown={handleResizeStart}
-            className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/40 z-10 flex items-center justify-center group"
-          >
-            <span className="w-0.5 h-12 rounded-full bg-gray-300 group-hover:bg-primary/60 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+  return (
+    <aside
+      className={`relative z-30 flex h-screen shrink-0 flex-col border-l border-white/50 bg-bg-sidebar shadow-2xl ${!isResizing && !isCollapsed ? 'transition-[width] duration-200 ease-out' : ''}`}
+      style={{ width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : clampSidebarWidthForViewport(sidebarWidth, window.innerWidth) }}
+      aria-label="القائمة الجانبية"
+    >
+      {!isCollapsed && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="تغيير عرض القائمة الجانبية"
+          onMouseDown={handleResizeStart}
+          className="absolute left-0 top-0 bottom-0 z-10 flex w-1 cursor-col-resize items-center justify-center group hover:bg-primary/20 active:bg-primary/40"
+        >
+          <span className="h-12 w-0.5 rounded-full bg-gray-300 opacity-0 transition-opacity group-hover:bg-primary/60 group-hover:opacity-100 pointer-events-none" />
+        </div>
+      )}
+
+      <div className={`flex h-16 items-center border-b border-gray-200/50 p-4 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+        {!isCollapsed && (
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-lg font-bold text-white shadow-sm">
+              ف
+            </div>
+            <span className="truncate text-xl font-bold text-primary">جمعية فيء</span>
           </div>
         )}
 
-        <div className={`flex items-center p-4 border-b border-gray-200/50 h-16 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-          {!isCollapsed && (
-            <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                ف
-              </div>
-              <span className="font-bold text-xl text-primary truncate">جمعية فيء</span>
-            </div>
-          )}
-
-          <button 
-            onClick={toggleCollapse}
-            className={`hidden md:flex items-center justify-center p-1.5 rounded-lg text-gray-500 hover:bg-gray-200 hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50
+        <button
+          onClick={toggleCollapse}
+          className={`hidden md:flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-200 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50
             ${isCollapsed ? 'rotate-180' : ''}`}
-            title={isCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="scale-x-[-1]"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg>
-          </button>
+          title={isCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="scale-x-[-1]"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg>
+        </button>
+      </div>
 
-          <button 
-            onClick={onClose} 
-            className="md:hidden p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
-            aria-label="إغلاق القائمة"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
+      <nav className="scrollbar-hide flex-1 space-y-2 overflow-y-auto px-3 py-6">
+        {visibleNavItems.map((item) => (
+          <NavItem
+            key={item.to}
+            to={item.to}
+            text={item.text}
+            icon={item.icon}
+            count={item.countKey ? notificationCounts[item.countKey] : undefined}
+            isCollapsed={isCollapsed}
+          />
+        ))}
+      </nav>
 
-        <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-2 scrollbar-hide">
-          {visibleNavItems.map((item) => (
-            <NavItem
-              key={item.to}
-              to={item.to}
-              text={item.text}
-              icon={item.icon}
-              count={item.countKey ? notificationCounts[item.countKey] : undefined}
-              isCollapsed={isCollapsed}
-              onClose={onClose}
-            />
-          ))}
-        </nav>
+      <div className="flex flex-col items-center border-t border-gray-200/50 bg-gray-50/50 p-4">
+        <button
+          onClick={handleSignOut}
+          className="group flex w-full items-center justify-center gap-3 rounded-xl p-3 font-medium text-text-secondary transition-all duration-300 hover:bg-red-50 hover:text-red-600"
+          title={isCollapsed ? 'تسجيل الخروج' : ''}
+        >
+          <div className="transition-transform group-hover:-translate-x-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </div>
 
-        <div className="p-4 border-t border-gray-200/50 bg-gray-50/50 flex flex-col items-center">
-          <button 
-            onClick={handleSignOut}
-            className="group flex items-center justify-center gap-3 p-3 rounded-xl text-text-secondary w-full hover:bg-red-50 hover:text-red-600 transition-all duration-300 font-medium"
-            title={isCollapsed ? 'تسجيل الخروج' : ''}
-          >
-            <div className="transition-transform group-hover:-translate-x-1">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            </div>
-            
-            {!isCollapsed && (
-              <span>تسجيل الخروج</span>
-            )}
-          </button>
+          {!isCollapsed && <span>تسجيل الخروج</span>}
+        </button>
 
-          {!isCollapsed && (
-            <div className="mt-4 text-center text-xs text-gray-400">
-              <p>فيء © {new Date().getFullYear()}</p>
-              <p>الإصدار 2.1.0</p>
-            </div>
-          )}
-        </div>
-      </aside>
-    </>
+        {!isCollapsed && (
+          <div className="mt-4 text-center text-xs text-gray-400">
+            <p>فيء © {new Date().getFullYear()}</p>
+            <p>الإصدار 2.1.0</p>
+          </div>
+        )}
+      </div>
+    </aside>
   );
 };
 

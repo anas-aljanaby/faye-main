@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Sidebar from './components/Sidebar';
@@ -21,8 +21,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import TeamMemberRoute from './components/TeamMemberRoute';
 
 function App() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
   return (
     <AuthProvider>
       <HashRouter>
@@ -34,9 +32,9 @@ function App() {
               <ProtectedRoute>
                 <PoliciesNavProvider>
                 <div className="relative flex min-h-[100dvh] overflow-hidden bg-bg-page text-text-primary md:h-screen">
-                  <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+                  <Sidebar />
                   <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-                    <Header onMenuClick={() => setIsSidebarOpen(true)} />
+                    <Header />
                     <div className="flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pt-6 md:p-8">
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
