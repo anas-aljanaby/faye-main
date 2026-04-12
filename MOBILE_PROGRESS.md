@@ -48,7 +48,7 @@ they no longer collide with the new global navigation.
 
 ---
 
-### Task 1.2: Header Mobile Refinement `[ ]`
+### Task 1.2: Header Mobile Refinement `[x]`
 **Priority:** P0
 **Files likely involved:** `components/Header.tsx`
 **Depends on:** Task 1.1
@@ -61,9 +61,17 @@ they no longer collide with the new global navigation.
 - Verify avatar dropdown works well on mobile (proper positioning)
 - Keep all desktop header behavior intact behind `md:` breakpoint
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Refined `components/Header.tsx` for mobile by reducing
+the header height, tightening the brand sizing, and enforcing 44px tap
+targets for the notification bell and avatar trigger. The bell badge and both
+floating panels now clamp more cleanly inside narrow viewports, and mobile
+theme access moved into the avatar dropdown so the top bar keeps only the
+brand, notifications, and user menu while desktop header behavior remains
+unchanged behind `md:`.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** The old mobile sidebar drawer state/markup still exists in
+the shell even though the header no longer exposes a mobile menu trigger; Task
+1.3 should remove that remaining mobile sidebar plumbing.
 
 ---
 
@@ -438,5 +446,5 @@ they no longer collide with the new global navigation.
 | Phase 3: Polish | 3.1 – 3.4 | Not started |
 
 **Total tasks:** 20
-**Completed:** 1
-**Remaining:** 19
+**Completed:** 2
+**Remaining:** 18
