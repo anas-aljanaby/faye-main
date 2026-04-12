@@ -11,11 +11,15 @@ const DEFAULT_PREFERENCES: NotificationPreference = {
   overdueReminderFrequencyDays: 3,
 };
 
+const MISSING_TABLE_ERROR_CODE = 'PGRST205';
+
 export const useNotifications = () => {
   const { userProfile } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreference | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notificationsTableAvailable, setNotificationsTableAvailable] = useState(true);
+  const [preferencesTableAvailable, setPreferencesTableAvailable] = useState(true);
 
   const mapNotification = useCallback((row: any): AppNotification => ({
     id: row.id,
@@ -31,8 +35,18 @@ export const useNotifications = () => {
     createdAt: new Date(row.created_at),
   }), []);
 
+  const isMissingTableError = useCallback((error: { code?: string } | null) => {
+    return error?.code === MISSING_TABLE_ERROR_CODE;
+  }, []);
+
   const fetchNotifications = useCallback(async () => {
     if (!userProfile) return;
+    if (!notificationsTableAvailable) {
+      setNotifications([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     const { data, error } = await supabase
       .from('notifications')
@@ -41,21 +55,45 @@ export const useNotifications = () => {
       .order('created_at', { ascending: false })
       .limit(50);
 
-    if (!error) {
-      setNotifications((data ?? []).map(mapNotification));
+    if (error) {
+      if (isMissingTableError(error)) {
+        setNotificationsTableAvailable(false);
+        setNotifications([]);
+      } else {
+        console.error('Error fetching notifications:', error);
+      }
+      setLoading(false);
+      return;
     }
+
+    setNotifications((data ?? []).map(mapNotification));
     setLoading(false);
-  }, [mapNotification, userProfile]);
+  }, [isMissingTableError, mapNotification, notificationsTableAvailable, userProfile]);
 
   const fetchPreferences = useCallback(async () => {
     if (!userProfile) return;
+    if (!preferencesTableAvailable) {
+      setPreferences({ ...DEFAULT_PREFERENCES, userId: userProfile.id });
+      return;
+    }
+
     const { data, error } = await supabase
       .from('notification_preferences')
       .select('*')
       .eq('user_id', userProfile.id)
       .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
+      if (isMissingTableError(error)) {
+        setPreferencesTableAvailable(false);
+      } else {
+        console.error('Error fetching notification preferences:', error);
+      }
+      setPreferences({ ...DEFAULT_PREFERENCES, userId: userProfile.id });
+      return;
+    }
+
+    if (!data) {
       setPreferences({ ...DEFAULT_PREFERENCES, userId: userProfile.id });
       return;
     }
@@ -67,16 +105,17 @@ export const useNotifications = () => {
       paymentDueReminderDays: data.payment_due_reminder_days,
       overdueReminderFrequencyDays: data.overdue_reminder_frequency_days,
     });
-  }, [userProfile]);
+  }, [isMissingTableError, preferencesTableAvailable, userProfile]);
 
   const markAsRead = useCallback(async (id: string) => {
     const now = new Date();
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, readAt: now } : n)));
+    if (!notificationsTableAvailable) return;
     await supabase.from('notifications').update({ read_at: now.toISOString() }).eq('id', id);
-  }, []);
+  }, [notificationsTableAvailable]);
 
   const markAllAsRead = useCallback(async () => {
-    if (!userProfile) return;
+    if (!userProfile || !notificationsTableAvailable) return;
     const now = new Date().toISOString();
     setNotifications((prev) => prev.map((n) => ({ ...n, readAt: new Date(now) })));
     await supabase
@@ -84,10 +123,13 @@ export const useNotifications = () => {
       .update({ read_at: now })
       .eq('user_id', userProfile.id)
       .is('read_at', null);
-  }, [userProfile]);
+  }, [notificationsTableAvailable, userProfile]);
 
   const updatePreferences = useCallback(async (next: Omit<NotificationPreference, 'userId'>) => {
     if (!userProfile) return;
+    setPreferences({ userId: userProfile.id, ...next });
+    if (!preferencesTableAvailable) return;
+
     const payload = {
       user_id: userProfile.id,
       in_app_enabled: next.inAppEnabled,
@@ -103,18 +145,24 @@ export const useNotifications = () => {
     if (!error) {
       setPreferences({ userId: userProfile.id, ...next });
     }
-  }, [userProfile]);
+  }, [preferencesTableAvailable, userProfile]);
 
   useEffect(() => {
     if (!userProfile) {
       setNotifications([]);
       setPreferences(null);
       setLoading(false);
+      setNotificationsTableAvailable(true);
+      setPreferencesTableAvailable(true);
       return;
     }
 
     fetchNotifications();
     fetchPreferences();
+
+    if (!notificationsTableAvailable) {
+      return;
+    }
 
     const channel = supabase
       .channel(`notifications:${userProfile.id}`)
@@ -136,7 +184,13 @@ export const useNotifications = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, fetchPreferences, mapNotification, userProfile]);
+  }, [
+    fetchNotifications,
+    fetchPreferences,
+    mapNotification,
+    notificationsTableAvailable,
+    userProfile,
+  ]);
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.readAt).length, [notifications]);
 

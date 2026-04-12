@@ -42,7 +42,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [isThemeSettingsOpen, setIsThemeSettingsOpen] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
+  const userMenuButtonRef = useRef<HTMLButtonElement>(null);
   const [notificationPosition, setNotificationPosition] = useState({ top: 0, left: 0, width: 320 });
+  const [userMenuPosition, setUserMenuPosition] = useState({ top: 0, left: 0, width: 192 });
   const { notifications, unreadCount, markAsRead, markAllAsRead, preferences, updatePreferences } = useNotifications();
 
   const handleSignOut = async () => {
@@ -77,6 +79,24 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       });
     }
   }, [showNotifications, isMobileViewport]);
+
+  useEffect(() => {
+    if (showUserMenu && userMenuButtonRef.current) {
+      const rect = userMenuButtonRef.current.getBoundingClientRect();
+      const viewportPadding = isMobileViewport ? 8 : 16;
+      const panelWidth = Math.min(window.innerWidth - viewportPadding * 2, 192);
+      const left = Math.min(
+        window.innerWidth - panelWidth - viewportPadding,
+        Math.max(viewportPadding, rect.right - panelWidth)
+      );
+
+      setUserMenuPosition({
+        top: rect.bottom + 8,
+        left,
+        width: panelWidth,
+      });
+    }
+  }, [showUserMenu, isMobileViewport]);
 
   return (
     <>
@@ -154,6 +174,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           </Link>
           <div className="relative">
             <button
+              ref={userMenuButtonRef}
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 rounded-lg p-2 hover:bg-primary-hover transition-colors"
               aria-label="قائمة المستخدم"
@@ -163,25 +184,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </button>
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 rounded-lg border border-gray-200 bg-bg-card py-2 shadow-xl z-50 dark:border-gray-700 dark:bg-gray-800">
-                <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                  <p className="font-semibold text-text-primary">{userProfile?.name}</p>
-                  <p className="text-sm text-text-secondary">{roleLabel}</p>
-                </div>
-                <button
-                  onClick={handleSignOut}
-                  className="w-full text-right px-4 py-2 text-text-primary hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                  </svg>
-                  تسجيل الخروج
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -215,6 +217,32 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             />
           </div>
         </>
+      )}
+      {showUserMenu && (
+        <div
+          className="fixed z-[100] rounded-lg border border-gray-200 bg-bg-card py-2 shadow-xl dark:border-gray-700 dark:bg-gray-800"
+          style={{
+            top: `${userMenuPosition.top}px`,
+            left: `${userMenuPosition.left}px`,
+            width: `${userMenuPosition.width}px`,
+          }}
+        >
+          <div className="border-b border-gray-200 px-4 py-2 dark:border-gray-700">
+            <p className="font-semibold text-text-primary">{userProfile?.name}</p>
+            <p className="text-sm text-text-secondary">{roleLabel}</p>
+          </div>
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-2 px-4 py-2 text-right text-text-primary transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            تسجيل الخروج
+          </button>
+        </div>
       )}
     </header>
     <ThemeSettings isOpen={isThemeSettingsOpen} onClose={() => setIsThemeSettingsOpen(false)} />
