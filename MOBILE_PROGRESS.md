@@ -103,7 +103,7 @@ large main bundle.
 
 ## Phase 2: Page-by-Page Mobile Optimization
 
-### Task 2.1: Sign-in Page (`/signin`) `[ ]`
+### Task 2.1: Sign-in Page (`/signin`) `[x]`
 **Priority:** P1
 **Files likely involved:** `components/SignIn.tsx`
 **Depends on:** None (no nav chrome)
@@ -115,9 +115,16 @@ large main bundle.
 - Logo/branding should scale down if needed
 - Gradient background should still look good
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Updated `components/SignIn.tsx` with a mobile-first
+wrapper that avoids vertical clipping on short screens, tightened the card
+and branding spacing for 375px–428px widths, and scaled the logo/headings
+down below `md` while preserving the larger desktop presentation. Inputs and
+the submit button now use full-width 48px+ touch targets inside a nearly
+full-width card, and the gradient background remains intact.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** No new sign-in specific issues were found during code
+review. `npm run build` still reports the existing Vite chunk-size warning
+for the large main bundle.
 
 ---
 
@@ -449,10 +456,10 @@ large main bundle.
 
 | Phase | Tasks | Status |
 |-------|-------|--------|
-| Phase 1: Navigation | 1.1, 1.2, 1.3 | In progress |
-| Phase 2: Pages | 2.1 – 2.13 | Not started |
+| Phase 1: Navigation | 1.1, 1.2, 1.3 | Completed |
+| Phase 2: Pages | 2.1 – 2.13 | In progress |
 | Phase 3: Polish | 3.1 – 3.4 | Not started |
 
 **Total tasks:** 20
-**Completed:** 2
-**Remaining:** 18
+**Completed:** 4
+**Remaining:** 16
