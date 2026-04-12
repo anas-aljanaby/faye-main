@@ -12,14 +12,152 @@ const DEFAULT_PREFERENCES: NotificationPreference = {
 };
 
 const MISSING_TABLE_ERROR_CODE = 'PGRST205';
+const SCHEMA_CACHE_PREFIX = 'faye:notification-schema';
+
+type SchemaAvailability = 'unknown' | 'available' | 'missing';
+
+type NotificationRowsResult =
+  | { status: 'available'; data: any[] }
+  | { status: 'missing'; data: [] };
+
+type PreferenceRowResult =
+  | { status: 'available'; data: any | null }
+  | { status: 'missing'; data: null };
+
+const notificationRequests = new Map<string, Promise<NotificationRowsResult>>();
+const preferenceRequests = new Map<string, Promise<PreferenceRowResult>>();
+
+const getSchemaCacheKey = (table: 'notifications' | 'notification_preferences') =>
+  `${SCHEMA_CACHE_PREFIX}:${supabase.supabaseUrl}:${table}`;
+
+const readSchemaAvailability = (table: 'notifications' | 'notification_preferences'): SchemaAvailability => {
+  if (typeof window === 'undefined') {
+    return 'unknown';
+  }
+
+  const cached = window.sessionStorage.getItem(getSchemaCacheKey(table));
+  if (cached === 'available' || cached === 'missing') {
+    return cached;
+  }
+
+  return 'unknown';
+};
+
+const writeSchemaAvailability = (
+  table: 'notifications' | 'notification_preferences',
+  availability: Exclude<SchemaAvailability, 'unknown'>
+) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.sessionStorage.setItem(getSchemaCacheKey(table), availability);
+};
+
+let notificationsSchemaAvailability = readSchemaAvailability('notifications');
+let preferencesSchemaAvailability = readSchemaAvailability('notification_preferences');
+
+const getDefaultPreferences = (userId: string): NotificationPreference => ({
+  ...DEFAULT_PREFERENCES,
+  userId,
+});
+
+const getNotificationsRows = async (
+  userId: string,
+  isMissingTableError: (error: { code?: string } | null) => boolean
+): Promise<NotificationRowsResult> => {
+  if (notificationsSchemaAvailability === 'missing') {
+    return { status: 'missing', data: [] };
+  }
+
+  const requestKey = `${supabase.supabaseUrl}:notifications:${userId}`;
+  const existingRequest = notificationRequests.get(requestKey);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = (async () => {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      if (isMissingTableError(error)) {
+        notificationsSchemaAvailability = 'missing';
+        writeSchemaAvailability('notifications', 'missing');
+        return { status: 'missing', data: [] };
+      }
+
+      throw error;
+    }
+
+    notificationsSchemaAvailability = 'available';
+    writeSchemaAvailability('notifications', 'available');
+    return { status: 'available', data: data ?? [] };
+  })().finally(() => {
+    notificationRequests.delete(requestKey);
+  });
+
+  notificationRequests.set(requestKey, request);
+  return request;
+};
+
+const getPreferenceRow = async (
+  userId: string,
+  isMissingTableError: (error: { code?: string } | null) => boolean
+): Promise<PreferenceRowResult> => {
+  if (preferencesSchemaAvailability === 'missing') {
+    return { status: 'missing', data: null };
+  }
+
+  const requestKey = `${supabase.supabaseUrl}:notification_preferences:${userId}`;
+  const existingRequest = preferenceRequests.get(requestKey);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = (async () => {
+    const { data, error } = await supabase
+      .from('notification_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      if (isMissingTableError(error)) {
+        preferencesSchemaAvailability = 'missing';
+        writeSchemaAvailability('notification_preferences', 'missing');
+        return { status: 'missing', data: null };
+      }
+
+      throw error;
+    }
+
+    preferencesSchemaAvailability = 'available';
+    writeSchemaAvailability('notification_preferences', 'available');
+    return { status: 'available', data: data ?? null };
+  })().finally(() => {
+    preferenceRequests.delete(requestKey);
+  });
+
+  preferenceRequests.set(requestKey, request);
+  return request;
+};
 
 export const useNotifications = () => {
   const { userProfile } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [preferences, setPreferences] = useState<NotificationPreference | null>(null);
   const [loading, setLoading] = useState(true);
-  const [notificationsTableAvailable, setNotificationsTableAvailable] = useState(true);
-  const [preferencesTableAvailable, setPreferencesTableAvailable] = useState(true);
+  const [notificationsTableAvailable, setNotificationsTableAvailable] = useState(
+    () => notificationsSchemaAvailability !== 'missing'
+  );
+  const [preferencesTableAvailable, setPreferencesTableAvailable] = useState(
+    () => preferencesSchemaAvailability !== 'missing'
+  );
 
   const mapNotification = useCallback((row: any): AppNotification => ({
     id: row.id,
@@ -41,70 +179,66 @@ export const useNotifications = () => {
 
   const fetchNotifications = useCallback(async () => {
     if (!userProfile) return;
-    if (!notificationsTableAvailable) {
+    if (!notificationsTableAvailable || notificationsSchemaAvailability === 'missing') {
       setNotifications([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userProfile.id)
-      .order('created_at', { ascending: false })
-      .limit(50);
 
-    if (error) {
-      if (isMissingTableError(error)) {
+    try {
+      const result = await getNotificationsRows(userProfile.id, isMissingTableError);
+
+      if (result.status === 'missing') {
         setNotificationsTableAvailable(false);
         setNotifications([]);
-      } else {
-        console.error('Error fetching notifications:', error);
+        return;
       }
-      setLoading(false);
-      return;
-    }
 
-    setNotifications((data ?? []).map(mapNotification));
-    setLoading(false);
+      setNotificationsTableAvailable(true);
+      setNotifications(result.data.map(mapNotification));
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [isMissingTableError, mapNotification, notificationsTableAvailable, userProfile]);
 
   const fetchPreferences = useCallback(async () => {
     if (!userProfile) return;
-    if (!preferencesTableAvailable) {
-      setPreferences({ ...DEFAULT_PREFERENCES, userId: userProfile.id });
+    if (!preferencesTableAvailable || preferencesSchemaAvailability === 'missing') {
+      setPreferences(getDefaultPreferences(userProfile.id));
       return;
     }
 
-    const { data, error } = await supabase
-      .from('notification_preferences')
-      .select('*')
-      .eq('user_id', userProfile.id)
-      .maybeSingle();
+    try {
+      const result = await getPreferenceRow(userProfile.id, isMissingTableError);
 
-    if (error) {
-      if (isMissingTableError(error)) {
+      if (result.status === 'missing') {
         setPreferencesTableAvailable(false);
-      } else {
-        console.error('Error fetching notification preferences:', error);
+        setPreferences(getDefaultPreferences(userProfile.id));
+        return;
       }
-      setPreferences({ ...DEFAULT_PREFERENCES, userId: userProfile.id });
-      return;
-    }
 
-    if (!data) {
-      setPreferences({ ...DEFAULT_PREFERENCES, userId: userProfile.id });
-      return;
-    }
+      setPreferencesTableAvailable(true);
 
-    setPreferences({
-      userId: data.user_id,
-      inAppEnabled: data.in_app_enabled,
-      emailEnabled: data.email_enabled,
-      paymentDueReminderDays: data.payment_due_reminder_days,
-      overdueReminderFrequencyDays: data.overdue_reminder_frequency_days,
-    });
+      if (!result.data) {
+        setPreferences(getDefaultPreferences(userProfile.id));
+        return;
+      }
+
+      setPreferences({
+        userId: result.data.user_id,
+        inAppEnabled: result.data.in_app_enabled,
+        emailEnabled: result.data.email_enabled,
+        paymentDueReminderDays: result.data.payment_due_reminder_days,
+        overdueReminderFrequencyDays: result.data.overdue_reminder_frequency_days,
+      });
+    } catch (error) {
+      console.error('Error fetching notification preferences:', error);
+      setPreferences(getDefaultPreferences(userProfile.id));
+    }
   }, [isMissingTableError, preferencesTableAvailable, userProfile]);
 
   const markAsRead = useCallback(async (id: string) => {
@@ -149,18 +283,20 @@ export const useNotifications = () => {
 
   useEffect(() => {
     if (!userProfile) {
+      notificationsSchemaAvailability = readSchemaAvailability('notifications');
+      preferencesSchemaAvailability = readSchemaAvailability('notification_preferences');
       setNotifications([]);
       setPreferences(null);
       setLoading(false);
-      setNotificationsTableAvailable(true);
-      setPreferencesTableAvailable(true);
+      setNotificationsTableAvailable(notificationsSchemaAvailability !== 'missing');
+      setPreferencesTableAvailable(preferencesSchemaAvailability !== 'missing');
       return;
     }
 
     fetchNotifications();
     fetchPreferences();
 
-    if (!notificationsTableAvailable) {
+    if (!notificationsTableAvailable || notificationsSchemaAvailability === 'missing') {
       return;
     }
 
