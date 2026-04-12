@@ -904,7 +904,7 @@ const Dashboard: React.FC = () => {
                     </div>
                 </div>
                 {/* Mobile Action Bar */}
-                <div className="mobile-action-bar sm:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.1)] p-2 grid grid-cols-4 gap-1 text-center z-40">
+                <div className="mobile-action-bar hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] bg-white/80 p-2 text-center shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-sm z-40 grid grid-cols-4 gap-1">
                     <button onClick={() => window.history.back()} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                         <span className="text-xs">رجوع</span>

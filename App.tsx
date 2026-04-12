@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import MobileBottomNav from './components/MobileBottomNav';
 import Dashboard from './components/Dashboard';
 import OrphanProfile from './components/OrphanProfile';
 import SponsorPage from './components/SponsorPage';
@@ -36,7 +37,7 @@ function App() {
                   <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
                   <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                     <Header onMenuClick={() => setIsSidebarOpen(true)} />
-                    <div className="flex-1 p-4 sm:p-6 md:p-8">
+                    <div className="flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pt-6 md:p-8">
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/financial-system" element={<TeamMemberRoute><FinancialSystem /></TeamMemberRoute>} />
@@ -54,6 +55,7 @@ function App() {
                       </Routes>
                     </div>
                   </main>
+                  <MobileBottomNav />
                 </div>
                 </PoliciesNavProvider>
               </ProtectedRoute>

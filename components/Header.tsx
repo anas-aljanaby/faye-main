@@ -16,14 +16,14 @@ const BellIcon: React.FC<BellIconProps> = ({ onClick, unreadCount, buttonRef }) 
     <button 
       ref={buttonRef}
       onClick={onClick}
-      className="relative p-2 rounded-lg hover:bg-primary-hover transition-colors"
+      className="relative min-h-11 min-w-11 rounded-lg p-2 transition-colors hover:bg-primary-hover"
       aria-label="الإشعارات"
     >
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-xs font-bold text-primary">
+          <span className="absolute end-0 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-xs font-bold text-primary">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -34,7 +34,7 @@ interface HeaderProps {
   onMenuClick: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+const Header: React.FC<HeaderProps> = ({ onMenuClick: _onMenuClick }) => {
   const { userProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -103,9 +103,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     <header className="sticky top-0 z-40 bg-primary shadow-md">
       <div className="flex h-16 items-center justify-between px-3 text-white sm:px-6">
         <div className="flex items-center gap-2 sm:gap-4">
-           <button onClick={onMenuClick} className="rounded-lg p-2 md:hidden hover:bg-primary-hover" aria-label="فتح القائمة">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-           </button>
            <div className="flex items-center gap-1 md:hidden">
               <div className="relative">
                 <BellIcon 

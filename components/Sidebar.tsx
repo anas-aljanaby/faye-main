@@ -1,68 +1,22 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { conversations, financialTransactions } from '../data';
-import { TransactionStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { getSidebarNavItems, useNavigationCounts, type AppNavItemConfig } from './navigationConfig';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-interface NavItemConfig {
-  to: string;
-  text: string;
-  icon: React.ReactNode;
-  countKey?: 'messages' | 'financial';
-}
-
-interface NavItemProps extends NavItemConfig {
+type NavItemProps = Pick<AppNavItemConfig, 'to' | 'text' | 'icon'> & {
   count?: number;
   isCollapsed: boolean;
   onClose: () => void;
-}
-
-const navItemsData: NavItemConfig[] = [
-  { 
-    to: '/', 
-    text: 'لوحة التحكم', 
-    icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> 
-  },
-  { 
-    to: '/orphans', 
-    text: 'الأيتام', 
-    icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 1-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 
-  },
-  { 
-    to: '/sponsors', 
-    text: 'الكفلاء', 
-    icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> 
-  },
-  { 
-    to: '/human-resources', 
-    text: 'الموارد البشرية', 
-    icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> 
-  },
-  { 
-    to: '/messages', 
-    text: 'المراسلات', 
-    icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>,
-    countKey: 'messages'
-  },
-  { 
-    to: '/financial-system', 
-    text: 'النظام المالي', 
-    icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>,
-    countKey: 'financial'
-  },
-  { 
-    to: '/policies', 
-    text: 'سياسات فيء', 
-    icon: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> 
-  },
-];
+};
 
 const NavItem = React.memo(({ to, text, icon, count, isCollapsed, onClose }: NavItemProps) => {
+  const Icon = icon;
+
   return (
     <NavLink
       to={to}
@@ -79,7 +33,7 @@ const NavItem = React.memo(({ to, text, icon, count, isCollapsed, onClose }: Nav
       title={isCollapsed ? text : ''}
     >
       <div className={`transition-transform duration-300 ${isCollapsed ? 'group-hover:scale-110' : ''}`}>
-        {icon}
+        <Icon className="h-6 w-6" />
       </div>
 
       {!isCollapsed && (
@@ -90,9 +44,9 @@ const NavItem = React.memo(({ to, text, icon, count, isCollapsed, onClose }: Nav
 
       {count && count > 0 ? (
         <div className={`absolute flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full shadow-sm ring-2 ring-bg-sidebar transition-all duration-300
-          ${isCollapsed 
-            ? 'top-1 right-1 w-4 h-4' 
-            : 'left-3 top-1/2 -translate-y-1/2 min-w-[20px] h-5 px-1.5'
+          ${isCollapsed
+            ? 'top-1 end-1 h-4 w-4'
+            : 'start-3 top-1/2 h-5 min-w-[20px] -translate-y-1/2 px-1.5'
           }`}
         >
           {count > 99 ? '99+' : count}
@@ -215,32 +169,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     });
   }, []);
 
-  const notificationCounts = useMemo(() => {
-    let unreadMessages = 0;
-    let pendingFinancial = 0;
-
-    try {
-      unreadMessages = conversations.filter(c => c.unread).length;
-      pendingFinancial = financialTransactions.filter(tx => tx.status === TransactionStatus.Pending).length;
-    } catch (error) {
-      console.error('خطأ في حساب العدادات:', error);
-    }
-
-    return {
-      messages: unreadMessages,
-      financial: pendingFinancial,
-    };
-  }, []);
+  const notificationCounts = useNavigationCounts();
 
   const handleSignOut = async () => {
     await signOut();
   };
 
-  const restrictedPaths = userProfile?.role === 'sponsor'
-    ? ['/sponsors', '/human-resources', '/financial-system']
-    : ['/payments'];
-
-  const visibleNavItems = navItemsData.filter(item => !restrictedPaths.includes(item.to));
+  const visibleNavItems = useMemo(() => getSidebarNavItems(userProfile?.role), [userProfile?.role]);
 
   return (
     <>
