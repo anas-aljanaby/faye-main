@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useTheme, ThemeMode, BrandColor, FontSize } from '../contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 interface ThemeSettingsProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ interface ThemeSettingsProps {
 const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
   const { mode, setMode, brandColor, setBrandColor, fontSize, setFontSize } = useTheme();
   const modalRef = useRef<HTMLDivElement>(null);
+
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

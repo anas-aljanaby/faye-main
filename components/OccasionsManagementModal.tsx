@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useOccasions } from '../hooks/useOccasions';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { SpecialOccasion } from '../types';
 
 interface OccasionsManagementModalProps {
@@ -15,6 +16,8 @@ const OccasionsManagementModal: React.FC<OccasionsManagementModalProps> = ({ isO
   const { orphans } = useOrphansBasic();
   const { canEditOrphans } = useAuth();
   const hasEditPermission = canEditOrphans();
+
+  useBodyScrollLock(isOpen);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<'all' | 'week' | 'month' | '3months'>('all');
@@ -514,4 +517,3 @@ const OccasionsManagementModal: React.FC<OccasionsManagementModalProps> = ({ isO
 };
 
 export default OccasionsManagementModal;
-

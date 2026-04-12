@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createProfileLogin, generateRandomPassword } from '../../lib/adminAccountApi';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 
 export const CreateLoginModal: React.FC<{
   isOpen: boolean;
@@ -12,6 +13,8 @@ export const CreateLoginModal: React.FC<{
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useBodyScrollLock(isOpen);
 
   useEffect(() => {
     if (isOpen) {
