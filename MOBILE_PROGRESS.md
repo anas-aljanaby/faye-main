@@ -128,7 +128,7 @@ for the large main bundle.
 
 ---
 
-### Task 2.2: Dashboard — Team Member View (`/`) `[ ]`
+### Task 2.2: Dashboard — Team Member View (`/`) `[x]`
 **Priority:** P1
 **Files likely involved:** `components/Dashboard.tsx`
 **Depends on:** Task 1.1, 1.2, 1.3
@@ -150,9 +150,19 @@ for the large main bundle.
 - Overall: reduce paddings, margins, font sizes for mobile density
 - Reduce icon sizes throughout the dashboard to mobile-appropriate sizes
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Refined `components/Dashboard.tsx` for mobile-first
+team-member use by tightening the hero spacing and typography, turning the
+quick actions into full-width mobile buttons, and keeping the four key stats
+as a denser 2×2 mobile grid with smaller icons and better text wrapping for
+amounts. The analytics toggle now fits narrow screens with 44px tap targets,
+the AI/activity and three widget sections stack cleanly, and the orphan,
+sponsor, and team sections now use more tappable `عرض الكل` actions plus
+smaller, more compact cards that stay single-column on phones while restoring
+multi-column layouts from `md` upward.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` still reports the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle, but no dashboard-specific compile issues were introduced.
 
 ---
 
@@ -461,5 +471,5 @@ for the large main bundle.
 | Phase 3: Polish | 3.1 – 3.4 | Not started |
 
 **Total tasks:** 20
-**Completed:** 4
-**Remaining:** 16
+**Completed:** 5
+**Remaining:** 15

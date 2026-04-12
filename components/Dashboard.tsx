@@ -17,6 +17,8 @@ import { GoogleGenAI } from '@google/genai';
 
 type TimeRange = 'week' | 'month' | 'year';
 
+const sectionActionLinkClass = 'inline-flex min-h-11 items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 hover:text-primary-hover md:min-h-0 md:rounded-none md:px-0 md:py-0 md:hover:bg-transparent';
+
 const AnimatedCounter: React.FC<{ value: number; prefix?: string; suffix?: string }> = ({ value, prefix = '', suffix = '' }) => {
     const [displayValue, setDisplayValue] = useState(0);
 
@@ -44,21 +46,21 @@ const AnimatedCounter: React.FC<{ value: number; prefix?: string; suffix?: strin
 };
 
 const StatWidget: React.FC<{ title: string; value: number; icon: React.ReactNode; color: string; subtext: string }> = ({ title, value, icon, color, subtext }) => (
-    <div className="h-full flex flex-col justify-between">
-        <div className="flex justify-between items-start">
-            <div>
-                <p className="text-text-secondary text-sm font-medium mb-1">{title}</p>
-                <h3 className="text-3xl font-bold text-gray-800">
+    <div className="flex h-full flex-col justify-between gap-4">
+        <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+                <p className="mb-1 text-xs font-medium text-text-secondary md:text-sm">{title}</p>
+                <h3 className="text-2xl font-bold text-gray-800 md:text-3xl">
                     <AnimatedCounter value={value} />
                 </h3>
             </div>
-            <div className={`p-3 rounded-xl ${color} bg-opacity-20`}>
+            <div className={`shrink-0 rounded-xl p-2.5 ${color} bg-opacity-20 md:p-3`}>
                 {icon}
             </div>
         </div>
-        <div className="mt-4 flex items-center text-sm">
-            <span className="text-green-500 font-bold flex items-center ml-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs md:text-sm">
+            <span className="inline-flex items-center gap-1 font-bold text-green-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-4 md:w-4"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                 +12%
             </span>
             <span className="text-gray-400">{subtext}</span>
@@ -75,15 +77,15 @@ const ActivityList: React.FC = () => {
     ];
 
     return (
-        <div className="space-y-4 mt-2">
+        <div className="mt-2 space-y-3">
             {activities.map(act => (
-                <div key={act.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors border-b border-gray-100 last:border-0">
+                <div key={act.id} className="flex items-start gap-3 rounded-xl border-b border-gray-100 px-3 py-3 transition-colors hover:bg-gray-50 last:border-0 md:px-3.5">
                     <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${
                         act.type === 'success' ? 'bg-green-500' : 
                         act.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
                     }`} />
-                    <div>
-                        <p className="text-sm font-semibold text-gray-800">{act.text}</p>
+                    <div className="min-w-0">
+                        <p className="text-[13px] font-semibold leading-6 text-gray-800 md:text-sm">{act.text}</p>
                         <p className="text-xs text-gray-400">{act.time}</p>
                     </div>
                 </div>
@@ -122,21 +124,21 @@ const AiSummaryWidget: React.FC = () => {
     };
 
     return (
-        <div className="bg-gradient-to-br from-primary to-primary-hover text-white rounded-xl p-6 h-full flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-            <div>
-                <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+        <div className="relative flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-hover p-4 text-white md:min-h-0 md:p-6">
+            <div className="absolute end-0 top-0 h-28 w-28 -me-10 -mt-10 rounded-full bg-white opacity-10 blur-2xl md:h-32 md:w-32"></div>
+            <div className="space-y-3">
+                <h3 className="flex items-center gap-2 text-base font-bold md:text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                     رؤى ذكية
                 </h3>
-                <p className="text-sm opacity-90 leading-relaxed min-h-[80px]">
+                <p className="min-h-[84px] text-sm leading-7 opacity-90">
                     {loading ? 'جاري التحليل...' : summary || 'اضغط على الزر للحصول على تحليل فوري للأداء العام للجمعية.'}
                 </p>
             </div>
             <button 
                 onClick={generateSummary}
                 disabled={loading}
-                className="mt-4 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-colors w-max backdrop-blur-sm"
+                className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-white/20 px-4 py-2 text-sm font-semibold text-white transition-colors backdrop-blur-sm hover:bg-white/30 disabled:cursor-not-allowed disabled:opacity-70 sm:w-max"
             >
                 تحديث التحليل
             </button>
@@ -148,18 +150,18 @@ const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: n
     const [timeRange, setTimeRange] = useState<TimeRange>('month');
 
     return (
-        <section className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-800">نظرة سريعة على المؤشرات</h2>
+        <section className="space-y-4 md:space-y-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-1">
+                    <h2 className="text-xl font-bold text-gray-800 md:text-2xl">نظرة سريعة على المؤشرات</h2>
                     <p className="text-text-secondary text-sm">قسم تحليلي تجريبي مستورد من النسخة الجديدة.</p>
                 </div>
-                <div className="bg-white p-1 rounded-lg border flex shadow-sm">
+                <div className="grid w-full grid-cols-3 gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm md:w-auto">
                     {(['week', 'month', 'year'] as TimeRange[]).map((t) => (
                         <button
                             key={t}
                             onClick={() => setTimeRange(t)}
-                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                            className={`min-h-11 rounded-lg px-2 py-2 text-xs font-medium transition-all sm:text-sm md:px-4 ${
                                 timeRange === t ? 'bg-primary text-white shadow' : 'text-gray-500 hover:bg-gray-50'
                             }`}
                         >
@@ -169,46 +171,46 @@ const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: n
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-bg-card rounded-xl shadow-sm border border-gray-100 p-5">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+                <div className="rounded-2xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-5">
                     <StatWidget
                         title="إجمالي الأيتام"
                         value={orphansCount}
                         subtext="مقارنة بالشهر الماضي"
                         color="text-primary bg-primary"
                         icon={
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-6 md:w-6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                         }
                     />
                 </div>
-                <div className="bg-bg-card rounded-xl shadow-sm border border-gray-100 p-5">
+                <div className="rounded-2xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-5">
                     <StatWidget
                         title="إجمالي الكفلاء"
                         value={sponsorsCount}
                         subtext="زيادة مستمرة"
                         color="text-blue-600 bg-blue-600"
                         icon={
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-6 md:w-6"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         }
                     />
                 </div>
-                <div className="bg-bg-card rounded-xl shadow-sm border border-gray-100 p-5">
+                <div className="rounded-2xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-5">
                     <StatWidget
                         title="التبرعات (تجريبي)"
                         value={15400}
                         subtext="إجمالي التبرعات التقديرية"
                         color="text-green-600 bg-green-600"
                         icon={
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-6 md:w-6"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                         }
                     />
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
                 <AiSummaryWidget />
-                <div className="bg-bg-card rounded-xl shadow-sm border border-gray-100 p-5">
-                    <h3 className="font-bold text-gray-800 mb-2">آخر الأنشطة</h3>
+                <div className="rounded-2xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-5">
+                    <h3 className="mb-2 text-base font-bold text-gray-800 md:text-lg">آخر الأنشطة</h3>
                     <ActivityList />
                 </div>
             </div>
@@ -217,12 +219,12 @@ const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: n
 };
 
 const WidgetCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode; }> = ({ title, icon, children }) => (
-    <div className="bg-bg-card rounded-lg shadow-md p-5 h-full">
-        <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 bg-primary-light text-primary rounded-lg flex items-center justify-center flex-shrink-0">
+    <div className="h-full rounded-xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-5">
+        <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-light text-primary md:h-10 md:w-10">
                 {icon}
             </div>
-            <h3 className="text-lg font-bold text-gray-700">{title}</h3>
+            <h3 className="text-base font-bold text-gray-700 md:text-lg">{title}</h3>
         </div>
         <div className="space-y-3">{children}</div>
     </div>
@@ -289,10 +291,10 @@ const UpcomingOccasions: React.FC<{ onViewAll: () => void }> = ({ onViewAll }) =
     return (
         <WidgetCard 
             title="المناسبات القادمة" 
-            icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7Z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z"/></svg>}
+            icon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7Z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7Z"/></svg>}
         >
             {loading ? (
-                <div className="flex justify-center py-4">
+                <div className="flex justify-center py-6">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 </div>
             ) : upcoming.length > 0 ? (
@@ -301,15 +303,15 @@ const UpcomingOccasions: React.FC<{ onViewAll: () => void }> = ({ onViewAll }) =
                         const orphanName = getOrphanName(occ);
                         const orphanId = getOrphanId(occ);
                         return (
-                            <div key={occ.id} className="text-sm cursor-pointer hover:bg-gray-50 p-2 rounded -mx-2" onClick={onViewAll}>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <p className="font-semibold text-gray-800">{occ.title}</p>
-                                    <span className="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-800 rounded">
+                            <div key={occ.id} className="-mx-1 cursor-pointer rounded-xl px-3 py-2.5 text-sm transition-colors hover:bg-gray-50" onClick={onViewAll}>
+                                <div className="mb-1 flex flex-wrap items-center gap-2">
+                                    <p className="line-clamp-2 font-semibold text-gray-800">{occ.title}</p>
+                                    <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[11px] text-blue-800">
                                         {getOccasionTypeLabel(occ.occasion_type)}
                                     </span>
                                 </div>
                                 {orphanName && (
-                                    <p className="text-text-secondary">
+                                    <p className="text-text-secondary text-sm">
                                         {orphanId ? (
                                             <>لـ <Link to={`/orphan/${orphanId}`} className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>{orphanName}</Link></>
                                         ) : (
@@ -328,7 +330,7 @@ const UpcomingOccasions: React.FC<{ onViewAll: () => void }> = ({ onViewAll }) =
                     }).length > 3 && (
                         <button
                             onClick={onViewAll}
-                            className="text-sm font-semibold text-primary hover:underline mt-2 w-full text-center"
+                            className={`${sectionActionLinkClass} mt-2 w-full`}
                         >
                             عرض الكل ({occasions.filter(occ => {
                                 const occDate = new Date(occ.date);
@@ -343,7 +345,7 @@ const UpcomingOccasions: React.FC<{ onViewAll: () => void }> = ({ onViewAll }) =
                     <p className="text-sm text-text-secondary pt-4">لا توجد مناسبات قادمة.</p>
                     <button
                         onClick={onViewAll}
-                        className="text-sm font-semibold text-primary hover:underline mt-2"
+                        className={`${sectionActionLinkClass} mt-2 w-full md:w-auto`}
                     >
                         عرض جميع المناسبات
                     </button>
@@ -358,16 +360,16 @@ const PendingApprovals = () => {
     const pending = transactions.filter(tx => tx.status === TransactionStatus.Pending);
 
     return (
-        <WidgetCard title="الموافقات المالية المعلقة" icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}>
+        <WidgetCard title="الموافقات المالية المعلقة" icon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>}>
             {loading ? (
-                <div className="flex justify-center py-4">
+                <div className="flex justify-center py-6">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                 </div>
             ) : pending.length > 0 ? (
                 <>
-                    <p className="font-bold text-2xl text-yellow-600">{pending.length} معاملات</p>
+                    <p className="text-xl font-bold text-yellow-600 md:text-2xl">{pending.length} معاملات</p>
                     <p className="text-sm text-text-secondary">بإجمالي مبلغ <span className="font-semibold">${pending.reduce((sum, tx) => sum + tx.amount, 0).toLocaleString()}</span></p>
-                    <Link to="/financial-system" className="text-sm font-semibold text-primary hover:underline mt-2 inline-block">مراجعة الآن &larr;</Link>
+                    <Link to="/financial-system" className={`${sectionActionLinkClass} mt-2 w-full md:w-auto`}>مراجعة الآن &larr;</Link>
                 </>
             ) : (
                  <p className="text-sm text-center text-text-secondary pt-4">لا توجد موافقات معلقة.</p>
@@ -383,11 +385,11 @@ const LatestAchievements: React.FC<{ orphans: Orphan[] }> = ({ orphans }) => {
         .slice(0, 2);
         
     return (
-         <WidgetCard title="أحدث الإنجازات" icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M8 21h8"/><path d="M12 17.5c-1.5 0-3-1-3-3.5V4.5A2.5 2.5 0 0 1 11.5 2h1A2.5 2.5 0 0 1 15 4.5V14c0 2.5-1.5 3.5-3 3.5Z"/></svg>}>
+         <WidgetCard title="أحدث الإنجازات" icon={<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M8 21h8"/><path d="M12 17.5c-1.5 0-3-1-3-3.5V4.5A2.5 2.5 0 0 1 11.5 2h1A2.5 2.5 0 0 1 15 4.5V14c0 2.5-1.5 3.5-3 3.5Z"/></svg>}>
             {latest.length > 0 ? (
                  latest.map(ach => (
-                    <div key={ach.id} className="text-sm bg-gray-50 p-2 rounded-lg">
-                        <p className="font-semibold text-gray-800 truncate">{ach.title}</p>
+                    <div key={ach.id} className="rounded-xl bg-gray-50 p-3 text-sm">
+                        <p className="line-clamp-2 text-[13px] font-semibold text-gray-800 md:text-sm">{ach.title}</p>
                         <p className="text-text-secondary">بواسطة <Link to={`/orphan/${ach.orphanId}`} className="text-primary hover:underline">{ach.orphanName}</Link></p>
                     </div>
                 ))
@@ -956,30 +958,30 @@ const Dashboard: React.FC = () => {
     };
     
     return (
-        <div className="space-y-12">
+        <div className="space-y-8 md:space-y-12">
           {/* Welcome Hero Section */}
-          <section className="bg-gradient-to-l from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 md:p-8 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-48 h-48 bg-primary/5 rounded-full translate-x-1/4 translate-y-1/4"></div>
+          <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-l from-primary/10 via-primary/5 to-transparent p-4 sm:p-5 md:rounded-2xl md:p-8">
+            <div className="absolute start-0 top-0 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 md:h-32 md:w-32"></div>
+            <div className="absolute bottom-0 end-0 h-32 w-32 translate-x-1/4 translate-y-1/4 rounded-full bg-primary/5 md:h-48 md:w-48"></div>
             
             <div className="relative z-10">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div>
-                  <p className="text-primary font-medium mb-1">{getGreeting()} 👋</p>
-                  <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
+                <div className="max-w-2xl">
+                  <p className="mb-1 text-sm font-medium text-primary md:text-base">{getGreeting()} 👋</p>
+                  <h1 className="mb-2 text-xl font-bold text-gray-800 sm:text-2xl md:text-3xl">
                     {userProfile?.name || 'مرحباً بك في فيء'}
                   </h1>
-                  <p className="text-text-secondary">
+                  <p className="text-sm leading-6 text-text-secondary md:text-base">
                     لوحة التحكم الرئيسية - نظرة شاملة على أنشطة المنظمة
                   </p>
                 </div>
                 
-                <div className="flex flex-wrap gap-3">
-                  <Link to="/orphans" className="inline-flex items-center gap-2 bg-primary text-white font-semibold py-2.5 px-5 rounded-lg hover:bg-primary-hover transition-colors shadow-sm">
+                <div className="grid w-full grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:flex md:w-auto md:flex-wrap">
+                  <Link to="/orphans" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover md:px-5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     عرض الأيتام
                   </Link>
-                  <Link to="/messages" className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm border">
+                  <Link to="/messages" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-white px-4 py-3 font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 md:px-5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     الرسائل
                   </Link>
@@ -987,56 +989,58 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Stats Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <div className="mt-6 grid grid-cols-2 gap-3 md:mt-8 md:gap-4">
+                <div className="rounded-xl border border-white/60 bg-white/85 p-3 shadow-sm backdrop-blur-sm md:p-4">
+                  <div className="flex flex-col gap-2 min-[400px]:flex-row min-[400px]:items-center">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600 md:h-10 md:w-10">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                     </div>
-                    <div>
-                      {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className="text-2xl font-bold text-gray-800">{orphansData.length}</p>}
-                      <p className="text-sm text-text-secondary">يتيم</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    </div>
-                    <div>
-                      {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className="text-2xl font-bold text-gray-800">{sponsorsData.length}</p>}
-                      <p className="text-sm text-text-secondary">كافل</p>
+                    <div className="min-w-0">
+                      {countsLoading ? <div className="mb-1 h-7 w-12 animate-pulse rounded-lg bg-gray-200/70" /> : <p className="text-xl font-bold text-gray-800 md:text-2xl">{orphansData.length}</p>}
+                      <p className="text-xs text-text-secondary md:text-sm">يتيم</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <div className="rounded-xl border border-white/60 bg-white/85 p-3 shadow-sm backdrop-blur-sm md:p-4">
+                  <div className="flex flex-col gap-2 min-[400px]:flex-row min-[400px]:items-center">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-green-600 md:h-10 md:w-10">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     </div>
-                    <div>
-                      {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className="text-2xl font-bold text-gray-800">{duePayments}</p>}
-                      <p className="text-sm text-text-secondary">دفعة مستحقة (${duePaymentsAmount.toLocaleString()})</p>
+                    <div className="min-w-0">
+                      {countsLoading ? <div className="mb-1 h-7 w-12 animate-pulse rounded-lg bg-gray-200/70" /> : <p className="text-xl font-bold text-gray-800 md:text-2xl">{sponsorsData.length}</p>}
+                      <p className="text-xs text-text-secondary md:text-sm">كافل</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 ${overduePayments > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'} rounded-lg flex items-center justify-center`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <div className="rounded-xl border border-white/60 bg-white/85 p-3 shadow-sm backdrop-blur-sm md:p-4">
+                  <div className="flex flex-col gap-2 min-[400px]:flex-row min-[400px]:items-center">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 text-yellow-600 md:h-10 md:w-10">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
-                    <div>
-                      {countsLoading ? <div className="h-8 w-14 bg-gray-200/70 animate-pulse rounded-lg mb-1" /> : <p className={`text-2xl font-bold ${overduePayments > 0 ? 'text-red-600' : 'text-gray-800'}`}>{overduePayments}</p>}
-                      <p className="text-sm text-text-secondary">دفعة متأخرة (${overduePaymentsAmount.toLocaleString()})</p>
+                    <div className="min-w-0">
+                      {countsLoading ? <div className="mb-1 h-7 w-12 animate-pulse rounded-lg bg-gray-200/70" /> : <p className="text-xl font-bold text-gray-800 md:text-2xl">{duePayments}</p>}
+                      <p className="text-xs text-text-secondary md:text-sm">دفعة مستحقة</p>
+                      <p className="text-[11px] text-text-secondary md:text-xs">(${duePaymentsAmount.toLocaleString()})</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-white/60 bg-white/85 p-3 shadow-sm backdrop-blur-sm md:p-4">
+                  <div className="flex flex-col gap-2 min-[400px]:flex-row min-[400px]:items-center">
+                    <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${overduePayments > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'} md:h-10 md:w-10`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <div className="min-w-0">
+                      {countsLoading ? <div className="mb-1 h-7 w-12 animate-pulse rounded-lg bg-gray-200/70" /> : <p className={`text-xl font-bold md:text-2xl ${overduePayments > 0 ? 'text-red-600' : 'text-gray-800'}`}>{overduePayments}</p>}
+                      <p className="text-xs text-text-secondary md:text-sm">دفعة متأخرة</p>
+                      <p className="text-[11px] text-text-secondary md:text-xs">(${overduePaymentsAmount.toLocaleString()})</p>
                     </div>
                   </div>
                 </div>
               </div>
-              <p className="mt-3 text-sm text-text-secondary">دفعات تم استلامها خلال آخر 30 يوماً: {recentlyReceivedPayments}</p>
+              <p className="mt-3 text-xs text-text-secondary sm:text-sm">دفعات تم استلامها خلال آخر 30 يوماً: {recentlyReceivedPayments}</p>
             </div>
           </section>
 
@@ -1046,7 +1050,7 @@ const Dashboard: React.FC = () => {
           />
 
           <section>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
               <UpcomingOccasions onViewAll={() => setIsOccasionsModalOpen(true)} />
               <PendingApprovals />
               <LatestAchievements orphans={orphansData} />
@@ -1059,20 +1063,20 @@ const Dashboard: React.FC = () => {
           />
 
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-700">الأيتام</h2>
+            <div className="mb-4 flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
+              <h2 className="text-xl font-bold text-gray-700 md:text-2xl">الأيتام</h2>
               {orphansData.length > 4 && (
-                <Link to="/orphans" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                <Link to="/orphans" className={sectionActionLinkClass}>
                   عرض الكل ({orphansData.length})
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </Link>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
               {orphansData.slice(0, 4).map(orphan => (
-                <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="bg-bg-card rounded-lg shadow-md p-4 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                  <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="mb-4 border-4 border-gray-100 !w-24 !h-24 !text-3xl" />
-                  <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
+                <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex flex-col items-center rounded-xl bg-bg-card p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md md:shadow-md md:hover:shadow-xl">
+                  <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="mb-3 border-4 border-gray-100 !h-20 !w-20 !text-2xl md:mb-4 md:!h-24 md:!w-24 md:!text-3xl" />
+                  <h3 className="line-clamp-2 text-base font-semibold text-gray-800 md:text-lg">{orphan.name}</h3>
                   <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
                 </Link>
               ))}
@@ -1080,23 +1084,23 @@ const Dashboard: React.FC = () => {
           </section>
 
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-700">الكفلاء</h2>
+            <div className="mb-4 flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
+              <h2 className="text-xl font-bold text-gray-700 md:text-2xl">الكفلاء</h2>
               {sponsorsData.length > 6 && (
-                <Link to="/sponsors" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                <Link to="/sponsors" className={sectionActionLinkClass}>
                   عرض الكل ({sponsorsData.length})
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </Link>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
               {sponsorsData.slice(0, 6).map(sponsor => (
-                <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="bg-bg-card rounded-lg shadow-md p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                  <div className="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center text-primary-text font-bold text-xl">
+                <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="flex items-center gap-3 rounded-xl bg-bg-card p-4 shadow-sm transition-colors hover:bg-gray-50 md:gap-4 md:p-5 md:shadow-md">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary-light text-lg font-bold text-primary-text md:h-12 md:w-12 md:text-xl">
                     {sponsor.name.charAt(0)}
                   </div>
-                  <div>
-                      <h3 className="text-lg font-semibold text-gray-800">{sponsor.name}</h3>
+                  <div className="min-w-0">
+                      <h3 className="line-clamp-1 text-base font-semibold text-gray-800 md:text-lg">{sponsor.name}</h3>
                       <p className="text-sm text-text-secondary">يكفل {sponsor.sponsoredOrphanIds.length} يتيم</p>
                     </div>
                 </Link>
@@ -1105,16 +1109,16 @@ const Dashboard: React.FC = () => {
           </section>
 
           <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-700">فريق العمل</h2>
+            <div className="mb-4 flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
+              <h2 className="text-xl font-bold text-gray-700 md:text-2xl">فريق العمل</h2>
               {teamMembersData.length > 6 && (
-                <Link to="/team" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
+                <Link to="/team" className={sectionActionLinkClass}>
                   عرض الكل ({teamMembersData.length})
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </Link>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
               {teamMembersData
                 .sort((a, b) => {
                   const aIsCurrentUser = a.uuid === userProfile?.id;
@@ -1125,10 +1129,10 @@ const Dashboard: React.FC = () => {
                 })
                 .slice(0, 6)
                 .map(member => (
-                <Link to={`/team/${member.id}`} key={member.id} className="bg-bg-card rounded-lg shadow-md p-5 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                  <Avatar src={member.avatarUrl} name={member.name} size="lg" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800">{member.name}</h3>
+                <Link to={`/team/${member.id}`} key={member.id} className="flex items-center gap-3 rounded-xl bg-bg-card p-4 shadow-sm transition-colors hover:bg-gray-50 md:gap-4 md:p-5 md:shadow-md">
+                  <Avatar src={member.avatarUrl} name={member.name} size="md" className="!h-11 !w-11 !text-base md:!h-12 md:!w-12 md:!text-lg" />
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-1 text-base font-semibold text-gray-800 md:text-lg">{member.name}</h3>
                     <p className="text-sm text-text-secondary">عضو فريق</p>
                   </div>
                 </Link>
