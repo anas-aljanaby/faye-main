@@ -425,33 +425,37 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
         return { overdue, due };
     }, [sponsoredOrphans]);
 
-    const StatCard: React.FC<{ title: string; value: string | number; icon: string; colorClass: string; }> = ({ title, value, icon, colorClass }) => (
-        <div className={`p-4 rounded-lg flex items-center gap-3 ${colorClass}`}>
-            <div className="text-2xl">{icon}</div>
-            <div>
-                <p className="text-sm font-semibold opacity-80">{title}</p>
-                <p className="text-xl font-bold">{value}</p>
+    const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; colorClass: string; }> = ({ title, value, icon, colorClass }) => (
+        <div className={`min-w-[13.5rem] shrink-0 snap-start rounded-xl border p-3.5 md:min-w-0 md:p-4 ${colorClass}`}>
+            <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/80 text-current shadow-sm md:h-11 md:w-11">
+                    {icon}
+                </div>
+                <div className="min-w-0">
+                    <p className="text-xs font-semibold opacity-80 md:text-sm">{title}</p>
+                    <p className="text-lg font-bold md:text-xl">{value}</p>
+                </div>
             </div>
         </div>
     );
 
     return (
-        <div className="bg-bg-card p-6 rounded-xl shadow-md">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-primary-light text-primary rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4Z"/></svg>
+        <section className="rounded-2xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-6 md:shadow-md">
+            <div className="mb-5 flex flex-col gap-4 md:mb-6 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-3 md:items-center md:gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-light text-primary md:h-12 md:w-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 md:h-6 md:w-6"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4Z"/></svg>
                     </div>
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-700">السجل المالي الذكي</h2>
-                        <p className="text-text-secondary">نظرة شاملة على مساهماتك وتأثيرها</p>
+                    <div className="min-w-0">
+                        <h2 className="text-xl font-bold text-gray-700 md:text-2xl">السجل المالي الذكي</h2>
+                        <p className="text-sm leading-6 text-text-secondary">نظرة شاملة على مساهماتك وتأثيرها</p>
                     </div>
                 </div>
                 <Link
                     to="/payments"
-                    className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold flex items-center gap-2"
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover md:w-auto"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 md:h-5 md:w-5">
                         <rect x="2" y="7" width="20" height="10" rx="2"/>
                         <path d="M6 12h.01"/>
                         <path d="M10 12h.01"/>
@@ -461,97 +465,108 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
                 </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="mb-6 flex gap-3 overflow-x-auto pb-1 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0">
                 <StatCard
                     title="إجمالي التبرعات"
                     value={`$${totalDonations.toLocaleString()}`}
-                    icon="💰"
-                    colorClass="bg-green-100 text-green-800"
+                    icon={
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    }
+                    colorClass="border-green-100 bg-green-50 text-green-700"
                 />
                 <StatCard
                     title="دفعات متأخرة"
                     value={paymentStats.overdue}
-                    icon="⏳"
-                    colorClass="bg-red-100 text-red-800"
+                    icon={
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    }
+                    colorClass="border-red-100 bg-red-50 text-red-700"
                 />
                 <StatCard
                     title="دفعات مستحقة"
                     value={paymentStats.due}
-                    icon="🔔"
-                    colorClass="bg-yellow-100 text-yellow-800"
+                    icon={
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    }
+                    colorClass="border-yellow-100 bg-yellow-50 text-yellow-700"
                 />
             </div>
 
-            <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-gray-800">حالة دفعات الأيتام</h3>
-                    {sponsoredOrphans.length > 3 && (
-                        <Link to="/payments" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
-                            عرض الكل
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                        </Link>
+            <div className="space-y-6">
+                <div className="space-y-3">
+                    <div className="flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
+                        <h3 className="text-base font-bold text-gray-800 md:text-lg">حالة دفعات الأيتام</h3>
+                        {sponsoredOrphans.length > 3 && (
+                            <Link to="/payments" className={sectionActionLinkClass}>
+                                عرض الكل
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </Link>
+                        )}
+                    </div>
+                    {sponsoredOrphans.length > 0 ? (
+                        <div className="grid gap-3">
+                            {sponsoredOrphans.slice(0, 3).map(orphan => {
+                                const overdueCount = orphan.payments.filter(p => p.status === PaymentStatus.Overdue).length;
+                                const dueCount = orphan.payments.filter(p => p.status === PaymentStatus.Due).length;
+                                let statusText = 'جميع الدفعات مسددة';
+                                let statusBadgeClass = 'bg-green-100 text-green-700';
+                                if (overdueCount > 0) {
+                                    statusText = `لديه ${overdueCount} دفعة متأخرة`;
+                                    statusBadgeClass = 'bg-red-100 text-red-700';
+                                } else if (dueCount > 0) {
+                                    statusText = `لديه ${dueCount} دفعة مستحقة`;
+                                    statusBadgeClass = 'bg-yellow-100 text-yellow-700';
+                                }
+
+                                return (
+                                    <Link to="/payments" key={orphan.id} className="flex min-h-11 flex-col gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3.5 transition-colors hover:bg-gray-100 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar src={orphan.photoUrl} name={orphan.name} size="md" className="!h-11 !w-11 !text-base md:!h-12 md:!w-12 md:!text-lg" />
+                                            <div className="min-w-0">
+                                                <p className="line-clamp-1 font-semibold text-gray-800">{orphan.name}</p>
+                                                <p className="text-xs text-text-secondary">متابعة حالة الدفعات الحالية</p>
+                                            </div>
+                                        </div>
+                                        <span className={`inline-flex min-h-11 items-center justify-center rounded-full px-3 py-2 text-center text-sm font-semibold ${statusBadgeClass}`}>
+                                            {statusText}
+                                        </span>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="rounded-xl border border-dashed border-gray-200 px-4 py-5 text-center text-sm text-gray-500">لا يوجد أيتام مكفولين</p>
                     )}
                 </div>
-                {sponsoredOrphans.length > 0 ? (
-                    <>
-                        {sponsoredOrphans.slice(0, 3).map(orphan => {
-                            const overdueCount = orphan.payments.filter(p => p.status === PaymentStatus.Overdue).length;
-                            const dueCount = orphan.payments.filter(p => p.status === PaymentStatus.Due).length;
-                            let statusText = "جميع الدفعات مسددة";
-                            let statusColor = "text-green-600";
-                            if (overdueCount > 0) {
-                                statusText = `لديه ${overdueCount} دفعة متأخرة`;
-                                statusColor = "text-red-600";
-                            } else if (dueCount > 0) {
-                                statusText = `لديه ${dueCount} دفعة مستحقة`;
-                                statusColor = "text-yellow-600";
-                            }
 
-                            return (
-                                <Link to="/payments" key={orphan.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
-                                        <span className="font-semibold text-gray-800">{orphan.name}</span>
-                                    </div>
-                                    <span className={`text-sm font-semibold ${statusColor}`}>{statusText}</span>
-                                </Link>
-                            );
-                        })}
-                    </>
-                ) : (
-                    <p className="text-sm text-center text-gray-500 py-4">لا يوجد أيتام مكفولين</p>
-                )}
-            </div>
-
-            <div className="border-t pt-4">
-                 <div className="flex items-center justify-between mb-3">
-                     <h3 className="font-bold text-gray-800">أحدث التبرعات</h3>
-                     {sponsorTransactions.length > 3 && (
-                         <Link to="/payments" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
-                             عرض الكل
-                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-                         </Link>
-                     )}
-                 </div>
-                 <div className="space-y-2">
-                     {sponsorTransactions.length > 0 ? (
-                         <>
-                             {sponsorTransactions.slice(0, 3).map(tx => (
-                                 <div key={tx.id} className="flex justify-between items-center p-2 rounded-lg">
-                                    <div>
-                                        <p className="font-semibold text-gray-700 text-sm">{tx.description}</p>
+                <div className="border-t border-gray-100 pt-5">
+                    <div className="mb-3 flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
+                        <h3 className="text-base font-bold text-gray-800 md:text-lg">أحدث التبرعات</h3>
+                        {sponsorTransactions.length > 3 && (
+                            <Link to="/payments" className={sectionActionLinkClass}>
+                                عرض الكل
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </Link>
+                        )}
+                    </div>
+                    <div className="space-y-3">
+                        {sponsorTransactions.length > 0 ? (
+                            sponsorTransactions.slice(0, 3).map(tx => (
+                                <div key={tx.id} className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-white p-3 md:flex-row md:items-center md:justify-between">
+                                    <div className="min-w-0">
+                                        <p className="line-clamp-2 text-sm font-semibold text-gray-700">{tx.description}</p>
                                         <p className="text-xs text-gray-500">{tx.date.toLocaleDateString('ar-EG')}</p>
                                     </div>
-                                    <span className="font-bold text-green-600 text-lg">${tx.amount.toLocaleString()}</span>
-                                 </div>
-                             ))}
-                         </>
-                     ) : (
-                         <p className="text-sm text-center text-gray-500 py-4">لا توجد تبرعات مسجلة مؤخراً.</p>
-                     )}
-                 </div>
+                                    <span className="text-base font-bold text-green-600 md:text-lg">${tx.amount.toLocaleString()}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="rounded-xl border border-dashed border-gray-200 px-4 py-5 text-center text-sm text-gray-500">لا توجد تبرعات مسجلة مؤخراً.</p>
+                        )}
+                    </div>
+                </div>
             </div>
-        </div>
+        </section>
     );
 };
 
@@ -687,13 +702,8 @@ const Dashboard: React.FC = () => {
 
     const handleExportPDF = () => {
         const input = receiptRef.current;
-        if(input) {
-            const mobileBar = input.querySelector('.mobile-action-bar');
-            if (mobileBar) (mobileBar as HTMLElement).style.display = 'none';
-
+        if (input) {
             html2canvas(input, { scale: 2, useCORS: true }).then((canvas) => {
-                if (mobileBar) (mobileBar as HTMLElement).style.display = 'grid';
-
                 const imgData = canvas.toDataURL('image/png');
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -714,8 +724,10 @@ const Dashboard: React.FC = () => {
             );
         }
 
-        const DownloadIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
-        const ShieldIcon = <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+        const DownloadIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 md:h-5 md:w-5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
+        const ShieldIcon = <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 md:h-7 md:w-7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>;
+        const sponsorSectionCardClass = 'rounded-2xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-6 md:shadow-md';
+        const sponsorActionClass = 'inline-flex min-h-11 min-w-[8.75rem] shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold shadow-sm transition-colors md:min-w-0';
 
         // Get current time greeting
         const getGreeting = () => {
@@ -726,204 +738,206 @@ const Dashboard: React.FC = () => {
         };
 
         return (
-            <div ref={receiptRef}>
-                <div className="space-y-8" style={{ paddingBottom: '80px' }}>
-                    {/* Welcome Hero Section for Sponsors */}
-                    <section className="bg-gradient-to-l from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 md:p-8 relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-32 h-32 bg-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-                        <div className="absolute bottom-0 right-0 w-48 h-48 bg-primary/5 rounded-full translate-x-1/4 translate-y-1/4"></div>
-                        
-                        <div className="relative z-10">
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                                <div>
-                                    <p className="text-primary font-medium mb-1">{getGreeting()} 👋</p>
-                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-2">
-                                        {userProfile?.name || sponsor.name}
-                                    </h1>
-                                    <p className="text-text-secondary">
-                                        لوحة التحكم - نظرة شاملة على أيتامك المكفولين
-                                    </p>
-                                </div>
-                                
-                                <div className="flex flex-wrap gap-3">
-                                    <Link to="/payments" className="inline-flex items-center gap-2 bg-primary text-white font-semibold py-2.5 px-5 rounded-lg hover:bg-primary-hover transition-colors shadow-sm">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/></svg>
-                                        الدفعات
-                                    </Link>
-                                    <Link to="/messages" className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm border">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                        الرسائل
-                                    </Link>
-                                    <button onClick={handleExportPDF} className="inline-flex items-center gap-2 bg-white text-gray-700 font-semibold py-2.5 px-5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm border">
-                                        {DownloadIcon}
-                                        <span>تصدير</span>
-                                    </button>
-                                </div>
+            <div ref={receiptRef} className="space-y-6 pb-2 md:space-y-8 md:pb-0">
+                <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-l from-primary/15 via-white to-primary/5 p-4 sm:p-5 md:rounded-2xl md:p-8">
+                    <div className="absolute start-0 top-0 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 md:h-32 md:w-32"></div>
+                    <div className="absolute bottom-0 end-0 h-32 w-32 translate-x-1/4 translate-y-1/4 rounded-full bg-primary/5 md:h-48 md:w-48"></div>
+
+                    <div className="relative z-10 space-y-5 md:space-y-6">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
+                            <div className="max-w-2xl space-y-2">
+                                <p className="text-sm font-medium text-primary md:text-base">{getGreeting()} 👋</p>
+                                <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">
+                                    {userProfile?.name || sponsor.name}
+                                </h1>
+                                <p className="text-sm leading-6 text-text-secondary md:text-base">
+                                    لوحة التحكم - نظرة شاملة على أيتامك المكفولين
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => orphansSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                                    className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-primary/20 bg-white/80 px-3 py-2 text-sm font-semibold text-primary shadow-sm transition-colors hover:bg-white md:hidden"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    الانتقال إلى الأيتام المكفولين
+                                </button>
                             </div>
 
-                            {/* Stats Cards - 3 metrics for sponsors */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-                                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                        </div>
-                                        <div>
-                                            <p className="text-2xl font-bold text-gray-800">{sponsoredOrphans.length}</p>
-                                            <p className="text-sm text-text-secondary">يتيم مكفول</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                        </div>
-                                        <div>
-                                            <p className="text-2xl font-bold text-gray-800">{sponsorPaymentStats.due}</p>
-                                            <p className="text-sm text-text-secondary">دفعة مستحقة (${sponsorPaymentStats.dueAmount.toLocaleString()})</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-white/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 ${sponsorPaymentStats.overdue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'} rounded-lg flex items-center justify-center`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                        </div>
-                                        <div>
-                                            <p className={`text-2xl font-bold ${sponsorPaymentStats.overdue > 0 ? 'text-red-600' : 'text-gray-800'}`}>{sponsorPaymentStats.overdue}</p>
-                                            <p className="text-sm text-text-secondary">دفعة متأخرة (${sponsorPaymentStats.overdueAmount.toLocaleString()})</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <p className="mt-3 text-sm text-text-secondary">تم استلام {sponsorPaymentStats.recentlyReceived} دفعة خلال آخر 30 يوماً.</p>
-                        </div>
-                    </section>
-
-                    <div ref={orphansSectionRef}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-2xl font-bold text-gray-700">الأيتام المكفولين</h2>
-                            {sponsoredOrphans.length > 4 && (
-                                <Link to="/orphans" className="text-primary hover:text-primary-hover font-semibold text-sm flex items-center gap-1">
-                                    عرض الكل ({sponsoredOrphans.length})
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            <div className="flex gap-3 overflow-x-auto pb-1 md:flex-wrap md:justify-end md:overflow-visible md:pb-0">
+                                <Link to="/payments" className={`${sponsorActionClass} bg-primary text-white hover:bg-primary-hover`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M6 12h.01"/><path d="M10 12h.01"/><path d="M14 12h.01"/></svg>
+                                    الدفعات
                                 </Link>
-                            )}
+                                <Link to="/messages" className={`${sponsorActionClass} border border-gray-200 bg-white text-gray-700 hover:bg-gray-50`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                    الرسائل
+                                </Link>
+                                <button type="button" onClick={handleExportPDF} className={`${sponsorActionClass} border border-gray-200 bg-white text-gray-700 hover:bg-gray-50`}>
+                                    {DownloadIcon}
+                                    <span>تصدير</span>
+                                </button>
+                            </div>
                         </div>
-                        {sponsoredOrphans.length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                {sponsoredOrphans.slice(0, 4).map(orphan => (
-                                    <Link key={orphan.id} to={`/orphan/${orphan.id}`} className="bg-bg-card rounded-lg shadow-md p-4 flex flex-col items-center text-center hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                        <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="mb-4 border-4 border-gray-100 !w-24 !h-24 !text-3xl" />
-                                        <h3 className="text-lg font-semibold text-gray-800">{orphan.name}</h3>
-                                        <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
-                                    </Link>
-                                ))}
+
+                        <div className="flex gap-3 overflow-x-auto pb-1 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0">
+                            <div className="min-w-[14rem] shrink-0 rounded-xl border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur-sm md:min-w-0">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600 md:h-11 md:w-11">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-2xl font-bold text-gray-800 md:text-3xl">{sponsoredOrphans.length}</p>
+                                        <p className="text-sm text-text-secondary">يتيم مكفول</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="min-w-[14rem] shrink-0 rounded-xl border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur-sm md:min-w-0">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-yellow-600 md:h-11 md:w-11">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-2xl font-bold text-gray-800 md:text-3xl">{sponsorPaymentStats.due}</p>
+                                        <p className="text-sm text-text-secondary">دفعات مستحقة</p>
+                                        <p className="text-xs text-text-secondary">بقيمة ${sponsorPaymentStats.dueAmount.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="min-w-[14rem] shrink-0 rounded-xl border border-white/70 bg-white/85 p-4 shadow-sm backdrop-blur-sm md:min-w-0">
+                                <div className="flex items-start gap-3">
+                                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl md:h-11 md:w-11 ${sponsorPaymentStats.overdue > 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'}`}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className={`text-2xl font-bold md:text-3xl ${sponsorPaymentStats.overdue > 0 ? 'text-red-600' : 'text-gray-800'}`}>{sponsorPaymentStats.overdue}</p>
+                                        <p className="text-sm text-text-secondary">دفعات متأخرة</p>
+                                        <p className="text-xs text-text-secondary">بقيمة ${sponsorPaymentStats.overdueAmount.toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p className="rounded-xl border border-white/70 bg-white/75 px-4 py-3 text-sm text-text-secondary shadow-sm">
+                            تم استلام {sponsorPaymentStats.recentlyReceived} دفعة خلال آخر 30 يوماً.
+                        </p>
+                    </div>
+                </section>
+
+                <section ref={orphansSectionRef} className="space-y-4">
+                    <div className="flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
+                        <div className="space-y-1">
+                            <h2 className="text-xl font-bold text-gray-700 md:text-2xl">الأيتام المكفولين</h2>
+                            <p className="text-sm text-text-secondary">ملخص سريع للأيتام المرتبطين بحسابك.</p>
+                        </div>
+                        {sponsoredOrphans.length > 4 && (
+                            <Link to="/orphans" className={sectionActionLinkClass}>
+                                عرض الكل ({sponsoredOrphans.length})
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </Link>
+                        )}
+                    </div>
+                    {sponsoredOrphans.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
+                            {sponsoredOrphans.slice(0, 4).map(orphan => (
+                                <Link key={orphan.id} to={`/orphan/${orphan.id}`} className="flex flex-col items-center rounded-2xl border border-gray-100 bg-bg-card p-4 text-center shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md md:p-5 md:shadow-md">
+                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="mb-3 border-4 border-gray-100 !h-20 !w-20 !text-2xl md:mb-4 md:!h-24 md:!w-24 md:!text-3xl" />
+                                    <h3 className="line-clamp-2 text-base font-semibold text-gray-800 md:text-lg">{orphan.name}</h3>
+                                    <p className="text-sm text-text-secondary">{orphan.age} سنوات</p>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="rounded-2xl border border-dashed border-gray-200 bg-bg-card px-4 py-8 text-center text-text-secondary">
+                            <p>لا يوجد أيتام مكفولين حالياً</p>
+                        </div>
+                    )}
+                </section>
+
+                <section className={sponsorSectionCardClass}>
+                    <div className="space-y-1">
+                        <h2 className="text-xl font-bold text-gray-700 md:text-2xl">فريق المتابعة</h2>
+                        <p className="text-sm text-text-secondary">الأعضاء المسؤولون عن المتابعة المباشرة لحالتك وحالات الأيتام.</p>
+                    </div>
+
+                    <div className="mt-5 space-y-5">
+                        {assignedTeamMembers.length > 0 ? (
+                            <div className="space-y-3">
+                                <h3 className="text-base font-semibold text-gray-700 md:text-lg">الأعضاء المعينون</h3>
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                                    {assignedTeamMembers.map(member => (
+                                        <Link
+                                            key={member.id}
+                                            to={`/team/${member.id}`}
+                                            className="flex min-h-11 items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                                        >
+                                            <Avatar src={member.avatar_url} name={member.name} size="md" className="md:!h-12 md:!w-12 md:!text-lg" />
+                                            <div className="min-w-0">
+                                                <h3 className="line-clamp-1 font-semibold text-gray-800">{member.name}</h3>
+                                                <p className="text-sm text-text-secondary">عضو فريق</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-text-secondary">
-                                <p>لا يوجد أيتام مكفولين حالياً</p>
+                            <p className="rounded-xl border border-dashed border-gray-200 px-4 py-5 text-center text-sm text-text-secondary">لم يتم تعيين أي أعضاء فريق بعد</p>
+                        )}
+
+                        {manager && (
+                            <div className="border-t border-gray-100 pt-5">
+                                <h3 className="mb-3 text-base font-semibold text-gray-700 md:text-lg">مدير المنظمة</h3>
+                                <Link
+                                    to={`/team/${manager.id}`}
+                                    className="flex min-h-11 items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                                >
+                                    <Avatar src={manager.avatar_url} name={manager.name} size="md" className="md:!h-12 md:!w-12 md:!text-lg" />
+                                    <div className="min-w-0">
+                                        <h3 className="line-clamp-1 font-semibold text-gray-800">{manager.name}</h3>
+                                        <p className="text-sm text-text-secondary">مدير</p>
+                                    </div>
+                                </Link>
                             </div>
                         )}
                     </div>
+                </section>
 
-                    {/* Team Members Section */}
-                    <div className="bg-bg-card p-6 rounded-xl shadow-md">
-                        <h2 className="text-2xl font-bold text-gray-700 mb-4">فريق المتابعة</h2>
-                        <div className="space-y-4">
-                            {assignedTeamMembers.length > 0 ? (
-                                <>
-                                    <h3 className="text-lg font-semibold text-gray-700 mb-3">الأعضاء المعينون</h3>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        {assignedTeamMembers.map(member => (
-                                            <Link 
-                                                key={member.id} 
-                                                to={`/team/${member.id}`}
-                                                className="bg-white rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-lg transition-all"
-                                            >
-                                                <Avatar src={member.avatar_url} name={member.name} size="lg" />
-                                                <div>
-                                                    <h3 className="font-semibold text-gray-800">{member.name}</h3>
-                                                    <p className="text-sm text-text-secondary">عضو فريق</p>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </>
-                            ) : (
-                                <p className="text-text-secondary text-center py-4">لم يتم تعيين أي أعضاء فريق بعد</p>
-                            )}
-                            
-                            {manager && (
-                                <div className="mt-6 pt-6 border-t">
-                                    <h3 className="text-lg font-semibold text-gray-700 mb-3">مدير المنظمة</h3>
-                                    <Link 
-                                        to={`/team/${manager.id}`}
-                                        className="bg-blue-50 rounded-lg shadow p-4 flex items-center gap-4 hover:shadow-lg transition-all"
-                                    >
-                                        <Avatar src={manager.avatar_url} name={manager.name} size="lg" />
-                                        <div>
-                                            <h3 className="font-semibold text-gray-800">{manager.name}</h3>
-                                            <p className="text-sm text-text-secondary">مدير</p>
-                                        </div>
-                                    </Link>
-                                </div>
-                            )}
+                <SponsorFinancialRecord sponsor={sponsor} sponsoredOrphans={sponsoredOrphans} />
+
+                <section className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                    <div className="relative overflow-hidden rounded-2xl border border-yellow-100 bg-gradient-to-br from-yellow-50 to-white p-5 shadow-sm md:p-6 md:shadow-md">
+                        <div className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-yellow-500 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                         </div>
-                    </div>
-
-                    <SponsorFinancialRecord sponsor={sponsor} sponsoredOrphans={sponsoredOrphans} />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="bg-yellow-50 p-6 rounded-lg shadow-md flex flex-col items-center text-center transform -rotate-2 hover:rotate-0 hover:scale-105 transition-transform duration-300">
-                             <div className="absolute -top-4 -right-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400 drop-shadow-sm"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">تواصل معنا</h3>
-                            <p className="text-text-secondary mb-4">
-                                لأية استفسارات، نحن متواجدون من الأحد إلى الخميس، 9 صباحًا - 5 مساءً.
+                        <div className="max-w-sm space-y-3">
+                            <h3 className="pe-10 text-xl font-bold text-gray-800">تواصل معنا</h3>
+                            <p className="text-sm leading-6 text-text-secondary">
+                                لأية استفسارات، نحن متواجدون من الأحد إلى الخميس، 9 صباحاً - 5 مساءً.
                             </p>
-                            <a href="tel:+123456789" className="inline-flex items-center justify-center gap-2 bg-primary text-white font-bold py-2 px-6 rounded-full hover:bg-primary-hover transition-colors shadow-lg hover:shadow-primary/40">
+                            <a href="tel:+123456789" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover md:w-auto">
                                 <span>اتصل بنا الآن</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                             </a>
                         </div>
-                         <Link to="/policies" className="bg-blue-50 p-6 rounded-lg shadow-md flex flex-col items-center text-center transform rotate-1 hover:rotate-0 hover:scale-105 transition-transform duration-300 relative">
-                            <div className="absolute -top-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 drop-shadow-sm"><path d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z" /></svg>
-                            </div>
-                            <div className="mt-4 text-blue-600">
-                                {ShieldIcon}
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-800 mt-2">سياسات فيء</h3>
-                            <p className="text-text-secondary text-sm mt-1">
-                                اطلع على شروط وأحكام المنظمة
-                            </p>
-                        </Link>
                     </div>
-                </div>
-                {/* Mobile Action Bar */}
-                <div className="mobile-action-bar hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] bg-white/80 p-2 text-center shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-sm z-40 grid grid-cols-4 gap-1">
-                    <button onClick={() => window.history.back()} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                        <span className="text-xs">رجوع</span>
-                    </button>
-                    <button onClick={() => orphansSectionRef.current?.scrollIntoView({ behavior: 'smooth' })} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        <span className="text-xs">الأيتام</span>
-                    </button>
-                    <Link to="/messages" className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        <span className="text-xs">رسالة</span>
+
+                    <Link to="/policies" className="relative overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md md:p-6 md:shadow-md">
+                        <div className="absolute end-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-blue-500 shadow-sm">
+                            {ShieldIcon}
+                        </div>
+                        <div className="max-w-sm space-y-3">
+                            <h3 className="pe-10 text-xl font-bold text-gray-800">سياسات فيء</h3>
+                            <p className="text-sm leading-6 text-text-secondary">
+                                اطلع على شروط وأحكام المنظمة وكل السياسات المنظمة للعلاقة مع فيء.
+                            </p>
+                            <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700">
+                                الانتقال إلى السياسات
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                            </span>
+                        </div>
                     </Link>
-                    <button onClick={handleExportPDF} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                        <span className="text-xs">تصدير</span>
-                    </button>
-                </div>
+                </section>
             </div>
         );
     }

@@ -166,7 +166,7 @@ large main bundle, but no dashboard-specific compile issues were introduced.
 
 ---
 
-### Task 2.3: Dashboard — Sponsor View (`/`) `[ ]`
+### Task 2.3: Dashboard — Sponsor View (`/`) `[x]`
 **Priority:** P1
 **Files likely involved:** `components/Dashboard.tsx`
 **Depends on:** Task 1.1, 1.2, 1.3
@@ -184,9 +184,21 @@ large main bundle, but no dashboard-specific compile issues were introduced.
   actions into the page or remove if redundant
 - Reduce icon sizes to mobile-appropriate sizes
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Refined the sponsor dashboard in
+`components/Dashboard.tsx` for 375px–428px widths by turning the hero into a
+mobile-first layout with smaller typography, a horizontally scrollable action
+row, and compact metric cards that scroll cleanly on narrow screens. The
+orphan cards now collapse to a 1–2 column mobile grid, the follow-up team
+section stays single-column until `md`, the smart financial record uses
+touch-friendly stacked rows plus mobile-safe summary cards, and the promo
+cards now stack vertically with lighter spacing. Removed the old sponsor-only
+mobile action bar because it conflicted with the global `MobileBottomNav`,
+while keeping its useful orphan-section shortcut as an in-page mobile button.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** No new sponsor-dashboard-specific issues were found during
+code review. `npm run build` still reports the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle.
 
 ---
 
@@ -471,5 +483,5 @@ large main bundle, but no dashboard-specific compile issues were introduced.
 | Phase 3: Polish | 3.1 – 3.4 | Not started |
 
 **Total tasks:** 20
-**Completed:** 5
-**Remaining:** 15
+**Completed:** 6
+**Remaining:** 14
