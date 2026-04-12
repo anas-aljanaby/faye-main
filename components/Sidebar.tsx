@@ -113,6 +113,16 @@ const SIDEBAR_COLLAPSED_WIDTH = 80;
 const SIDEBAR_EXPANDED_DEFAULT = 288;
 const SIDEBAR_MIN_WIDTH = 220;
 const SIDEBAR_MAX_WIDTH = 400;
+const SIDEBAR_VIEWPORT_RATIO_CAP = 0.36;
+
+const clampSidebarWidthForViewport = (preferredWidth: number, viewportWidth: number) => {
+  const viewportMax = Math.min(
+    SIDEBAR_MAX_WIDTH,
+    Math.max(SIDEBAR_MIN_WIDTH, Math.floor(viewportWidth * SIDEBAR_VIEWPORT_RATIO_CAP))
+  );
+
+  return Math.min(viewportMax, Math.max(SIDEBAR_MIN_WIDTH, preferredWidth));
+};
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -133,12 +143,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       const saved = localStorage.getItem('sidebar_width');
       if (saved) {
         const w = parseInt(saved, 10);
-        if (!Number.isNaN(w) && w >= SIDEBAR_MIN_WIDTH && w <= SIDEBAR_MAX_WIDTH) return w;
+        if (!Number.isNaN(w) && w >= SIDEBAR_MIN_WIDTH && w <= SIDEBAR_MAX_WIDTH) {
+          return clampSidebarWidthForViewport(w, window.innerWidth);
+        }
       }
     } catch {
       // ignore
     }
-    return SIDEBAR_EXPANDED_DEFAULT;
+    return clampSidebarWidthForViewport(SIDEBAR_EXPANDED_DEFAULT, window.innerWidth);
   });
 
   const [isResizing, setIsResizing] = useState(false);
@@ -164,7 +176,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     const onMove = (e: MouseEvent) => {
       const rightEdge = window.innerWidth;
       const newWidth = rightEdge - e.clientX;
-      const clamped = Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, newWidth));
+      const clamped = clampSidebarWidthForViewport(newWidth, window.innerWidth);
       setSidebarWidth(clamped);
       try {
         localStorage.setItem('sidebar_width', String(clamped));
@@ -244,7 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         ${isOpen ? 'translate-x-0' : 'translate-x-full'} 
         md:relative md:w-auto md:max-w-none md:translate-x-0
         ${!isResizing && !isCollapsed ? 'transition-[width] duration-200 ease-out' : ''}`}
-        style={isDesktop ? { width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : sidebarWidth } : undefined}
+        style={isDesktop ? { width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : clampSidebarWidthForViewport(sidebarWidth, window.innerWidth) } : undefined}
         aria-label="القائمة الجانبية"
       >
         {isDesktop && !isCollapsed && (
