@@ -20,6 +20,7 @@ interface DataTableProps<TData, TValue> {
   renderBulkActions?: (selectedRows: TData[]) => React.ReactNode;
   storageKey?: string;
   filterPlaceholder?: string;
+  disablePagination?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -29,6 +30,7 @@ export function DataTable<TData, TValue>({
   renderBulkActions,
   storageKey = 'datatable_state',
   filterPlaceholder = 'بحث...',
+  disablePagination = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -68,7 +70,7 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(disablePagination ? {} : { getPaginationRowModel: getPaginationRowModel() }),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
@@ -133,33 +135,33 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="flex flex-col items-stretch justify-between gap-4 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:p-4">
         <div className="relative w-full sm:w-72">
-          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+          <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </div>
           <input
             value={globalFilter ?? ''}
             onChange={e => setGlobalFilter(e.target.value)}
-            className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-colors"
+            className="min-h-[44px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary"
             placeholder={filterPlaceholder}
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
           {selectedData.length > 0 && renderBulkActions && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-primary bg-primary-light px-2 py-1 rounded-md whitespace-nowrap">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex min-h-[32px] items-center rounded-lg bg-primary-light px-2 py-1 text-xs font-semibold text-primary whitespace-nowrap">
                 {selectedData.length} محدّد
               </span>
               {renderBulkActions(selectedData)}
-              <div className="h-6 w-px bg-gray-300 mx-2"></div>
+              <div className="mx-2 hidden h-6 w-px bg-gray-300 sm:block"></div>
             </div>
           )}
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             title="تصدير CSV"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
@@ -169,9 +171,9 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         <div ref={tableContainerRef} className="overflow-auto max-h-[600px] relative w-full">
-          <table className="w-full text-sm text-right">
+          <table className="min-w-[48rem] w-full text-right text-sm">
             <thead className="bg-gray-50 text-gray-700 font-semibold sticky top-0 z-10 shadow-sm">
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
@@ -237,28 +239,30 @@ export function DataTable<TData, TValue>({
         </div>
 
         {/* Pagination */}
-        <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-t border-gray-200">
-          <div className="text-sm text-gray-500">
-            صفحة <span className="font-bold text-gray-900">{table.getState().pagination.pageIndex + 1}</span> من{' '}
-            <span className="font-bold text-gray-900">{table.getPageCount()}</span>
+        {!disablePagination && (
+          <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="text-sm text-gray-500">
+              صفحة <span className="font-bold text-gray-900">{table.getState().pagination.pageIndex + 1}</span> من{' '}
+              <span className="font-bold text-gray-900">{table.getPageCount()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-gray-300 bg-white transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+              <button
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-gray-300 bg-white transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              className="p-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-            <button
-              className="p-1.5 rounded-md border border-gray-300 bg-white hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

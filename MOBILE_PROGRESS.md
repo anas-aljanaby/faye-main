@@ -3,7 +3,7 @@
 > This document tracks progress across multiple Codex runs.
 > **Read before starting. Update after finishing.**
 
-Last updated: 2026-04-12
+Last updated: 2026-04-13
 
 ---
 
@@ -202,7 +202,7 @@ large main bundle.
 
 ---
 
-### Task 2.4: Orphans List (`/orphans`) `[ ]`
+### Task 2.4: Orphans List (`/orphans`) `[x]`
 **Priority:** P1
 **Files likely involved:** `components/OrphansList.tsx`,
 `components/EntityCard.tsx`, `components/DataTable.tsx`
@@ -219,9 +219,23 @@ large main bundle.
 - Reduce icon sizes in cards and table rows
 - Bulk action bar (if visible): fixed bottom strip above the nav bar
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Refined `components/OrphansList.tsx` into a true
+mobile-first page by shrinking the header typography, moving the add/export
+actions into a compact `...` menu on phones, and turning the filter control
+into a touch-friendly mobile bottom sheet while preserving the desktop button
+layout. Search and controls now stack cleanly on narrow widths, the grid view
+stays single-column on phones, and list mode now swaps the desktop table for
+full-width mobile cards with external page-level pagination so cards and the
+desktop table both stay in sync with the server-side paging hook. Updated the
+add-orphan and message modals to near-full-screen mobile sheets, improved the
+selection action bar above the global bottom nav, and tightened shared
+components in `EntityCard.tsx` and `DataTable.tsx` for smaller avatars,
+lighter spacing, 44px tap targets, horizontal table scrolling, and optional
+disabling of internal table pagination.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** No new orphan-list-specific issues were found during code
+review. `npm run build` still reports the existing `baseline-browser-mapping`
+update notice and Vite chunk-size warning for the large main bundle.
 
 ---
 
@@ -483,5 +497,5 @@ large main bundle.
 | Phase 3: Polish | 3.1 – 3.4 | Not started |
 
 **Total tasks:** 20
-**Completed:** 6
-**Remaining:** 14
+**Completed:** 7
+**Remaining:** 13
