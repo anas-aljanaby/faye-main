@@ -97,25 +97,25 @@ const AddAchievementModal: React.FC<{
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={resetAndClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">إضافة إنجاز جديد</h3>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 p-0 md:items-center md:p-4" onClick={resetAndClose}>
+            <div className="max-h-[92svh] w-full overflow-y-auto rounded-t-[1.75rem] bg-white p-4 shadow-xl md:max-h-[90vh] md:max-w-lg md:rounded-lg md:p-6" onClick={(e) => e.stopPropagation()}>
+                <h3 className="mb-4 text-xl font-bold">إضافة إنجاز جديد</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان الإنجاز" className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" required />
-                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="وصف الإنجاز" rows={3} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md resize-y" required />
-                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" required />
+                    <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="عنوان الإنجاز" className="min-h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 py-2" required />
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="وصف الإنجاز" rows={3} className="min-h-[120px] w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2" required />
+                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="min-h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 py-2" required />
                     
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">رفع صورة أو فيديو (اختياري)</label>
                         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                             <div className="space-y-1 text-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M21.2 15c.7-1.2 1-2.5.7-3.9-.6-2.8-3.3-4.8-6.3-4.2-1.2.2-2.3.8-3.1 1.5-1-.7-2.3-1-3.6-1-3.3 0-6 2.7-6 6 0 1.3.4 2.5 1 3.5"/><path d="m20 17-5-5-4 4-3-3-5 5"/><path d="M16 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M15 22H9a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2Z"/></svg>
-                                <div className="flex text-sm text-gray-600">
+                                <div className="flex flex-wrap justify-center gap-x-1 text-sm text-gray-600">
                                     <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary-hover focus-within:outline-none">
                                         <span>ارفع ملف</span>
                                         <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} accept="image/*,video/mp4" />
                                     </label>
-                                    <p className="pr-1">أو اسحبه وأفلته هنا</p>
+                                    <p className="pe-1">أو اسحبه وأفلته هنا</p>
                                 </div>
                                 <p className="text-xs text-gray-500">صور أو فيديو (MP4)</p>
                             </div>
@@ -133,9 +133,9 @@ const AddAchievementModal: React.FC<{
                         </div>
                     )}
                     
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={resetAndClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">حفظ الإنجاز</button>
+                    <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end">
+                        <button type="button" onClick={resetAndClose} className="min-h-[44px] rounded-lg bg-gray-100 px-5 py-2 font-semibold text-text-secondary hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="min-h-[44px] rounded-lg bg-primary px-5 py-2 font-semibold text-white hover:bg-primary-hover">حفظ الإنجاز</button>
                     </div>
                 </form>
             </div>
@@ -162,14 +162,14 @@ const AddUpdateLogModal: React.FC<{
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">إضافة تحديث/ملاحظة جديدة</h3>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="w-full rounded-t-[1.75rem] bg-white p-4 shadow-xl md:max-w-lg md:rounded-lg md:p-6" onClick={(e) => e.stopPropagation()}>
+                <h3 className="mb-4 text-xl font-bold">إضافة تحديث/ملاحظة جديدة</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="اكتب ملاحظتك هنا..." rows={4} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md resize-y" required autoFocus/>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">حفظ الملاحظة</button>
+                    <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="اكتب ملاحظتك هنا..." rows={4} className="min-h-[180px] w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2" required autoFocus/>
+                    <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end">
+                        <button type="button" onClick={onClose} className="min-h-[44px] rounded-lg bg-gray-100 px-5 py-2 font-semibold text-text-secondary hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="min-h-[44px] rounded-lg bg-primary px-5 py-2 font-semibold text-white hover:bg-primary-hover">حفظ الملاحظة</button>
                     </div>
                 </form>
             </div>
@@ -245,16 +245,16 @@ const EventModal: React.FC<{
     const otherEvents = existingEvents.filter(e => e.type !== 'occasion');
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={handleClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 p-0 md:items-center md:p-4" onClick={handleClose}>
+            <div className="max-h-[92svh] w-full overflow-y-auto rounded-t-[1.75rem] bg-white p-4 shadow-xl md:max-h-[80vh] md:max-w-lg md:rounded-lg md:p-6" onClick={(e) => e.stopPropagation()}>
+                <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
                         <h3 className="text-xl font-bold">الأحداث</h3>
                         <p className="text-sm text-gray-500">
                             {date.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                         </p>
                     </div>
-                    <button onClick={handleClose} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                    <button onClick={handleClose} className="flex h-11 w-11 items-center justify-center rounded-full text-2xl font-bold text-gray-500 hover:bg-gray-100 hover:text-gray-800">&times;</button>
                 </div>
 
                 {/* Existing Editable Events */}
@@ -274,14 +274,14 @@ const EventModal: React.FC<{
                                             type="text"
                                             value={editingTitle}
                                             onChange={(e) => setEditingTitle(e.target.value)}
-                                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+                                            className="min-h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 py-2"
                                             autoFocus
                                         />
-                                        <div className="flex gap-2">
-                                            <button type="submit" className="py-1.5 px-4 bg-primary text-white rounded-md text-sm font-semibold hover:bg-primary-hover">
+                                        <div className="flex flex-col gap-2 sm:flex-row">
+                                            <button type="submit" className="min-h-[44px] rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
                                                 حفظ
                                             </button>
-                                            <button type="button" onClick={cancelEditing} className="py-1.5 px-4 bg-gray-100 text-gray-700 rounded-md text-sm font-semibold hover:bg-gray-200">
+                                            <button type="button" onClick={cancelEditing} className="min-h-[44px] rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                                                 إلغاء
                                             </button>
                                         </div>
@@ -289,11 +289,11 @@ const EventModal: React.FC<{
                                 ) : deleteConfirmId === event.id ? (
                                     <div className="space-y-2">
                                         <p className="text-sm text-red-600 font-semibold">هل أنت متأكد من حذف "{event.title}"؟</p>
-                                        <div className="flex gap-2">
-                                            <button onClick={() => handleDelete(event.id)} className="py-1.5 px-4 bg-red-500 text-white rounded-md text-sm font-semibold hover:bg-red-600">
+                                        <div className="flex flex-col gap-2 sm:flex-row">
+                                            <button onClick={() => handleDelete(event.id)} className="min-h-[44px] rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600">
                                                 نعم، احذف
                                             </button>
-                                            <button onClick={() => setDeleteConfirmId(null)} className="py-1.5 px-4 bg-gray-100 text-gray-700 rounded-md text-sm font-semibold hover:bg-gray-200">
+                                            <button onClick={() => setDeleteConfirmId(null)} className="min-h-[44px] rounded-md bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                                                 إلغاء
                                             </button>
                                         </div>
@@ -362,14 +362,14 @@ const EventModal: React.FC<{
                             value={newTitle}
                             onChange={(e) => setNewTitle(e.target.value)}
                             placeholder="عنوان المناسبة (مثال: موعد طبيب الأسنان)"
-                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+                            className="min-h-[44px] w-full rounded-md border border-gray-300 bg-white px-3 py-2"
                             autoFocus
                         />
-                        <div className="flex gap-2">
-                            <button type="submit" className="py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold text-sm">
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            <button type="submit" className="min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
                                 حفظ
                             </button>
-                            <button type="button" onClick={() => { setIsAdding(false); setNewTitle(''); }} className="py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold text-sm">
+                            <button type="button" onClick={() => { setIsAdding(false); setNewTitle(''); }} className="min-h-[44px] rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200">
                                 إلغاء
                             </button>
                         </div>
@@ -395,11 +395,11 @@ const EventModal: React.FC<{
 
 
 const InfoCard: React.FC<{ title: string; children: React.ReactNode; icon: React.ReactNode; className?: string, headerActions?: React.ReactNode }> = ({ title, children, icon, className = '', headerActions }) => (
-    <div className={`bg-bg-card p-6 rounded-xl shadow-sm ${className}`}>
-        <div className="flex items-center justify-between gap-3 mb-4">
+    <div className={`rounded-xl bg-bg-card p-4 shadow-sm md:p-6 ${className}`}>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-light text-primary rounded-lg flex items-center justify-center">{icon}</div>
-                <h3 className="text-xl font-bold text-gray-700">{title}</h3>
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-light text-primary md:h-10 md:w-10">{icon}</div>
+                <h3 className="text-lg font-bold text-gray-700 md:text-xl">{title}</h3>
             </div>
             {headerActions}
         </div>
@@ -437,13 +437,13 @@ const YearlyPaymentSummary: React.FC<{ payments: Payment[] }> = ({ payments }) =
     };
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-6">
             {months.map(month => {
                 const { status, color, textColor } = getStatusForMonth(month);
                 return (
-                    <div key={month.getMonth()} className={`p-3 rounded-lg text-center ${color}`}>
-                        <p className="font-semibold text-gray-800">{month.toLocaleDateString('ar-EG', { month: 'long' })}</p>
-                        <p className={`text-sm font-medium ${textColor}`}>{status}</p>
+                    <div key={month.getMonth()} className={`rounded-lg p-2.5 text-center md:p-3 ${color}`}>
+                        <p className="text-sm font-semibold text-gray-800 md:text-base">{month.toLocaleDateString('ar-EG', { month: 'long' })}</p>
+                        <p className={`text-xs font-medium md:text-sm ${textColor}`}>{status}</p>
                     </div>
                 );
             })}
@@ -466,22 +466,22 @@ const FinancialRecordCard: React.FC<{ orphanId: number }> = ({ orphanId }) => {
     return (
         <InfoCard title="السجل المالي" icon={CashIcon}>
             {relatedTransactions.length > 0 ? (
-                <div className="space-y-3 -mx-2 max-h-60 overflow-y-auto pr-2">
+                <div className="max-h-60 space-y-3 overflow-y-auto pe-2">
                     {relatedTransactions.map(tx => (
-                        <div key={tx.id} className="flex items-center justify-between p-2 rounded-lg bg-gray-50">
-                            <div className="flex items-center gap-3">
-                                <span className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${tx.type === TransactionType.Income ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                        <div key={tx.id} className="flex flex-col gap-3 rounded-lg bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${tx.type === TransactionType.Income ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                                     {tx.type === TransactionType.Income ? 
                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg> :
                                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
                                     }
                                 </span>
-                                <div>
+                                <div className="min-w-0">
                                     <p className="text-sm font-semibold text-gray-800">{tx.description}</p>
                                     <p className="text-xs text-gray-500">{tx.date.toLocaleDateString('ar-EG')}</p>
                                 </div>
                             </div>
-                            <span className={`text-lg font-bold ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>
+                            <span className={`text-base font-bold sm:text-lg ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>
                                 {tx.type === TransactionType.Income ? '+' : '-'}${tx.amount.toLocaleString()}
                             </span>
                         </div>
@@ -554,19 +554,19 @@ const InteractiveCalendar: React.FC<{
     const weekdays = ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'];
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-4">
-                <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+        <div className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+                <button onClick={() => changeMonth(-1)} className="flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
-                <h4 className="text-lg font-bold text-gray-700">
+                <h4 className="text-center text-base font-bold text-gray-700 md:text-lg">
                     {currentDate.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' })}
                 </h4>
-                <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors">
+                <button onClick={() => changeMonth(1)} className="flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100">
                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-sm text-text-secondary mb-2">
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-text-secondary md:text-sm">
                 {weekdays.map(day => <div key={day} className="font-semibold">{day}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-1">
@@ -582,7 +582,7 @@ const InteractiveCalendar: React.FC<{
                         <div 
                             key={dayNumber} 
                             onClick={() => onDayClick(date, dayEvents || [])}
-                            className={`h-12 flex flex-col items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 relative group ${isToday ? 'bg-primary text-white font-bold' : 'hover:bg-primary-light'}`}
+                            className={`group relative flex aspect-square min-h-[2.65rem] cursor-pointer flex-col items-center justify-center rounded-lg p-1 text-xs transition-colors duration-200 md:min-h-[3rem] md:text-sm ${isToday ? 'bg-primary font-bold text-white' : 'hover:bg-primary-light'}`}
                             title={dayEvents && dayEvents.length > 0 ? `${dayEvents.length} حدث` : `إضافة حدث ليوم ${dayNumber}`}
                         >
                             <span className="z-10">{dayNumber}</span>
@@ -600,7 +600,7 @@ const InteractiveCalendar: React.FC<{
                                 </div>
                             )}
                             {dayEvents && (
-                                <div className="absolute hidden group-hover:block bottom-full mb-2 w-max max-w-xs bg-gray-800 text-white text-xs rounded-md shadow-lg py-1 px-2 z-20 pointer-events-none">
+                                <div className="pointer-events-none absolute bottom-full z-20 mb-2 hidden w-max max-w-xs rounded-md bg-gray-800 px-2 py-1 text-xs text-white shadow-lg group-hover:block md:block">
                                     {dayEvents.map((e, i) => <div key={i} className="py-0.5">{e.title}</div>)}
                                 </div>
                             )}
@@ -621,7 +621,7 @@ const Lightbox: React.FC<{ src: string; type: 'image' | 'video'; onClose: () => 
         className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
         onClick={onClose}
     >
-        <button className="absolute top-4 right-4 text-white hover:text-gray-300 p-2">
+        <button className="absolute end-4 top-4 p-2 text-white hover:text-gray-300">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
         <div className="max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
@@ -637,7 +637,7 @@ const Lightbox: React.FC<{ src: string; type: 'image' | 'video'; onClose: () => 
 const TabButton: React.FC<{ active: boolean; label: string; onClick: () => void; icon?: React.ReactNode }> = ({ active, label, onClick, icon }) => (
     <button
         onClick={onClick}
-        className={`relative px-6 py-3 text-sm font-bold transition-colors duration-200 flex items-center gap-2 whitespace-nowrap
+        className={`relative flex min-h-[44px] snap-start items-center gap-2 whitespace-nowrap rounded-t-xl px-4 py-3 text-sm font-bold transition-colors duration-200 md:px-6
         ${active ? 'text-primary' : 'text-gray-500 hover:text-gray-700'}`}
     >
         {icon}
@@ -645,7 +645,7 @@ const TabButton: React.FC<{ active: boolean; label: string; onClick: () => void;
         {active && (
             <motion.div
                 layoutId="activeTab"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                className="absolute inset-x-0 bottom-0 h-0.5 bg-primary"
             />
         )}
     </button>
@@ -673,7 +673,7 @@ const EditableField: React.FC<{
                     <select 
                         value={value} 
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary"
+                        className="min-h-[44px] w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:ring-1 focus:ring-primary"
                     >
                         {options.map(opt => (
                             <option key={opt || 'empty'} value={opt}>{opt || '—'}</option>
@@ -684,14 +684,14 @@ const EditableField: React.FC<{
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
                         rows={textareaRows}
-                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary resize-y min-h-[4rem]"
+                        className="min-h-[6rem] w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-1 focus:ring-primary"
                     />
                 ) : (
                     <input 
                         type={type} 
                         value={value} 
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary"
+                        className="min-h-[44px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-1 focus:ring-primary"
                     />
                 )
             ) : (
@@ -720,7 +720,7 @@ const ProgramParticipationFields: React.FC<{
                     <select
                         value={status}
                         onChange={(e) => onStatus(e.target.value as ProgramParticipation['status'])}
-                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:ring-1 focus:ring-primary"
+                        className="min-h-[44px] w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:ring-1 focus:ring-primary"
                     >
                         {PROGRAM_STATUS_OPTIONS.map((s) => (
                             <option key={s} value={s}>{s}</option>
@@ -733,7 +733,7 @@ const ProgramParticipationFields: React.FC<{
                         value={details}
                         onChange={(e) => onDetails(e.target.value)}
                         rows={3}
-                        className="w-full p-1.5 border border-gray-200 rounded-lg text-sm focus:ring-1 focus:ring-primary resize-y"
+                        className="min-h-[6rem] w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-1 focus:ring-primary"
                     />
                 </div>
             </>
@@ -1034,6 +1034,14 @@ const OrphanProfile: React.FC = () => {
   if (!orphan && !orphanLoading) {
     return <div className="text-center text-red-500">لم يتم العثور على اليتيم.</div>;
   }
+
+  const handleBackNavigation = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate('/orphans');
+  };
 
   const handleEdit = () => {
     setIsEditMode(true);
@@ -1451,10 +1459,10 @@ const OrphanProfile: React.FC = () => {
         {isSummaryModalOpen && (
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+                className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4"
                 onClick={() => setIsSummaryModalOpen(false)}
             >
-                <div className="bg-white rounded-xl shadow-xl p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="max-h-[92svh] w-full overflow-y-auto rounded-t-[1.75rem] bg-white p-4 shadow-xl md:max-h-[80vh] md:max-w-lg md:rounded-xl md:p-6" onClick={e => e.stopPropagation()}>
                     <h3 className="text-xl font-bold mb-4">التقرير الموجز لـ {orphan.name}</h3>
                     {isSummaryLoading ? (
                         <div className="space-y-3 animate-pulse">
@@ -1478,10 +1486,10 @@ const OrphanProfile: React.FC = () => {
         {isNeedsModalOpen && (
             <motion.div 
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+                className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4"
                 onClick={() => setIsNeedsModalOpen(false)}
             >
-                <div className="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                <div className="max-h-[92svh] w-full overflow-y-auto rounded-t-[1.75rem] bg-white p-4 shadow-xl md:max-h-[90vh] md:max-w-2xl md:rounded-xl md:p-6" onClick={e => e.stopPropagation()}>
                     <h3 className="text-xl font-bold mb-4 border-b pb-3">تقرير تقييم الاحتياجات لـ {orphan.name}</h3>
                     {isNeedsLoading ? (
                         <div className="space-y-3 animate-pulse">
@@ -1501,28 +1509,38 @@ const OrphanProfile: React.FC = () => {
         )}
     </AnimatePresence>
 
-    <div ref={profileRef} className="bg-bg-page min-h-screen pb-20">
+    <div ref={profileRef} className="min-h-screen bg-bg-page pb-24 md:pb-20">
         {/* Header / Cover */}
-        <div className="relative h-48 bg-gradient-to-r from-primary to-primary-hover rounded-b-[2.5rem] shadow-lg mb-16">
+        <div className="relative mb-16 h-40 rounded-b-[2.5rem] bg-gradient-to-r from-primary to-primary-hover shadow-lg sm:h-44 md:mb-16 md:h-48">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,_white,_transparent_60%)]" />
             
             {/* Actions Toolbar — edit/save primary control is sticky bar below header */}
-            <div className="absolute top-4 left-4 flex gap-2 no-print">
-                {isSponsorOfOrphan && (
-                    <button onClick={() => setIsNoteModalOpen(true)} className="bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg backdrop-blur-sm transition text-sm font-semibold">ملاحظة</button>
-                )}
-                <button id="export-button-desktop" onClick={handleExportPDF} className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition" title="طباعة">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <div className="absolute start-3 end-3 top-3 flex items-start justify-between gap-2 no-print md:start-4 md:end-4 md:top-4">
+                <button
+                    type="button"
+                    onClick={handleBackNavigation}
+                    className="flex min-h-[44px] items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/30"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    رجوع
                 </button>
-                <button onClick={handleGenerateSummaryReport} className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-lg backdrop-blur-sm transition flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                    <span className="hidden sm:inline text-sm">تقرير ذكي</span>
-                </button>
+                <div className="flex max-w-[68%] flex-wrap justify-end gap-2 md:max-w-none">
+                    {isSponsorOfOrphan && (
+                        <button onClick={() => setIsNoteModalOpen(true)} className="min-h-[44px] rounded-full bg-white/20 px-3 py-2 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/30">ملاحظة</button>
+                    )}
+                    <button id="export-button-desktop" onClick={handleExportPDF} className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-white/20 p-2 text-white backdrop-blur-sm transition hover:bg-white/30" title="طباعة">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    </button>
+                    <button onClick={handleGenerateSummaryReport} className="flex min-h-[44px] items-center gap-1 rounded-full bg-white/20 px-3 py-2 text-white backdrop-blur-sm transition hover:bg-white/30">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                        <span className="hidden text-sm sm:inline">تقرير ذكي</span>
+                    </button>
+                </div>
             </div>
 
             {/* Avatar + Name */}
-            <div className="absolute -bottom-14 right-8 md:right-16 flex items-center gap-6 w-full">
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-32 h-32 md:w-40 md:h-40 rounded-full border-4 border-white shadow-md bg-white overflow-hidden flex-shrink-0">
+            <div className="absolute -bottom-12 start-4 end-4 flex flex-col items-center gap-4 text-center md:-bottom-14 md:start-auto md:end-16 md:flex-row md:items-center md:gap-6 md:text-start">
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-4 border-white bg-white shadow-md md:h-40 md:w-40">
                     {orphan.uuid ? (
                         <AvatarUpload
                             currentAvatarUrl={orphan.photoUrl}
@@ -1536,42 +1554,42 @@ const OrphanProfile: React.FC = () => {
                             src={orphan.photoUrl}
                             name={orphan.name}
                             size="xl"
-                            className="!w-full !h-full !text-4xl"
+                            className="!h-full !w-full !text-3xl md:!text-4xl"
                         />
                     )}
                 </motion.div>
-                <div className="text-white drop-shadow-md -translate-y-12 md:-translate-y-14">
+                <div className="max-w-full text-white drop-shadow-md md:-translate-y-12">
                     {isEditMode ? (
                         <input
                             type="text"
                             value={editFormData.name}
                             onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                            className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 bg-white/90 border-2 border-primary rounded-lg px-4 py-2 w-full max-w-xs"
+                            className="w-full max-w-xs rounded-lg border-2 border-primary bg-white/90 px-4 py-2 text-center text-xl font-bold text-gray-900 md:text-start md:text-4xl"
                         />
                     ) : (
-                        <h1 className="text-3xl md:text-4xl font-bold">{orphan.name}</h1>
+                        <h1 className="text-2xl font-bold md:text-4xl">{orphan.name}</h1>
                     )}
                     <p className="opacity-90 text-sm md:text-base font-medium">{(isEditMode ? editFormData.grade : orphan.grade) || '—'} • {orphan.age} سنوات</p>
                 </div>
             </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="mx-auto max-w-6xl px-3 sm:px-4 md:px-6">
             {hasEditPermission && (
-                <div className="sticky top-0 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mb-2 bg-bg-page/95 backdrop-blur-sm border-b border-gray-200/80 no-print flex flex-wrap items-center justify-between gap-2">
+                <div className="sticky top-14 z-20 -mx-3 mb-2 flex flex-col gap-3 border-b border-gray-200/80 bg-bg-page/95 px-3 py-3 backdrop-blur-sm no-print sm:-mx-4 sm:px-4 md:top-0 md:-mx-6 md:flex-row md:items-center md:justify-between md:px-6">
                     <span className="text-sm font-semibold text-gray-600">ملف اليتيم</span>
-                    <div className="flex gap-2">
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                         {isEditMode ? (
                             <>
-                                <button type="button" onClick={handleCancelEdit} className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50">
+                                <button type="button" onClick={handleCancelEdit} className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                     إلغاء
                                 </button>
-                                <button type="button" onClick={handleSaveEdit} disabled={isSaving} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover disabled:opacity-60">
+                                <button type="button" onClick={handleSaveEdit} disabled={isSaving} className="min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:opacity-60">
                                     {isSaving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
                                 </button>
                             </>
                         ) : (
-                            <button type="button" onClick={handleEdit} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover">
+                            <button type="button" onClick={handleEdit} className="min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover">
                                 تعديل الملف
                             </button>
                         )}
@@ -1579,7 +1597,7 @@ const OrphanProfile: React.FC = () => {
                 </div>
             )}
             {/* Tabs Navigation */}
-            <div className="flex overflow-x-auto border-b border-gray-200 mb-6 no-print" style={{ scrollbarWidth: 'none' }}>
+            <div className="-mx-3 mb-5 flex snap-x snap-mandatory overflow-x-auto border-b border-gray-200 px-3 no-print [scrollbar-width:none] sm:mx-0 sm:px-0 md:mb-6" style={{ scrollbarWidth: 'none' }}>
                 <TabButton active={activeTab === 'overview'} label="نظرة عامة" onClick={() => setActiveTab('overview')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>} />
                 <TabButton active={activeTab === 'education'} label="التعليم" onClick={() => setActiveTab('education')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>} />
                 <TabButton active={activeTab === 'timeline'} label="الجدول الزمني" onClick={() => setActiveTab('timeline')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>} />
@@ -1592,7 +1610,7 @@ const OrphanProfile: React.FC = () => {
                 {activeTab === 'overview' && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Personal Info Card */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <div className="flex justify-between items-center mb-4 border-b pb-2">
                                 <h3 className="font-bold text-lg text-gray-800">البيانات الشخصية</h3>
                                 {!isEditMode && (orphan.healthStatus || '').trim() !== '' && (
@@ -1601,7 +1619,7 @@ const OrphanProfile: React.FC = () => {
                                     </span>
                                 )}
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div className="col-span-2">
                                     <EditableField
                                         label="الحالة الصحية"
@@ -1637,11 +1655,11 @@ const OrphanProfile: React.FC = () => {
                         </div>
 
                         {/* Sponsorship Info */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">تفاصيل الكفالة</h3>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-600 md:h-10 md:w-10">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                                     </div>
                                     <div>
@@ -1650,13 +1668,13 @@ const OrphanProfile: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-50 text-purple-600 md:h-10 md:w-10">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                     </div>
                                     <div>
                                         <p className="text-xs text-gray-500">نوع الكفالة</p>
                                         {isEditMode ? (
-                                            <input type="text" value={editFormData.sponsorshipType} onChange={(e) => setEditFormData({ ...editFormData, sponsorshipType: e.target.value })} className="w-full p-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-primary" />
+                                            <input type="text" value={editFormData.sponsorshipType} onChange={(e) => setEditFormData({ ...editFormData, sponsorshipType: e.target.value })} className="min-h-[44px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-1 focus:ring-primary" />
                                         ) : (
                                             <p className="font-semibold text-gray-800">{orphan.sponsorshipType}</p>
                                         )}
@@ -1666,9 +1684,9 @@ const OrphanProfile: React.FC = () => {
                         </div>
 
                         {/* Social & Housing */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">الحالة الاجتماعية والسكن</h3>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <EditableField label="العائلة" value={isEditMode ? editFormData.familyStatus : orphan.familyStatus} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, familyStatus: v })} />
                                 <EditableField label="السكن" value={isEditMode ? editFormData.housingStatus : orphan.housingStatus} isEditing={isEditMode} onChange={(v) => setEditFormData({ ...editFormData, housingStatus: v })} />
                             </div>
@@ -1677,10 +1695,10 @@ const OrphanProfile: React.FC = () => {
                                 {isEditMode && hasEditPermission ? (
                                     <div className="space-y-3">
                                         {familyDraft.map((row, idx) => (
-                                            <div key={row.id || `new-${idx}`} className="flex flex-wrap gap-2 items-center">
+                                            <div key={row.id || `new-${idx}`} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                                                 <input
                                                     type="text"
-                                                    className="flex-1 min-w-[140px] p-1.5 border border-gray-200 rounded-lg text-sm"
+                                                    className="min-h-[44px] flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                                     placeholder="صلة القرابة"
                                                     value={row.relationship}
                                                     onChange={(e) => {
@@ -1692,7 +1710,7 @@ const OrphanProfile: React.FC = () => {
                                                 <input
                                                     type="number"
                                                     min={0}
-                                                    className="w-24 p-1.5 border border-gray-200 rounded-lg text-sm"
+                                                    className="min-h-[44px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm sm:w-24"
                                                     placeholder="العمر"
                                                     value={row.age}
                                                     onChange={(e) => {
@@ -1703,7 +1721,7 @@ const OrphanProfile: React.FC = () => {
                                                 />
                                                 <button
                                                     type="button"
-                                                    className="text-sm text-red-600 hover:underline px-2"
+                                                    className="min-h-[44px] rounded-lg px-3 text-sm font-semibold text-red-600 hover:bg-red-50 sm:px-2"
                                                     onClick={() => setFamilyDraft(familyDraft.filter((_, i) => i !== idx))}
                                                 >
                                                     حذف
@@ -1712,7 +1730,7 @@ const OrphanProfile: React.FC = () => {
                                         ))}
                                         <button
                                             type="button"
-                                            className="text-sm font-semibold text-primary hover:underline"
+                                            className="min-h-[44px] self-start rounded-lg px-3 text-sm font-semibold text-primary hover:bg-primary-light"
                                             onClick={() => setFamilyDraft([...familyDraft, { relationship: '', age: '' }])}
                                         >
                                             + إضافة فرد
@@ -1735,7 +1753,7 @@ const OrphanProfile: React.FC = () => {
                         </div>
 
                         {/* Interests & Needs */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <div className="space-y-4">
                                 <div>
                                     <h4 className="font-bold text-gray-800 mb-3 flex items-center gap-2">
@@ -1772,13 +1790,13 @@ const OrphanProfile: React.FC = () => {
                                         )}
                                     </div>
                                     {isEditMode && (
-                                        <div className="flex flex-wrap gap-2 mt-2">
+                                        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                                             <input
                                                 type="text"
                                                 value={hobbyInput}
                                                 onChange={(e) => setHobbyInput(e.target.value)}
                                                 placeholder="أضف هواية..."
-                                                className="flex-1 min-w-[160px] p-1.5 border border-gray-200 rounded-lg text-sm"
+                                                className="min-h-[44px] flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
@@ -1792,7 +1810,7 @@ const OrphanProfile: React.FC = () => {
                                             />
                                             <button
                                                 type="button"
-                                                className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-semibold hover:bg-gray-200"
+                                                className="min-h-[44px] rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold hover:bg-gray-200"
                                                 onClick={() => {
                                                     const t = hobbyInput.trim();
                                                     if (t) {
@@ -1838,13 +1856,13 @@ const OrphanProfile: React.FC = () => {
                                         )}
                                     </ul>
                                     {isEditMode && (
-                                        <div className="flex flex-wrap gap-2 mt-2">
+                                        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                                             <input
                                                 type="text"
                                                 value={needInput}
                                                 onChange={(e) => setNeedInput(e.target.value)}
                                                 placeholder="أضف احتياجاً أو أمنية..."
-                                                className="flex-1 min-w-[160px] p-1.5 border border-gray-200 rounded-lg text-sm"
+                                                className="min-h-[44px] flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
@@ -1861,7 +1879,7 @@ const OrphanProfile: React.FC = () => {
                                             />
                                             <button
                                                 type="button"
-                                                className="px-3 py-1.5 bg-gray-100 rounded-lg text-sm font-semibold hover:bg-gray-200"
+                                                className="min-h-[44px] rounded-lg bg-gray-100 px-4 py-2 text-sm font-semibold hover:bg-gray-200"
                                                 onClick={() => {
                                                     const t = needInput.trim();
                                                     if (t) {
@@ -1882,7 +1900,7 @@ const OrphanProfile: React.FC = () => {
                         </div>
 
                         {/* Faye Programs - Full Width */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:col-span-2 md:p-6">
                             <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">برامج فيء</h3>
                             <div className="space-y-4">
                                 <ProgramParticipationFields
@@ -1895,7 +1913,7 @@ const OrphanProfile: React.FC = () => {
                                 />
                                 <div className="border-t pt-4">
                                     <h4 className="font-bold text-gray-700 text-sm mb-3">الدعم النفسي</h4>
-                                    <div className="grid sm:grid-cols-2 gap-4">
+                                    <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="bg-gray-50 p-3 rounded-lg space-y-2">
                                             <p className="font-semibold text-gray-700 text-xs">للطفل ({orphan.name})</p>
                                             <ProgramParticipationFields
@@ -1925,7 +1943,7 @@ const OrphanProfile: React.FC = () => {
 
                         {/* Sponsor Note (visible to sponsor only) */}
                         {userProfile?.role === 'sponsor' && displayNote && (
-                            <div className="bg-blue-50 p-6 rounded-xl shadow-sm border-2 border-blue-200 md:col-span-2">
+                            <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-4 shadow-sm md:col-span-2 md:p-6">
                                 <h3 className="font-bold text-lg text-gray-800 mb-3">ملاحظة الكافل</h3>
                                 <div className="space-y-2">
                                     <div className="flex justify-between items-center">
@@ -1944,11 +1962,11 @@ const OrphanProfile: React.FC = () => {
                 {/* ==================== TAB 2: EDUCATION ==================== */}
                 {activeTab === 'education' && (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
-                        <div className="grid md:grid-cols-3 gap-6">
+                        <div className="grid gap-4 md:grid-cols-3 md:gap-6">
                             {/* Academic Performance Chart */}
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 md:col-span-2">
-                                <h3 className="font-bold text-lg text-gray-800 mb-6">تطور الأداء الدراسي</h3>
-                                <div className="h-[300px] w-full" dir="ltr">
+                            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:col-span-2 md:p-6">
+                                <h3 className="mb-4 text-lg font-bold text-gray-800 md:mb-6">تطور الأداء الدراسي</h3>
+                                <div className="h-64 w-full md:h-[300px]" dir="ltr">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <LineChart data={academicData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -1966,7 +1984,7 @@ const OrphanProfile: React.FC = () => {
 
                             {/* Academic Summary */}
                             <div className="space-y-6">
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                                     <h3 className="font-bold text-gray-800 mb-4">الملخص الأكاديمي</h3>
                                     <div className="space-y-4">
                                         <div>
@@ -1994,7 +2012,7 @@ const OrphanProfile: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                                     <h3 className="font-bold text-gray-800 mb-3">البرنامج التعليمي</h3>
                                     <ProgramParticipationFields
                                         isEditing={isEditMode && hasEditPermission}
@@ -2009,9 +2027,9 @@ const OrphanProfile: React.FC = () => {
                         </div>
 
                         {/* Psychological Support */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <h3 className="font-bold text-lg text-gray-800 mb-4">الدعم النفسي</h3>
-                            <div className="grid sm:grid-cols-2 gap-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="bg-gray-50 p-4 rounded-lg space-y-2">
                                     <p className="font-semibold text-gray-700 text-sm">للطفل ({orphan.name})</p>
                                     <ProgramParticipationFields
@@ -2043,17 +2061,17 @@ const OrphanProfile: React.FC = () => {
                 {activeTab === 'timeline' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                         {/* Activity Timeline */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-lg text-gray-800">سجل النشاطات والأحداث</h3>
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
+                            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <h3 className="text-lg font-bold text-gray-800">سجل النشاطات والأحداث</h3>
                                 {hasEditPermission && (
-                                <button type="button" onClick={() => setIsAddLogModalOpen(true)} className="text-sm font-semibold py-1.5 px-4 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
+                                <button type="button" onClick={() => setIsAddLogModalOpen(true)} className="flex min-h-[44px] w-full items-center justify-center gap-1 rounded-full bg-primary-light px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white sm:w-auto">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                     إضافة تحديث
                                 </button>
                                 )}
                             </div>
-                            <div className="relative border-r-2 border-gray-200 mr-3 space-y-8">
+                            <div className="relative ms-3 space-y-6 border-s-2 border-gray-200 md:space-y-8">
                                 {[
                                     ...orphan.updateLogs.map((l) => ({ ...l, type: 'log' as const })),
                                     ...orphan.achievements.map((a) => ({ ...a, type: 'achievement' as const })),
@@ -2068,9 +2086,9 @@ const OrphanProfile: React.FC = () => {
                                         const rowKey = `${item.type}:${item.id}`;
                                         const isEditingRow = timelineEditKey === rowKey;
                                         return (
-                                            <div key={rowKey} className="relative pr-8">
+                                            <div key={rowKey} className="relative ps-6 md:ps-8">
                                                 <div
-                                                    className={`absolute -right-[9px] top-1 w-4 h-4 rounded-full border-2 border-white shadow-sm
+                                                    className={`absolute start-0 top-1 h-3.5 w-3.5 -translate-x-1/2 rounded-full border-2 border-white shadow-sm md:h-4 md:w-4
                                                 ${item.type === 'achievement' ? 'bg-green-500' : item.type === 'occasion' ? 'bg-purple-500' : 'bg-blue-500'}
                                             `}
                                                 ></div>
@@ -2100,14 +2118,14 @@ const OrphanProfile: React.FC = () => {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => startTimelineEdit(item)}
-                                                                className="text-xs font-semibold text-primary hover:underline"
+                                                                className="min-h-[36px] rounded-lg px-2 text-xs font-semibold text-primary hover:bg-primary-light"
                                                             >
                                                                 تعديل
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => removeTimelineItem(item)}
-                                                                className="text-xs font-semibold text-red-600 hover:underline"
+                                                                className="min-h-[36px] rounded-lg px-2 text-xs font-semibold text-red-600 hover:bg-red-50"
                                                             >
                                                                 حذف
                                                             </button>
@@ -2125,7 +2143,7 @@ const OrphanProfile: React.FC = () => {
                                                                         setTimelineDraft({ ...timelineDraft, note: e.target.value })
                                                                     }
                                                                     rows={4}
-                                                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm resize-y"
+                                                                    className="min-h-[6rem] w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                                                 />
                                                             </>
                                                         )}
@@ -2138,7 +2156,7 @@ const OrphanProfile: React.FC = () => {
                                                                     onChange={(e) =>
                                                                         setTimelineDraft({ ...timelineDraft, title: e.target.value })
                                                                     }
-                                                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm"
+                                                                    className="min-h-[44px] w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                                                 />
                                                             </>
                                                         )}
@@ -2154,7 +2172,7 @@ const OrphanProfile: React.FC = () => {
                                                                         })
                                                                     }
                                                                     rows={3}
-                                                                    className="w-full p-2 border border-gray-200 rounded-lg text-sm resize-y"
+                                                                    className="min-h-[6rem] w-full resize-y rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                                                 />
                                                             </>
                                                         )}
@@ -2165,20 +2183,20 @@ const OrphanProfile: React.FC = () => {
                                                             onChange={(e) =>
                                                                 setTimelineDraft({ ...timelineDraft, date: e.target.value })
                                                             }
-                                                            className="w-full max-w-xs p-2 border border-gray-200 rounded-lg text-sm"
+                                                            className="min-h-[44px] w-full max-w-xs rounded-lg border border-gray-200 px-3 py-2 text-sm"
                                                         />
-                                                        <div className="flex gap-2 pt-1">
+                                                        <div className="flex flex-col gap-2 pt-1 sm:flex-row">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => saveTimelineEdit(item)}
-                                                                className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-hover"
+                                                                className="min-h-[44px] rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
                                                             >
                                                                 حفظ
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 onClick={cancelTimelineEdit}
-                                                                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                                                                className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                                                             >
                                                                 إلغاء
                                                             </button>
@@ -2207,30 +2225,30 @@ const OrphanProfile: React.FC = () => {
                         </div>
 
                         {/* Interactive Calendar */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <h3 className="font-bold text-lg text-gray-800 mb-4">الرزنامة التفاعلية</h3>
                             <InteractiveCalendar orphan={orphan} occasions={orphanOccasions} onDayClick={handleDayClickForEvent} />
                         </div>
 
                         {/* Occasions & Gifts */}
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="grid gap-4 md:grid-cols-2 md:gap-6">
+                            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                                 <h3 className="font-bold text-gray-800 mb-3">مناسبات خاصة</h3>
                                 {orphanOccasions.length > 0 ? orphanOccasions.map(occ => (
                                     <div key={occ.id} className="flex items-center gap-2 py-2 border-b last:border-0">
                                         <span className="w-2 h-2 rounded-full bg-purple-500"></span>
                                         <span className="font-semibold text-sm text-gray-800">{occ.title}</span>
-                                        <span className="text-xs text-gray-500 mr-auto">{formatDateArEG(occ.date)}</span>
+                                        <span className="ms-auto text-xs text-gray-500">{formatDateArEG(occ.date)}</span>
                                     </div>
                                 )) : <p className="text-sm text-gray-400">لا توجد مناسبات.</p>}
                             </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                                 <h3 className="font-bold text-gray-800 mb-3">الهدايا</h3>
                                 {orphan.gifts.length > 0 ? orphan.gifts.map(gift => (
                                     <div key={gift.id} className="flex items-center gap-2 py-2 border-b last:border-0">
                                         <span className="w-2 h-2 rounded-full bg-yellow-500"></span>
                                         <span className="font-semibold text-sm text-gray-800">{gift.item}</span>
-                                        <span className="text-xs text-gray-500 mr-auto">من {gift.from}</span>
+                                        <span className="ms-auto text-xs text-gray-500">من {gift.from}</span>
                                     </div>
                                 )) : <p className="text-sm text-gray-400">لا توجد هدايا مسجلة.</p>}
                             </div>
@@ -2241,16 +2259,16 @@ const OrphanProfile: React.FC = () => {
                 {/* ==================== TAB 4: GALLERY ==================== */}
                 {activeTab === 'gallery' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-bold text-lg text-gray-800">معرض الصور والإنجازات</h3>
+                        <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <h3 className="text-lg font-bold text-gray-800">معرض الصور والإنجازات</h3>
                             {hasEditPermission && (
-                            <button type="button" onClick={() => setIsAddAchievementModalOpen(true)} className="text-sm font-semibold py-1.5 px-4 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex items-center gap-1">
+                            <button type="button" onClick={() => setIsAddAchievementModalOpen(true)} className="flex min-h-[44px] w-full items-center justify-center gap-1 rounded-full bg-primary-light px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white sm:w-auto">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                 إضافة إنجاز
                             </button>
                             )}
                         </div>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
                             {orphan.achievements.filter(a => a.mediaUrl).map((achievement, idx) => (
                                 <div 
                                     key={idx} 
@@ -2278,7 +2296,7 @@ const OrphanProfile: React.FC = () => {
 
                         {/* Achievements List */}
                         {orphan.achievements.length > 0 && (
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mt-6">
+                        <div className="mt-6 rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                                 <h3 className="font-bold text-gray-800 mb-4">قائمة الإنجازات</h3>
                                 <div className="space-y-3">
                                     {orphan.achievements.map(ach => (
@@ -2299,12 +2317,12 @@ const OrphanProfile: React.FC = () => {
                 {/* ==================== TAB 5: FINANCIAL ==================== */}
                 {activeTab === 'financial' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                        <div className="grid md:grid-cols-3 gap-6">
+                        <div className="grid gap-4 md:grid-cols-3 md:gap-6">
                             {/* Payment Records Table */}
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 col-span-2">
-                                <h3 className="font-bold text-lg text-gray-800 mb-4">سجل الدفعات ({new Date().getFullYear()})</h3>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-right">
+                            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:col-span-2 md:p-6">
+                                <h3 className="mb-4 text-lg font-bold text-gray-800">سجل الدفعات ({new Date().getFullYear()})</h3>
+                                <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+                                    <table className="w-full min-w-[640px] text-right text-sm">
                                         <thead className="bg-gray-50 text-gray-600">
                                             <tr>
                                                 <th className="p-3 rounded-r-lg">التاريخ المستحق</th>
@@ -2322,7 +2340,7 @@ const OrphanProfile: React.FC = () => {
                                                             <td className="p-2 align-middle">
                                                                 <input
                                                                     type="date"
-                                                                    className="w-full p-1 border border-gray-200 rounded text-xs"
+                                                                    className="min-h-[44px] w-full rounded border border-gray-200 px-2 py-1 text-xs"
                                                                     value={paymentEditDraft.dueDate}
                                                                     onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, dueDate: e.target.value })}
                                                                 />
@@ -2332,14 +2350,14 @@ const OrphanProfile: React.FC = () => {
                                                                     type="number"
                                                                     step="0.01"
                                                                     min={0}
-                                                                    className="w-full p-1 border border-gray-200 rounded text-xs"
+                                                                    className="min-h-[44px] w-full rounded border border-gray-200 px-2 py-1 text-xs"
                                                                     value={paymentEditDraft.amount}
                                                                     onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, amount: e.target.value })}
                                                                 />
                                                             </td>
                                                             <td className="p-2 align-middle">
                                                                 <select
-                                                                    className="w-full p-1 border border-gray-200 rounded text-xs bg-white"
+                                                                    className="min-h-[44px] w-full rounded border border-gray-200 bg-white px-2 py-1 text-xs"
                                                                     value={paymentEditDraft.status}
                                                                     onChange={(e) =>
                                                                         setPaymentEditDraft({
@@ -2356,7 +2374,7 @@ const OrphanProfile: React.FC = () => {
                                                             <td className="p-2 align-middle">
                                                                 <input
                                                                     type="date"
-                                                                    className="w-full p-1 border border-gray-200 rounded text-xs"
+                                                                    className="min-h-[44px] w-full rounded border border-gray-200 px-2 py-1 text-xs"
                                                                     value={paymentEditDraft.paidDate}
                                                                     onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, paidDate: e.target.value })}
                                                                 />
@@ -2365,7 +2383,7 @@ const OrphanProfile: React.FC = () => {
                                                                 <td className="p-2 align-middle whitespace-nowrap">
                                                                     <button
                                                                         type="button"
-                                                                        className="text-xs font-semibold text-primary hover:underline ml-2"
+                                                                    className="me-2 text-xs font-semibold text-primary hover:underline"
                                                                         onClick={async () => {
                                                                             try {
                                                                                 const amt = parseFloat(paymentEditDraft.amount);
@@ -2460,11 +2478,11 @@ const OrphanProfile: React.FC = () => {
                             </div>
 
                             {/* Financial Summary Card */}
-                            <div className="bg-primary text-white p-6 rounded-xl shadow-lg flex flex-col justify-between relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-10 -mt-10"></div>
+                            <div className="relative order-first flex flex-col justify-between overflow-hidden rounded-xl bg-primary p-5 text-white shadow-lg md:order-none md:p-6">
+                                <div className="absolute end-0 top-0 h-24 w-24 -me-8 -mt-8 rounded-full bg-white opacity-10 md:h-32 md:w-32 md:-me-10 md:-mt-10"></div>
                                 <div>
                                     <p className="text-white/80 text-sm mb-1">الرصيد المستحق</p>
-                                    <h3 className="text-4xl font-bold mb-6">
+                                    <h3 className="mb-5 text-3xl font-bold md:mb-6 md:text-4xl">
                                         ${orphan.payments.filter(p => p.status !== PaymentStatus.Paid).reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
                                     </h3>
                                     <p className="text-white/80 text-sm mb-1">إجمالي المدفوعات</p>
@@ -2476,7 +2494,7 @@ const OrphanProfile: React.FC = () => {
                         </div>
 
                         {/* Yearly Payment Summary */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <h3 className="font-bold text-lg text-gray-800 mb-4">ملخص الدفعات الشهري</h3>
                             <YearlyPaymentSummary payments={orphan.payments} />
                         </div>
@@ -2485,12 +2503,12 @@ const OrphanProfile: React.FC = () => {
                         <FinancialRecordCard orphanId={orphan.id} />
 
                         {/* AI Analytics */}
-                        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                                 تحليلات الذكاء الاصطناعي
                             </h3>
-                            <div className="grid sm:grid-cols-2 gap-4">
+                            <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <h4 className="font-bold text-gray-800">موجز سريع للحالة</h4>
                                     <p className="text-sm my-2 text-gray-600">احصل على تقرير فوري يلخص الوضع الأكاديمي والمالي لليتيم مع توصية سريعة.</p>
@@ -2511,22 +2529,6 @@ const OrphanProfile: React.FC = () => {
                 )}
             </div>
         </div>
-    </div>
-
-    {/* Mobile Action Bar */}
-    <div className="mobile-action-bar hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] bg-white p-2 text-center shadow-[0_-2px_10px_rgba(0,0,0,0.1)] no-print grid grid-cols-5 gap-1">
-        {[
-            { key: 'overview' as const, label: 'عامة', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
-            { key: 'education' as const, label: 'التعليم', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg> },
-            { key: 'timeline' as const, label: 'الأحداث', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
-            { key: 'gallery' as const, label: 'المعرض', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> },
-            { key: 'financial' as const, label: 'المالية', icon: <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
-        ].map(tab => (
-            <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`flex flex-col items-center py-1 rounded-lg transition-colors ${activeTab === tab.key ? 'text-primary bg-primary-light' : 'text-gray-500 hover:text-primary'}`}>
-                {tab.icon}
-                <span className="text-xs mt-0.5">{tab.label}</span>
-            </button>
-        ))}
     </div>
 
     {/* Add Achievement Modal */}
@@ -2557,8 +2559,8 @@ const OrphanProfile: React.FC = () => {
 
     {/* Sponsor Note Modal */}
     {isNoteModalOpen && (
-      <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4" onClick={() => setIsNoteModalOpen(false)}>
-        <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black bg-opacity-60 p-0 md:items-center md:p-4" onClick={() => setIsNoteModalOpen(false)}>
+        <div className="w-full rounded-t-[1.75rem] bg-white p-4 shadow-xl md:max-w-2xl md:rounded-xl md:p-6" onClick={(e) => e.stopPropagation()}>
           <h3 className="text-xl font-bold mb-4 text-blue-600 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -2576,21 +2578,21 @@ const OrphanProfile: React.FC = () => {
             value={sponsorNote}
             onChange={(e) => setSponsorNote(e.target.value)}
             placeholder="اكتب ملاحظتك هنا..."
-            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md mb-4 min-h-[200px] resize-y"
+            className="mb-4 min-h-[200px] w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-2"
             autoFocus
           />
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
             <button 
               type="button" 
               onClick={() => setIsNoteModalOpen(false)} 
-              className="py-2 px-4 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold"
+              className="min-h-[44px] rounded-lg bg-gray-100 px-4 py-2 font-semibold text-text-secondary hover:bg-gray-200"
             >
               إلغاء
             </button>
             <button 
               onClick={handleSaveNote}
               disabled={isNoteLoading}
-              className="py-2 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center gap-2"
+              className="flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600 disabled:cursor-not-allowed disabled:bg-blue-300"
             >
               {isNoteLoading ? (
                 <>

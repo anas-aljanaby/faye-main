@@ -3,7 +3,7 @@
 > This document tracks progress across multiple Codex runs.
 > **Read before starting. Update after finishing.**
 
-Last updated: 2026-04-13
+Last updated: 2026-04-14
 
 ---
 
@@ -239,7 +239,7 @@ update notice and Vite chunk-size warning for the large main bundle.
 
 ---
 
-### Task 2.5: Orphan Profile (`/orphan/:id`) `[ ]`
+### Task 2.5: Orphan Profile (`/orphan/:id`) `[x]`
 **Priority:** P1
 **Files likely involved:** `components/OrphanProfile.tsx`
 
@@ -258,9 +258,22 @@ update notice and Vite chunk-size warning for the large main bundle.
 - Back navigation: clear and tappable
 - Reduce all oversized icons
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Reworked `components/OrphanProfile.tsx` into a
+mobile-first layout by compressing the hero, stacking the avatar/name block,
+adding a dedicated tappable back button, and keeping export/report actions
+reachable with 44px targets. The tab rail now scrolls cleanly on phones, the
+overview and education forms collapse to single-column layouts by default,
+the interactive calendar and timeline controls were tightened to fit narrow
+widths, the gallery stays a 2-column grid on mobile, and the financial tab
+now uses a safer overflow wrapper plus reordered summary content for phones.
+Also removed the obsolete page-level mobile action bar and updated the
+profile’s page-specific modals and inline edit controls to use near-full-
+screen mobile sheets with larger touch targets.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` still reports the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle, but no orphan-profile-specific compile issues were
+introduced.
 
 ---
 
@@ -497,5 +510,5 @@ update notice and Vite chunk-size warning for the large main bundle.
 | Phase 3: Polish | 3.1 – 3.4 | Not started |
 
 **Total tasks:** 20
-**Completed:** 7
-**Remaining:** 13
+**Completed:** 8
+**Remaining:** 12
