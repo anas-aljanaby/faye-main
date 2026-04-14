@@ -28,21 +28,43 @@ const AddSponsorModal: React.FC<{
             setName('');
         }
     };
-    
+
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">إضافة كافل جديد</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">اسم الكافل</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" required autoFocus/>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div
+                className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">إضافة كافل جديد</h3>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                        aria-label="إغلاق"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+                    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 md:px-6">
+                        <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-700">اسم الكافل</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                required
+                                autoFocus
+                            />
+                        </div>
                     </div>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold">إضافة</button>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6">
+                        <button type="button" onClick={onClose} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover">إضافة</button>
                     </div>
                 </form>
             </div>
@@ -63,17 +85,37 @@ const EditSponsorModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">تعديل بيانات الكافل</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">اسم الكافل</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div
+                className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">تعديل بيانات الكافل</h3>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                        aria-label="إغلاق"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+                    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 md:px-6">
+                        <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-700">اسم الكافل</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                            />
+                        </div>
                     </div>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold">حفظ التغييرات</button>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6">
+                        <button type="button" onClick={onClose} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover">حفظ التغييرات</button>
                     </div>
                 </form>
             </div>
@@ -99,19 +141,36 @@ const SendMessageModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">{title}</h3>
-                <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="اكتب رسالتك هنا..."
-                    className="w-full h-32 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary resize-y"
-                    autoFocus
-                ></textarea>
-                <div className="flex justify-end gap-3 pt-4">
-                    <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                    <button onClick={handleSend} disabled={!message.trim()} className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed">إرسال</button>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div
+                className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">{title}</h3>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                        aria-label="إغلاق"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <div className="flex flex-1 flex-col overflow-hidden">
+                    <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6">
+                        <textarea
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            placeholder="اكتب رسالتك هنا..."
+                            className="h-full min-h-[240px] w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 md:min-h-[200px]"
+                            autoFocus
+                        />
+                    </div>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6">
+                        <button type="button" onClick={onClose} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button onClick={handleSend} disabled={!message.trim()} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-gray-400">إرسال</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -122,8 +181,11 @@ const SortPopover: React.FC<{
     onClose: () => void;
     sortBy: string;
     setSortBy: (value: string) => void;
+    filterOnlyNoAccount: boolean;
+    setFilterOnlyNoAccount: (value: boolean) => void;
+    isSysAdmin: boolean;
     onReset: () => void;
-}> = ({ onClose, sortBy, setSortBy, onReset }) => {
+}> = ({ onClose, sortBy, setSortBy, filterOnlyNoAccount, setFilterOnlyNoAccount, isSysAdmin, onReset }) => {
     const popoverRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -137,49 +199,103 @@ const SortPopover: React.FC<{
     }, [onClose]);
 
     return (
-        <div ref={popoverRef} className="absolute top-full right-0 mt-2 w-72 bg-white rounded-lg shadow-2xl z-20 border border-gray-200">
-            <div className="p-4 border-b">
-                <h4 className="font-bold text-gray-800">الفرز</h4>
+        <div ref={popoverRef} className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-2xl md:absolute md:inset-x-auto md:bottom-auto md:end-0 md:top-full md:mt-2 md:w-72 md:rounded-2xl">
+            <div className="border-b border-gray-100 px-4 py-4">
+                <h4 className="font-bold text-gray-800">الفرز والتصفية</h4>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="max-h-[min(60vh,28rem)] space-y-4 overflow-y-auto px-4 py-4">
                 <fieldset>
-                    <legend className="text-sm font-semibold text-gray-600 mb-2">ترتيب حسب</legend>
+                    <legend className="mb-2 text-sm font-semibold text-gray-600">ترتيب حسب</legend>
                     <div className="space-y-2">
                         {(['name-asc', 'orphans-desc'] as const).map(option => (
-                            <label key={option} className="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="sort" value={option} checked={sortBy === option} onChange={e => setSortBy(e.target.value)} className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0"/>
+                            <label key={option} className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 transition-colors hover:border-gray-100 hover:bg-gray-50">
+                                <input type="radio" name="sort" value={option} checked={sortBy === option} onChange={e => setSortBy(e.target.value)} className="h-4 w-4 text-primary focus:ring-primary focus:ring-offset-0" />
                                 <span className="text-sm">{ { 'name-asc': 'الاسم', 'orphans-desc': 'عدد الأيتام (الأكثر)' }[option] }</span>
                             </label>
                         ))}
                     </div>
                 </fieldset>
+                {isSysAdmin && (
+                    <fieldset>
+                        <legend className="mb-2 text-sm font-semibold text-gray-600">الحسابات</legend>
+                        <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-xl border border-transparent px-2 transition-colors hover:border-gray-100 hover:bg-gray-50">
+                            <input
+                                type="checkbox"
+                                checked={filterOnlyNoAccount}
+                                onChange={(e) => setFilterOnlyNoAccount(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm">بدون حساب دخول فقط</span>
+                        </label>
+                    </fieldset>
+                )}
             </div>
-            <div className="p-2 bg-gray-50 flex justify-between rounded-b-lg">
-                <button onClick={onReset} className="text-sm font-semibold text-gray-600 hover:text-primary px-3 py-1 rounded-md">إعادة تعيين</button>
-                <button onClick={onClose} className="text-sm font-semibold bg-primary-light text-primary px-4 py-1 rounded-md hover:bg-primary-hover hover:text-white transition-colors">تم</button>
+            <div className="flex items-center justify-between gap-3 bg-gray-50 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+                <button onClick={onReset} className="inline-flex min-h-[44px] items-center rounded-xl px-3 text-sm font-semibold text-gray-600 transition-colors hover:text-primary">إعادة تعيين</button>
+                <button onClick={onClose} className="inline-flex min-h-[44px] items-center rounded-xl bg-primary-light px-4 text-sm font-semibold text-primary transition-colors hover:bg-primary-hover hover:text-white">تم</button>
             </div>
         </div>
     );
 };
 
+const EmptyState: React.FC<{ title: string; description: string }> = ({ title, description }) => (
+    <div className="rounded-[1.75rem] border border-dashed border-gray-300 bg-white px-6 py-12 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-light text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </div>
+        <h3 className="text-base font-bold text-gray-900">{title}</h3>
+        <p className="mt-2 text-sm leading-6 text-text-secondary">{description}</p>
+    </div>
+);
+
+const ResponsivePagination: React.FC<{
+    currentPage: number;
+    totalPages: number;
+    onPrevious: () => void;
+    onNext: () => void;
+}> = ({ currentPage, totalPages, onPrevious, onNext }) => {
+    if (totalPages <= 1) return null;
+
+    return (
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm sm:flex-row">
+            <button
+                onClick={onPrevious}
+                disabled={currentPage === 1}
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="الصفحة السابقة"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            <span className="text-sm font-medium text-gray-600">
+                صفحة <span className="font-bold text-gray-900">{currentPage}</span> من <span className="font-bold text-gray-900">{totalPages}</span>
+            </span>
+            <button
+                onClick={onNext}
+                disabled={currentPage === totalPages}
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl border border-gray-200 bg-white px-3 text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="الصفحة التالية"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+        </div>
+    );
+};
+
+const ITEMS_PER_PAGE = 12;
 
 const SponsorsList: React.FC = () => {
     const { sponsors: sponsorsData, loading, refetch: refetchSponsors } = useSponsorsBasic();
-    const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
+    const { orphans: orphansData } = useOrphansBasic();
     const { userProfile, canEditSponsors, canEditOrphans, isManager } = useAuth();
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const isSysAdmin = userProfile?.is_system_admin === true;
     const hasEditPermission = userProfile?.role === 'team_member' && canEditSponsors();
     const canAssignOrphansToSponsors = useMemo(() => {
-        return (isManager() || (canEditOrphans() && canEditSponsors()));
+        return isManager() || (canEditOrphans() && canEditSponsors());
     }, [isManager, canEditOrphans, canEditSponsors]);
+
     const [sponsorList, setSponsorList] = useState<Sponsor[]>([]);
-    
-    useEffect(() => {
-        if (!loading && sponsorsData) {
-            setSponsorList(sponsorsData);
-        }
-    }, [sponsorsData, loading]);
     const [editingSponsor, setEditingSponsor] = useState<Sponsor | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
@@ -188,26 +304,31 @@ const SponsorsList: React.FC = () => {
     const [sponsorAssignedOrphanIds, setSponsorAssignedOrphanIds] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-    const navigate = useNavigate();
-    const searchInputRef = useRef<HTMLInputElement>(null);
+    const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
+    const actionsMenuRef = useRef<HTMLDivElement>(null);
     const [sortBy, setSortBy] = useState('name-asc');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
     const [filterOnlyNoAccount, setFilterOnlyNoAccount] = useState(false);
     const [createLoginTarget, setCreateLoginTarget] = useState<{ profileId: string; name: string } | null>(null);
-    const ITEMS_PER_PAGE = 12;
+
+    useEffect(() => {
+        if (!loading && sponsorsData) {
+            setSponsorList(sponsorsData);
+        }
+    }, [sponsorsData, loading]);
 
     const sponsorProfileIds = useMemo(
         () => sponsorList.map((s) => s.uuid).filter(Boolean) as string[],
         [sponsorList]
     );
+
     const { data: accountsMap = {}, isLoading: accountsLoading } = useAccountStatusesMap(
         sponsorProfileIds,
         isSysAdmin
     );
 
-    // Column definitions for DataTable (list view)
     const tableColumns = useMemo<ColumnDef<Sponsor>[]>(() => {
         const cols: ColumnDef<Sponsor>[] = [
             {
@@ -218,7 +339,7 @@ const SponsorsList: React.FC = () => {
                             type="checkbox"
                             checked={table.getIsAllPageRowsSelected()}
                             onChange={table.getToggleAllPageRowsSelectedHandler()}
-                            className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                            className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary"
                         />
                     </div>
                 ),
@@ -229,7 +350,7 @@ const SponsorsList: React.FC = () => {
                             checked={row.getIsSelected()}
                             disabled={!row.getCanSelect()}
                             onChange={row.getToggleSelectedHandler()}
-                            className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                            className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary"
                             onClick={(e) => e.stopPropagation()}
                         />
                     </div>
@@ -243,8 +364,8 @@ const SponsorsList: React.FC = () => {
                 header: 'الكافل',
                 cell: ({ row }) => (
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
-                            <Avatar src={row.original.avatarUrl} name={row.original.name} size="md" className="!w-full !h-full !text-sm" />
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 shadow-sm">
+                            <Avatar src={row.original.avatarUrl} name={row.original.name} size="md" className="!h-full !w-full !text-sm" />
                         </div>
                         <div>
                             <div className="font-bold text-gray-900">{row.original.name}</div>
@@ -266,6 +387,7 @@ const SponsorsList: React.FC = () => {
                     rowA.original.sponsoredOrphanIds.length - rowB.original.sponsoredOrphanIds.length,
             },
         ];
+
         if (isSysAdmin) {
             cols.push({
                 id: 'platform_account',
@@ -300,7 +422,7 @@ const SponsorsList: React.FC = () => {
                                 e.stopPropagation();
                                 setCreateLoginTarget({ profileId: uuid, name: row.original.name });
                             }}
-                            className="text-xs font-bold text-primary hover:text-primary-hover whitespace-nowrap"
+                            className="inline-flex min-h-[36px] items-center rounded-lg px-2 text-xs font-bold text-primary transition-colors hover:bg-primary-light hover:text-primary-hover"
                         >
                             إنشاء حساب
                         </button>
@@ -310,14 +432,15 @@ const SponsorsList: React.FC = () => {
                 size: 100,
             });
         }
-        return cols;
-    }, [isSysAdmin, accountsMap, accountsLoading]);
 
-    const renderBulkActions = (selectedRows: Sponsor[]) => {
+        return cols;
+    }, [accountsLoading, accountsMap, isSysAdmin]);
+
+    const renderBulkActions = (_selectedRows: Sponsor[]) => {
         return (
             <button
                 onClick={() => setIsMessageModalOpen(true)}
-                className="text-xs font-semibold bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 hover:text-primary transition-colors flex items-center gap-2 shadow-sm"
+                className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 مراسلة المحدد
@@ -325,7 +448,18 @@ const SponsorsList: React.FC = () => {
         );
     };
 
-    // Fetch assigned orphans for selected sponsor (when modal is open)
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+                setIsActionsMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     useEffect(() => {
         const fetchSponsorAssignedOrphans = async () => {
             if (!selectedSponsorForAssignment?.uuid) {
@@ -356,7 +490,7 @@ const SponsorsList: React.FC = () => {
         let sortedAndFiltered = [...sponsorList];
 
         if (searchQuery) {
-            sortedAndFiltered = sortedAndFiltered.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
+            sortedAndFiltered = sortedAndFiltered.filter((s) => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
         }
 
         switch (sortBy) {
@@ -377,18 +511,32 @@ const SponsorsList: React.FC = () => {
         }
 
         return sortedAndFiltered;
-    }, [searchQuery, sponsorList, sortBy, isSysAdmin, filterOnlyNoAccount, accountsMap]);
+    }, [accountsMap, filterOnlyNoAccount, isSysAdmin, searchQuery, sortBy, sponsorList]);
 
-    // Reset to first page when filters change
     useEffect(() => {
         setCurrentPage(1);
     }, [searchQuery, sortBy, filterOnlyNoAccount]);
 
-    const totalPages = Math.ceil(filteredSponsors.length / ITEMS_PER_PAGE);
+    useEffect(() => {
+        setSelectedIds(new Set());
+    }, [viewMode]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredSponsors.length / ITEMS_PER_PAGE));
     const paginatedSponsors = useMemo(() => {
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         return filteredSponsors.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-    }, [filteredSponsors, currentPage]);
+    }, [currentPage, filteredSponsors]);
+
+    useEffect(() => {
+        setSelectedIds((previous) => {
+            if (previous.size === 0) return previous;
+            const visibleIds = new Set(paginatedSponsors.map((sponsor) => sponsor.id));
+            const next = new Set(Array.from(previous).filter((id) => visibleIds.has(id)));
+            return next.size === previous.size ? previous : next;
+        });
+    }, [paginatedSponsors]);
+
+    const activeFiltersCount = Number(sortBy !== 'name-asc') + Number(isSysAdmin && filterOnlyNoAccount);
 
     const handleSelect = (id: number) => {
         const newSelectedIds = new Set(selectedIds);
@@ -402,7 +550,7 @@ const SponsorsList: React.FC = () => {
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
-            setSelectedIds(new Set(filteredSponsors.map(s => s.id)));
+            setSelectedIds(new Set(paginatedSponsors.map((sponsor) => sponsor.id)));
         } else {
             setSelectedIds(new Set());
         }
@@ -418,7 +566,7 @@ const SponsorsList: React.FC = () => {
         const headers = ['id', 'name', 'sponsored_orphans_count'];
         const csvRows = [
             headers.join(','),
-            ...filteredSponsors.map(s => [s.id, `"${s.name}"`, s.sponsoredOrphanIds.length].join(','))
+            ...filteredSponsors.map((sponsor) => [sponsor.id, `"${sponsor.name}"`, sponsor.sponsoredOrphanIds.length].join(','))
         ];
         const csvContent = '\uFEFF' + csvRows.join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -430,9 +578,9 @@ const SponsorsList: React.FC = () => {
         link.click();
         document.body.removeChild(link);
     };
-    
+
     const handleSaveSponsor = (updatedSponsor: Sponsor) => {
-        setSponsorList(prevList => prevList.map(s => s.id === updatedSponsor.id ? updatedSponsor : s));
+        setSponsorList(prevList => prevList.map((sponsor) => sponsor.id === updatedSponsor.id ? updatedSponsor : sponsor));
         setEditingSponsor(null);
     };
 
@@ -440,436 +588,560 @@ const SponsorsList: React.FC = () => {
         const newSponsor: Sponsor = {
             id: Date.now(),
             name,
+            avatarUrl: '',
             sponsoredOrphanIds: [],
         };
         setSponsorList(prev => [newSponsor, ...prev]);
         setIsAddModalOpen(false);
     };
 
-    const handleResetSort = () => {
+    const handleResetFilters = () => {
         setSortBy('name-asc');
+        setFilterOnlyNoAccount(false);
         setIsPopoverOpen(false);
+    };
+
+    const closeAssignOrphansModal = () => {
+        setShowAssignOrphansModal(false);
+        setSelectedSponsorForAssignment(null);
     };
 
     return (
         <>
-        <div className="space-y-6 pb-24">
-            <header className="space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-800">قائمة الكفلاء</h1>
-                        <p className="text-sm text-text-secondary mt-0.5">
-                            عرض وإدارة بيانات الكفلاء بتنسيق متقدم
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        {hasEditPermission && (
-                            <button
-                                type="button"
-                                onClick={() => setIsAddModalOpen(true)}
-                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-xl font-bold text-sm hover:bg-primary-hover transition-colors shadow-sm"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                                إضافة كافل
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={handleExportExcel}
-                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors shadow-sm"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                            تصدير
-                        </button>
-                    </div>
-                </div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                    <div className="relative w-full sm:w-72">
-                        <div className="absolute pointer-events-none right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <div className={`space-y-6 ${selectedIds.size > 0 ? 'pb-40' : 'pb-24'}`}>
+                <header className="space-y-4">
+                    <div className="flex items-start justify-between gap-3 sm:items-center">
+                        <div className="min-w-0">
+                            <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">قائمة الكفلاء</h1>
+                            <p className="mt-1 text-sm text-text-secondary">
+                                عرض وإدارة بيانات الكفلاء بتنسيق متقدم
+                            </p>
                         </div>
-                        <input
-                            type="text"
-                            placeholder="ابحث باسم الكافل..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pr-10 pl-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-white outline-none transition-colors"
-                            ref={searchInputRef}
-                        />
-                    </div>
-                </div>
-            </header>
-            
-            <div>
-                {/* Toolbar row: view toggle, sort, select all, assign, total */}
-                <div className="flex flex-wrap items-center gap-4 mb-4">
-                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
-                            aria-label="عرض قائمة"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
-                        </button>
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-primary'}`}
-                            aria-label="عرض شبكي"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-                        </button>
-                    </div>
-                    <div className="relative">
-                        <button 
-                            onClick={() => setIsPopoverOpen(prev => !prev)}
-                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-500 hover:text-primary"
-                            aria-label="الفرز"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                        </button>
-                        {isPopoverOpen && (
-                            <SortPopover 
-                                onClose={() => setIsPopoverOpen(false)}
-                                sortBy={sortBy}
-                                setSortBy={setSortBy}
-                                onReset={handleResetSort}
-                            />
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <input 
-                            type="checkbox" 
-                            id="selectAllCheckbox"
-                            checked={filteredSponsors.length > 0 && selectedIds.size === filteredSponsors.length}
-                            onChange={handleSelectAll}
-                            className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                            disabled={filteredSponsors.length === 0}
-                            aria-label="تحديد الكل"
-                        />
-                        <label htmlFor="selectAllCheckbox" className="text-sm font-medium text-gray-700 select-none cursor-pointer whitespace-nowrap">
-                            تحديد الكل
-                        </label>
-                    </div>
-                    {isSysAdmin && (
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer whitespace-nowrap">
-                            <input
-                                type="checkbox"
-                                checked={filterOnlyNoAccount}
-                                onChange={(e) => setFilterOnlyNoAccount(e.target.checked)}
-                                className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4"
-                            />
-                            بدون حساب دخول فقط
-                        </label>
-                    )}
-                    {canAssignOrphansToSponsors && (
-                        <button
-                            onClick={() => setShowAssignOrphansModal(true)}
-                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold text-sm flex items-center gap-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                            <span>تعيين أيتام لكافل</span>
-                        </button>
-                    )}
-                    <span className="text-sm text-text-secondary">
-                        تم العثور على {filteredSponsors.length} كافل
-                    </span>
-                </div>
-
-                {viewMode === 'list' ? (
-                    <DataTable
-                        columns={tableColumns}
-                        data={filteredSponsors}
-                        onRowClick={(row) => navigate(`/sponsor/${row.id}`)}
-                        renderBulkActions={renderBulkActions}
-                        storageKey="sponsors_table"
-                        filterPlaceholder="ابحث باسم الكافل..."
-                    />
-                ) : (
-                    <>
-                        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {paginatedSponsors.map(sponsor => {
-                                const isSelected = selectedIds.has(sponsor.id);
-                                const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
-                                const canQuickCreate =
-                                    isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
-                                const cardFields: EntityCardField[] = [
-                                    { label: 'عدد الأيتام:', value: `${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}` },
-                                ];
-                                if (isSysAdmin && sponsor.uuid) {
-                                    const statusLabel =
-                                        accountsLoading
-                                            ? '…'
-                                            : acc?.status === 'no_login'
-                                              ? 'لا يوجد حساب دخول'
-                                              : acc?.status === 'pending_first_login'
-                                                ? 'بانتظار أول دخول'
-                                                : acc?.status === 'active'
-                                                  ? 'حساب فعّال'
-                                                  : '—';
-                                    cardFields.push({
-                                        label: 'حساب المنصة:',
-                                        value: statusLabel,
-                                        type: 'pill',
-                                        pillClass:
-                                            acc?.status === 'active'
-                                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                                : acc?.status === 'pending_first_login'
-                                                  ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                                  : 'bg-gray-100 text-gray-700 border-gray-200',
-                                    });
-                                }
-                                return (
-                                    <EntityCard
-                                        key={sponsor.id}
-                                        variant="card"
-                                        title={sponsor.name}
-                                        subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
-                                        imageUrl={sponsor.avatarUrl}
-                                        imageAlt={sponsor.name}
-                                        fields={cardFields}
-                                        actionLabel="عرض الملف الكامل"
-                                        onClick={() => navigate(`/sponsor/${sponsor.id}`)}
-                                        secondaryAction={
-                                            canQuickCreate
-                                                ? {
-                                                      label: 'إنشاء حساب دخول',
-                                                      onClick: () =>
-                                                          setCreateLoginTarget({
-                                                              profileId: sponsor.uuid!,
-                                                              name: sponsor.name,
-                                                          }),
-                                                  }
-                                                : undefined
-                                        }
-                                        selected={isSelected}
-                                        onSelect={() => handleSelect(sponsor.id)}
-                                        showCheckbox={true}
-                                    />
-                                );
-                            })}
-                        </section>
-
-                        {/* Pagination - grid only */}
-                        {totalPages > 1 && (
-                            <div className="flex items-center justify-center gap-2 mt-6">
+                        <div className="flex shrink-0 items-center gap-2">
+                            <div ref={actionsMenuRef} className="relative sm:hidden">
                                 <button
-                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                    disabled={currentPage === 1}
-                                    className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    type="button"
+                                    onClick={() => setIsActionsMenuOpen((prev) => !prev)}
+                                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition-colors hover:bg-gray-50 hover:text-primary"
+                                    aria-label="إجراءات الصفحة"
+                                    aria-expanded={isActionsMenuOpen}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
                                 </button>
-                                <span className="text-sm text-gray-600">
-                                    صفحة {currentPage} من {totalPages}
-                                </span>
-                                <button
-                                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                    disabled={currentPage === totalPages}
-                                    className="p-2 rounded-lg border hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                                </button>
+                                {isActionsMenuOpen && (
+                                    <div className="absolute end-0 top-full z-20 mt-2 w-48 rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl">
+                                        {hasEditPermission && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsAddModalOpen(true);
+                                                    setIsActionsMenuOpen(false);
+                                                }}
+                                                className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-primary-light hover:text-primary"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                                إضافة كافل
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                handleExportExcel();
+                                                setIsActionsMenuOpen(false);
+                                            }}
+                                            className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-primary-light hover:text-primary"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                            تصدير
+                                        </button>
+                                        {canAssignOrphansToSponsors && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowAssignOrphansModal(true);
+                                                    setIsActionsMenuOpen(false);
+                                                }}
+                                                className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-primary-light hover:text-primary"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                                تعيين أيتام
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </>
-                )}
-            </div>
-        </div>
-        
-        {selectedIds.size > 0 && (
-            <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] border-t bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-40 md:bottom-0">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center gap-4">
-                            <span className="font-bold text-primary">{selectedIds.size} تم تحديده</span>
-                            <button onClick={() => setSelectedIds(new Set())} className="text-sm font-semibold text-text-secondary hover:text-red-600">
-                                إلغاء التحديد
-                            </button>
-                        </div>
-                        <button onClick={() => setIsMessageModalOpen(true)} className="flex items-center gap-2 py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold text-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            <span>إرسال رسالة</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {selectedIds.size === 0 && (
-            <div className="hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] items-center justify-around bg-white/80 p-2 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-sm z-30">
-                <button onClick={() => navigate(-1)} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    <span className="text-xs">رجوع</span>
-                </button>
-                <button onClick={() => searchInputRef.current?.focus()} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <span className="text-xs">بحث</span>
-                </button>
-                <button onClick={handleExportExcel} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                    <span className="text-xs">تصدير</span>
-                </button>
-                {hasEditPermission && (
-                    <button onClick={() => setIsAddModalOpen(true)} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                        <span className="text-xs">إضافة</span>
-                    </button>
-                )}
-            </div>
-        )}
-
-        {editingSponsor && (
-            <EditSponsorModal
-                sponsor={editingSponsor}
-                onClose={() => setEditingSponsor(null)}
-                onSave={handleSaveSponsor}
-            />
-        )}
-        <AddSponsorModal
-            isOpen={isAddModalOpen}
-            onClose={() => setIsAddModalOpen(false)}
-            onSave={handleSaveNewSponsor}
-        />
-        <SendMessageModal
-            isOpen={isMessageModalOpen}
-            onClose={() => setIsMessageModalOpen(false)}
-            onSend={handleSendMessage}
-            title={`إرسال رسالة إلى ${selectedIds.size} من الكفلاء`}
-        />
-
-        {/* Assign Orphans Modal */}
-        {createLoginTarget && (
-            <CreateLoginModal
-                isOpen
-                onClose={() => setCreateLoginTarget(null)}
-                profileId={createLoginTarget.profileId}
-                displayName={createLoginTarget.name}
-                onSuccess={() => {
-                    void queryClient.invalidateQueries({ queryKey: ['account-statuses'] });
-                    void queryClient.invalidateQueries({ queryKey: ['account-status'] });
-                }}
-            />
-        )}
-
-        {showAssignOrphansModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => {
-                setShowAssignOrphansModal(false);
-                setSelectedSponsorForAssignment(null);
-            }}>
-                <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-                    {!selectedSponsorForAssignment ? (
-                        <>
-                            <div className="flex justify-between items-center mb-4 border-b pb-3">
-                                <h3 className="text-xl font-bold">اختر كافل</h3>
-                                <button onClick={() => {
-                                    setShowAssignOrphansModal(false);
-                                    setSelectedSponsorForAssignment(null);
-                                }} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
-                            </div>
-                            <div className="overflow-y-auto space-y-2 flex-1">
-                                {filteredSponsors.map(sponsor => (
+                            <div className="hidden items-center gap-2 sm:flex">
+                                {hasEditPermission && (
                                     <button
-                                        key={sponsor.id}
-                                        onClick={() => setSelectedSponsorForAssignment(sponsor)}
-                                        className="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 text-right"
+                                        type="button"
+                                        onClick={() => setIsAddModalOpen(true)}
+                                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover"
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" />
-                                            <div>
-                                                <p className="font-semibold">{sponsor.name}</p>
-                                                <p className="text-sm text-gray-500">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
-                                            </div>
-                                        </div>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400"><path d="m9 18 6-6-6-6"/></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                        إضافة كافل
                                     </button>
-                                ))}
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={handleExportExcel}
+                                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                    تصدير
+                                </button>
                             </div>
-                        </>
+                        </div>
+                    </div>
+                    <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+                        <div className="relative w-full">
+                            <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="ابحث باسم الكافل..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary"
+                            />
+                        </div>
+                    </div>
+                </header>
+
+                <div>
+                    <div className="mb-4 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+                                    <button
+                                        onClick={() => setViewMode('list')}
+                                        className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-primary'}`}
+                                        aria-label="عرض قائمة"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('grid')}
+                                        className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-primary'}`}
+                                        aria-label="عرض شبكي"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsPopoverOpen(prev => !prev)}
+                                        className={`relative inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors ${isPopoverOpen || activeFiltersCount > 0 ? 'border-primary/30 bg-primary-light text-primary' : 'border-gray-200 text-gray-600 hover:border-primary/30 hover:text-primary'}`}
+                                        aria-label="الفرز والتصفية"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                                        <span className="hidden sm:inline">الفرز والتصفية</span>
+                                        {activeFiltersCount > 0 && (
+                                            <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">
+                                                {activeFiltersCount}
+                                            </span>
+                                        )}
+                                    </button>
+                                    {isPopoverOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-20 bg-black/30 md:hidden" onClick={() => setIsPopoverOpen(false)} />
+                                            <SortPopover
+                                                onClose={() => setIsPopoverOpen(false)}
+                                                sortBy={sortBy}
+                                                setSortBy={setSortBy}
+                                                filterOnlyNoAccount={filterOnlyNoAccount}
+                                                setFilterOnlyNoAccount={setFilterOnlyNoAccount}
+                                                isSysAdmin={isSysAdmin}
+                                                onReset={handleResetFilters}
+                                            />
+                                        </>
+                                    )}
+                                </div>
+                                <label htmlFor="selectAllCheckbox" className={`inline-flex min-h-[44px] cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:border-primary/30 hover:bg-primary-light/40 ${viewMode === 'list' ? 'md:hidden' : ''}`}>
+                                    <input
+                                        type="checkbox"
+                                        id="selectAllCheckbox"
+                                        checked={paginatedSponsors.length > 0 && selectedIds.size === paginatedSponsors.length}
+                                        onChange={handleSelectAll}
+                                        className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary"
+                                        disabled={paginatedSponsors.length === 0}
+                                        aria-label="تحديد الكل"
+                                    />
+                                    <span className="select-none whitespace-nowrap">تحديد الكل</span>
+                                </label>
+                                {canAssignOrphansToSponsors && (
+                                    <button
+                                        onClick={() => setShowAssignOrphansModal(true)}
+                                        className="hidden min-h-[44px] items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:inline-flex"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                                        <span>تعيين أيتام لكافل</span>
+                                    </button>
+                                )}
+                            </div>
+                            <span className="inline-flex min-h-[40px] items-center rounded-xl bg-gray-100 px-3 text-sm text-text-secondary">
+                                تم العثور على {filteredSponsors.length} كافل
+                            </span>
+                        </div>
+                    </div>
+
+                    {loading ? (
+                        <div className="rounded-[1.75rem] border border-gray-100 bg-white px-6 py-12 text-center shadow-sm">
+                            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+                            <p className="text-sm font-medium text-gray-600">جاري تحميل بيانات الكفلاء...</p>
+                        </div>
+                    ) : viewMode === 'list' ? (
+                        <div className="space-y-4">
+                            <section className="space-y-3 md:hidden">
+                                {paginatedSponsors.length > 0 ? (
+                                    paginatedSponsors.map((sponsor) => {
+                                        const isSelected = selectedIds.has(sponsor.id);
+                                        const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
+                                        const canQuickCreate = isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
+                                        const cardFields: EntityCardField[] = [
+                                            {
+                                                label: 'عدد الأيتام:',
+                                                value: `${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`
+                                            },
+                                        ];
+
+                                        if (isSysAdmin && sponsor.uuid) {
+                                            const statusLabel =
+                                                accountsLoading
+                                                    ? '…'
+                                                    : acc?.status === 'no_login'
+                                                      ? 'لا يوجد حساب دخول'
+                                                      : acc?.status === 'pending_first_login'
+                                                        ? 'بانتظار أول دخول'
+                                                        : acc?.status === 'active'
+                                                          ? 'حساب فعّال'
+                                                          : '—';
+                                            cardFields.push({
+                                                label: 'حساب المنصة:',
+                                                value: statusLabel,
+                                                type: 'pill',
+                                                pillClass:
+                                                    acc?.status === 'active'
+                                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                                        : acc?.status === 'pending_first_login'
+                                                          ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                                          : 'bg-gray-100 text-gray-700 border-gray-200',
+                                            });
+                                        }
+
+                                        return (
+                                            <EntityCard
+                                                key={sponsor.id}
+                                                variant="card"
+                                                title={sponsor.name}
+                                                subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
+                                                imageUrl={sponsor.avatarUrl}
+                                                imageAlt={sponsor.name}
+                                                fields={cardFields}
+                                                actionLabel="عرض الملف"
+                                                onClick={() => navigate(`/sponsor/${sponsor.id}`)}
+                                                secondaryAction={
+                                                    canQuickCreate
+                                                        ? {
+                                                              label: 'إنشاء حساب دخول',
+                                                              onClick: () =>
+                                                                  setCreateLoginTarget({
+                                                                      profileId: sponsor.uuid!,
+                                                                      name: sponsor.name,
+                                                                  }),
+                                                          }
+                                                        : undefined
+                                                }
+                                                selected={isSelected}
+                                                onSelect={() => handleSelect(sponsor.id)}
+                                                showCheckbox={true}
+                                            />
+                                        );
+                                    })
+                                ) : (
+                                    <EmptyState title="لا توجد نتائج مطابقة" description="جرّب تعديل البحث أو إعادة تعيين التصفية لعرض مزيد من الكفلاء." />
+                                )}
+                            </section>
+                            <div className="hidden md:block">
+                                <DataTable
+                                    columns={tableColumns}
+                                    data={filteredSponsors}
+                                    onRowClick={(row) => navigate(`/sponsor/${row.id}`)}
+                                    renderBulkActions={renderBulkActions}
+                                    storageKey="sponsors_table"
+                                    filterPlaceholder="ابحث باسم الكافل..."
+                                />
+                            </div>
+                            <ResponsivePagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPrevious={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                onNext={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            />
+                        </div>
                     ) : (
                         <>
-                            <div className="flex justify-between items-center mb-4 border-b pb-3">
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => setSelectedSponsorForAssignment(null)}
-                                        className="p-1 hover:bg-gray-100 rounded-lg"
-                                        title="رجوع"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                                    </button>
-                                    <h3 className="text-xl font-bold">تعيين أيتام لـ {selectedSponsorForAssignment.name}</h3>
-                                </div>
-                                <button onClick={() => {
-                                    setShowAssignOrphansModal(false);
-                                    setSelectedSponsorForAssignment(null);
-                                }} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
-                            </div>
-                            <div className="overflow-y-auto space-y-2 flex-1">
-                                {orphansData.map(orphan => {
-                                    const isAssigned = orphan.uuid && sponsorAssignedOrphanIds.includes(orphan.uuid);
-                                    return (
-                                        <div 
-                                            key={orphan.id}
-                                            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
-                                                <div>
-                                                    <p className="font-semibold">{orphan.name}</p>
-                                                    <p className="text-sm text-gray-500">{orphan.age} سنوات</p>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={async () => {
-                                                    if (!selectedSponsorForAssignment.uuid || !orphan.uuid) return;
-                                                    
-                                                    try {
-                                                        if (isAssigned) {
-                                                            // Remove assignment
-                                                            const { error } = await supabase
-                                                                .from('sponsor_orphans')
-                                                                .delete()
-                                                                .eq('sponsor_id', selectedSponsorForAssignment.uuid)
-                                                                .eq('orphan_id', orphan.uuid);
-                                                            
-                                                            if (!error) {
-                                                                setSponsorAssignedOrphanIds(prev => prev.filter(id => id !== orphan.uuid));
-                                                                refetchSponsors();
-                                                            }
-                                                        } else {
-                                                            // Add assignment
-                                                            const { error } = await supabase
-                                                                .from('sponsor_orphans')
-                                                                .insert({
-                                                                    sponsor_id: selectedSponsorForAssignment.uuid,
-                                                                    orphan_id: orphan.uuid
-                                                                });
-                                                            
-                                                            if (!error) {
-                                                                setSponsorAssignedOrphanIds(prev => [...prev, orphan.uuid!]);
-                                                                refetchSponsors();
-                                                            }
-                                                        }
-                                                    } catch (err) {
-                                                        console.error('Error updating orphan-to-sponsor assignment:', err);
-                                                    }
-                                                }}
-                                                className={`px-4 py-2 rounded-lg font-semibold text-sm ${
-                                                    isAssigned 
-                                                        ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                                                        : 'bg-primary text-white hover:bg-primary-hover'
-                                                }`}
-                                            >
-                                                {isAssigned ? 'إلغاء التعيين' : 'تعيين'}
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                            {paginatedSponsors.length > 0 ? (
+                                <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+                                    {paginatedSponsors.map((sponsor) => {
+                                        const isSelected = selectedIds.has(sponsor.id);
+                                        const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
+                                        const canQuickCreate = isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
+                                        const cardFields: EntityCardField[] = [
+                                            {
+                                                label: 'عدد الأيتام:',
+                                                value: `${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`
+                                            },
+                                        ];
+
+                                        if (isSysAdmin && sponsor.uuid) {
+                                            const statusLabel =
+                                                accountsLoading
+                                                    ? '…'
+                                                    : acc?.status === 'no_login'
+                                                      ? 'لا يوجد حساب دخول'
+                                                      : acc?.status === 'pending_first_login'
+                                                        ? 'بانتظار أول دخول'
+                                                        : acc?.status === 'active'
+                                                          ? 'حساب فعّال'
+                                                          : '—';
+                                            cardFields.push({
+                                                label: 'حساب المنصة:',
+                                                value: statusLabel,
+                                                type: 'pill',
+                                                pillClass:
+                                                    acc?.status === 'active'
+                                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                                        : acc?.status === 'pending_first_login'
+                                                          ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                                          : 'bg-gray-100 text-gray-700 border-gray-200',
+                                            });
+                                        }
+
+                                        return (
+                                            <EntityCard
+                                                key={sponsor.id}
+                                                variant="card"
+                                                title={sponsor.name}
+                                                subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
+                                                imageUrl={sponsor.avatarUrl}
+                                                imageAlt={sponsor.name}
+                                                fields={cardFields}
+                                                actionLabel="عرض الملف الكامل"
+                                                onClick={() => navigate(`/sponsor/${sponsor.id}`)}
+                                                secondaryAction={
+                                                    canQuickCreate
+                                                        ? {
+                                                              label: 'إنشاء حساب دخول',
+                                                              onClick: () =>
+                                                                  setCreateLoginTarget({
+                                                                      profileId: sponsor.uuid!,
+                                                                      name: sponsor.name,
+                                                                  }),
+                                                          }
+                                                        : undefined
+                                                }
+                                                selected={isSelected}
+                                                onSelect={() => handleSelect(sponsor.id)}
+                                                showCheckbox={true}
+                                            />
+                                        );
+                                    })}
+                                </section>
+                            ) : (
+                                <EmptyState title="لا توجد نتائج مطابقة" description="جرّب تعديل البحث أو إعادة تعيين التصفية لعرض مزيد من الكفلاء." />
+                            )}
+
+                            <ResponsivePagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                onPrevious={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                onNext={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            />
                         </>
                     )}
                 </div>
             </div>
-        )}
+
+            {selectedIds.size > 0 && (
+                <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 border-t bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.1)] md:bottom-0">
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                        <div className="flex min-h-[72px] flex-col justify-center gap-3 py-3 sm:h-16 sm:flex-row sm:items-center sm:justify-between sm:py-0">
+                            <div className="flex items-center gap-4">
+                                <span className="font-bold text-primary">{selectedIds.size} تم تحديده</span>
+                                <button onClick={() => setSelectedIds(new Set())} className="text-sm font-semibold text-text-secondary transition-colors hover:text-red-600">
+                                    إلغاء التحديد
+                                </button>
+                            </div>
+                            <button onClick={() => setIsMessageModalOpen(true)} className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                <span>إرسال رسالة</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {editingSponsor && (
+                <EditSponsorModal
+                    sponsor={editingSponsor}
+                    onClose={() => setEditingSponsor(null)}
+                    onSave={handleSaveSponsor}
+                />
+            )}
+
+            <AddSponsorModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSave={handleSaveNewSponsor}
+            />
+
+            <SendMessageModal
+                isOpen={isMessageModalOpen}
+                onClose={() => setIsMessageModalOpen(false)}
+                onSend={handleSendMessage}
+                title={`إرسال رسالة إلى ${selectedIds.size} من الكفلاء`}
+            />
+
+            {createLoginTarget && (
+                <CreateLoginModal
+                    isOpen
+                    onClose={() => setCreateLoginTarget(null)}
+                    profileId={createLoginTarget.profileId}
+                    displayName={createLoginTarget.name}
+                    onSuccess={() => {
+                        void queryClient.invalidateQueries({ queryKey: ['account-statuses'] });
+                        void queryClient.invalidateQueries({ queryKey: ['account-status'] });
+                    }}
+                />
+            )}
+
+            {showAssignOrphansModal && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={closeAssignOrphansModal}>
+                    <div
+                        className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {!selectedSponsorForAssignment ? (
+                            <>
+                                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">اختر كافل</h3>
+                                    <button
+                                        type="button"
+                                        onClick={closeAssignOrphansModal}
+                                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                        aria-label="إغلاق"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                    </button>
+                                </div>
+                                <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-6">
+                                    {filteredSponsors.map((sponsor) => (
+                                        <button
+                                            key={sponsor.id}
+                                            onClick={() => setSelectedSponsorForAssignment(sponsor)}
+                                            className="flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl border border-gray-200 px-4 py-3 text-right transition-colors hover:bg-gray-50"
+                                        >
+                                            <div className="flex min-w-0 items-center gap-3">
+                                                <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" />
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-semibold text-gray-900">{sponsor.name}</p>
+                                                    <p className="text-sm text-gray-500">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
+                                                </div>
+                                            </div>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-gray-400"><path d="m9 18 6-6-6-6"/></svg>
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                                    <div className="flex min-w-0 items-center gap-3">
+                                        <button
+                                            onClick={() => setSelectedSponsorForAssignment(null)}
+                                            className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                            title="رجوع"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                        </button>
+                                        <h3 className="truncate text-lg font-bold text-gray-900 md:text-xl">تعيين أيتام لـ {selectedSponsorForAssignment.name}</h3>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={closeAssignOrphansModal}
+                                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                        aria-label="إغلاق"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                    </button>
+                                </div>
+                                <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-6">
+                                    {orphansData.map((orphan) => {
+                                        const isAssigned = orphan.uuid ? sponsorAssignedOrphanIds.includes(orphan.uuid) : false;
+
+                                        return (
+                                            <div
+                                                key={orphan.id}
+                                                className="flex flex-col gap-3 rounded-2xl border border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                                            >
+                                                <div className="flex min-w-0 items-center gap-3">
+                                                    <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
+                                                    <div className="min-w-0">
+                                                        <p className="truncate font-semibold text-gray-900">{orphan.name}</p>
+                                                        <p className="text-sm text-gray-500">{orphan.age} سنوات</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!selectedSponsorForAssignment.uuid || !orphan.uuid) return;
+
+                                                        try {
+                                                            if (isAssigned) {
+                                                                const { error } = await supabase
+                                                                    .from('sponsor_orphans')
+                                                                    .delete()
+                                                                    .eq('sponsor_id', selectedSponsorForAssignment.uuid)
+                                                                    .eq('orphan_id', orphan.uuid);
+
+                                                                if (!error) {
+                                                                    setSponsorAssignedOrphanIds(prev => prev.filter(id => id !== orphan.uuid));
+                                                                    refetchSponsors();
+                                                                }
+                                                            } else {
+                                                                const { error } = await supabase
+                                                                    .from('sponsor_orphans')
+                                                                    .insert({
+                                                                        sponsor_id: selectedSponsorForAssignment.uuid,
+                                                                        orphan_id: orphan.uuid
+                                                                    });
+
+                                                                if (!error) {
+                                                                    setSponsorAssignedOrphanIds(prev => [...prev, orphan.uuid!]);
+                                                                    refetchSponsors();
+                                                                }
+                                                            }
+                                                        } catch (err) {
+                                                            console.error('Error updating orphan-to-sponsor assignment:', err);
+                                                        }
+                                                    }}
+                                                    className={`inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                                                        isAssigned
+                                                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                                            : 'bg-primary text-white hover:bg-primary-hover'
+                                                    }`}
+                                                >
+                                                    {isAssigned ? 'إلغاء التعيين' : 'تعيين'}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </>
     );
 };

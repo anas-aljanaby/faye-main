@@ -277,7 +277,7 @@ introduced.
 
 ---
 
-### Task 2.6: Sponsors List (`/sponsors`) `[ ]`
+### Task 2.6: Sponsors List (`/sponsors`) `[x]`
 **Priority:** P2
 **Files likely involved:** `components/SponsorsList.tsx`
 
@@ -287,9 +287,21 @@ introduced.
 - "إضافة كافل" modal: near-full-screen on mobile
 - Row actions: ensure tap targets are large enough
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Reworked `components/SponsorsList.tsx` into a
+mobile-first screen by collapsing the header actions into a compact `...`
+menu on phones, tightening the page spacing and typography, and turning the
+sort controls into a touch-friendly mobile bottom sheet with filter counts.
+List mode now swaps the desktop table for full-width mobile sponsor cards
+with external pagination, while grid mode stays single-column on phones and
+keeps denser multi-column layouts from `sm`/`lg` upward. Updated the
+add-sponsor, edit, message, and orphan-assignment dialogs to near-full-screen
+mobile sheets with 48px actions, removed the obsolete page-level mobile bar,
+and improved selection handling so the bulk action strip sits safely above
+the global bottom navigation.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 
@@ -510,5 +522,5 @@ introduced.
 | Phase 3: Polish | 3.1 – 3.4 | Not started |
 
 **Total tasks:** 20
-**Completed:** 8
-**Remaining:** 12
+**Completed:** 9
+**Remaining:** 11
