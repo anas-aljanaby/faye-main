@@ -305,7 +305,7 @@ large main bundle still remain.
 
 ---
 
-### Task 2.7: Sponsor Profile (`/sponsor/:id`) `[ ]`
+### Task 2.7: Sponsor Profile (`/sponsor/:id`) `[x]`
 **Priority:** P2
 **Files likely involved:** `components/SponsorPage.tsx`
 
@@ -315,9 +315,22 @@ large main bundle still remain.
 - السجل المالي الذكي: full width, internal tables scroll horizontally
 - Messaging modals: near-full-screen on mobile
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Reworked `components/SponsorPage.tsx` into a
+mobile-first sponsor profile by tightening and stacking the header, adding a
+clear back button plus 44px action controls, and introducing a horizontal
+scrollable mobile tab rail so phones can switch between overview, sponsored
+orphans, financial details, and support content without squeezing the desktop
+layout. The sponsored orphans section now stays single-column on mobile, the
+smart financial record was expanded into full-width responsive summary cards
+plus horizontally scrollable tables for orphan payment status and recent
+donations, and the old page-level mobile action bar was removed because it
+conflicted with the global bottom navigation. Updated the message composer
+and orphan-assignment modal into near-full-screen mobile sheets while keeping
+their existing behavior intact on larger breakpoints.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 
