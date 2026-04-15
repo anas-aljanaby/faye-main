@@ -3,7 +3,7 @@
 > This document tracks progress across multiple Codex runs.
 > **Read before starting. Update after finishing.**
 
-Last updated: 2026-04-14
+Last updated: 2026-04-16
 
 ---
 
@@ -334,7 +334,7 @@ large main bundle still remain.
 
 ---
 
-### Task 2.8: Sponsor Payments (`/payments`) `[ ]`
+### Task 2.8: Sponsor Payments (`/payments`) `[x]`
 **Priority:** P1
 **Files likely involved:** `components/SponsorPaymentsPage.tsx`
 
@@ -346,9 +346,23 @@ large main bundle still remain.
   consider reducing month cell sizes or horizontal scrolling
 - PaymentStatusBadge: ensure readable at mobile sizes
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Reworked `components/SponsorPaymentsPage.tsx`
+into a mobile-first sponsor payments screen by tightening the page header,
+keeping the year selector and dashboard link as full-width mobile controls,
+and turning the summary area into a denser 2×2 stat grid on phones while
+preserving wider desktop layouts from `md`/`lg` upward. The filters now
+stack as a full-width search field, horizontally scrollable status chips with
+counts, and a separate mobile-friendly sort row, while each orphan section
+was rebuilt as a touch-friendly expandable card with smaller avatars,
+wrapped summary pills, and no page-level horizontal overflow. The payment
+calendar now uses compact month tiles with contained horizontal scrolling on
+small widths, the history list was tightened into stacked mobile cards, and
+`components/PaymentStatusBadge.tsx` was updated with slightly taller, more
+readable pills for narrow screens.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 

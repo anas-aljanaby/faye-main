@@ -24,7 +24,7 @@ const PaymentStatusBadge: React.FC<PaymentStatusBadgeProps> = ({ status, classNa
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusStyles()} ${className}`}
+      className={`inline-flex min-h-7 items-center justify-center whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-semibold leading-4 sm:text-xs ${getStatusStyles()} ${className}`}
     >
       {status}
     </span>
