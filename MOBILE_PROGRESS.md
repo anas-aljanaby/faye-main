@@ -366,7 +366,7 @@ large main bundle still remain.
 
 ---
 
-### Task 2.9: Messages (`/messages`) `[ ]`
+### Task 2.9: Messages (`/messages`) `[x]`
 **Priority:** P1
 **Files likely involved:** `components/Messages.tsx`
 
@@ -383,9 +383,20 @@ large main bundle still remain.
 - Template modal: near-full-screen
 - Desktop two-pane layout must be completely preserved
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Reworked `components/Messages.tsx` into a mobile-first
+messaging screen by preserving the existing desktop two-pane layout from `md`
+upward while making phones show only the conversation list first and switch to
+a full-width thread view after selection. The list header now uses a full-width
+search field plus a touch-friendly new-conversation action, the thread header
+adds a dedicated mobile back button, message bubbles now cap at roughly 85% of
+the viewport, and the composer was tightened into a bottom-anchored thread
+footer with safe-area padding so it stays reachable above the global bottom
+navigation. Updated both the new-conversation modal and the templates modal to
+near-full-screen mobile sheets with larger tap targets and scrollable content.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 
