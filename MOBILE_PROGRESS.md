@@ -400,7 +400,7 @@ large main bundle still remain.
 
 ---
 
-### Task 2.10: Human Resources (`/human-resources`) `[ ]`
+### Task 2.10: Human Resources (`/human-resources`) `[x]`
 **Priority:** P2
 **Files likely involved:** `components/HumanResources.tsx`,
 `components/TeamList.tsx`
@@ -415,9 +415,20 @@ large main bundle still remain.
 - Add/edit modals: near-full-screen
 - Placeholder tabs: just ensure they don't overflow
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Reworked `components/HumanResources.tsx` into a more
+mobile-first shell by tightening the page header, turning the long HR section
+tabs into a snap-scrolling horizontal rail, and ensuring placeholder sections
+stay contained on narrow screens. The embedded `components/TeamList.tsx` now
+uses a dedicated single-column mobile card list below `md`, tighter toolbar
+controls, more flexible permission rows, and near-full-screen bottom-sheet
+modals for member actions. The volunteers and delegates sections now stack
+their filters and summary cards cleanly, swap desktop tables for touch-friendly
+mobile cards, and use near-full-screen add/edit sheets with safer mobile
+footer actions and 48px inputs/buttons.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 

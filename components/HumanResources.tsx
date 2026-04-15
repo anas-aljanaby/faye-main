@@ -46,6 +46,13 @@ const initialVolunteerData: VolunteerLogEntry[] = [
 const opportunities = [...new Set(initialVolunteerData.map(v => v.opportunity))];
 const classifications: VolunteerClassification[] = ['موظف', 'مروج', 'مانح', 'سلبي'];
 
+const formatVolunteerDate = (date: Date) =>
+    date.toLocaleDateString('ar-EG', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+
 
 // --- UI HELPER COMPONENTS FOR VOLUNTEERS TABLE ---
 
@@ -118,36 +125,43 @@ const AddEditVolunteerModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-6">{logToEdit ? 'تعديل سجل متطوع' : 'إضافة سجل جديد'}</h3>
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input name="volunteerName" value={formData.volunteerName} onChange={handleChange} placeholder="اسم المتطوع" className="md:col-span-2 w-full p-2 border rounded" required />
-                    <input name="opportunity" value={formData.opportunity} onChange={handleChange} placeholder="الفرصة التطوعية" className="w-full p-2 border rounded" required />
-                    <input type="date" name="date" value={formData.date} onChange={handleChange} className="w-full p-2 border rounded" required />
-                    <textarea name="tasks" value={formData.tasks} onChange={handleChange} placeholder="المهام المسندة" className="md:col-span-2 w-full p-2 border rounded" required />
-                    <input type="number" name="durationHours" value={formData.durationHours} onChange={handleChange} placeholder="عدد ساعات التطوع" className="w-full p-2 border rounded" required />
-                    <select name="classification" value={formData.classification} onChange={handleChange} className="w-full p-2 border rounded">
-                        {classifications.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                    <div>
-                        <label className="text-sm">نسبة الإنجاز: {formData.completionPercentage}%</label>
-                        <input type="range" name="completionPercentage" min="0" max="100" step="10" value={formData.completionPercentage} onChange={handleChange} className="w-full" />
-                    </div>
-                    <div>
-                        <label className="text-sm">تقييم جودة الأداء</label>
-                        <div className="flex items-center gap-1">
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <button type="button" key={star} onClick={() => setFormData(p => ({...p, performanceRating: star}))} className="focus:outline-none">
-                                <svg className={`w-6 h-6 ${star <= formData.performanceRating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.96c.3.921-.755 1.688-1.54 1.118l-3.368-2.446a1 1 0 00-1.176 0l-3.368 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.96a1 1 0 00-.364-1.118L2.07 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69L9.049 2.927z" /></svg>
-                            </button>
-                           ))}
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">{logToEdit ? 'تعديل سجل متطوع' : 'إضافة سجل جديد'}</h3>
+                    <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                    <div className="grid flex-1 grid-cols-1 gap-4 overflow-y-auto px-4 py-4 md:grid-cols-2 md:px-6 md:py-6">
+                        <input name="volunteerName" value={formData.volunteerName} onChange={handleChange} placeholder="اسم المتطوع" className="w-full rounded-xl border border-gray-300 px-4 py-3 md:col-span-2" required />
+                        <input name="opportunity" value={formData.opportunity} onChange={handleChange} placeholder="الفرصة التطوعية" className="w-full rounded-xl border border-gray-300 px-4 py-3" required />
+                        <input type="date" name="date" value={formData.date} onChange={handleChange} className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-3" required />
+                        <textarea name="tasks" value={formData.tasks} onChange={handleChange} placeholder="المهام المسندة" className="min-h-[120px] w-full rounded-xl border border-gray-300 px-4 py-3 md:col-span-2" required />
+                        <input type="number" name="durationHours" value={formData.durationHours} onChange={handleChange} placeholder="عدد ساعات التطوع" className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-3" required />
+                        <select name="classification" value={formData.classification} onChange={handleChange} className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3">
+                            {classifications.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                            <label className="mb-3 block text-sm font-semibold text-gray-700">نسبة الإنجاز: {formData.completionPercentage}%</label>
+                            <input type="range" name="completionPercentage" min="0" max="100" step="10" value={formData.completionPercentage} onChange={handleChange} className="w-full" />
                         </div>
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                            <label className="mb-3 block text-sm font-semibold text-gray-700">تقييم جودة الأداء</label>
+                            <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <button type="button" key={star} onClick={() => setFormData(p => ({...p, performanceRating: star}))} className="inline-flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
+                                        <svg className={`h-6 w-6 ${star <= formData.performanceRating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.96c.3.921-.755 1.688-1.54 1.118l-3.368-2.446a1 1 0 00-1.176 0l-3.368 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.96a1 1 0 00-.364-1.118L2.07 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69L9.049 2.927z" /></svg>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <textarea name="achievements" value={formData.achievements} onChange={handleChange} placeholder="إنجازات نوعية استثنائية (اختياري)" className="min-h-[120px] w-full rounded-xl border border-gray-300 px-4 py-3 md:col-span-2" />
                     </div>
-                    <textarea name="achievements" value={formData.achievements} onChange={handleChange} placeholder="إنجازات نوعية استثنائية (اختياري)" className="md:col-span-2 w-full p-2 border rounded" />
-                    <div className="flex justify-end gap-3 pt-4 md:col-span-2">
-                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">حفظ</button>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                        <button type="button" onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="min-h-[48px] rounded-xl bg-primary px-5 py-2 font-semibold text-white transition-colors hover:bg-primary-hover">حفظ</button>
                     </div>
                 </form>
             </div>
@@ -253,7 +267,7 @@ const VolunteerKPIs: React.FC<{ logs: VolunteerLogEntry[] }> = ({ logs }) => {
     
     return (
         <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-800">مؤشرات أداء المتطوعين</h2>
+            <h2 className="text-xl font-bold text-gray-800 md:text-2xl">مؤشرات أداء المتطوعين</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {kpiList.map(kpi => {
                     const data = (kpiData as any)[kpi.id];
@@ -331,44 +345,84 @@ const VolunteersSection: React.FC = () => {
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8">
             <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                     <h2 className="text-2xl font-bold text-gray-800">سجل المتطوعين الذكي</h2>
-                     <button onClick={() => { setEditingLog(null); setIsModalOpen(true); }} className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover flex items-center gap-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                     <h2 className="text-xl font-bold text-gray-800 md:text-2xl">سجل المتطوعين الذكي</h2>
+                     <button onClick={() => { setEditingLog(null); setIsModalOpen(true); }} className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto">
                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                          إضافة سجل جديد
                      </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg border">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                    <div className="rounded-2xl border bg-gray-50 p-4">
                         <p className="text-sm text-gray-600">إجمالي المتطوعين</p>
-                        <p className="text-2xl font-bold text-primary">{summary.totalVolunteers}</p>
+                        <p className="text-xl font-bold text-primary md:text-2xl">{summary.totalVolunteers}</p>
                     </div>
-                    <div className="bg-gray-50 p-4 rounded-lg border">
+                    <div className="rounded-2xl border bg-gray-50 p-4">
                         <p className="text-sm text-gray-600">إجمالي الساعات التطوعية</p>
-                        <p className="text-2xl font-bold text-primary">{summary.totalHours}</p>
+                        <p className="text-xl font-bold text-primary md:text-2xl">{summary.totalHours}</p>
                     </div>
-                     <div className="bg-gray-50 p-4 rounded-lg border">
+                     <div className="rounded-2xl border bg-gray-50 p-4 sm:col-span-2 md:col-span-1">
                         <p className="text-sm text-gray-600">الفرصة الأكثر نشاطاً</p>
-                        <p className="text-2xl font-bold text-primary truncate">{summary.mostActiveOpportunity}</p>
+                        <p className="truncate text-xl font-bold text-primary md:text-2xl">{summary.mostActiveOpportunity}</p>
                     </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-3">
-                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="ابحث بالاسم..." className="flex-grow p-2 border rounded-lg" />
-                    <select value={opportunityFilter} onChange={e => setOpportunityFilter(e.target.value)} className="p-2 border rounded-lg bg-white">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr),200px,200px]">
+                    <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="ابحث بالاسم..." className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-3" />
+                    <select value={opportunityFilter} onChange={e => setOpportunityFilter(e.target.value)} className="min-h-[48px] rounded-xl border border-gray-300 bg-white px-4 py-3">
                         <option value="all">كل الفرص</option>
                         {opportunities.map(op => <option key={op} value={op}>{op}</option>)}
                     </select>
-                     <select value={classificationFilter} onChange={e => setClassificationFilter(e.target.value)} className="p-2 border rounded-lg bg-white">
+                     <select value={classificationFilter} onChange={e => setClassificationFilter(e.target.value)} className="min-h-[48px] rounded-xl border border-gray-300 bg-white px-4 py-3">
                         <option value="all">كل التصنيفات</option>
                         {classifications.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                 </div>
-                
-                <div className="overflow-x-auto">
+
+                <div className="space-y-3 md:hidden">
+                    {filteredLogs.map((log) => (
+                        <div key={log.id} className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm">
+                            <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                    <h3 className="truncate text-base font-bold text-gray-800">{log.volunteerName}</h3>
+                                    <p className="mt-1 text-sm text-text-secondary">{log.opportunity}</p>
+                                    <p className="mt-1 text-xs text-gray-500">{formatVolunteerDate(log.date)}</p>
+                                </div>
+                                <ClassificationPill classification={log.classification} />
+                            </div>
+                            <p className="mt-3 text-sm leading-6 text-gray-600">{log.tasks}</p>
+                            <div className="mt-4 grid grid-cols-2 gap-3">
+                                <div className="rounded-2xl bg-gray-50 p-3">
+                                    <p className="text-xs text-gray-500">عدد الساعات</p>
+                                    <p className="mt-1 text-sm font-bold text-gray-800">{log.durationHours}</p>
+                                </div>
+                                <div className="rounded-2xl bg-gray-50 p-3">
+                                    <p className="text-xs text-gray-500">الإنجاز</p>
+                                    <p className="mt-1 text-sm font-bold text-gray-800">{log.completionPercentage}%</p>
+                                </div>
+                            </div>
+                            <div className="mt-4 space-y-2">
+                                <div>
+                                    <p className="mb-2 text-xs font-semibold text-gray-500">نسبة الإنجاز</p>
+                                    <ProgressBar value={log.completionPercentage} />
+                                </div>
+                                <div>
+                                    <p className="mb-2 text-xs font-semibold text-gray-500">جودة الأداء</p>
+                                    <StarRating rating={log.performanceRating} />
+                                </div>
+                            </div>
+                            <button onClick={() => handleEdit(log)} className="mt-4 inline-flex min-h-[44px] w-full items-center justify-center rounded-xl border border-primary/20 bg-primary-light px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white">
+                                تعديل السجل
+                            </button>
+                        </div>
+                    ))}
+                    {filteredLogs.length === 0 && <p className="rounded-2xl border border-dashed border-gray-200 bg-white py-10 text-center text-sm text-gray-500">لا توجد نتائج مطابقة.</p>}
+                </div>
+
+                <div className="hidden overflow-x-auto md:block">
                     <table className="w-full text-sm text-right">
                         <thead className="bg-gray-100 text-gray-600">
                             <tr>
@@ -401,7 +455,7 @@ const VolunteersSection: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
-                     {filteredLogs.length === 0 && <p className="text-center text-gray-500 py-10">لا توجد نتائج مطابقة.</p>}
+                     {filteredLogs.length === 0 && <p className="py-10 text-center text-gray-500">لا توجد نتائج مطابقة.</p>}
                 </div>
             </div>
 
@@ -504,49 +558,55 @@ const AddEditDelegateModal: React.FC<AddEditDelegateModalProps> = ({ isOpen, onC
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-6">{delegateToEdit ? 'تعديل مندوب' : 'إضافة مندوب جديد'}</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">الاسم *</label>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">{delegateToEdit ? 'تعديل مندوب' : 'إضافة مندوب جديد'}</h3>
+                    <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+                        <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-700">الاسم *</label>
                         <input 
                             name="name" 
                             value={formData.name} 
                             onChange={handleChange} 
                             placeholder="اسم المندوب" 
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                            className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary" 
                             required 
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">المهمة</label>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">المهمة</label>
                         <textarea 
                             name="task" 
                             value={formData.task || ''} 
                             onChange={handleChange} 
                             placeholder="وصف المهمة" 
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
-                            rows={2}
+                            className="min-h-[100px] w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary" 
+                            rows={3}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">العنوان</label>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">العنوان</label>
                         <input 
                             name="address" 
                             value={formData.address || ''} 
                             onChange={handleChange} 
                             placeholder="العنوان" 
-                            className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                            className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary" 
                         />
                     </div>
                     <div>
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="mb-2 flex items-center justify-between">
                             <label className="block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
                             <button 
                                 type="button" 
                                 onClick={addEmail}
-                                className="text-primary hover:text-primary-hover text-sm font-medium flex items-center gap-1"
+                                className="inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 text-sm font-medium text-primary hover:bg-primary-light"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                 إضافة
@@ -560,14 +620,14 @@ const AddEditDelegateModal: React.FC<AddEditDelegateModalProps> = ({ isOpen, onC
                                         value={email} 
                                         onChange={(e) => handleEmailChange(index, e.target.value)} 
                                         placeholder="example@email.com" 
-                                        className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                                        className="min-h-[48px] flex-1 rounded-xl border border-gray-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary" 
                                         dir="ltr"
                                     />
                                     {formData.emails.length > 1 && (
                                         <button 
                                             type="button" 
                                             onClick={() => removeEmail(index)}
-                                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                                            className="inline-flex h-12 w-12 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 hover:text-red-700"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                         </button>
@@ -577,12 +637,12 @@ const AddEditDelegateModal: React.FC<AddEditDelegateModalProps> = ({ isOpen, onC
                         </div>
                     </div>
                     <div>
-                        <div className="flex items-center justify-between mb-1">
+                        <div className="mb-2 flex items-center justify-between">
                             <label className="block text-sm font-medium text-gray-700">رقم الهاتف</label>
                             <button 
                                 type="button" 
                                 onClick={addPhone}
-                                className="text-primary hover:text-primary-hover text-sm font-medium flex items-center gap-1"
+                                className="inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 text-sm font-medium text-primary hover:bg-primary-light"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                 إضافة
@@ -596,14 +656,14 @@ const AddEditDelegateModal: React.FC<AddEditDelegateModalProps> = ({ isOpen, onC
                                         value={phone} 
                                         onChange={(e) => handlePhoneChange(index, e.target.value)} 
                                         placeholder="رقم الهاتف" 
-                                        className="flex-1 p-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" 
+                                        className="min-h-[48px] flex-1 rounded-xl border border-gray-300 px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary" 
                                         dir="ltr"
                                     />
                                     {formData.phones.length > 1 && (
                                         <button 
                                             type="button" 
                                             onClick={() => removePhone(index)}
-                                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg"
+                                            className="inline-flex h-12 w-12 items-center justify-center rounded-xl text-red-500 hover:bg-red-50 hover:text-red-700"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                         </button>
@@ -612,9 +672,10 @@ const AddEditDelegateModal: React.FC<AddEditDelegateModalProps> = ({ isOpen, onC
                             ))}
                         </div>
                     </div>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">حفظ</button>
+                    </div>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                        <button type="button" onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="min-h-[48px] rounded-xl bg-primary px-5 py-2 font-semibold text-white transition-colors hover:bg-primary-hover">حفظ</button>
                     </div>
                 </form>
             </div>
@@ -678,11 +739,11 @@ const DelegatesSection: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-                <h2 className="text-2xl font-bold text-gray-800">المندوبين</h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-xl font-bold text-gray-800 md:text-2xl">المندوبين</h2>
                 <button 
                     onClick={() => { setEditingDelegate(null); setIsModalOpen(true); }} 
-                    className="bg-primary text-white font-semibold py-2 px-4 rounded-lg hover:bg-primary-hover flex items-center gap-2"
+                    className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     إضافة مندوب
@@ -690,18 +751,18 @@ const DelegatesSection: React.FC = () => {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg border">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                <div className="rounded-2xl border bg-gray-50 p-4">
                     <p className="text-sm text-gray-600">إجمالي المندوبين</p>
-                    <p className="text-2xl font-bold text-primary">{delegates.length}</p>
+                    <p className="text-xl font-bold text-primary md:text-2xl">{delegates.length}</p>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg border">
+                <div className="rounded-2xl border bg-gray-50 p-4">
                     <p className="text-sm text-gray-600">مع بريد إلكتروني</p>
-                    <p className="text-2xl font-bold text-primary">{delegates.filter(d => d.emails && d.emails.length > 0).length}</p>
+                    <p className="text-xl font-bold text-primary md:text-2xl">{delegates.filter(d => d.emails && d.emails.length > 0).length}</p>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg border">
+                <div className="rounded-2xl border bg-gray-50 p-4 sm:col-span-2 md:col-span-1">
                     <p className="text-sm text-gray-600">مع رقم هاتف</p>
-                    <p className="text-2xl font-bold text-primary">{delegates.filter(d => d.phones && d.phones.length > 0).length}</p>
+                    <p className="text-xl font-bold text-primary md:text-2xl">{delegates.filter(d => d.phones && d.phones.length > 0).length}</p>
                 </div>
             </div>
 
@@ -712,12 +773,74 @@ const DelegatesSection: React.FC = () => {
                     value={searchQuery} 
                     onChange={e => setSearchQuery(e.target.value)} 
                     placeholder="ابحث بالاسم أو المهمة أو العنوان..." 
-                    className="flex-grow p-2 border rounded-lg" 
+                    className="min-h-[48px] flex-grow rounded-xl border border-gray-300 px-4 py-3" 
                 />
             </div>
 
             {/* Delegates Table */}
-            <div className="overflow-x-auto">
+            <div className="space-y-3 md:hidden">
+                {filteredDelegates.map((delegate) => (
+                    <div key={delegate.id} className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                                <h3 className="truncate text-base font-bold text-gray-800">{delegate.name}</h3>
+                                <p className="mt-1 text-sm text-text-secondary">{delegate.task || 'لا توجد مهمة مسجلة'}</p>
+                            </div>
+                            <span className="rounded-full bg-primary-light px-2.5 py-1 text-[11px] font-semibold text-primary">مندوب</span>
+                        </div>
+
+                        <div className="mt-4 space-y-3 text-sm text-gray-600">
+                            <div>
+                                <p className="mb-1 text-xs font-semibold text-gray-500">العنوان</p>
+                                <p>{delegate.address || 'غير محدد'}</p>
+                            </div>
+                            <div>
+                                <p className="mb-1 text-xs font-semibold text-gray-500">البريد الإلكتروني</p>
+                                {delegate.emails && delegate.emails.length > 0 ? (
+                                    <div className="space-y-1" dir="ltr">
+                                        {delegate.emails.map((email, i) => <p key={i} className="truncate">{email}</p>)}
+                                    </div>
+                                ) : (
+                                    <p>غير متوفر</p>
+                                )}
+                            </div>
+                            <div>
+                                <p className="mb-1 text-xs font-semibold text-gray-500">رقم الهاتف</p>
+                                {delegate.phones && delegate.phones.length > 0 ? (
+                                    <div className="space-y-1" dir="ltr">
+                                        {delegate.phones.map((phone, i) => <p key={i}>{phone}</p>)}
+                                    </div>
+                                ) : (
+                                    <p>غير متوفر</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                            <button 
+                                onClick={() => handleEdit(delegate)} 
+                                className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-primary/20 bg-primary-light px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
+                            >
+                                تعديل
+                            </button>
+                            <button 
+                                onClick={() => handleDelete(delegate.id)} 
+                                className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-100"
+                                disabled={deletingId === delegate.id}
+                            >
+                                {deletingId === delegate.id ? 'جاري...' : 'حذف'}
+                            </button>
+                        </div>
+                    </div>
+                ))}
+                {filteredDelegates.length === 0 && (
+                    <p className="rounded-2xl border border-dashed border-gray-200 bg-white py-10 text-center text-sm text-gray-500">
+                        {delegates.length === 0 ? 'لا يوجد مندوبين. قم بإضافة مندوب جديد.' : 'لا توجد نتائج مطابقة.'}
+                    </p>
+                )}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-sm text-right">
                     <thead className="bg-gray-100 text-gray-600">
                         <tr>
@@ -816,9 +939,9 @@ const HR_TAB_ORDER: HrSection[] = [
 
 
 const PlaceholderContent: React.FC<{ title: string }> = ({ title }) => (
-    <div className="text-center text-gray-500 py-20 flex flex-col items-center justify-center h-full">
-        <h2 className="text-2xl font-bold mb-2">{title}</h2>
-        <p>محتوى هذا القسم سيتم إضافته قريباً.</p>
+    <div className="flex min-h-[16rem] flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-gray-200 bg-white px-4 py-12 text-center text-gray-500 shadow-sm">
+        <h2 className="mb-2 text-xl font-bold text-gray-800 md:text-2xl">{title}</h2>
+        <p className="max-w-md text-sm leading-6 md:text-base">محتوى هذا القسم سيتم إضافته قريباً.</p>
     </div>
 );
 
@@ -840,27 +963,30 @@ const HumanResources: React.FC = () => {
     };
 
     return (
-        <div className="space-y-6 pb-20">
+        <div className="space-y-4 pb-20 md:space-y-6">
             {/* Header - faye-new design */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800">الموارد البشرية</h1>
-                    <p className="text-text-secondary">إدارة فريق العمل، الحضور، والعطلات الرسمية.</p>
+                    <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">الموارد البشرية</h1>
+                    <p className="text-sm text-text-secondary md:text-base">إدارة فريق العمل، الحضور، والعطلات الرسمية.</p>
                 </div>
             </div>
 
             {/* Tab Navigation - faye-new pill style */}
-            <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide border-b">
-                {HR_TAB_ORDER.map(section => (
-                    <button
-                        key={section}
-                        onClick={() => setActiveSection(section)}
-                        className={`px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap transition-colors
-                        ${activeSection === section ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'}`}
-                    >
-                        {HR_TAB_LABELS[section]}
-                    </button>
-                ))}
+            <div className="-mx-4 border-b border-gray-200 px-4 md:mx-0 md:px-0">
+                <div className="flex snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto pb-3 scrollbar-hide">
+                    {HR_TAB_ORDER.map(section => (
+                        <button
+                            key={section}
+                            onClick={() => setActiveSection(section)}
+                            className={`shrink-0 snap-start rounded-xl px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-colors ${
+                            activeSection === section ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'
+                        }`}
+                        >
+                            {HR_TAB_LABELS[section]}
+                        </button>
+                    ))}
+                </div>
             </div>
             
             {/* Main Content Area */}

@@ -84,7 +84,7 @@ const PermissionToggle: React.FC<{
     >
         <span 
             className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
-                enabled ? 'right-0.5' : 'left-0.5'
+                enabled ? 'end-0.5' : 'start-0.5'
             } ${loading ? 'animate-pulse' : ''}`}
         />
     </button>
@@ -197,16 +197,16 @@ const PermissionsPanel: React.FC<{
                             
                             return (
                                 <>
-                                    <div className="flex items-center gap-3 mb-4 pb-4 border-b">
+                                    <div className="mb-4 flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center">
                                         <Avatar src={member.avatar_url} name={member.name} size="lg" />
-                                        <div>
+                                        <div className="min-w-0">
                                             <h3 className="font-bold text-lg">{member.name}</h3>
                                             <p className="text-sm text-text-secondary">
                                                 {isActualManager ? 'مدير - صلاحيات كاملة' : 'عضو فريق'}
                                             </p>
                                         </div>
                                         {isActualManager && (
-                                            <span className="bg-primary text-white text-xs px-2 py-1 rounded-full mr-auto">
+                                            <span className="rounded-full bg-primary px-2 py-1 text-xs text-white sm:me-auto">
                                                 المدير الرئيسي
                                             </span>
                                         )}
@@ -234,7 +234,7 @@ const PermissionsPanel: React.FC<{
                                             return (
                                                 <div 
                                                     key={key}
-                                                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                                    className={`flex flex-col gap-3 rounded-lg border p-3 transition-all sm:flex-row sm:items-center sm:justify-between ${
                                                         value ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
                                                     } ${isDisabled ? 'opacity-60' : ''}`}
                                                 >
@@ -301,26 +301,27 @@ const PermissionsModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
-                <div className="bg-gradient-to-r from-primary to-primary-hover p-4">
-                    <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-r from-primary to-primary-hover p-4 md:p-5">
+                    <div className="flex items-start gap-3">
                         <Avatar src={member.avatar_url} name={member.name} size="lg" className="border-2 border-white/30" />
-                        <div>
-                            <h3 className="text-xl font-bold text-white">{member.name}</h3>
+                        <div className="min-w-0 flex-1">
+                            <h3 className="truncate text-lg font-bold text-white md:text-xl">{member.name}</h3>
                             <p className="text-white/80 text-sm">
                                 {isActualManager ? 'مدير - صلاحيات كاملة' : 'إدارة الصلاحيات'}
                             </p>
                         </div>
                         {isActualManager && (
-                            <span className="bg-white/20 text-white text-xs px-2 py-1 rounded-full">
+                            <span className="hidden rounded-full bg-white/20 px-2 py-1 text-xs text-white sm:inline-flex">
                                 المدير الرئيسي
                             </span>
                         )}
                         <button 
                             onClick={onClose}
-                            className="mr-auto text-white/80 hover:text-white transition-colors"
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                            aria-label="إغلاق"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         </button>
@@ -336,7 +337,7 @@ const PermissionsModal: React.FC<{
                 )}
                 
                 {/* Permissions List */}
-                <div className="p-4 overflow-y-auto max-h-[60vh]">
+                <div className="flex-1 overflow-y-auto p-4 md:max-h-[60vh]">
                     <div className="space-y-3">
                         {PERMISSION_KEYS.map(key => {
                             const config = PERMISSION_CONFIG[key];
@@ -348,7 +349,7 @@ const PermissionsModal: React.FC<{
                             return (
                                 <div 
                                     key={key} 
-                                    className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                    className={`flex flex-col gap-3 rounded-lg border p-3 transition-all sm:flex-row sm:items-center sm:justify-between ${
                                         value ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
                                     } ${isDisabled ? 'opacity-60' : ''}`}
                                 >
@@ -384,10 +385,10 @@ const PermissionsModal: React.FC<{
                 </div>
 
                 {/* Footer */}
-                <div className="border-t p-4 bg-gray-50">
+                <div className="border-t bg-gray-50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:px-4 md:py-4 md:pb-4">
                     <button 
                         onClick={onClose} 
-                        className="w-full py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+                        className="min-h-[48px] w-full rounded-xl bg-gray-100 py-2.5 font-semibold text-gray-700 transition-colors hover:bg-gray-200"
                     >
                         إغلاق
                     </button>
@@ -415,17 +416,24 @@ const AddTeamMemberModal: React.FC<{
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">إضافة عضو فريق جديد</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">اسم العضو</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" required autoFocus/>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-w-md md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">إضافة عضو فريق جديد</h3>
+                    <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                    <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+                        <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-700">اسم العضو</label>
+                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="block min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary" required autoFocus/>
+                        </div>
                     </div>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold">إضافة</button>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                        <button type="button" onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="min-h-[48px] rounded-xl bg-primary px-5 py-2 font-semibold text-white transition-colors hover:bg-primary-hover">إضافة</button>
                     </div>
                 </form>
             </div>
@@ -447,17 +455,24 @@ const EditTeamMemberModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">تعديل بيانات عضو الفريق</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700">اسم العضو</label>
-                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"/>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-w-md md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">تعديل بيانات عضو الفريق</h3>
+                    <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                    <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+                        <div>
+                            <label className="mb-2 block text-sm font-medium text-gray-700">اسم العضو</label>
+                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="block min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary"/>
+                        </div>
                     </div>
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold">حفظ التغييرات</button>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                        <button type="button" onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="min-h-[48px] rounded-xl bg-primary px-5 py-2 font-semibold text-white transition-colors hover:bg-primary-hover">حفظ التغييرات</button>
                     </div>
                 </form>
             </div>
@@ -483,19 +498,26 @@ const SendMessageModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4">{title}</h3>
-                <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="اكتب رسالتك هنا..."
-                    className="w-full h-32 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary resize-y"
-                    autoFocus
-                ></textarea>
-                <div className="flex justify-end gap-3 pt-4">
-                    <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors font-semibold">إلغاء</button>
-                    <button onClick={handleSend} disabled={!message.trim()} className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:bg-gray-400 disabled:cursor-not-allowed">إرسال</button>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-w-lg md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">{title}</h3>
+                    <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+                    <textarea
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        placeholder="اكتب رسالتك هنا..."
+                        className="h-40 w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary md:h-32"
+                        autoFocus
+                    ></textarea>
+                </div>
+                <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                    <button type="button" onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                    <button onClick={handleSend} disabled={!message.trim()} className="min-h-[48px] rounded-xl bg-primary px-5 py-2 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-gray-400">إرسال</button>
                 </div>
             </div>
         </div>
@@ -550,6 +572,67 @@ const SortPopover: React.FC<{
 interface TeamListProps {
     embedded?: boolean;
 }
+
+const MobileTeamMemberCard: React.FC<{
+    member: TeamMember;
+    role: string;
+    isSysAdmin: boolean;
+    accountsLoading: boolean;
+    accountStatus?: string;
+    canQuickCreate: boolean;
+    onQuickCreate: () => void;
+}> = ({ member, role, isSysAdmin, accountsLoading, accountStatus, canQuickCreate, onQuickCreate }) => (
+    <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex items-start gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-light text-lg font-bold text-primary">
+                {member.name.charAt(0)}
+            </div>
+            <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="truncate text-base font-bold text-gray-800">{member.name}</h3>
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-600">
+                        {role}
+                    </span>
+                </div>
+                <div className="mt-2">
+                    {isSysAdmin ? (
+                        member.uuid ? (
+                            <AccountStatusBadge
+                                status={accountStatus as any}
+                                loading={accountsLoading}
+                                className="!text-[10px]"
+                            />
+                        ) : (
+                            <span className="text-xs text-gray-400">لا يوجد ملف مرتبط</span>
+                        )
+                    ) : (
+                        <span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-600">
+                            نشط
+                        </span>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-2">
+            <Link
+                to={`/team/${member.id}`}
+                className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-hover"
+            >
+                عرض الملف
+            </Link>
+            {canQuickCreate && (
+                <button
+                    type="button"
+                    onClick={onQuickCreate}
+                    className="inline-flex min-h-[48px] w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-800 transition-colors hover:bg-slate-50"
+                >
+                    إنشاء حساب دخول
+                </button>
+            )}
+        </div>
+    </div>
+);
 
 const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
     const { teamMembers: teamMembersData, loading } = useTeamMembersBasic();
@@ -717,6 +800,20 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
         setIsPopoverOpen(false);
     };
 
+    if (loading && teamList.length === 0) {
+        return (
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div className="animate-pulse space-y-4">
+                    <div className="h-6 w-40 rounded bg-gray-200" />
+                    <div className="grid gap-3 md:grid-cols-2">
+                        <div className="h-28 rounded-2xl bg-gray-100" />
+                        <div className="h-28 rounded-2xl bg-gray-100" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
         <div className="space-y-6 pb-24">
@@ -736,20 +833,20 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
             )}
 
             {/* Toolbar */}
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
                 <div className="relative w-full md:w-80 group">
                     <input 
                         type="text" 
                         placeholder="البحث في الموظفين..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pr-10 pl-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
+                        className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-4 ps-4 text-sm outline-none transition-all focus:bg-white focus:ring-2 focus:ring-primary"
                         ref={searchInputRef}
                     />
                 </div>
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:flex-wrap md:items-center md:justify-end">
                     {isSysAdmin && (
-                        <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer whitespace-nowrap">
+                        <label className="flex min-h-[44px] items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 cursor-pointer whitespace-nowrap">
                             <input
                                 type="checkbox"
                                 checked={filterOnlyNoAccount}
@@ -759,59 +856,144 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                             بدون حساب دخول فقط
                         </label>
                     )}
-                    <div className="bg-gray-100 p-1 rounded-xl flex">
+                    <div className="hidden rounded-xl bg-gray-100 p-1 md:flex">
                         <button onClick={() => setTeamViewMode('table')} className={`px-3 py-2 rounded-lg transition-all ${teamViewMode === 'table' ? 'bg-white text-primary shadow-sm font-bold' : 'text-gray-500'}`}>جدول</button>
                         <button onClick={() => setTeamViewMode('grid')} className={`px-3 py-2 rounded-lg transition-all ${teamViewMode === 'grid' ? 'bg-white text-primary shadow-sm font-bold' : 'text-gray-500'}`}>بطاقات</button>
                     </div>
-                    <button className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold shadow-lg" onClick={() => setIsAddModalOpen(true)}>إضافة موظف</button>
+                    <button className="min-h-[48px] w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg md:w-auto" onClick={() => setIsAddModalOpen(true)}>إضافة موظف</button>
                 </div>
             </div>
 
-            <AnimatePresence mode="wait">
-                {teamViewMode === 'table' ? (
-                    <motion.div key="table" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <table className="w-full text-right border-collapse">
-                            <thead className="bg-gray-50 text-gray-500 text-xs font-bold uppercase">
-                                <tr>
-                                    <th className="p-4 border-b">الاسم</th>
-                                    <th className="p-4 border-b">الدور</th>
-                                    {isSysAdmin ? (
-                                        <th className="p-4 border-b">حساب الدخول</th>
-                                    ) : (
-                                        <th className="p-4 border-b">الحالة</th>
-                                    )}
-                                    <th className="p-4 border-b text-center">الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {filteredTeamMembers.map(member => {
-                                    const memberPerms = getMemberPermissions(member.id);
-                                    const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
-                                    const acc = member.uuid ? accountsMap[member.uuid] : undefined;
-                                    const canQuickCreate =
-                                        isSysAdmin && member.uuid && acc?.status === 'no_login';
-                                    return (
-                                        <tr key={member.id} className="hover:bg-gray-50 transition-all text-sm cursor-pointer" onClick={() => navigate(`/team/${member.id}`)}>
-                                            <td className="p-4 font-bold">{member.name}</td>
-                                            <td className="p-4 text-gray-600">{role}</td>
-                                            <td className="p-4">
+            {filteredTeamMembers.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-12 text-center text-sm text-text-secondary shadow-sm">
+                    لا يوجد أعضاء فريق مطابقون لنتائج البحث الحالية.
+                </div>
+            ) : (
+                <>
+                    <div className="space-y-3 md:hidden">
+                        {filteredTeamMembers.map(member => {
+                            const memberPerms = getMemberPermissions(member.id);
+                            const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
+                            const acc = member.uuid ? accountsMap[member.uuid] : undefined;
+                            const canQuickCreate =
+                                isSysAdmin && member.uuid && acc?.status === 'no_login';
+
+                            return (
+                                <MobileTeamMemberCard
+                                    key={member.id}
+                                    member={member}
+                                    role={role}
+                                    isSysAdmin={isSysAdmin}
+                                    accountsLoading={accountsLoading}
+                                    accountStatus={acc?.status}
+                                    canQuickCreate={Boolean(canQuickCreate)}
+                                    onQuickCreate={() => setCreateLoginTarget({ profileId: member.uuid!, name: member.name })}
+                                />
+                            );
+                        })}
+                    </div>
+
+                    <div className="hidden md:block">
+                        <AnimatePresence mode="wait">
+                            {teamViewMode === 'table' ? (
+                                <motion.div key="table" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+                                    <table className="w-full text-right border-collapse">
+                                        <thead className="bg-gray-50 text-xs font-bold uppercase text-gray-500">
+                                            <tr>
+                                                <th className="p-4 border-b">الاسم</th>
+                                                <th className="p-4 border-b">الدور</th>
                                                 {isSysAdmin ? (
-                                                    member.uuid ? (
+                                                    <th className="p-4 border-b">حساب الدخول</th>
+                                                ) : (
+                                                    <th className="p-4 border-b">الحالة</th>
+                                                )}
+                                                <th className="p-4 border-b text-center">الإجراءات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {filteredTeamMembers.map(member => {
+                                                const memberPerms = getMemberPermissions(member.id);
+                                                const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
+                                                const acc = member.uuid ? accountsMap[member.uuid] : undefined;
+                                                const canQuickCreate =
+                                                    isSysAdmin && member.uuid && acc?.status === 'no_login';
+                                                return (
+                                                    <tr key={member.id} className="hover:bg-gray-50 transition-all text-sm cursor-pointer" onClick={() => navigate(`/team/${member.id}`)}>
+                                                        <td className="p-4 font-bold">{member.name}</td>
+                                                        <td className="p-4 text-gray-600">{role}</td>
+                                                        <td className="p-4">
+                                                            {isSysAdmin ? (
+                                                                member.uuid ? (
+                                                                    <AccountStatusBadge
+                                                                        status={acc?.status}
+                                                                        loading={accountsLoading}
+                                                                        className="!text-[10px]"
+                                                                    />
+                                                                ) : (
+                                                                    <span className="text-xs text-gray-400">—</span>
+                                                                )
+                                                            ) : (
+                                                                <span className="text-[10px] font-bold text-green-600">نشط</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="p-4 text-center">
+                                                            <div className="flex items-center justify-center gap-2 flex-wrap">
+                                                                <Link to={`/team/${member.id}`} onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-primary transition-colors">عرض</Link>
+                                                                {canQuickCreate && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setCreateLoginTarget({ profileId: member.uuid!, name: member.name });
+                                                                        }}
+                                                                        className="text-xs font-bold text-primary hover:text-primary-hover"
+                                                                    >
+                                                                        إنشاء حساب
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </motion.div>
+                            ) : (
+                                <motion.div key="grid" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+                                    {filteredTeamMembers.map(member => {
+                                        const memberPerms = getMemberPermissions(member.id);
+                                        const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
+                                        const acc = member.uuid ? accountsMap[member.uuid] : undefined;
+                                        const canQuickCreate =
+                                            isSysAdmin && member.uuid && acc?.status === 'no_login';
+                                        return (
+                                            <div key={member.id} className="group bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/team/${member.id}`)}>
+                                                <div className="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center text-2xl font-bold mb-3">
+                                                    {member.name.charAt(0)}
+                                                </div>
+                                                <h4 className="font-bold text-gray-800">{member.name}</h4>
+                                                <p className="text-xs text-gray-500 mb-2">{role}</p>
+                                                {isSysAdmin && member.uuid && (
+                                                    <div className="mb-2" onClick={(e) => e.stopPropagation()}>
                                                         <AccountStatusBadge
                                                             status={acc?.status}
                                                             loading={accountsLoading}
                                                             className="!text-[10px]"
                                                         />
-                                                    ) : (
-                                                        <span className="text-xs text-gray-400">—</span>
-                                                    )
-                                                ) : (
-                                                    <span className="text-[10px] font-bold text-green-600">نشط</span>
+                                                    </div>
                                                 )}
-                                            </td>
-                                            <td className="p-4 text-center">
-                                                <div className="flex items-center justify-center gap-2 flex-wrap">
-                                                    <Link to={`/team/${member.id}`} onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-primary transition-colors">عرض</Link>
+                                                <div className="flex flex-col sm:flex-row gap-2 w-full mt-auto">
+                                                    {!isSysAdmin && (
+                                                        <span className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-green-50 text-green-600">نشط</span>
+                                                    )}
+                                                    <Link
+                                                        to={`/team/${member.id}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="flex-1 min-w-0 px-3 py-2.5 bg-primary-light text-primary rounded-xl text-xs font-bold text-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm"
+                                                    >
+                                                        عرض
+                                                    </Link>
                                                     {canQuickCreate && (
                                                         <button
                                                             type="button"
@@ -819,73 +1001,21 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                                 e.stopPropagation();
                                                                 setCreateLoginTarget({ profileId: member.uuid!, name: member.name });
                                                             }}
-                                                            className="text-xs font-bold text-primary hover:text-primary-hover"
+                                                            className="flex-1 min-w-0 py-2.5 px-2 border-2 border-slate-300 bg-white text-slate-800 rounded-xl text-xs font-bold hover:bg-slate-50 shadow-sm"
                                                         >
                                                             إنشاء حساب
                                                         </button>
                                                     )}
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </motion.div>
-                ) : (
-                    <motion.div key="grid" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {filteredTeamMembers.map(member => {
-                            const memberPerms = getMemberPermissions(member.id);
-                            const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
-                            const acc = member.uuid ? accountsMap[member.uuid] : undefined;
-                            const canQuickCreate =
-                                isSysAdmin && member.uuid && acc?.status === 'no_login';
-                            return (
-                                <div key={member.id} className="group bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/team/${member.id}`)}>
-                                    <div className="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center text-2xl font-bold mb-3">
-                                        {member.name.charAt(0)}
-                                    </div>
-                                    <h4 className="font-bold text-gray-800">{member.name}</h4>
-                                    <p className="text-xs text-gray-500 mb-2">{role}</p>
-                                    {isSysAdmin && member.uuid && (
-                                        <div className="mb-2" onClick={(e) => e.stopPropagation()}>
-                                            <AccountStatusBadge
-                                                status={acc?.status}
-                                                loading={accountsLoading}
-                                                className="!text-[10px]"
-                                            />
-                                        </div>
-                                    )}
-                                    <div className="flex flex-col sm:flex-row gap-2 w-full mt-auto">
-                                        {!isSysAdmin && (
-                                            <span className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-green-50 text-green-600">نشط</span>
-                                        )}
-                                        <Link
-                                            to={`/team/${member.id}`}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="flex-1 min-w-0 px-3 py-2.5 bg-primary-light text-primary rounded-xl text-xs font-bold text-center group-hover:bg-primary group-hover:text-white transition-all shadow-sm"
-                                        >
-                                            عرض
-                                        </Link>
-                                        {canQuickCreate && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setCreateLoginTarget({ profileId: member.uuid!, name: member.name });
-                                                }}
-                                                className="flex-1 min-w-0 py-2.5 px-2 border-2 border-slate-300 bg-white text-slate-800 rounded-xl text-xs font-bold hover:bg-slate-50 shadow-sm"
-                                            >
-                                                إنشاء حساب
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                                            </div>
+                                        );
+                                    })}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </>
+            )}
         </div>
 
         {selectedIds.size > 0 && (
