@@ -151,7 +151,7 @@ const AddEditVolunteerModal: React.FC<{
                             <label className="mb-3 block text-sm font-semibold text-gray-700">تقييم جودة الأداء</label>
                             <div className="flex items-center gap-1">
                                 {[1, 2, 3, 4, 5].map(star => (
-                                    <button type="button" key={star} onClick={() => setFormData(p => ({...p, performanceRating: star}))} className="inline-flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <button type="button" key={star} onClick={() => setFormData(p => ({...p, performanceRating: star}))} className="inline-flex h-11 w-11 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-primary">
                                         <svg className={`h-6 w-6 ${star <= formData.performanceRating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.96a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.96c.3.921-.755 1.688-1.54 1.118l-3.368-2.446a1 1 0 00-1.176 0l-3.368 2.446c-.784.57-1.838-.197-1.539-1.118l1.287-3.96a1 1 0 00-.364-1.118L2.07 9.387c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69L9.049 2.927z" /></svg>
                                     </button>
                                 ))}
@@ -449,7 +449,7 @@ const VolunteersSection: React.FC = () => {
                                     <td className="p-3"><StarRating rating={log.performanceRating} /></td>
                                     <td className="p-3"><ClassificationPill classification={log.classification} /></td>
                                     <td className="p-3">
-                                        <button onClick={() => handleEdit(log)} className="text-blue-600 hover:text-blue-800 p-1">تعديل</button>
+                                        <button onClick={() => handleEdit(log)} className="inline-flex min-h-[44px] items-center rounded-xl px-3 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-800">تعديل</button>
                                     </td>
                                 </tr>
                             ))}
@@ -606,7 +606,7 @@ const AddEditDelegateModal: React.FC<AddEditDelegateModalProps> = ({ isOpen, onC
                             <button 
                                 type="button" 
                                 onClick={addEmail}
-                                className="inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 text-sm font-medium text-primary hover:bg-primary-light"
+                                className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-3 text-sm font-medium text-primary transition-colors hover:bg-primary-light"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                 إضافة
@@ -642,7 +642,7 @@ const AddEditDelegateModal: React.FC<AddEditDelegateModalProps> = ({ isOpen, onC
                             <button 
                                 type="button" 
                                 onClick={addPhone}
-                                className="inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 text-sm font-medium text-primary hover:bg-primary-light"
+                                className="inline-flex min-h-[44px] items-center gap-1 rounded-lg px-3 text-sm font-medium text-primary transition-colors hover:bg-primary-light"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                                 إضافة
@@ -882,13 +882,13 @@ const DelegatesSection: React.FC = () => {
                                     <div className="flex gap-2">
                                         <button 
                                             onClick={() => handleEdit(delegate)} 
-                                            className="text-blue-600 hover:text-blue-800 p-1"
+                                            className="inline-flex min-h-[44px] items-center rounded-xl px-3 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-800"
                                         >
                                             تعديل
                                         </button>
                                         <button 
                                             onClick={() => handleDelete(delegate.id)} 
-                                            className="text-red-600 hover:text-red-800 p-1"
+                                            className="inline-flex min-h-[44px] items-center rounded-xl px-3 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-800"
                                             disabled={deletingId === delegate.id}
                                         >
                                             {deletingId === delegate.id ? 'جاري...' : 'حذف'}
@@ -979,7 +979,7 @@ const HumanResources: React.FC = () => {
                         <button
                             key={section}
                             onClick={() => setActiveSection(section)}
-                            className={`shrink-0 snap-start rounded-xl px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-colors ${
+                            className={`min-h-[44px] shrink-0 snap-start rounded-xl px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-colors ${
                             activeSection === section ? 'bg-primary text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100'
                         }`}
                         >

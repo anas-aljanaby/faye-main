@@ -78,15 +78,21 @@ const PermissionToggle: React.FC<{
     <button
         onClick={onToggle}
         disabled={disabled || loading}
-        className={`relative w-11 h-6 rounded-full transition-all duration-200 ${
-            enabled ? 'bg-green-500' : 'bg-gray-300'
-        } ${(disabled || loading) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:opacity-90'}`}
+        className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full px-1 transition-all duration-200 ${
+            (disabled || loading) ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:opacity-90'
+        }`}
     >
-        <span 
-            className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
-                enabled ? 'end-0.5' : 'start-0.5'
-            } ${loading ? 'animate-pulse' : ''}`}
-        />
+        <span
+            className={`relative h-6 w-11 rounded-full transition-all duration-200 ${
+                enabled ? 'bg-green-500' : 'bg-gray-300'
+            }`}
+        >
+            <span 
+                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all duration-200 ${
+                    enabled ? 'end-0.5' : 'start-0.5'
+                } ${loading ? 'animate-pulse' : ''}`}
+            />
+        </span>
     </button>
 );
 
@@ -149,7 +155,7 @@ const PermissionsPanel: React.FC<{
                     <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                         {errorMessage}
-                        <button onClick={() => setErrorMessage(null)} className="mr-auto text-red-500 hover:text-red-700">×</button>
+                        <button onClick={() => setErrorMessage(null)} className="mr-auto inline-flex h-11 w-11 items-center justify-center rounded-full text-red-500 transition-colors hover:bg-red-100 hover:text-red-700">×</button>
                     </div>
                 )}
                 {successMessage && (
@@ -167,7 +173,7 @@ const PermissionsPanel: React.FC<{
                             <button
                                 key={member.id}
                                 onClick={() => setSelectedMember(selectedMember === member.id ? null : member.id)}
-                                className={`flex items-center gap-2 p-2 rounded-lg border-2 transition-all ${
+                                className={`flex min-h-[48px] items-center gap-2 rounded-lg border-2 px-3 py-3 transition-all ${
                                     selectedMember === member.id 
                                         ? 'border-primary bg-primary-light' 
                                         : 'border-gray-200 hover:border-gray-300 bg-white'
@@ -206,7 +212,7 @@ const PermissionsPanel: React.FC<{
                                             </p>
                                         </div>
                                         {isActualManager && (
-                                            <span className="rounded-full bg-primary px-2 py-1 text-xs text-white sm:me-auto">
+                                            <span className="rounded-full bg-primary px-2.5 py-1 text-xs text-white sm:me-auto">
                                                 المدير الرئيسي
                                             </span>
                                         )}
@@ -1024,11 +1030,11 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-center gap-4">
                             <span className="font-bold text-primary">{selectedIds.size} تم تحديده</span>
-                            <button onClick={() => setSelectedIds(new Set())} className="text-sm font-semibold text-text-secondary hover:text-red-600">
+                            <button onClick={() => setSelectedIds(new Set())} className="inline-flex min-h-[44px] items-center rounded-xl px-3 text-sm font-semibold text-text-secondary transition-colors hover:bg-red-50 hover:text-red-600">
                                 إلغاء التحديد
                             </button>
                         </div>
-                        <button onClick={() => setIsMessageModalOpen(true)} className="flex items-center gap-2 py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold text-sm">
+                        <button onClick={() => setIsMessageModalOpen(true)} className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-hover">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                             <span>إرسال رسالة</span>
                         </button>
@@ -1038,8 +1044,8 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
         )}
 
         {selectedIds.size === 0 && (
-            <div className="hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] items-center justify-around bg-white/80 p-2 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-sm z-30">
-                <button onClick={() => navigate(-1)} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
+                <div className="hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] items-center justify-around bg-white/80 p-2 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-sm z-30">
+                <button onClick={() => navigate(-1)} className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center text-gray-600 transition-colors hover:text-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                     <span className="text-xs">رجوع</span>
                 </button>

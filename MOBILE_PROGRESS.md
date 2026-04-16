@@ -559,7 +559,7 @@ notice and Vite chunk-size warning for the large main bundle.
 
 ---
 
-### Task 3.2: Touch Target & Icon Size Audit `[~]`
+### Task 3.2: Touch Target & Icon Size Audit `[x]`
 **Priority:** P2
 **Depends on:** All Phase 2 tasks
 
@@ -569,16 +569,22 @@ notice and Vite chunk-size warning for the large main bundle.
 - Ensure icon buttons have adequate padding for touch
 - Check dropdowns, selects, and custom controls
 
-**Completion Notes:** A large portion of the high-traffic UI already uses
-44px+ tap targets after the page-by-page work, and many mobile actions were
-normalized to `min-h-11`, `min-h-[44px]`, or `min-h-[48px]`. This task is
-still only partially complete because there has not yet been a single
-deliberate audit across every shared control, dialog, and low-traffic screen.
+**Completion Notes:** Completed a dedicated touch-target sweep across the
+remaining shared and lower-traffic UI after the page-by-page work. Raised
+smaller actions to 44px+ where needed in shared surfaces such as
+`components/NotificationPanel.tsx`, `components/ThemeSettings.tsx`,
+`components/account/AccountAccessSection.tsx`,
+`components/policies/PoliciesSidebar.tsx`, `components/TeamList.tsx`, and
+`components/HumanResources.tsx`, including notification action links, theme
+mode/font toggles, account-access utility buttons, team permission controls,
+HR add/remove actions, and bottom action bars. This pass also normalized a
+few remaining compact buttons to clearer mobile-safe spacing without altering
+desktop layouts.
 
-**Known Issues:** Shared dialogs and older utility components still need a
-full sweep for button sizing, checkbox/select affordances, and oversized
-content icons. The remaining gaps appear concentrated outside the main Phase 2
-screens rather than in the core mobile flows.
+**Known Issues:** No new touch-target or icon-size-specific issues were found
+during code review. `npm run build` still reports the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle.
 
 ---
 
@@ -637,7 +643,7 @@ layouts. The remaining work is mainly a consistency polish pass.
 | Phase 3: Polish | 3.1 – 3.4 | Partially complete |
 
 **Total tasks:** 20
-**Completed:** 17
-**In progress:** 3
+**Completed:** 18
+**In progress:** 2
 **Not started:** 0
-**Remaining to finish:** 3
+**Remaining to finish:** 2

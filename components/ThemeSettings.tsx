@@ -79,7 +79,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
                       <button
                         key={item.id}
                         onClick={() => setMode(item.id as ThemeMode)}
-                        className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200
+                        className={`flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm font-semibold transition-all duration-200
                           ${mode === item.id ? 'bg-white dark:bg-gray-600 text-primary shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
                       >
                         {item.icon}
@@ -117,21 +117,21 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
                   <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-1 flex items-center justify-between">
                     <button
                       onClick={() => setFontSize('small')}
-                      className={`flex-1 py-2 rounded-lg text-xs transition-colors ${fontSize === 'small' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm font-bold' : 'text-gray-500'}`}
+                      className={`min-h-[44px] flex-1 rounded-lg text-xs transition-colors ${fontSize === 'small' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm font-bold' : 'text-gray-500'}`}
                     >
                       ع
                     </button>
                     <div className="w-px h-6 bg-gray-300 dark:bg-gray-700" />
                     <button
                       onClick={() => setFontSize('normal')}
-                      className={`flex-1 py-2 rounded-lg text-sm transition-colors ${fontSize === 'normal' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm font-bold' : 'text-gray-500'}`}
+                      className={`min-h-[44px] flex-1 rounded-lg text-sm transition-colors ${fontSize === 'normal' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm font-bold' : 'text-gray-500'}`}
                     >
                       ع
                     </button>
                     <div className="w-px h-6 bg-gray-300 dark:bg-gray-700" />
                     <button
                       onClick={() => setFontSize('large')}
-                      className={`flex-1 py-2 rounded-lg text-lg transition-colors ${fontSize === 'large' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm font-bold' : 'text-gray-500'}`}
+                      className={`min-h-[44px] flex-1 rounded-lg text-lg transition-colors ${fontSize === 'large' ? 'bg-white dark:bg-gray-600 text-primary shadow-sm font-bold' : 'text-gray-500'}`}
                     >
                       ع
                     </button>

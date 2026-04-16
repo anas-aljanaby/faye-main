@@ -68,7 +68,7 @@ export const AccountAccessSection: React.FC<{
             <button
               type="button"
               onClick={() => setModalOpen(true)}
-              className="shrink-0 w-full sm:w-auto py-2.5 px-5 border-2 border-primary text-primary bg-white rounded-lg hover:bg-primary-light font-semibold shadow-sm text-center"
+              className="min-h-[48px] shrink-0 w-full rounded-xl border-2 border-primary bg-white px-5 py-2.5 text-center font-semibold text-primary shadow-sm transition-colors hover:bg-primary-light sm:w-auto"
             >
               إنشاء حساب دخول
             </button>
@@ -94,7 +94,7 @@ export const AccountAccessSection: React.FC<{
                 type="button"
                 disabled
                 title="سيُفعّل لاحقاً عند تهيئة البريد"
-                className="py-2 px-4 rounded-lg border border-gray-300 bg-white text-gray-400 text-sm font-semibold cursor-not-allowed"
+                className="min-h-[44px] rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed"
               >
                 إعادة تعيين كلمة المرور
               </button>
@@ -110,7 +110,7 @@ export const AccountAccessSection: React.FC<{
                   setUnlinkError(null);
                   setUnlinkConfirmOpen(true);
                 }}
-                className="py-2 px-4 rounded-lg border-2 border-red-600 bg-white text-red-600 text-sm font-semibold hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:text-gray-400 disabled:border-gray-200 disabled:hover:bg-white"
+                className="min-h-[44px] rounded-xl border-2 border-red-600 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:opacity-50 disabled:hover:bg-white"
               >
                 فك الربط وتعطيل الدخول
               </button>
@@ -118,7 +118,7 @@ export const AccountAccessSection: React.FC<{
                 type="button"
                 disabled
                 title="سيُفعّل لاحقاً مع SMTP"
-                className="py-2 px-4 rounded-lg border border-gray-300 bg-white text-gray-400 text-sm font-semibold cursor-not-allowed"
+                className="min-h-[44px] rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed"
               >
                 إعادة إرسال الدعوة
               </button>

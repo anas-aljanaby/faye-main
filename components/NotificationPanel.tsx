@@ -50,10 +50,16 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-3">
           <p className="text-lg font-semibold text-text-primary">إشعارات جديدة</p>
           <div className="flex flex-wrap items-center justify-end gap-1 text-right sm:gap-2">
-            <button onClick={() => setShowPreferences(true)} className="text-xs font-semibold text-primary">
+            <button
+              onClick={() => setShowPreferences(true)}
+              className="inline-flex min-h-[44px] items-center rounded-xl px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary-light"
+            >
               الإعدادات
             </button>
-            <button onClick={onMarkAllAsRead} className="text-xs font-semibold text-primary">
+            <button
+              onClick={onMarkAllAsRead}
+              className="inline-flex min-h-[44px] items-center rounded-xl px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary-light"
+            >
               تعليم الكل كمقروء
             </button>
           </div>

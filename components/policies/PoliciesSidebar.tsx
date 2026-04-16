@@ -32,7 +32,7 @@ function TocList({
             <button
               type="button"
               onClick={() => handleClick(item.id)}
-              className={`w-full rounded-xl px-3 py-2.5 text-right text-sm transition-colors ${
+              className={`min-h-[44px] w-full rounded-xl px-3 py-2.5 text-right text-sm transition-colors ${
                 activeId === item.id
                   ? 'bg-primary-light text-primary font-semibold'
                   : 'text-gray-600 hover:bg-primary-light hover:text-primary'
@@ -81,7 +81,7 @@ export function PoliciesSidebar({ activeId, onSelect }: PoliciesSidebarProps) {
               <p className="mt-1 text-sm text-text-secondary">افتح فهرس السياسات واختر القسم المطلوب</p>
             </div>
             <span
-              className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition-transform ${
+              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 transition-transform ${
                 isDrawerOpen ? 'rotate-180' : ''
               }`}
               aria-hidden="true"
