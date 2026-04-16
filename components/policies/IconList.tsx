@@ -7,12 +7,12 @@ interface IconListProps {
 }
 
 const defaultIcon = (
-  <span className="text-primary font-bold ml-2" aria-hidden>◈</span>
+  <span className="font-bold text-primary" aria-hidden>◈</span>
 );
 
 export function IconList({ items, icon = defaultIcon, className = '' }: IconListProps) {
   return (
-    <ul className={`space-y-2 text-base text-gray-600 leading-relaxed list-none ${className}`}>
+    <ul className={`list-none space-y-3 text-base leading-8 text-gray-600 ${className}`}>
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2">
           {icon}

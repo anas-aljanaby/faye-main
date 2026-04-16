@@ -14,19 +14,19 @@ interface FeatureGridProps {
 
 export function FeatureGrid({ cards, columns = 3, className = '' }: FeatureGridProps) {
   const gridClass = columns === 2
-    ? 'grid grid-cols-1 md:grid-cols-2 gap-4'
-    : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+    ? 'grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4'
+    : 'grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3';
   return (
     <div className={`${gridClass} ${className}`}>
       {cards.map((card, i) => (
         <div
           key={i}
-          className="bg-bg-card border border-gray-200 rounded-xl p-5 shadow-sm"
+          className="rounded-2xl border border-gray-200 bg-bg-card p-4 shadow-sm md:p-5"
         >
           {card.icon && (
             <div className="mb-3 text-primary">{card.icon}</div>
           )}
-          <h4 className="font-semibold text-gray-800 mb-2">{card.title}</h4>
+          <h4 className="mb-2 text-base font-semibold text-gray-800">{card.title}</h4>
           <p className="text-gray-600 text-base leading-relaxed">{card.description}</p>
         </div>
       ))}

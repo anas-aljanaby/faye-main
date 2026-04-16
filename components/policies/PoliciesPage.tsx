@@ -77,7 +77,7 @@ export function PoliciesPage() {
   return (
     <>
       <div
-        className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary-light to-primary z-50 print:hidden"
+        className="fixed start-0 end-0 top-0 z-50 h-1 bg-gradient-to-r from-primary via-primary-light to-primary print:hidden"
         style={{ width: `${readingProgress}%`, transition: 'width 0.1s ease-out' }}
       />
       <PoliciesLayout

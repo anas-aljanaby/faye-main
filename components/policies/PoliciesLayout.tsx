@@ -22,12 +22,19 @@ export function PoliciesLayout({ header, sidebar, children, footer, contentRef }
         }
       `}</style>
       {header}
-      <div className="flex flex-col lg:flex-row gap-2 max-w-[2000px] mx-auto px-4 sm:px-6 md:px-8 py-4 sm:py-6 md:py-8 print:gap-0 print:p-0 print:flex-col print:mx-auto">
-        <main ref={contentRef} className="flex-1 min-w-0 print:max-w-none">
-          {children}
+      <div className="mx-auto flex max-w-[2000px] flex-col gap-4 px-4 py-4 sm:px-5 md:px-8 md:py-8 lg:flex-row lg:gap-6 print:mx-auto print:flex-col print:gap-0 print:p-0">
+        {sidebar != null && (
+          <div className="print:hidden lg:hidden">
+            {sidebar}
+          </div>
+        )}
+        <main ref={contentRef} className="min-w-0 flex-1 print:max-w-none">
+          <div className="policies-content space-y-6 rounded-[1.75rem] bg-white p-4 shadow-sm ring-1 ring-black/5 sm:p-5 md:space-y-8 md:p-8 print:rounded-none print:bg-transparent print:p-0 print:shadow-none print:ring-0 [&_p]:text-base [&_p]:leading-8 [&_li]:text-base [&_li]:leading-8 [&_ol]:space-y-2 [&_ul]:space-y-2">
+            {children}
+          </div>
         </main>
         {sidebar != null && (
-          <aside className="w-full lg:w-72 flex-shrink-0 lg:sticky lg:top-20 lg:self-start print:hidden">
+          <aside className="hidden w-full shrink-0 print:hidden lg:block lg:w-72 lg:self-start lg:sticky lg:top-20">
             {sidebar}
           </aside>
         )}

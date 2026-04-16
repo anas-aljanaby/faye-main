@@ -20,30 +20,30 @@ export function ComparisonGrid({
   className = '',
 }: ComparisonGridProps) {
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${className}`}>
-      <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-5">
-        <h4 className="font-semibold text-gray-800 flex items-center gap-2 mb-3">
+    <div className={`grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 ${className}`}>
+      <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 md:p-5">
+        <h4 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-800">
           {leftIcon}
           {leftTitle}
         </h4>
-        <ul className="space-y-2 text-gray-600 list-none">
+        <ul className="list-none space-y-2 text-base leading-8 text-gray-600">
           {leftItems.map((item, i) => (
             <li key={i} className="flex items-start gap-2">
-              <span className="text-amber-600 mt-0.5 font-bold">•</span>
+              <span className="mt-0.5 font-bold text-amber-600">•</span>
               <span>{item}</span>
             </li>
           ))}
         </ul>
       </div>
-      <div className="bg-green-50/80 border border-green-200 rounded-xl p-5">
-        <h4 className="font-semibold text-gray-800 flex items-center gap-2 mb-3">
+      <div className="rounded-2xl border border-green-200 bg-green-50/80 p-4 md:p-5">
+        <h4 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-800">
           {rightIcon}
           {rightTitle}
         </h4>
-        <ul className="space-y-2 text-gray-600 list-none">
+        <ul className="list-none space-y-2 text-base leading-8 text-gray-600">
           {rightItems.map((item, i) => (
             <li key={i} className="flex items-start gap-2">
-              <span className="text-green-600 mt-0.5">✅</span>
+              <span className="mt-0.5 text-green-600">✅</span>
               <span>{item}</span>
             </li>
           ))}

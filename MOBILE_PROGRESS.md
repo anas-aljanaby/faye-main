@@ -466,7 +466,7 @@ large main bundle still remain.
 
 ---
 
-### Task 2.12: Policies (`/policies`) `[ ]`
+### Task 2.12: Policies (`/policies`) `[x]`
 **Priority:** P2
 **Files likely involved:** `components/policies/PoliciesLayout.tsx`,
 `components/policies/PoliciesContent.tsx`, related policy components
@@ -481,9 +481,20 @@ large main bundle still remain.
 - Print styles: should still work
 - Stepper/grid components: stack on mobile
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Refined the policies experience for phones by moving
+the mobile table of contents into a collapsible top section while preserving
+the existing sticky desktop sidebar, then wrapping the long-form content in a
+cleaner mobile-first reading container with tighter padding and 16px+ body
+type. Updated the shared policy primitives so section headers use RTL logical
+spacing, data tables scroll horizontally with safer minimum widths, feature
+and comparison grids use denser mobile cards, and process steppers stack
+cleanly on narrow screens. The print action remains available on mobile, the
+reading progress bar and print styles were preserved, and the layout still
+restores the larger two-column presentation from `lg` upward.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 

@@ -14,15 +14,15 @@ export function PolicySection({ id, title, children }: PolicySectionProps) {
   return (
     <section
       id={id}
-      className="policy-section scroll-mt-24 mb-10 print:break-before-page print:first:break-before-auto border-r-4 border-primary pr-4 md:pr-6"
+      className="policy-section mb-10 scroll-mt-24 border-s-4 border-primary ps-4 print:break-before-page print:first:break-before-auto md:ps-6"
     >
-      <div className="flex items-baseline gap-3 mb-4 mt-8 first:mt-0">
+      <div className="mt-8 mb-4 flex items-start gap-3 first:mt-0 md:items-baseline">
         {number && (
-          <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary-light text-primary font-bold text-sm flex-shrink-0">
+          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary-light text-sm font-bold text-primary md:h-10 md:w-10">
             {number}
           </span>
         )}
-        <h2 className="text-2xl font-bold text-primary">
+        <h2 className="text-xl font-bold leading-8 text-primary md:text-2xl">
           {title}
         </h2>
       </div>

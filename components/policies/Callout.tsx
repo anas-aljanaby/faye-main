@@ -18,11 +18,11 @@ const variantStyles: Record<Variant, string> = {
 export function Callout({ variant = 'info', title, children, className = '' }: CalloutProps) {
   return (
     <div
-      className={`rounded-xl border p-4 ${variantStyles[variant]} ${className}`}
+      className={`rounded-2xl border p-4 md:p-5 ${variantStyles[variant]} ${className}`}
       role="alert"
     >
-      {title && <p className="font-semibold mb-2">{title}</p>}
-      <div className="text-base">{children}</div>
+      {title && <p className="mb-2 text-base font-semibold">{title}</p>}
+      <div className="text-base leading-8">{children}</div>
     </div>
   );
 }
