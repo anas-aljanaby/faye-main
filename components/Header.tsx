@@ -127,7 +127,7 @@ const Header: React.FC = () => {
 
   return (
     <>
-    <header className="sticky top-0 z-40 bg-primary shadow-md">
+    <header className="sticky top-0 z-40 bg-primary pt-[env(safe-area-inset-top)] shadow-md md:pt-0">
       <div className="flex h-14 items-center justify-between ps-3 pe-2 text-white sm:h-[3.75rem] sm:ps-4 sm:pe-3 md:h-16 md:px-6">
         <div className="flex items-center gap-1.5 sm:gap-3">
            <div className="flex items-center gap-1 md:hidden">
@@ -210,7 +210,7 @@ const Header: React.FC = () => {
             onClick={() => setShowNotifications(false)}
           />
           <div
-            className="fixed z-[100]"
+            className="fixed z-[100] max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-hidden"
             style={{
               top: `${notificationPosition.top}px`,
               left: `${notificationPosition.left}px`,
@@ -230,7 +230,7 @@ const Header: React.FC = () => {
       )}
       {showUserMenu && (
         <div
-          className="fixed z-[100] overflow-hidden rounded-2xl border border-gray-200 bg-bg-card py-2 shadow-xl dark:border-gray-700 dark:bg-gray-800"
+          className="fixed z-[100] max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] overflow-x-hidden overflow-y-auto rounded-2xl border border-gray-200 bg-bg-card py-2 shadow-xl dark:border-gray-700 dark:bg-gray-800"
           style={{
             top: `${userMenuPosition.top}px`,
             left: `${userMenuPosition.left}px`,

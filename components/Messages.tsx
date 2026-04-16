@@ -100,7 +100,7 @@ const TemplatesModal: React.FC<{
                 aria-modal="true"
                 aria-label="قوالب الرسائل"
             >
-                <div className="flex shrink-0 flex-col gap-3 border-b px-4 pb-4 pt-5 md:flex-row md:items-center md:justify-between md:px-6">
+                <div className="flex shrink-0 flex-col gap-3 border-b px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] md:flex-row md:items-center md:justify-between md:px-6 md:py-5">
                     <div>
                         <h3 className="text-xl font-bold text-gray-900">قوالب الرسائل</h3>
                         <p className="mt-1 text-sm text-gray-500">اختر قالبًا جاهزًا أو عدّل القوالب الحالية.</p>
@@ -507,7 +507,7 @@ const Messages: React.FC = () => {
                     aria-modal="true"
                     aria-label="بدء محادثة جديدة"
                 >
-                    <div className="flex shrink-0 items-center justify-between border-b px-4 pb-4 pt-5 md:px-6">
+                    <div className="flex shrink-0 items-center justify-between border-b px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] md:px-6 md:py-5">
                         <div>
                             <h3 className="text-xl font-bold text-gray-900">بدء محادثة جديدة</h3>
                             <p className="mt-1 text-sm text-gray-500">اختر مستخدمًا لبدء محادثة مباشرة.</p>

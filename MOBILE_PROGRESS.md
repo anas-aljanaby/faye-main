@@ -588,7 +588,7 @@ large main bundle.
 
 ---
 
-### Task 3.3: Safe Areas & Viewport `[~]`
+### Task 3.3: Safe Areas & Viewport `[x]`
 **Priority:** P3
 **Depends on:** Task 1.1
 
@@ -599,17 +599,21 @@ large main bundle.
 - Test that fixed elements (bottom nav, fixed headers) account for
   safe areas
 
-**Completion Notes:** The base viewport meta tag is already present in
-`index.html`, and bottom safe-area handling is in place in the app shell,
-global mobile bottom nav, messaging composer, and several modal/action
-footers via `env(safe-area-inset-bottom)`. This means the foundation for the
-task is already shipped, but the final verification pass across all fixed
-elements has not been completed yet.
+**Completion Notes:** Completed the finishing pass for viewport and safe-area
+handling by upgrading `index.html` to use `viewport-fit=cover`, adding
+explicit top safe-area padding to the sticky app header in
+`components/Header.tsx`, and auditing the header’s fixed notification/user
+menus so they clamp within the visible viewport with both top and bottom safe
+insets accounted for. Also updated `components/NotificationPanel.tsx` to use a
+safe-area-aware max height and reviewed remaining top-anchored overlays by
+adding top safe-area padding to the message template and new-conversation
+modals in `components/Messages.tsx`. The existing bottom safe-area handling in
+the app shell, mobile bottom nav, and modal/action footers remains in place.
 
-**Known Issues:** Top safe-area handling is not yet explicitly applied to the
-header, and not every fixed overlay has been audited for notch/home-indicator
-behavior. This should be treated as a finishing pass rather than net-new
-implementation.
+**Known Issues:** No new safe-area or viewport-specific issues were found
+during code review. `npm run build` still reports the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle.
 
 ---
 
@@ -643,7 +647,7 @@ layouts. The remaining work is mainly a consistency polish pass.
 | Phase 3: Polish | 3.1 – 3.4 | Partially complete |
 
 **Total tasks:** 20
-**Completed:** 18
-**In progress:** 2
+**Completed:** 19
+**In progress:** 1
 **Not started:** 0
-**Remaining to finish:** 2
+**Remaining to finish:** 1
