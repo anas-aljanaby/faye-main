@@ -498,7 +498,7 @@ large main bundle still remain.
 
 ---
 
-### Task 2.13: Team Member Page (`/team/:id`) `[ ]`
+### Task 2.13: Team Member Page (`/team/:id`) `[x]`
 **Priority:** P2
 **Files likely involved:** `components/TeamMemberPage.tsx`
 
@@ -513,9 +513,20 @@ large main bundle still remain.
   conflicts with MobileBottomNav. Keep page-specific actions but ensure
   they don't overlap the global bottom nav
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Reworked `components/TeamMemberPage.tsx` into a
+mobile-first profile screen by stacking the avatar/header block, adding a
+clear back action plus inline quick actions that no longer compete with the
+global bottom navigation, and tightening the section spacing, typography, and
+touch targets across the pending tasks, AI suggestions, assigned orphans, and
+assigned sponsors cards. The right-side calendar and day-detail panel now fit
+phone widths with smaller cells and contained spacing while still restoring
+the wider desktop two-column layout from `xl` upward, and the add-task,
+assign-orphans, and assign-sponsors dialogs were converted into near-full-
+screen mobile sheets with safer footer actions and scrollable content.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 

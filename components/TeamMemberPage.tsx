@@ -42,26 +42,30 @@ const AddTaskModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-xl font-bold mb-2 text-text-primary">إضافة مهمة جديدة</h3>
-        <p className="text-text-secondary mb-6">
-          ليوم {day.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' })}
-        </p>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={taskTitle}
-            onChange={(e) => setTaskTitle(e.target.value)}
-            placeholder="عنوان المهمة..."
-            className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-primary focus:border-primary transition"
-            autoFocus
-          />
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 transition-colors font-semibold">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4">
+      <div className="flex h-[min(100dvh,32rem)] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-xl md:h-auto md:max-w-md md:rounded-2xl">
+        <div className="border-b border-gray-100 px-4 py-4 md:px-6 md:py-5">
+          <h3 className="text-lg font-bold text-text-primary md:text-xl">إضافة مهمة جديدة</h3>
+          <p className="mt-2 text-sm leading-6 text-text-secondary md:text-base">
+            ليوم {day.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+          <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5">
+            <input
+              type="text"
+              value={taskTitle}
+              onChange={(e) => setTaskTitle(e.target.value)}
+              placeholder="عنوان المهمة..."
+              className="min-h-12 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-primary focus:ring-2 focus:ring-primary md:text-base"
+              autoFocus
+            />
+          </div>
+          <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+            <button type="button" onClick={onClose} className="min-h-12 rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">
               إلغاء
             </button>
-            <button type="submit" className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold">
+            <button type="submit" className="min-h-12 rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover">
               إضافة المهمة
             </button>
           </div>
@@ -75,10 +79,10 @@ const AddTaskModal: React.FC<{
 const TeamMemberPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { teamMembers: teamMembersData, loading: teamMembersLoading, refetch: refetchTeamMembers } = useTeamMembers();
+  const { teamMembers: teamMembersData, loading: teamMembersLoading } = useTeamMembers();
   const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
   const { sponsors: sponsorsData, refetch: refetchSponsors } = useSponsorsBasic();
-  const { userProfile, canEditOrphans, canEditSponsors, isManager, isSystemAdmin } = useAuth();
+  const { canEditOrphans, canEditSponsors, isManager, isSystemAdmin } = useAuth();
   const member = useMemo(() => findById(teamMembersData, id || ''), [teamMembersData, id]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -310,6 +314,11 @@ const TeamMemberPage: React.FC = () => {
     const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     setSelectedDate(clickedDate);
     setDayForNewTask(clickedDate);
+  };
+
+  const openTaskModalForDate = (date: Date) => {
+    setSelectedDate(date);
+    setDayForNewTask(date);
     setIsModalOpen(true);
   };
 
@@ -322,55 +331,129 @@ const TeamMemberPage: React.FC = () => {
         onAddTask={handleAddTask}
         day={dayForNewTask}
     />
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
-      <div className="lg:col-span-2 space-y-8">
-        <div className="bg-bg-card p-6 rounded-xl shadow-md flex items-center gap-6">
-            {member.uuid ? (
-              <AvatarUpload
-                currentAvatarUrl={member.avatarUrl}
-                userId={member.uuid}
-                type="team_member"
-                onUploadComplete={(newUrl) => {
-                  // Refresh team members to get updated avatar
-                  window.location.reload();
-                }}
-              />
-            ) : (
-              <Avatar src={member.avatarUrl} name={member.name} size="xl" className="!w-20 !h-20 !text-3xl" />
-            )}
-            <div>
-                <h1 className="text-3xl font-bold text-gray-800">{member.name}</h1>
-                <p className="text-text-secondary">عضو فريق العمل</p>
+    <div className="grid grid-cols-1 gap-4 pb-6 md:gap-6 md:pb-8 xl:grid-cols-3 xl:items-start">
+      <div className="space-y-4 xl:col-span-2 xl:space-y-6">
+        <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:border-primary hover:text-primary"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  <span>رجوع</span>
+                </button>
+                <div className="rounded-full bg-gray-100 p-2">
+                  <BellIcon count={pendingTasks.length} />
+                </div>
             </div>
-            <div className="ms-auto">
-                <BellIcon count={pendingTasks.length} />
+            <div className="flex flex-col items-center gap-4 text-center md:flex-row md:items-center md:text-start">
+              <div className="[&_img]:h-24 [&_img]:w-24 [&_img]:text-2xl md:[&_img]:h-32 md:[&_img]:w-32 md:[&_img]:text-3xl">
+                {member.uuid ? (
+                  <AvatarUpload
+                    currentAvatarUrl={member.avatarUrl}
+                    userId={member.uuid}
+                    type="team_member"
+                    onUploadComplete={() => {
+                      // Refresh team members to get updated avatar
+                      window.location.reload();
+                    }}
+                    size="md"
+                  />
+                ) : (
+                  <Avatar src={member.avatarUrl} name={member.name} size="xl" className="!h-24 !w-24 !text-2xl md:!h-32 md:!w-32 md:!text-3xl" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1 space-y-2">
+                  <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">{member.name}</h1>
+                  <p className="text-sm text-text-secondary md:text-base">عضو فريق العمل</p>
+                  <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
+                    <span className="inline-flex min-h-9 items-center rounded-full bg-primary-light px-3 py-1 text-xs font-semibold text-primary md:text-sm">
+                      {pendingTasks.length} مهام مستحقة
+                    </span>
+                  </div>
+              </div>
+              <div className="flex w-full flex-col gap-2 md:w-auto">
+                <button
+                  type="button"
+                  onClick={() => openTaskModalForDate(selectedDate ?? new Date())}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                  <span>إضافة مهمة</span>
+                </button>
+                <Link
+                  to="/messages"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-text-primary transition-colors hover:border-primary hover:text-primary"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <span>فتح الرسائل</span>
+                </Link>
+              </div>
             </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 md:hidden">
+          <button
+            type="button"
+            onClick={() => openTaskModalForDate(selectedDate ?? new Date())}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-text-primary transition-colors hover:border-primary hover:text-primary"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+            <span>إضافة مهمة</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleGenerateSuggestions}
+            disabled={isLoadingSuggestions}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-text-primary transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            <span>اقتراحات ذكية</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => assignedOrphansRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-text-primary transition-colors hover:border-primary hover:text-primary"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>الأيتام</span>
+          </button>
+          <Link
+            to="/messages"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-text-primary transition-colors hover:border-primary hover:text-primary"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span>رسالة</span>
+          </Link>
         </div>
 
         {isSystemAdmin() && member.uuid && (
           <AccountAccessSection profileId={member.uuid} displayName={member.name} />
         )}
         
-        <div className="bg-bg-card p-6 rounded-xl shadow-md">
-          <h2 className="text-xl font-bold text-gray-700 mb-4">المهام المستحقة ({pendingTasks.length})</h2>
-          <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+        <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+          <h2 className="mb-4 text-lg font-bold text-gray-700 md:text-xl">المهام المستحقة ({pendingTasks.length})</h2>
+          <div className="max-h-72 space-y-3 overflow-y-auto pe-1 md:pe-2">
             {pendingTasks.length > 0 ? pendingTasks.map(task => (
-              <div key={task.id} className="flex items-center bg-gray-50 p-3 rounded-lg">
-                <input type="checkbox" checked={task.completed} onChange={() => toggleTask(task.id)} className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary me-3" />
-                <label htmlFor={`task-${task.id}`} className="flex-grow text-gray-700">{task.title}</label>
-                <span className="text-sm text-text-secondary">{task.dueDate.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })}</span>
+              <div key={task.id} className="flex flex-col gap-2 rounded-xl bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                  <input id={`task-${task.id}`} type="checkbox" checked={task.completed} onChange={() => toggleTask(task.id)} className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary" />
+                  <label htmlFor={`task-${task.id}`} className="min-w-0 flex-1 text-sm text-gray-700 md:text-base">{task.title}</label>
+                </div>
+                <span className="text-xs font-medium text-text-secondary md:text-sm">{task.dueDate.toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })}</span>
               </div>
             )) : <p className="text-text-secondary text-center py-4">لا توجد مهام مستحقة.</p>}
           </div>
         </div>
 
-        <div className="bg-bg-card p-6 rounded-xl shadow-md">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-700">مهام واقتراحات ذكية</h2>
+        <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-lg font-bold text-gray-700 md:text-xl">مهام واقتراحات ذكية</h2>
                 <button
                     onClick={handleGenerateSuggestions}
                     disabled={isLoadingSuggestions}
-                    className="bg-primary-light text-primary font-semibold py-2 px-4 rounded-lg hover:bg-primary hover:text-white transition-colors flex items-center justify-center gap-2 disabled:bg-gray-200 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary-light px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 sm:w-auto"
                 >
                     {isLoadingSuggestions ? (
                          <>
@@ -394,21 +477,21 @@ const TeamMemberPage: React.FC = () => {
                  <p className="text-text-secondary text-center py-4">انقر على الزر لتلقي اقتراحات مهام ذكية بناءً على حالة الأيتام.</p>
             )}
             {suggestions.length > 0 && (
-                <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <div className="max-h-80 space-y-3 overflow-y-auto pe-1 md:pe-2">
                     {suggestions.map((s, index) => (
-                        <div key={index} className="flex items-center justify-between bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                            <div className="flex items-center gap-3">
+                        <div key={index} className="flex flex-col gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-3 md:p-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="flex items-start gap-3">
                                 <div className="text-yellow-600 flex-shrink-0">
                                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15.09 16.05 19.5 20.5"/><path d="M6.12 6.12a9 9 0 0 0 11.76 11.76"/><path d="M17.88 17.88a9 9 0 0 0-11.76-11.76"/><path d="m3.5 7.5.01-.01"/><path d="m20.5 16.5.01-.01"/><path d="M12 2a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4v0a4 4 0 0 0-4-4Z"/><path d="M12 12a4 4 0 0 0-4 4v0a4 4 0 0 0 4 4v0a4 4 0 0 0 4-4v0a4 4 0 0 0-4-4Z"/></svg>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-semibold text-gray-800">{s.suggestionText}</p>
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold leading-6 text-gray-800">{s.suggestionText}</p>
                                     <Link to={`/orphan/${s.orphanId}`} className="text-xs text-primary hover:underline">{s.orphanName}</Link>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => addTaskFromSuggestion(s)}
-                                className="text-xs font-semibold py-1.5 px-3 bg-primary-light text-primary rounded-full hover:bg-primary hover:text-white transition-colors flex-shrink-0"
+                                className="min-h-11 w-full rounded-full bg-primary-light px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-white lg:w-auto lg:flex-shrink-0"
                                 title="إضافة هذه المهمة إلى قائمتك"
                             >
                                 + إضافة للمهام
@@ -419,13 +502,13 @@ const TeamMemberPage: React.FC = () => {
             )}
         </div>
 
-        <div ref={assignedOrphansRef} className="bg-bg-card p-6 rounded-xl shadow-md">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-700">الأيتام قيد المتابعة</h2>
+        <div ref={assignedOrphansRef} className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-lg font-bold text-gray-700 md:text-xl">الأيتام قيد المتابعة</h2>
                 {canAssign && (
                     <button
                         onClick={() => setShowAssignOrphansModal(true)}
-                        className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold text-sm flex items-center gap-2"
+                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                         تعيين أيتام
@@ -435,8 +518,8 @@ const TeamMemberPage: React.FC = () => {
             <div className="space-y-4">
                 {assignedOrphans.length > 0 ? (
                     assignedOrphans.map(orphan => (
-                    <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                        <Avatar src={orphan.photoUrl} name={orphan.name} size="lg" className="me-4" />
+                    <Link to={`/orphan/${orphan.id}`} key={orphan.id} className="flex min-h-16 items-center gap-3 rounded-xl bg-gray-50 p-3 transition-colors hover:bg-gray-100">
+                        <Avatar src={orphan.photoUrl} name={orphan.name} size="lg" className="shrink-0" />
                         <p className="font-semibold text-gray-800">{orphan.name}</p>
                     </Link>
                     ))
@@ -448,12 +531,12 @@ const TeamMemberPage: React.FC = () => {
 
         {/* Assigned Sponsors Section */}
         {canAssign && (
-            <div className="bg-bg-card p-6 rounded-xl shadow-md">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-gray-700">الكفلاء المعينون</h2>
+            <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 className="text-lg font-bold text-gray-700 md:text-xl">الكفلاء المعينون</h2>
                     <button
                         onClick={() => setShowAssignSponsorsModal(true)}
-                        className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold text-sm flex items-center gap-2"
+                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                         تعيين كفلاء
@@ -464,8 +547,8 @@ const TeamMemberPage: React.FC = () => {
                         sponsorsData
                             .filter(s => s.uuid && assignedSponsorIds.includes(s.uuid))
                             .map(sponsor => (
-                                <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
-                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="lg" className="me-4" />
+                                <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="flex min-h-16 items-center gap-3 rounded-xl bg-gray-50 p-3 transition-colors hover:bg-gray-100">
+                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="lg" className="shrink-0" />
                                     <p className="font-semibold text-gray-800">{sponsor.name}</p>
                                 </Link>
                             ))
@@ -478,15 +561,15 @@ const TeamMemberPage: React.FC = () => {
 
       </div>
       
-      <div className="space-y-6">
-        <div className="bg-bg-card p-6 rounded-xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-gray-100">&lt;</button>
-            <h2 className="text-xl font-bold text-gray-700">{monthName}</h2>
-            <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-gray-100">&gt;</button>
+      <div className="space-y-4 xl:space-y-6">
+        <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <button onClick={() => changeMonth(-1)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-lg text-text-primary transition-colors hover:border-primary hover:text-primary" aria-label="الشهر السابق">&lt;</button>
+            <h2 className="text-base font-bold text-gray-700 md:text-xl">{monthName}</h2>
+            <button onClick={() => changeMonth(1)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-lg text-text-primary transition-colors hover:border-primary hover:text-primary" aria-label="الشهر التالي">&gt;</button>
           </div>
-          <div className="grid grid-cols-7 gap-1 text-center text-sm text-text-secondary mb-2">
-            {['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'].map(day => <div key={day}>{day}</div>)}
+          <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] text-text-secondary md:text-sm">
+            {['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'].map(day => <div key={day} className="truncate py-1">{day}</div>)}
           </div>
           <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`}></div>)}
@@ -500,24 +583,24 @@ const TeamMemberPage: React.FC = () => {
                 <div 
                   key={dayNumber} 
                   onClick={() => handleDayClick(dayNumber)}
-                  className={`h-10 flex items-center justify-center rounded-lg relative cursor-pointer transition-all duration-200 font-semibold ${isSelected ? 'bg-primary text-white' : isToday ? 'bg-primary-light text-primary' : 'hover:bg-gray-100'}`}
+                  className={`relative flex h-10 items-center justify-center rounded-xl text-sm font-semibold transition-all duration-200 md:h-11 md:text-base ${isSelected ? 'bg-primary text-white shadow-sm' : isToday ? 'bg-primary-light text-primary' : 'hover:bg-gray-100'}`}
                 >
                   {dayNumber}
-                  {tasksForDay && tasksForDay.length > 0 && <span className={`absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white ${tasksForDay.some(t => !t.completed) ? 'bg-red-500' : 'bg-green-500'}`}></span>}
+                  {tasksForDay && tasksForDay.length > 0 && <span className={`absolute -top-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-white ${tasksForDay.some(t => !t.completed) ? 'bg-red-500' : 'bg-green-500'}`}></span>}
                 </div>
               );
             })}
           </div>
         </div>
-        <div className="bg-bg-card p-6 rounded-xl shadow-md min-h-[180px]">
-           <h3 className="text-lg font-bold text-gray-700 mb-4 border-b pb-2">
+        <div className="min-h-[12rem] rounded-2xl bg-bg-card p-4 shadow-md md:min-h-[180px] md:p-6">
+           <h3 className="mb-4 border-b border-gray-100 pb-3 text-base font-bold text-gray-700 md:text-lg">
             {selectedDate ? `مهام يوم ${selectedDate.toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric' })}` : 'حدد يوماً لعرض المهام'}
            </h3>
            <div className="space-y-3">
                 {selectedDate && tasksForSelectedDay.length > 0 ? (
                     tasksForSelectedDay.map(task => (
-                        <div key={task.id} className="flex items-center text-sm">
-                            <span className={`w-2 h-2 rounded-full me-3 ${task.completed ? 'bg-green-400' : 'bg-yellow-400'}`}></span>
+                        <div key={task.id} className="flex items-center text-sm md:text-base">
+                            <span className={`me-3 h-2.5 w-2.5 rounded-full ${task.completed ? 'bg-green-400' : 'bg-yellow-400'}`}></span>
                             <p className={`${task.completed ? 'line-through text-gray-500' : 'text-gray-800'}`}>{task.title}</p>
                         </div>
                     ))
@@ -530,46 +613,23 @@ const TeamMemberPage: React.FC = () => {
         </div>
       </div>
     </div>
-    
-    {/* Mobile Action Bar */}
-    <div className="mobile-action-bar hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] bg-white/80 p-2 text-center shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-sm z-40 grid grid-cols-5 gap-1">
-        <button onClick={() => navigate(-1)} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            <span className="text-xs">رجوع</span>
-        </button>
-        <button onClick={() => { setDayForNewTask(new Date()); setIsModalOpen(true); }} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-            <span className="text-xs">إضافة مهمة</span>
-        </button>
-        <button onClick={handleGenerateSuggestions} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-            <span className="text-xs">اقتراحات</span>
-        </button>
-        <button onClick={() => assignedOrphansRef.current?.scrollIntoView({ behavior: 'smooth' })} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span className="text-xs">الأيتام</span>
-        </button>
-        <button onClick={() => navigate('/messages')} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            <span className="text-xs">رسالة</span>
-        </button>
-    </div>
 
     {/* Assign Orphans Modal */}
     {showAssignOrphansModal && member && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAssignOrphansModal(false)}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-4 border-b pb-3">
-                    <h3 className="text-xl font-bold">تعيين أيتام لـ {member.name}</h3>
-                    <button onClick={() => setShowAssignOrphansModal(false)} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={() => setShowAssignOrphansModal(false)}>
+            <div className="flex h-[min(100dvh,42rem)] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-xl md:h-auto md:max-h-[80vh] md:max-w-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-4 md:px-6 md:py-5">
+                    <h3 className="text-lg font-bold text-text-primary md:text-xl">تعيين أيتام لـ {member.name}</h3>
+                    <button onClick={() => setShowAssignOrphansModal(false)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-xl font-bold text-gray-500 transition-colors hover:border-primary hover:text-primary">&times;</button>
                 </div>
-                <div className="overflow-y-auto space-y-2 flex-1">
+                <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5">
+                    <div className="space-y-3">
                     {orphansData.map(orphan => {
                         const isAssigned = assignedOrphanIds.includes(orphan.uuid || '');
                         return (
                             <div 
                                 key={orphan.id}
-                                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                                className="flex flex-col gap-3 rounded-xl border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div className="flex items-center gap-3">
                                     <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
@@ -612,7 +672,7 @@ const TeamMemberPage: React.FC = () => {
                                             console.error('Error updating orphan assignment:', err);
                                         }
                                     }}
-                                    className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                                    className={`min-h-11 w-full rounded-xl px-4 py-3 text-sm font-semibold sm:w-auto ${
                                         isAssigned 
                                             ? 'bg-red-100 text-red-700 hover:bg-red-200' 
                                             : 'bg-primary text-white hover:bg-primary-hover'
@@ -623,6 +683,7 @@ const TeamMemberPage: React.FC = () => {
                             </div>
                         );
                     })}
+                    </div>
                 </div>
             </div>
         </div>
@@ -630,19 +691,20 @@ const TeamMemberPage: React.FC = () => {
 
     {/* Assign Sponsors Modal */}
     {showAssignSponsorsModal && member && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAssignSponsorsModal(false)}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-4 border-b pb-3">
-                    <h3 className="text-xl font-bold">تعيين كفلاء لـ {member.name}</h3>
-                    <button onClick={() => setShowAssignSponsorsModal(false)} className="text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={() => setShowAssignSponsorsModal(false)}>
+            <div className="flex h-[min(100dvh,42rem)] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-xl md:h-auto md:max-h-[80vh] md:max-w-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-4 md:px-6 md:py-5">
+                    <h3 className="text-lg font-bold text-text-primary md:text-xl">تعيين كفلاء لـ {member.name}</h3>
+                    <button onClick={() => setShowAssignSponsorsModal(false)} className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-xl font-bold text-gray-500 transition-colors hover:border-primary hover:text-primary">&times;</button>
                 </div>
-                <div className="overflow-y-auto space-y-2 flex-1">
+                <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5">
+                    <div className="space-y-3">
                     {sponsorsData.map(sponsor => {
                         const isAssigned = sponsor.uuid && assignedSponsorIds.includes(sponsor.uuid);
                         return (
                             <div 
                                 key={sponsor.id}
-                                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                                className="flex flex-col gap-3 rounded-xl border border-gray-200 p-3 transition-colors hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between"
                             >
                                 <div className="flex items-center gap-3">
                                     <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" />
@@ -685,7 +747,7 @@ const TeamMemberPage: React.FC = () => {
                                             console.error('Error updating sponsor assignment:', err);
                                         }
                                     }}
-                                    className={`px-4 py-2 rounded-lg font-semibold text-sm ${
+                                    className={`min-h-11 w-full rounded-xl px-4 py-3 text-sm font-semibold sm:w-auto ${
                                         isAssigned 
                                             ? 'bg-red-100 text-red-700 hover:bg-red-200' 
                                             : 'bg-primary text-white hover:bg-primary-hover'
@@ -696,6 +758,7 @@ const TeamMemberPage: React.FC = () => {
                             </div>
                         );
                     })}
+                    </div>
                 </div>
             </div>
         </div>
