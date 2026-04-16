@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NotificationPreference } from '../types';
+import ResponsiveModalShell from './ResponsiveModalShell';
 
 interface NotificationPreferencesModalProps {
   isOpen: boolean;
@@ -43,68 +44,80 @@ const NotificationPreferencesModal: React.FC<NotificationPreferencesModalProps> 
   };
 
   return (
-    <>
-      <div className="fixed inset-0 z-[110] bg-black/30" onClick={onClose} />
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
-        <div className="w-full max-w-lg rounded-xl border border-gray-200 bg-bg-card p-6 shadow-2xl">
-          <h3 className="mb-1 text-xl font-bold text-text-primary">إعدادات الإشعارات</h3>
-          <p className="mb-4 text-sm text-text-secondary">تحكم في طريقة وتوقيت تذكيرات الدفعات.</p>
-
-          <div className="space-y-4">
-            <label className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <span className="font-semibold text-text-primary">تفعيل إشعارات داخل التطبيق</span>
-              <input type="checkbox" checked={inAppEnabled} onChange={(e) => setInAppEnabled(e.target.checked)} />
-            </label>
-
-            <label className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
-              <span className="font-semibold text-text-primary">تفعيل إشعارات البريد الإلكتروني</span>
-              <input type="checkbox" checked={emailEnabled} onChange={(e) => setEmailEnabled(e.target.checked)} />
-            </label>
-
-            <label className="block">
-              <span className="mb-1 block text-sm font-semibold text-text-primary">
-                عدد الأيام قبل موعد الاستحقاق
-              </span>
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={paymentDueReminderDays}
-                onChange={(e) => setPaymentDueReminderDays(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              />
-            </label>
-
-            <label className="block">
-              <span className="mb-1 block text-sm font-semibold text-text-primary">تكرار تذكير الدفعات المتأخرة (بالأيام)</span>
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={overdueReminderFrequencyDays}
-                onChange={(e) =>
-                  setOverdueReminderFrequencyDays(Math.max(1, Math.min(30, Number(e.target.value) || 1)))
-                }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              />
-            </label>
-          </div>
-
-          <div className="mt-6 flex justify-end gap-2">
-            <button onClick={onClose} className="rounded-lg border border-gray-300 px-4 py-2 font-semibold">
-              إلغاء
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-lg bg-primary px-4 py-2 font-semibold text-white disabled:opacity-60"
-            >
-              {saving ? 'جارٍ الحفظ...' : 'حفظ'}
-            </button>
-          </div>
+    <ResponsiveModalShell
+      isOpen={isOpen}
+      onClose={onClose}
+      title="إعدادات الإشعارات"
+      description="تحكم في طريقة وتوقيت تذكيرات الدفعات."
+      maxWidthClassName="md:max-w-lg"
+      zIndexClassName="z-[120]"
+      bodyClassName="space-y-4"
+      footer={
+        <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-[48px] rounded-xl border border-gray-300 px-4 py-2.5 font-semibold text-text-secondary transition-colors hover:bg-gray-50"
+          >
+            إلغاء
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="min-h-[48px] rounded-xl bg-primary px-4 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-60"
+          >
+            {saving ? 'جارٍ الحفظ...' : 'حفظ'}
+          </button>
         </div>
-      </div>
-    </>
+      }
+    >
+      <label className="flex min-h-[56px] items-center justify-between gap-4 rounded-xl border border-gray-200 p-4">
+        <span className="font-semibold text-text-primary">تفعيل إشعارات داخل التطبيق</span>
+        <input
+          type="checkbox"
+          checked={inAppEnabled}
+          onChange={(e) => setInAppEnabled(e.target.checked)}
+          className="h-5 w-5 shrink-0 accent-primary"
+        />
+      </label>
+
+      <label className="flex min-h-[56px] items-center justify-between gap-4 rounded-xl border border-gray-200 p-4">
+        <span className="font-semibold text-text-primary">تفعيل إشعارات البريد الإلكتروني</span>
+        <input
+          type="checkbox"
+          checked={emailEnabled}
+          onChange={(e) => setEmailEnabled(e.target.checked)}
+          className="h-5 w-5 shrink-0 accent-primary"
+        />
+      </label>
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-semibold text-text-primary">عدد الأيام قبل موعد الاستحقاق</span>
+        <input
+          type="number"
+          min={1}
+          max={30}
+          value={paymentDueReminderDays}
+          onChange={(e) => setPaymentDueReminderDays(Math.max(1, Math.min(30, Number(e.target.value) || 1)))}
+          className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-2.5"
+        />
+      </label>
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-semibold text-text-primary">تكرار تذكير الدفعات المتأخرة (بالأيام)</span>
+        <input
+          type="number"
+          min={1}
+          max={30}
+          value={overdueReminderFrequencyDays}
+          onChange={(e) =>
+            setOverdueReminderFrequencyDays(Math.max(1, Math.min(30, Number(e.target.value) || 1)))
+          }
+          className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-2.5"
+        />
+      </label>
+    </ResponsiveModalShell>
   );
 };
 

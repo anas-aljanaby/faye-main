@@ -48,17 +48,17 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none"
+            className="fixed inset-0 z-[70] flex items-end justify-center p-0 pointer-events-none md:items-center md:p-4"
           >
             <div
               ref={modalRef}
-              className="bg-bg-card rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col max-h-[90vh]"
+              className="flex h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-[1.75rem] border border-gray-200 bg-bg-card shadow-2xl pointer-events-auto dark:border-gray-700 md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl"
             >
-              <div className="p-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+              <div className="flex items-center justify-between gap-3 border-b border-gray-100 bg-gray-50/50 px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] dark:border-gray-700 dark:bg-gray-800/50 md:p-5">
                 <h3 className="text-xl font-bold text-text-primary">تخصيص المظهر</h3>
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-text-secondary transition-colors"
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full text-text-secondary transition-colors hover:bg-gray-200 dark:hover:bg-gray-700"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18" />
@@ -67,7 +67,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
                 </button>
               </div>
 
-              <div className="p-6 space-y-8 overflow-y-auto">
+              <div className="space-y-8 overflow-y-auto px-4 py-4 md:p-6">
                 <section>
                   <h4 className="text-sm font-bold text-text-secondary uppercase mb-3 tracking-wider">وضع العرض</h4>
                   <div className="grid grid-cols-3 gap-2 bg-gray-100 dark:bg-gray-800 p-1.5 rounded-xl">
@@ -144,10 +144,10 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
                 </section>
               </div>
 
-              <div className="p-4 bg-gray-50/50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 text-center">
+              <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] text-center dark:border-gray-700 dark:bg-gray-800/50 md:p-4">
                 <button
                   onClick={onClose}
-                  className="w-full bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary-hover transition-colors shadow-lg shadow-primary/30"
+                  className="min-h-[48px] w-full rounded-xl bg-primary py-2.5 font-bold text-white shadow-lg shadow-primary/30 transition-colors hover:bg-primary-hover"
                 >
                   حفظ وإغلاق
                 </button>

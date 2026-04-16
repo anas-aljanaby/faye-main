@@ -41,10 +41,9 @@ legacy page-level mobile action bars were either hidden when redundant or
 lifted above the new global bottom nav when they still expose selection
 actions.
 
-**Known Issues:** The old mobile sidebar drawer markup/state still exists
-off-canvas and should be fully removed in Task 1.3. Some page-specific mobile
-action strips now need dedicated redesign in their own page tasks, even though
-they no longer collide with the new global navigation.
+**Known Issues:** The follow-up cleanup called out here was completed by Tasks
+1.3 and 2.2–2.13. The remaining global issue is the existing Vite chunk-size
+warning for the large main bundle.
 
 ---
 
@@ -69,9 +68,9 @@ theme access moved into the avatar dropdown so the top bar keeps only the
 brand, notifications, and user menu while desktop header behavior remains
 unchanged behind `md:`.
 
-**Known Issues:** The old mobile sidebar drawer state/markup still exists in
-the shell even though the header no longer exposes a mobile menu trigger; Task
-1.3 should remove that remaining mobile sidebar plumbing.
+**Known Issues:** The sidebar plumbing called out here was removed by Task
+1.3. The remaining global issue is the existing Vite chunk-size warning for
+the large main bundle.
 
 ---
 
@@ -532,7 +531,7 @@ large main bundle still remain.
 
 ## Phase 3: Polish & Cross-Cutting
 
-### Task 3.1: Modal Consistency Pass `[ ]`
+### Task 3.1: Modal Consistency Pass `[x]`
 **Priority:** P2
 **Depends on:** All Phase 2 tasks
 
@@ -543,13 +542,24 @@ large main bundle still remain.
 - Add `safe-area-inset-bottom` padding where modals have bottom actions
 - Scroll behavior: modal body scrolls, header/footer fixed
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Added a shared `components/ResponsiveModalShell.tsx`
+wrapper so legacy dialogs now follow the same mobile treatment as the Phase 2
+screens: near-full-screen below `md`, safe top/bottom padding, a consistently
+reachable close button, and fixed header/footer regions around a scrollable
+body. Migrated the older shared/admin dialogs that were still using centered
+desktop layouts, including `components/OccasionsManagementModal.tsx`,
+`components/NotificationPreferencesModal.tsx`,
+`components/account/CreateLoginModal.tsx`, the unlink-confirmation dialog in
+`components/account/AccountAccessSection.tsx`, and the theme settings panel in
+`components/ThemeSettings.tsx`.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** No new modal-specific issues were found during code review.
+`npm run build` still reports the existing `baseline-browser-mapping` update
+notice and Vite chunk-size warning for the large main bundle.
 
 ---
 
-### Task 3.2: Touch Target & Icon Size Audit `[ ]`
+### Task 3.2: Touch Target & Icon Size Audit `[~]`
 **Priority:** P2
 **Depends on:** All Phase 2 tasks
 
@@ -559,13 +569,20 @@ large main bundle still remain.
 - Ensure icon buttons have adequate padding for touch
 - Check dropdowns, selects, and custom controls
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** A large portion of the high-traffic UI already uses
+44px+ tap targets after the page-by-page work, and many mobile actions were
+normalized to `min-h-11`, `min-h-[44px]`, or `min-h-[48px]`. This task is
+still only partially complete because there has not yet been a single
+deliberate audit across every shared control, dialog, and low-traffic screen.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** Shared dialogs and older utility components still need a
+full sweep for button sizing, checkbox/select affordances, and oversized
+content icons. The remaining gaps appear concentrated outside the main Phase 2
+screens rather than in the core mobile flows.
 
 ---
 
-### Task 3.3: Safe Areas & Viewport `[ ]`
+### Task 3.3: Safe Areas & Viewport `[~]`
 **Priority:** P3
 **Depends on:** Task 1.1
 
@@ -576,13 +593,21 @@ large main bundle still remain.
 - Test that fixed elements (bottom nav, fixed headers) account for
   safe areas
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** The base viewport meta tag is already present in
+`index.html`, and bottom safe-area handling is in place in the app shell,
+global mobile bottom nav, messaging composer, and several modal/action
+footers via `env(safe-area-inset-bottom)`. This means the foundation for the
+task is already shipped, but the final verification pass across all fixed
+elements has not been completed yet.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** Top safe-area handling is not yet explicitly applied to the
+header, and not every fixed overlay has been audited for notch/home-indicator
+behavior. This should be treated as a finishing pass rather than net-new
+implementation.
 
 ---
 
-### Task 3.4: Loading & Empty States on Mobile `[ ]`
+### Task 3.4: Loading & Empty States on Mobile `[~]`
 **Priority:** P3
 **Depends on:** All Phase 2 tasks
 
@@ -591,9 +616,15 @@ large main bundle still remain.
 - Empty state illustrations/text should be centered and sized for mobile
 - Error messages should not overflow on small screens
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Several core screens already render mobile-friendly
+empty states and compact loading treatments, and some pages now use skeletons
+or card-based placeholders that fit narrow widths. This remains partial
+because those states were improved opportunistically during page work, not
+through a dedicated consistency review across the whole app.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** Global/shared loading states such as route guards and some
+older utility views still rely on simple centered text or desktop-leaning
+layouts. The remaining work is mainly a consistency polish pass.
 
 ---
 
@@ -602,9 +633,11 @@ large main bundle still remain.
 | Phase | Tasks | Status |
 |-------|-------|--------|
 | Phase 1: Navigation | 1.1, 1.2, 1.3 | Completed |
-| Phase 2: Pages | 2.1 – 2.13 | In progress |
-| Phase 3: Polish | 3.1 – 3.4 | Not started |
+| Phase 2: Pages | 2.1 – 2.13 | Completed |
+| Phase 3: Polish | 3.1 – 3.4 | Partially complete |
 
 **Total tasks:** 20
-**Completed:** 9
-**Remaining:** 11
+**Completed:** 17
+**In progress:** 3
+**Not started:** 0
+**Remaining to finish:** 3

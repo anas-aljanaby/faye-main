@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { AccountStatusBadge } from './AccountStatusBadge';
 import { CreateLoginModal } from './CreateLoginModal';
 import { unlinkProfileLogin } from '../../lib/adminAccountApi';
+import ResponsiveModalShell from '../ResponsiveModalShell';
 
 function formatLastSignIn(iso: string | null): string {
   if (!iso) return '—';
@@ -135,35 +136,21 @@ export const AccountAccessSection: React.FC<{
       />
 
       {unlinkConfirmOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4"
-          onClick={() => !unlinkSubmitting && setUnlinkConfirmOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 border border-slate-200"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-labelledby="unlink-title"
-          >
-            <h2 id="unlink-title" className="text-xl font-bold text-text-primary mb-2">
-              فك ربط حساب الدخول؟
-            </h2>
-            <p className="text-sm text-text-secondary mb-4 leading-relaxed">
-              سيتم حذف مستخدم المصادقة في النظام وإزالة الربط عن ملف <strong>{displayName}</strong>. بيانات
-              الملف (الاسم، الصلاحيات، الروابط…) تبقى كما هي. يمكن لاحقاً إنشاء حساب دخول جديد لهذا الملف.
-            </p>
-            {unlinkError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
-                {unlinkError}
-              </p>
-            )}
-            <div className="flex justify-end gap-3">
+        <ResponsiveModalShell
+          isOpen={unlinkConfirmOpen}
+          onClose={() => setUnlinkConfirmOpen(false)}
+          closeDisabled={unlinkSubmitting}
+          title="فك ربط حساب الدخول؟"
+          maxWidthClassName="md:max-w-md"
+          zIndexClassName="z-[60]"
+          bodyClassName="space-y-4"
+          footer={
+            <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end">
               <button
                 type="button"
                 disabled={unlinkSubmitting}
                 onClick={() => setUnlinkConfirmOpen(false)}
-                className="py-2.5 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold disabled:opacity-50"
+                className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2.5 font-semibold text-text-secondary transition-colors hover:bg-gray-200 disabled:opacity-50"
               >
                 إلغاء
               </button>
@@ -183,13 +170,23 @@ export const AccountAccessSection: React.FC<{
                     setUnlinkSubmitting(false);
                   }
                 }}
-                className="py-2.5 px-5 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold disabled:opacity-50"
+                className="min-h-[48px] rounded-xl bg-red-600 px-5 py-2.5 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
               >
                 {unlinkSubmitting ? 'جاري التنفيذ…' : 'نعم، فك الربط'}
               </button>
             </div>
-          </div>
-        </div>
+          }
+        >
+          <p className="text-sm leading-relaxed text-text-secondary">
+            سيتم حذف مستخدم المصادقة في النظام وإزالة الربط عن ملف <strong>{displayName}</strong>. بيانات
+            الملف (الاسم، الصلاحيات، الروابط…) تبقى كما هي. يمكن لاحقاً إنشاء حساب دخول جديد لهذا الملف.
+          </p>
+          {unlinkError && (
+            <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {unlinkError}
+            </p>
+          )}
+        </ResponsiveModalShell>
       )}
     </>
   );
