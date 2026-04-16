@@ -432,7 +432,7 @@ large main bundle still remain.
 
 ---
 
-### Task 2.11: Financial System (`/financial-system`) `[ ]`
+### Task 2.11: Financial System (`/financial-system`) `[x]`
 **Priority:** P2
 **Files likely involved:** `components/FinancialSystem.tsx`
 
@@ -447,9 +447,22 @@ large main bundle still remain.
 - Year selector: ensure it fits mobile width
 - Filter controls: stack vertically
 
-**Completion Notes:** (to be filled by agent)
+**Completion Notes:** Reworked `components/FinancialSystem.tsx` into a more
+mobile-first finance screen by tightening the page header and sticky section
+tabs, keeping the KPI cards in a denser 2×2 mobile grid, and reducing chart
+heights while preserving the existing stacked chart layout below `lg`.
+Converted the transactions toolbar into stacked mobile controls with
+horizontally scrollable period chips, swapped the desktop transaction table for
+touch-friendly mobile cards below `md`, and kept desktop table behavior intact
+from `md` upward. Updated the add-transaction, approve, reject, receipt/PDF,
+and quick-add sponsor dialogs into near-full-screen mobile sheets, then
+refined the orphan payments area with stacked orphan headers, a full-width year
+selector, and a horizontally scrollable 12-month payment calendar that still
+supports inline payment editing on phones.
 
-**Known Issues:** (to be filled by agent)
+**Known Issues:** `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 

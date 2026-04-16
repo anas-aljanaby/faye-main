@@ -33,28 +33,36 @@ const ApproveTransactionModal: React.FC<{
     const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
                 {/* Header */}
-                <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-t-xl">
-                    <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 text-white md:rounded-t-2xl md:p-6">
+                    <div className="flex items-start gap-3 md:items-center md:gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20 md:h-16 md:w-16">
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <polyline points="20 6 9 17 4 12"/>
                             </svg>
                         </div>
                         <div className="flex-1">
-                            <h2 className="text-2xl font-bold mb-1">الموافقة على المعاملة المالية</h2>
+                            <h2 className="mb-1 text-lg font-bold md:text-2xl">الموافقة على المعاملة المالية</h2>
                             <p className="text-green-100 text-sm">يرجى مراجعة تفاصيل المعاملة قبل الموافقة</p>
                         </div>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                            aria-label="إغلاق"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 space-y-6">
+                <div className="flex-1 space-y-4 overflow-y-auto p-4 md:space-y-6 md:p-6">
                     {/* Transaction Details Card */}
-                    <div className="bg-gray-50 rounded-lg p-5 border-2 border-gray-200">
-                        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <div className="rounded-2xl border-2 border-gray-200 bg-gray-50 p-4 md:p-5">
+                        <h3 className="mb-4 flex items-center gap-2 text-base font-bold text-gray-800 md:text-lg">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                                 <polyline points="14 2 14 8 20 8"/>
@@ -63,14 +71,14 @@ const ApproveTransactionModal: React.FC<{
                             </svg>
                             تفاصيل المعاملة
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <p className="text-sm text-gray-600 mb-1">البيان</p>
-                                <p className="font-semibold text-gray-800 text-lg">{transaction.description}</p>
+                                <p className="text-base font-semibold text-gray-800 md:text-lg">{transaction.description}</p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-600 mb-1">المبلغ</p>
-                                <p className={`font-bold text-2xl ${transaction.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>
+                                <p className={`text-xl font-bold md:text-2xl ${transaction.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>
                                     ${transaction.amount.toLocaleString()}
                                 </p>
                             </div>
@@ -149,8 +157,8 @@ const ApproveTransactionModal: React.FC<{
                     )}
 
                     {transaction.orphanId && (
-                        <div className="bg-purple-50 rounded-lg p-5 border-2 border-purple-200">
-                            <h3 className="text-lg font-bold text-gray-800 mb-2">اليتيم المرتبط</h3>
+                        <div className="rounded-2xl border-2 border-purple-200 bg-purple-50 p-4 md:p-5">
+                            <h3 className="mb-2 text-base font-bold text-gray-800 md:text-lg">اليتيم المرتبط</h3>
                             {(() => {
                                 const orphan = orphans.find(o => o.id === transaction.orphanId);
                                 return orphan ? (
@@ -180,10 +188,10 @@ const ApproveTransactionModal: React.FC<{
                 </div>
 
                 {/* Footer Actions */}
-                <div className="bg-gray-50 p-6 rounded-b-xl border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
+                <div className="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:rounded-b-2xl md:p-6">
                     <button 
                         onClick={onClose} 
-                        className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-semibold transition-colors flex items-center justify-center gap-2"
+                        className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-gray-200 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-300"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -193,7 +201,7 @@ const ApproveTransactionModal: React.FC<{
                     </button>
                     <button 
                         onClick={onApprove} 
-                        className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+                        className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-green-500 to-green-600 px-6 py-3 text-base font-bold text-white shadow-lg transition-all hover:from-green-600 hover:to-green-700 hover:shadow-xl md:px-8 md:text-lg"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20 6 9 17 4 12"/>
@@ -226,22 +234,31 @@ const RejectTransactionModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-bold mb-2 text-red-600">رفض المعاملة</h3>
-                <p className="text-sm text-text-secondary mb-4">{transactionDescription}</p>
-                <form onSubmit={handleSubmit}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-w-md md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-red-600">رفض المعاملة</h3>
+                        <p className="mt-1 text-sm text-text-secondary">{transactionDescription}</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6">
                     <textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
                         placeholder="سبب الرفض..."
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md mb-4 min-h-[100px]"
+                        className="min-h-[160px] w-full rounded-2xl border border-gray-300 bg-white px-4 py-3"
                         required
                         autoFocus
                     />
-                    <div className="flex justify-end gap-3">
-                        <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold">رفض</button>
+                    </div>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                        <button type="button" onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-100 px-4 py-2 font-semibold text-text-secondary hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="min-h-[48px] rounded-xl bg-red-500 px-4 py-2 font-semibold text-white hover:bg-red-600">رفض</button>
                     </div>
                 </form>
             </div>
@@ -278,22 +295,29 @@ const AddSponsorQuickModal: React.FC<{
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-lg font-bold mb-4">إضافة كافل جديد</h3>
-                <form onSubmit={handleSubmit}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-w-sm md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900">إضافة كافل جديد</h3>
+                    <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6">
                     <input
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="اسم الكافل الكامل"
-                        className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md mb-4"
+                        className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3"
                         required
                         autoFocus
                     />
-                    <div className="flex justify-end gap-3">
-                        <button type="button" onClick={onClose} className="py-2 px-4 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
-                        <button type="submit" className="py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold">إضافة</button>
+                    </div>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                        <button type="button" onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-100 px-4 py-2 font-semibold text-text-secondary hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="min-h-[48px] rounded-xl bg-primary px-4 py-2 font-semibold text-white hover:bg-primary-hover">إضافة</button>
                     </div>
                 </form>
             </div>
@@ -552,10 +576,16 @@ const AddTransactionModal: React.FC<{
 
     return (
         <>
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={resetForm}>
-            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
-                <h3 className="text-xl font-bold mb-4 text-center">إضافة حركة مالية جديدة</h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4" onClick={resetForm}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">إضافة حركة مالية جديدة</h3>
+                    <button type="button" onClick={resetForm} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+                    <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             type="button"
@@ -566,7 +596,7 @@ const AddTransactionModal: React.FC<{
                                 setDonationCategory('');
                                 setAmount('');
                             }}
-                            className={`w-full py-2 px-4 rounded-lg font-semibold text-center transition-colors duration-200 ${
+                            className={`min-h-[48px] w-full rounded-xl px-4 py-2 font-semibold text-center transition-colors duration-200 ${
                                 type === TransactionType.Expense ? 'bg-red-500 text-white shadow-md' : 'bg-red-100 text-red-700 hover:bg-red-200'
                             }`}
                         >
@@ -575,7 +605,7 @@ const AddTransactionModal: React.FC<{
                         <button
                             type="button"
                             onClick={() => setType(TransactionType.Income)}
-                            className={`w-full py-2 px-4 rounded-lg font-semibold text-center transition-colors duration-200 ${
+                            className={`min-h-[48px] w-full rounded-xl px-4 py-2 font-semibold text-center transition-colors duration-200 ${
                                 type === TransactionType.Income ? 'bg-green-500 text-white shadow-md' : 'bg-green-100 text-green-700 hover:bg-green-200'
                             }`}
                         >
@@ -592,10 +622,10 @@ const AddTransactionModal: React.FC<{
                                     value={sponsorSearchQuery}
                                     onChange={(e) => setSponsorSearchQuery(e.target.value)}
                                     placeholder="بحث بالاسم..."
-                                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+                                    className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3"
                                     autoComplete="off"
                                 />
-                                <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-white">
+                                <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white">
                                     {filteredSponsorsForPicker.length === 0 ? (
                                         <p className="px-3 py-2 text-sm text-gray-500 text-center">لا نتائج</p>
                                     ) : (
@@ -607,7 +637,7 @@ const AddTransactionModal: React.FC<{
                                                         <button
                                                             type="button"
                                                             onClick={() => setSelectedSponsorId(String(sponsor.id))}
-                                                            className={`w-full text-right px-3 py-2 text-sm transition-colors ${
+                                                            className={`w-full px-3 py-3 text-right text-sm transition-colors ${
                                                                 isSelected
                                                                     ? 'bg-primary-light text-primary font-semibold'
                                                                     : 'hover:bg-gray-50 text-gray-800'
@@ -629,7 +659,7 @@ const AddTransactionModal: React.FC<{
                                     if (e.target.value !== 'كفالة يتيم') {
                                         setAmount(''); 
                                     }
-                                }} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" required>
+                                }} className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3" required>
                                     <option value="" disabled>-- اختر التصنيف --</option>
                                     <option value="كفالة يتيم">كفالة يتيم</option>
                                     <option value="تبرع عام">تبرع عام</option>
@@ -649,7 +679,7 @@ const AddTransactionModal: React.FC<{
                                                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm"
                                                     autoComplete="off"
                                                 />
-                                                <div className="max-h-40 overflow-y-auto rounded-md border border-gray-200 bg-white">
+                                                <div className="max-h-40 overflow-y-auto rounded-xl border border-gray-200 bg-white">
                                                     {filteredOrphansForPicker.length === 0 ? (
                                                         <p className="px-3 py-2 text-sm text-gray-500 text-center">
                                                             {orphanSearchQuery.trim()
@@ -704,7 +734,7 @@ const AddTransactionModal: React.FC<{
                                                 };
 
                                                 return (
-                                                    <div key={orphanId} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                                    <div key={orphanId} className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
                                                         <div className="flex items-center justify-between mb-3">
                                                             <h5 className="font-semibold text-gray-800">{orphan.name}</h5>
                                                             <button
@@ -741,14 +771,14 @@ const AddTransactionModal: React.FC<{
                                                                         }
                                                                     }));
                                                                 }}
-                                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded-md"
+                                                                className="min-h-[40px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                                                             />
                                                         </div>
 
                                                         {/* Payment Type Section */}
                                                         <div className="space-y-2">
                                                             <label className="text-xs font-medium text-gray-700 block">نوع الدفعة</label>
-                                                            <div className="flex gap-2 mb-2">
+                                                            <div className="mb-2 grid grid-cols-2 gap-2">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => {
@@ -762,7 +792,7 @@ const AddTransactionModal: React.FC<{
                                                                             }
                                                                         }));
                                                                     }}
-                                                                    className={`flex-1 px-3 py-1 text-xs rounded-md transition-colors ${
+                                                                    className={`min-h-[40px] rounded-lg px-3 py-1 text-xs transition-colors ${
                                                                         paymentInfo.paymentType === 'month'
                                                                             ? 'bg-primary text-white'
                                                                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -782,7 +812,7 @@ const AddTransactionModal: React.FC<{
                                                                             }
                                                                         }));
                                                                     }}
-                                                                    className={`flex-1 px-3 py-1 text-xs rounded-md transition-colors ${
+                                                                    className={`min-h-[40px] rounded-lg px-3 py-1 text-xs transition-colors ${
                                                                         paymentInfo.paymentType === 'year'
                                                                             ? 'bg-primary text-white'
                                                                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -794,7 +824,7 @@ const AddTransactionModal: React.FC<{
 
                                                             {/* Month Selection */}
                                                             {paymentInfo.paymentType === 'month' && (
-                                                                <div className="grid grid-cols-2 gap-2">
+                                                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                                                     <select
                                                                         value={paymentInfo.month !== undefined ? paymentInfo.month : ''}
                                                                         onChange={(e) => {
@@ -806,7 +836,7 @@ const AddTransactionModal: React.FC<{
                                                                                 }
                                                                             }));
                                                                         }}
-                                                                        className="px-2 py-1 text-xs border border-gray-300 rounded-md bg-white"
+                                                                        className="min-h-[40px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs"
                                                                     >
                                                                         <option value="">-- اختر الشهر --</option>
                                                                         {Array.from({ length: 12 }, (_, i) => {
@@ -829,7 +859,7 @@ const AddTransactionModal: React.FC<{
                                                                                 }
                                                                             }));
                                                                         }}
-                                                                        className="px-2 py-1 text-xs border border-gray-300 rounded-md bg-white"
+                                                                        className="min-h-[40px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs"
                                                                     >
                                                                         {Array.from({ length: 5 }, (_, i) => {
                                                                             const year = new Date().getFullYear() - 2 + i;
@@ -857,7 +887,7 @@ const AddTransactionModal: React.FC<{
                                                                                 }
                                                                             }));
                                                                         }}
-                                                                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded-md bg-white"
+                                                                        className="min-h-[40px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs"
                                                                     >
                                                                         {Array.from({ length: 5 }, (_, i) => {
                                                                             const year = new Date().getFullYear() - 2 + i;
@@ -887,7 +917,7 @@ const AddTransactionModal: React.FC<{
                     {type === TransactionType.Expense && (
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-gray-700">ربط المصروف بيتيم (اختياري)</label>
-                            <select value={selectedOrphanId} onChange={(e) => setSelectedOrphanId(e.target.value)} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md">
+                            <select value={selectedOrphanId} onChange={(e) => setSelectedOrphanId(e.target.value)} className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3">
                                 <option value="">-- لا يوجد --</option>
                                 {orphans.map(orphan => (
                                     <option key={orphan.id} value={orphan.id}>{orphan.name}</option>
@@ -896,7 +926,7 @@ const AddTransactionModal: React.FC<{
                         </div>
                     )}
 
-                    <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="البيان (اختياري)" className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md" autoFocus/>
+                    <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="البيان (اختياري)" className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3" autoFocus/>
                     {!(type === TransactionType.Income && donationCategory === 'كفالة يتيم') && (
                         <input
                             type="number"
@@ -904,17 +934,17 @@ const AddTransactionModal: React.FC<{
                             onChange={(e) => setAmount(e.target.value)}
                             placeholder="المبلغ"
                             dir="ltr"
-                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+                            className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3"
                             required
                         />
                     )}
-                    
-                    <div className="flex justify-end gap-3 pt-4">
-                        <button type="button" onClick={resetForm} className="py-2 px-5 bg-gray-100 text-text-secondary rounded-lg hover:bg-gray-200 font-semibold">إلغاء</button>
+                    </div>
+                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                        <button type="button" onClick={resetForm} className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2 font-semibold text-text-secondary hover:bg-gray-200">إلغاء</button>
                         <button 
                             type="submit" 
                             disabled={!isFormValid || isSubmitting}
-                            className={`py-2 px-5 rounded-lg font-semibold transition-colors ${
+                            className={`min-h-[48px] rounded-xl px-5 py-2 font-semibold transition-colors ${
                                 isFormValid && !isSubmitting
                                     ? 'bg-primary text-white hover:bg-primary-hover cursor-pointer' 
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
@@ -953,9 +983,15 @@ const ReceiptModal: React.FC<{ transaction: FinancialTransaction | null; onClose
     };
     
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-[60] flex items-center justify-center p-4" onClick={onClose}>
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
-                <div id="printable-receipt" ref={receiptRef} className="p-8 text-text-primary bg-white">
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-xl md:h-auto md:max-h-[95vh] md:max-w-lg md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:hidden">
+                    <h3 className="text-lg font-bold text-gray-900">إيصال التبرع</h3>
+                    <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <div id="printable-receipt" ref={receiptRef} className="flex-1 overflow-y-auto bg-white p-4 text-text-primary md:p-8">
                     <div className="border-b-2 border-primary pb-4 mb-6 text-center">
                         <h2 className="text-3xl font-bold text-primary">إيصال تبرع</h2>
                         <p className="text-sm text-text-secondary">منظمة فيء لرعاية الأيتام</p>
@@ -986,13 +1022,13 @@ const ReceiptModal: React.FC<{ transaction: FinancialTransaction | null; onClose
                         </div>
                     </div>
                 </div>
-                 <div className="bg-gray-100 p-4 flex justify-end gap-3 rounded-b-lg">
-                    <button onClick={onClose} className="py-2 px-5 bg-gray-200 text-text-secondary rounded-lg hover:bg-gray-300 font-semibold">إغلاق</button>
-                    <button onClick={() => window.print()} className="py-2 px-5 bg-primary-light text-primary rounded-lg hover:bg-primary hover:text-white transition-colors font-semibold flex items-center gap-2">
+                 <div className="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:rounded-b-2xl md:pb-4">
+                    <button onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-200 px-5 py-2 font-semibold text-text-secondary hover:bg-gray-300">إغلاق</button>
+                    <button onClick={() => window.print()} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-primary-light px-5 py-2 font-semibold text-primary transition-colors hover:bg-primary hover:text-white">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                         طباعة
                     </button>
-                    <button onClick={handleExportPDF} className="py-2 px-5 bg-primary text-white rounded-lg hover:bg-primary-hover font-semibold flex items-center gap-2">
+                    <button onClick={handleExportPDF} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2 font-semibold text-white hover:bg-primary-hover">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                         PDF
                     </button>
@@ -1004,13 +1040,13 @@ const ReceiptModal: React.FC<{ transaction: FinancialTransaction | null; onClose
 
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; color: string }> = ({ title, value, icon, color }) => (
-    <div className="bg-bg-card p-4 rounded-lg shadow flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
+    <div className="flex items-center gap-3 rounded-2xl bg-bg-card p-3 shadow-sm md:gap-4 md:p-4">
+        <div className={`flex h-10 w-10 items-center justify-center rounded-xl md:h-12 md:w-12 ${color}`}>
             {icon}
         </div>
-        <div>
-            <p className="text-text-secondary text-sm">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
+        <div className="min-w-0">
+            <p className="text-xs text-text-secondary md:text-sm">{title}</p>
+            <p className="text-lg font-bold md:text-2xl">{value}</p>
         </div>
     </div>
 );
@@ -1075,8 +1111,8 @@ const TrendsChart: React.FC = () => {
     };
 
     return (
-        <div className="bg-bg-card p-6 rounded-lg shadow-sm h-[350px]">
-            <h3 className="text-lg font-bold mb-4">توجهات الإيرادات والمصروفات</h3>
+        <div className="h-[290px] rounded-2xl bg-bg-card p-4 shadow-sm md:h-[350px] md:p-6">
+            <h3 className="mb-4 text-base font-bold md:text-lg">توجهات الإيرادات والمصروفات</h3>
             <Bar data={data} options={options} />
         </div>
     );
@@ -1114,8 +1150,8 @@ const IncomeSourceChart: React.FC = () => {
     };
 
     return (
-        <div className="bg-bg-card p-6 rounded-lg shadow-sm h-[350px]">
-            <h3 className="text-lg font-bold mb-4">مصادر الإيرادات</h3>
+        <div className="h-[290px] rounded-2xl bg-bg-card p-4 shadow-sm md:h-[350px] md:p-6">
+            <h3 className="mb-4 text-base font-bold md:text-lg">مصادر الإيرادات</h3>
             <Pie data={data} options={options} />
         </div>
     );
@@ -1841,16 +1877,16 @@ const FinancialSystem: React.FC = () => {
 
     return (
         <>
-        <div className="space-y-6 pb-24 sm:pb-0">
+        <div className="space-y-4 pb-24 md:space-y-6 md:pb-0">
             <div>
-                <h1 className="text-3xl font-bold">النظام المالي</h1>
-                <p className="text-text-secondary">عرض وإدارة جميع الحركات المالية.</p>
+                <h1 className="text-2xl font-bold md:text-3xl">النظام المالي</h1>
+                <p className="text-sm text-text-secondary md:text-base">عرض وإدارة جميع الحركات المالية.</p>
             </div>
 
             {/* Sticky Navigation Bar */}
-            <div className="sticky top-16 z-30 bg-white border-b border-gray-200 shadow-sm -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
-                <div className="border-b border-gray-200 overflow-x-auto">
-                    <nav className="flex gap-2 min-w-max" role="tablist">
+            <div className="sticky top-16 z-30 -mx-4 border-b border-gray-200 bg-white px-4 shadow-sm md:mx-0 md:px-0">
+                <div className="overflow-x-auto border-b border-gray-200">
+                    <nav className="flex min-w-max gap-2 pb-1" role="tablist">
                         {financialSections.map(section => (
                             <button
                                 key={section.id}
@@ -1863,7 +1899,7 @@ const FinancialSystem: React.FC = () => {
                                 }}
                                 role="tab"
                                 aria-selected={activeSection === section.id}
-                                className={`flex items-center gap-2 px-4 py-3 font-semibold transition-all whitespace-nowrap border-b-2 ${
+                                className={`flex min-h-[48px] items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition-all whitespace-nowrap md:text-base ${
                                     activeSection === section.id
                                         ? 'border-primary text-primary bg-primary/5'
                                         : 'border-transparent text-text-secondary hover:text-primary hover:border-gray-300'
@@ -1877,9 +1913,9 @@ const FinancialSystem: React.FC = () => {
                 </div>
             </div>
 
-            <div className="space-y-4">
-                <h2 className="text-xl font-bold">لوحة التحكم المالية</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="space-y-3 md:space-y-4">
+                <h2 className="text-lg font-bold md:text-xl">لوحة التحكم المالية</h2>
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
                      <StatCard title="الرصيد" value={`$${balance.toLocaleString()}`} color="bg-blue-100" icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4h-4Z"/></svg>} />
                     <StatCard title="إجمالي الإيرادات" value={`$${totalIncome.toLocaleString()}`} color="bg-green-100" icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>} />
                     <StatCard title="إجمالي المصروفات" value={`$${totalExpenses.toLocaleString()}`} color="bg-red-100" icon={<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>} />
@@ -1887,7 +1923,7 @@ const FinancialSystem: React.FC = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-6">
                 <div className="lg:col-span-2">
                     <TrendsChart />
                 </div>
@@ -1896,41 +1932,41 @@ const FinancialSystem: React.FC = () => {
                 </div>
             </div>
             
-            <div ref={transactionsSectionRef} className="bg-bg-card p-6 rounded-lg shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                    <h2 className="text-xl font-bold">سجل الحركات المالية</h2>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <button onClick={() => setIsAddModalOpen(true)} className="bg-primary text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-hover flex items-center gap-2">
+            <div ref={transactionsSectionRef} className="rounded-2xl bg-bg-card p-4 shadow-sm md:p-6">
+                <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <h2 className="text-lg font-bold md:text-xl">سجل الحركات المالية</h2>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                        <button onClick={() => setIsAddModalOpen(true)} className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-bold text-white hover:bg-primary-hover">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                             إضافة حركة
                         </button>
-                        <div className="flex items-center bg-gray-100 rounded-lg">
+                        <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:px-0 sm:pb-0">
                             <button 
                                 onClick={() => handleMonthFilter('هذا العام')}
-                                className={`py-2 px-4 text-sm font-semibold rounded-lg transition-colors ${
+                                className={`min-h-[44px] shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
                                     activeMonthFilter === 'هذا العام' 
                                         ? 'bg-primary text-white' 
-                                        : 'text-text-secondary hover:bg-gray-200'
+                                        : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
                                 }`}
                             >
                                 هذا العام
                             </button>
                             <button 
                                 onClick={() => handleMonthFilter('آخر 3 أشهر')}
-                                className={`py-2 px-4 text-sm font-semibold rounded-lg transition-colors ${
+                                className={`min-h-[44px] shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
                                     activeMonthFilter === 'آخر 3 أشهر' 
                                         ? 'bg-primary text-white' 
-                                        : 'text-text-secondary hover:bg-gray-200'
+                                        : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
                                 }`}
                             >
                                 آخر 3 أشهر
                             </button>
                             <button 
                                 onClick={() => handleMonthFilter('هذا الشهر')}
-                                className={`py-2 px-4 text-sm font-semibold rounded-lg transition-colors ${
+                                className={`min-h-[44px] shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
                                     activeMonthFilter === 'هذا الشهر' 
                                         ? 'bg-primary text-white' 
-                                        : 'text-text-secondary hover:bg-gray-200'
+                                        : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
                                 }`}
                             >
                                 هذا الشهر
@@ -1939,9 +1975,9 @@ const FinancialSystem: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 mb-4 pb-4 border-b">
-                    <div className="flex items-center gap-2">
-                        <label htmlFor="from-date" className="text-sm">من</label>
+                <div className="mb-4 grid grid-cols-1 gap-3 border-b pb-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr),minmax(0,1fr),180px,180px,auto]">
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="from-date" className="text-sm font-medium text-gray-700">من</label>
                         <input 
                             type="date" 
                             id="from-date" 
@@ -1951,11 +1987,11 @@ const FinancialSystem: React.FC = () => {
                                 setFromDate(e.target.value);
                                 setActiveMonthFilter('');
                             }}
-                            className="bg-white border border-gray-300 rounded-lg p-2"
+                            className="min-h-[48px] rounded-xl border border-gray-300 bg-white px-4 py-3"
                         />
                     </div>
-                    <div className="flex items-center gap-2">
-                        <label htmlFor="to-date" className="text-sm">إلى</label>
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="to-date" className="text-sm font-medium text-gray-700">إلى</label>
                         <input 
                             type="date" 
                             id="to-date" 
@@ -1965,13 +2001,13 @@ const FinancialSystem: React.FC = () => {
                                 setToDate(e.target.value);
                                 setActiveMonthFilter('');
                             }}
-                            className="bg-white border border-gray-300 rounded-lg p-2"
+                            className="min-h-[48px] rounded-xl border border-gray-300 bg-white px-4 py-3"
                         />
                     </div>
                     <select 
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
-                        className="bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary"
+                        className="min-h-[48px] rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary"
                     >
                         <option>كل الأنواع</option>
                         <option>إيرادات</option>
@@ -1980,19 +2016,132 @@ const FinancialSystem: React.FC = () => {
                     <select 
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="bg-white border border-gray-300 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary"
+                        className="min-h-[48px] rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary"
                     >
                         <option>كل الحالات</option>
                         <option>مكتملة</option>
                         <option>قيد المراجعة</option>
                         <option>مرفوضة</option>
                     </select>
-                    <button className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600" onClick={handleExport}>
-                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    <button className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-green-600" onClick={handleExport}>
+                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                        تصدير
                     </button>
                 </div>
-                
-                <div className="overflow-x-auto">
+
+                <div className="space-y-3 md:hidden">
+                    {transactionsLoading ? (
+                        <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-10 text-center text-sm text-text-secondary">
+                            جاري التحميل...
+                        </div>
+                    ) : filteredTransactions.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-10 text-center text-sm text-text-secondary">
+                            {transactions.length === 0 ? 'لا توجد حركات مالية' : 'لا توجد نتائج تطابق الفلاتر المحددة'}
+                        </div>
+                    ) : (
+                        paginatedTransactions.map(tx => {
+                            const txWithApproval = tx as FinancialTransactionWithApproval;
+                            const isPending = tx.status === TransactionStatus.Pending;
+                            const isRejected = tx.status === TransactionStatus.Rejected;
+
+                            return (
+                                <div key={tx.id} className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm">
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-start gap-2">
+                                                <h3 className="text-sm font-bold leading-6 text-gray-800">{tx.description}</h3>
+                                                {tx.receipt && (
+                                                    <button onClick={() => setReceiptToShow(tx)} title="عرض الإيصال" className="mt-0.5 shrink-0 text-primary hover:text-primary-hover">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <p className="mt-1 text-xs text-text-secondary">{ensureDate(tx.date)?.toLocaleDateString('en-CA') ?? '-'}</p>
+                                        </div>
+                                        <StatusPill status={tx.status} />
+                                    </div>
+
+                                    <div className="mt-4 grid grid-cols-2 gap-3">
+                                        <div className="rounded-xl bg-gray-50 p-3">
+                                            <p className="text-[11px] text-gray-500">أنشئت بواسطة</p>
+                                            <p className="mt-1 text-sm font-semibold text-gray-800">{tx.createdBy}</p>
+                                        </div>
+                                        <div className="rounded-xl bg-gray-50 p-3">
+                                            <p className="text-[11px] text-gray-500">المبلغ</p>
+                                            <p className={`mt-1 text-sm font-bold ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>${tx.amount.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+
+                                    {tx.receipt && tx.receipt.orphanPaymentMonths && tx.receipt.relatedOrphanIds && tx.receipt.relatedOrphanIds.length > 0 && (
+                                        <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-700">
+                                            <div className="font-semibold">الكافل: {tx.receipt.sponsorName}</div>
+                                            <div className="mt-2 space-y-1 text-gray-600">
+                                                {tx.receipt.relatedOrphanIds.map(orphanId => {
+                                                    const orphan = orphansData.find(o => o.id === orphanId);
+                                                    const paymentInfo = tx.receipt?.orphanPaymentMonths?.[orphanId];
+                                                    if (!paymentInfo || !orphan) return null;
+
+                                                    const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+                                                    const paymentText = paymentInfo.isYear
+                                                        ? `سنة ${paymentInfo.year} كاملة`
+                                                        : paymentInfo.month !== undefined
+                                                            ? `${monthNames[paymentInfo.month]} ${paymentInfo.year}`
+                                                            : '';
+
+                                                    return (
+                                                        <div key={orphanId}>
+                                                            <span className="font-medium">{orphan.name}</span>: {paymentText}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {(txWithApproval.approvedBy || txWithApproval.rejectedBy || (isRejected && txWithApproval.rejectionReason)) && (
+                                        <div className="mt-3 space-y-1 text-xs">
+                                            {txWithApproval.approvedBy && <p className="text-green-600">وافق عليها: {txWithApproval.approvedBy}</p>}
+                                            {txWithApproval.rejectedBy && <p className="text-red-600">رفضها: {txWithApproval.rejectedBy}</p>}
+                                            {isRejected && txWithApproval.rejectionReason && <p className="text-red-500">سبب الرفض: {txWithApproval.rejectionReason}</p>}
+                                        </div>
+                                    )}
+
+                                    <div className="mt-4 flex flex-col gap-2">
+                                        {isPending && canApproveExpense && tx.type === TransactionType.Expense && (
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <button
+                                                    onClick={() => setTransactionToApprove(txWithApproval)}
+                                                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-green-600"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                                    موافقة
+                                                </button>
+                                                <button
+                                                    onClick={() => setTransactionToReject(txWithApproval)}
+                                                    className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                                    رفض
+                                                </button>
+                                            </div>
+                                        )}
+                                        {canEditTransactions && (
+                                            <button
+                                                onClick={() => handleDelete(tx.id)}
+                                                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-100"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                                حذف المعاملة
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
+                <div className="hidden overflow-x-auto md:block">
                     <table className="w-full text-sm text-right">
                         <thead className="text-text-secondary">
                             <tr>
@@ -2111,7 +2260,7 @@ const FinancialSystem: React.FC = () => {
                                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                                                         </button>
                                                         {actionMenuOpen === tx.id && (
-                                                            <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                                                            <div className="absolute end-0 top-full z-10 mt-1 min-w-[120px] rounded-lg border border-gray-200 bg-white shadow-lg">
                                                                 <button 
                                                                     onClick={() => handleDelete(tx.id)}
                                                                     className="w-full px-4 py-2 text-right text-red-600 hover:bg-red-50 flex items-center gap-2"
@@ -2215,11 +2364,11 @@ const FinancialSystem: React.FC = () => {
             </div>
 
             {/* Orphan Payments Section */}
-            <div ref={orphanPaymentsSectionRef} className="bg-bg-card p-6 rounded-lg shadow-sm">
-                <h2 className="text-xl font-bold mb-4">دفعات الأيتام</h2>
+            <div ref={orphanPaymentsSectionRef} className="rounded-2xl bg-bg-card p-4 shadow-sm md:p-6">
+                <h2 className="mb-4 text-lg font-bold md:text-xl">دفعات الأيتام</h2>
                 
                 {orphansData.length === 0 ? (
-                    <div className="text-center text-text-secondary py-8">
+                    <div className="py-8 text-center text-text-secondary">
                         لا توجد أيتام مسجلة
                     </div>
                 ) : (
@@ -2234,61 +2383,61 @@ const FinancialSystem: React.FC = () => {
                             const totalAmount = orphanPayments.reduce((sum, p) => sum + p.amount, 0);
 
                             return (
-                                <div key={orphan.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+                                <div key={orphan.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
                                     {/* Orphan Header */}
                                     <div
-                                        className="p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                                        className="cursor-pointer p-4 transition-colors hover:bg-gray-50"
                                         onClick={() => toggleOrphanExpansion(orphan.uuid || orphan.id.toString())}
                                     >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4 flex-1">
-                                                <Avatar src={orphan.photoUrl} name={orphan.name} size="xl" className="border-2 border-gray-200" />
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-3">
-                                                        <h3 className="text-xl font-bold text-gray-800">{orphan.name}</h3>
+                                        <div className="flex items-start gap-3 md:items-center md:justify-between">
+                                            <div className="flex min-w-0 flex-1 items-start gap-3 md:items-center md:gap-4">
+                                                <Avatar src={orphan.photoUrl} name={orphan.name} size="lg" className="h-14 w-14 border-2 border-gray-200 md:h-16 md:w-16" />
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+                                                        <h3 className="truncate text-base font-bold text-gray-800 md:text-xl">{orphan.name}</h3>
                                                         <Link
                                                             to={`/orphan/${orphan.id}`}
                                                             onClick={(e) => e.stopPropagation()}
-                                                            className="text-primary hover:text-primary-hover text-sm font-semibold"
+                                                            className="text-sm font-semibold text-primary hover:text-primary-hover"
                                                         >
                                                             عرض الملف الشخصي →
                                                         </Link>
                                                     </div>
-                                                    <div className="flex flex-wrap gap-4 mt-2">
-                                                        <span className="text-sm text-gray-600">
+                                                    <div className="mt-3 flex flex-wrap gap-2">
+                                                        <span className="inline-flex min-h-8 items-center rounded-full bg-gray-100 px-3 text-xs font-semibold text-gray-700 md:text-sm">
                                                             إجمالي الدفعات: <strong>{orphanPayments.length}</strong>
                                                         </span>
-                                                        <span className="text-sm text-gray-600">
+                                                        <span className="inline-flex min-h-8 items-center rounded-full bg-slate-100 px-3 text-xs font-semibold text-slate-700 md:text-sm">
                                                             المبلغ الإجمالي: <strong>${totalAmount.toLocaleString()}</strong>
                                                         </span>
                                                         {paidCount > 0 && (
-                                                            <span className="text-sm text-green-600">
+                                                            <span className="inline-flex min-h-8 items-center rounded-full bg-green-50 px-3 text-xs font-semibold text-green-700 md:text-sm">
                                                                 مدفوع: <strong>{paidCount}</strong>
                                                             </span>
                                                         )}
                                                         {dueCount > 0 && (
-                                                            <span className="text-sm text-yellow-600">
+                                                            <span className="inline-flex min-h-8 items-center rounded-full bg-yellow-50 px-3 text-xs font-semibold text-yellow-700 md:text-sm">
                                                                 مستحق: <strong>{dueCount}</strong>
                                                             </span>
                                                         )}
                                                         {overdueCount > 0 && (
-                                                            <span className="text-sm text-red-600">
+                                                            <span className="inline-flex min-h-8 items-center rounded-full bg-red-50 px-3 text-xs font-semibold text-red-700 md:text-sm">
                                                                 متأخر: <strong>{overdueCount}</strong>
                                                             </span>
                                                         )}
                                                         {processingCount > 0 && (
-                                                            <span className="text-sm text-blue-600">
+                                                            <span className="inline-flex min-h-8 items-center rounded-full bg-blue-50 px-3 text-xs font-semibold text-blue-700 md:text-sm">
                                                                 قيد المعالجة: <strong>{processingCount}</strong>
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="mt-1 flex items-center gap-2">
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
-                                                    width="24"
-                                                    height="24"
+                                                    width="20"
+                                                    height="20"
                                                     viewBox="0 0 24 24"
                                                     fill="none"
                                                     stroke="currentColor"
@@ -2305,21 +2454,21 @@ const FinancialSystem: React.FC = () => {
 
                                     {/* 12-Month Calendar View */}
                                     {isExpanded && (
-                                        <div className="border-t border-gray-200 p-4 bg-gray-50">
+                                        <div className="border-t border-gray-200 bg-gray-50 p-3 md:p-4">
                                             {orphanPayments.length === 0 ? (
-                                                <div className="p-3 text-center text-text-secondary text-sm">
+                                                <div className="p-3 text-center text-sm text-text-secondary">
                                                     لا توجد دفعات مسجلة
                                                 </div>
                                             ) : (
                                                 <div className="max-w-4xl mx-auto">
-                                                    <div className="flex items-center justify-between mb-4">
-                                                        <h4 className="text-lg font-bold text-gray-800">
+                                                    <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                                        <h4 className="text-base font-bold text-gray-800 md:text-lg">
                                                             تقويم الدفعات
                                                         </h4>
                                                         <select
                                                             value={selectedYear}
                                                             onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                                            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm font-semibold bg-white shadow-sm"
+                                                            className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-primary md:w-auto md:min-w-[180px]"
                                                         >
                                                             {Array.from({ length: 10 }, (_, i) => {
                                                                 const year = 2020 + i;
@@ -2331,7 +2480,8 @@ const FinancialSystem: React.FC = () => {
                                                             })}
                                                         </select>
                                                     </div>
-                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                                                    <div className="-mx-1 overflow-x-auto px-1 pb-2 md:mx-0 md:px-0 md:pb-0">
+                                                    <div className="flex gap-3 md:grid md:grid-cols-4">
                                                         {Array.from({ length: 12 }, (_, i) => {
                                                             const month = new Date(selectedYear, i, 1);
                                                             const paymentForMonth = orphanPayments.find(p => 
@@ -2397,7 +2547,9 @@ const FinancialSystem: React.FC = () => {
                                                             return (
                                                                 <div 
                                                                     key={month.getMonth()} 
-                                                                    className={`${bgColor} p-3 rounded-lg text-center shadow-sm transition-all duration-200 relative ${
+                                                                    className={`relative min-w-[140px] rounded-2xl p-3 text-center shadow-sm transition-all duration-200 md:min-w-0 ${
+                                                                        bgColor
+                                                                    } ${
                                                                         canViewFinancials() ? 'cursor-pointer hover:shadow-lg hover:scale-105' : ''
                                                                     }`}
                                                                     onClick={() => {
@@ -2414,14 +2566,14 @@ const FinancialSystem: React.FC = () => {
                                                                 >
                                                                     {isEditing ? (
                                                                         <div className="space-y-2">
-                                                                            <p className="font-semibold text-gray-800 mb-1 text-sm">
+                                                                            <p className="mb-1 text-sm font-semibold text-gray-800">
                                                                                 {month.toLocaleDateString('ar-EG', { month: 'long' })}
                                                                             </p>
                                                                             <input
                                                                                 type="number"
                                                                                 step="0.01"
                                                                                 min="0"
-                                                                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white text-center"
+                                                                                className="min-h-[40px] w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-center text-xs"
                                                                                 value={editingPayment.amount}
                                                                                 onChange={(e) => {
                                                                                     const newAmount = parseFloat(e.target.value) || 0;
@@ -2435,7 +2587,7 @@ const FinancialSystem: React.FC = () => {
                                                                                 autoFocus
                                                                             />
                                                                             <select
-                                                                                className="w-full px-2 py-1 text-xs border border-gray-300 rounded bg-white"
+                                                                                className="min-h-[40px] w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs"
                                                                                 value={editingPayment.status || paymentForMonth?.status || PaymentStatus.Due}
                                                                                 onChange={(e) => {
                                                                                     const newStatus = e.target.value as PaymentStatus;
@@ -2451,7 +2603,7 @@ const FinancialSystem: React.FC = () => {
                                                                                 <option value={PaymentStatus.Overdue}>متأخر</option>
                                                                                 <option value={PaymentStatus.Processing}>قيد المعالجة</option>
                                                                             </select>
-                                                                            <div className="flex gap-1">
+                                                                            <div className="grid grid-cols-2 gap-1">
                                                                                 <button
                                                                                     onClick={(e) => {
                                                                                         e.stopPropagation();
@@ -2464,7 +2616,7 @@ const FinancialSystem: React.FC = () => {
                                                                                             editingPayment.amount
                                                                                         );
                                                                                     }}
-                                                                                    className="flex-1 text-xs px-2 py-1 bg-primary text-white rounded hover:bg-primary-hover"
+                                                                                    className="min-h-[40px] rounded-lg bg-primary px-2 py-1 text-xs text-white hover:bg-primary-hover"
                                                                                 >
                                                                                     حفظ
                                                                                 </button>
@@ -2473,7 +2625,7 @@ const FinancialSystem: React.FC = () => {
                                                                                         e.stopPropagation();
                                                                                         setEditingPayment(null);
                                                                                     }}
-                                                                                    className="flex-1 text-xs px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                                                                                    className="min-h-[40px] rounded-lg bg-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-300"
                                                                                 >
                                                                                     إلغاء
                                                                                 </button>
@@ -2500,6 +2652,7 @@ const FinancialSystem: React.FC = () => {
                                                                 </div>
                                                             );
                                                         })}
+                                                    </div>
                                                     </div>
                                                 </div>
                                             )}
