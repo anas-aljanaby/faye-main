@@ -1,7 +1,7 @@
 - generic [ref=e5]:
   - generic [ref=e6]:
     - img [ref=e8]
-    - heading "منظمة يتيم" [level=1] [ref=e10]
+    - heading "منصة يتيم" [level=1] [ref=e10]
     - paragraph [ref=e11]: نظام إدارة رعاية الأيتام
   - generic [ref=e12]:
     - heading "تسجيل الدخول" [level=2] [ref=e13]
@@ -23,4 +23,4 @@
         - img [ref=e34]
         - generic [ref=e37]: جاري تسجيل الدخول...
     - paragraph [ref=e30]: للمساعدة، يرجى التواصل مع مدير النظام
-  - paragraph [ref=e32]: © 2024 منظمة يتيم. جميع الحقوق محفوظة.
+  - paragraph [ref=e32]: © 2024 منصة يتيم. جميع الحقوق محفوظة.

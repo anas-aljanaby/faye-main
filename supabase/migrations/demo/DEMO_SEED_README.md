@@ -42,7 +42,7 @@ All demo passwords: **`admin`**
 
 ### 1. Organization and users (007)
 
-- **1 organization:** منظمة يتيم - Demo  
+- **1 organization:** منصة يتيم - Demo  
 - **1 super admin:** مدير النظام (`is_system_admin = TRUE`) – invisible in team/sponsor lists; full permissions; login `admin` / `admin@yetim-demo.com`.  
 - **2 team members:** خالد الغامدي (manager, full permissions), نورة السعد (staff, limited: no approve/create expense)  
 - **5 sponsors:** عبدالله الراجحي, فاطمة الأحمد (Jan); محمد الشمري, منى العتيبي (Feb); سعد الدوسري (Mar)  

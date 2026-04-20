@@ -367,10 +367,10 @@ BEGIN
     RAISE NOTICE 'Creating organization...';
     
     INSERT INTO organizations (name) 
-    VALUES ('منظمة يتيم')
+    VALUES ('منصة يتيم')
     RETURNING id INTO org_id;
     
-    RAISE NOTICE '  ✓ Created organization: منظمة يتيم (ID: %)', org_id;
+    RAISE NOTICE '  ✓ Created organization: منصة يتيم (ID: %)', org_id;
 
     -- ============================================================================
     -- STEP 2: CREATE TEAM MEMBER PROFILES
@@ -8887,7 +8887,7 @@ BEGIN
     RAISE NOTICE '========================================';
     RAISE NOTICE '';
     RAISE NOTICE 'Summary:';
-    RAISE NOTICE '  - Organization: منظمة يتيم';
+    RAISE NOTICE '  - Organization: منصة يتيم';
     RAISE NOTICE '  - Team Members: 8';
     RAISE NOTICE '  - Sponsors: 94';
     RAISE NOTICE '  - Orphans: 239';

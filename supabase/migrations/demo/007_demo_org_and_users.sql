@@ -31,7 +31,7 @@ BEGIN
     INSERT INTO organizations (id, name, created_at, updated_at)
     VALUES (
         demo_org_id,
-        'منظمة يتيم - Demo',
+        'منصة يتيم - Demo',
         '2026-01-01 08:00:00+00',
         '2026-01-01 08:00:00+00'
     )

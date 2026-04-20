@@ -24,7 +24,7 @@ The sidebar **hides** some destinations by role (users never see a dead link):
 **Sign-in (`/signin`)**
 
 - Full-screen **soft gradient** background.
-- Centered **branding** (heart icon, “منظمة يتيم”, subtitle “نظام إدارة رعاية الأيتام”).
+- Centered **branding** (heart icon, “منصة يتيم”, subtitle “نظام إدارة رعاية الأيتام”).
 - **White card** with email and password fields (email field LTR), error alert if login fails, primary **تسجيل الدخول** button with loading state.
 
 ---

@@ -60,7 +60,7 @@ BEGIN
     -- CREATE DEMO ORGANIZATION
     -- ============================================================================
     INSERT INTO organizations (id, name) 
-    VALUES (demo_org_id, 'منظمة يتيم - Demo');
+    VALUES (demo_org_id, 'منصة يتيم - Demo');
 
     -- ============================================================================
     -- CREATE USER PROFILES

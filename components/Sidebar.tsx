@@ -204,7 +204,7 @@ const Sidebar: React.FC = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-lg font-bold text-white shadow-sm">
               ف
             </div>
-            <span className="truncate text-xl font-bold text-primary">جمعية يتيم</span>
+            <span className="truncate text-xl font-bold text-primary">منصة يتيم</span>
           </div>
         )}
 

@@ -1,4 +1,4 @@
--- System admin profile + permissions for organization "منظمة يتيم"
+-- System admin profile + permissions for organization "منصة يتيم"
 -- Run after 003_import_yetim_data.sql (or whenever org data exists).
 --
 -- Supabase Auth user creation is NOT done here (requires Auth Admin API or Dashboard).
@@ -14,11 +14,11 @@ BEGIN
     SELECT id
     INTO org_id
     FROM organizations
-    WHERE name = 'منظمة يتيم'
+    WHERE name = 'منصة يتيم'
     LIMIT 1;
 
     IF org_id IS NULL THEN
-        RAISE NOTICE '⚠ Organization "منظمة يتيم" not found. Skipping admin creation.';
+        RAISE NOTICE '⚠ Organization "منصة يتيم" not found. Skipping admin creation.';
         RETURN;
     END IF;
 

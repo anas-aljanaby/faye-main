@@ -35,7 +35,7 @@ BEGIN
     -- STEP 1: CREATE DEMO ORGANIZATION
     -- ============================================================================
     INSERT INTO organizations (id, name) 
-    VALUES (demo_org_id, 'منظمة يتيم - Demo')
+    VALUES (demo_org_id, 'منصة يتيم - Demo')
     ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
     
     -- ============================================================================

@@ -43,7 +43,7 @@ const SignIn: React.FC = () => {
             <div className="mb-3 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.75rem] shadow-lg md:mb-4 md:h-20 md:w-20 md:rounded-full">
               <img src="/icons/logo-placeholder.svg" alt="Yetim Logo" className="h-full w-full object-cover" />
             </div>
-            <h1 className="mb-1 text-2xl font-bold text-gray-800 md:mb-2 md:text-3xl">منظمة يتيم</h1>
+            <h1 className="mb-1 text-2xl font-bold text-gray-800 md:mb-2 md:text-3xl">منصة يتيم</h1>
             <p className="mx-auto max-w-xs text-sm text-text-secondary md:text-base">نظام إدارة رعاية الأيتام</p>
           </div>
 
@@ -119,7 +119,7 @@ const SignIn: React.FC = () => {
 
           {/* Footer */}
           <div className="mt-6 text-center text-xs text-text-secondary md:mt-8 md:text-sm">
-            <p>© 2024 منظمة يتيم. جميع الحقوق محفوظة.</p>
+            <p>© 2024 منصة يتيم. جميع الحقوق محفوظة.</p>
           </div>
         </div>
       </div>

@@ -994,7 +994,7 @@ const ReceiptModal: React.FC<{ transaction: FinancialTransaction | null; onClose
                 <div id="printable-receipt" ref={receiptRef} className="flex-1 overflow-y-auto bg-white p-4 text-text-primary md:p-8">
                     <div className="border-b-2 border-primary pb-4 mb-6 text-center">
                         <h2 className="text-3xl font-bold text-primary">إيصال تبرع</h2>
-                        <p className="text-sm text-text-secondary">منظمة يتيم لرعاية الأيتام</p>
+                        <p className="text-sm text-text-secondary">منصة يتيم لرعاية الأيتام</p>
                     </div>
                     <div className="flex justify-between mb-6 text-sm">
                         <div>

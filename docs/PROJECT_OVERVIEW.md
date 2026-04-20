@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**Yetim** is a web application for managing orphan care operations for an association (جمعية يتيم). It centralizes records for orphans and sponsors, internal team and permissions, messaging, financial transactions, and published internal policies. The UI is primarily **Arabic (RTL)** and is built as a **single-page application** backed by **Supabase** (database, auth, storage) with optional **Google Gemini** integration for AI-assisted reporting on the dashboard.
+**Yetim** is a web application for managing orphan care operations for an association (منصة يتيم). It centralizes records for orphans and sponsors, internal team and permissions, messaging, financial transactions, and published internal policies. The UI is primarily **Arabic (RTL)** and is built as a **single-page application** backed by **Supabase** (database, auth, storage) with optional **Google Gemini** integration for AI-assisted reporting on the dashboard.
 
 ## Who uses it
 

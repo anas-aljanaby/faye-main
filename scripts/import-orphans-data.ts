@@ -78,7 +78,7 @@ interface ImportResult {
 }
 
 // Organization name
-const ORGANIZATION_NAME = 'منظمة يتيم';
+const ORGANIZATION_NAME = 'منصة يتيم';
 
 /**
  * Read and parse Excel file
