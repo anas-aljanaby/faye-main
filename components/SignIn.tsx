@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import PasswordInput from './PasswordInput';
 
 const SignIn: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -75,21 +76,16 @@ const SignIn: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-700">
-                  كلمة المرور
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="min-h-12 w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm transition focus:border-primary focus:ring-2 focus:ring-primary md:text-base"
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                />
-              </div>
+              <PasswordInput
+                id="password"
+                label="كلمة المرور"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                inputClassName="min-h-12"
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
 
               <button
                 type="submit"

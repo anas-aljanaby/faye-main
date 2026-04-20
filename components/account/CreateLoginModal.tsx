@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createProfileLogin, generateRandomPassword } from '../../lib/adminAccountApi';
 import ResponsiveModalShell from '../ResponsiveModalShell';
+import PasswordInput from '../PasswordInput';
 
 export const CreateLoginModal: React.FC<{
   isOpen: boolean;
@@ -116,13 +117,12 @@ export const CreateLoginModal: React.FC<{
                 توليد عشوائي
               </button>
             </div>
-            <input
-              type="text"
+            <PasswordInput
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="min-h-[48px] w-full rounded-xl border border-gray-300 px-4 py-2.5 font-mono text-sm focus:border-primary focus:ring-2 focus:ring-primary"
-              dir="ltr"
+              inputClassName="min-h-[48px] py-2.5 font-mono text-sm"
+              inputDir="ltr"
               placeholder="8 أحرف على الأقل"
             />
           </div>
