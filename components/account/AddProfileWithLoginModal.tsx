@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ResponsiveModalShell from '../ResponsiveModalShell';
-import PasswordInput from '../PasswordInput';
+import PasswordFieldWithActions from './PasswordFieldWithActions';
 import { createProfileWithLogin, generateRandomPassword } from '../../lib/adminAccountApi';
 
 type AddProfileWithLoginModalProps = {
@@ -35,7 +35,6 @@ const AddProfileWithLoginModal: React.FC<AddProfileWithLoginModalProps> = ({
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
-  const [copyState, setCopyState] = useState<'idle' | 'done' | 'failed'>('idle');
   const [toast, setToast] = useState<ToastState>(null);
 
   useEffect(() => {
@@ -45,7 +44,6 @@ const AddProfileWithLoginModal: React.FC<AddProfileWithLoginModalProps> = ({
     setPassword('');
     setErrors({});
     setSubmitting(false);
-    setCopyState('idle');
     setToast(null);
   }, [open, role]);
 
@@ -90,18 +88,6 @@ const AddProfileWithLoginModal: React.FC<AddProfileWithLoginModalProps> = ({
     setErrors((prev) => ({ ...prev, password: undefined, general: undefined }));
   };
 
-  const handleCopyPassword = async () => {
-    if (!password) return;
-    try {
-      await navigator.clipboard.writeText(password);
-      setCopyState('done');
-      setTimeout(() => setCopyState('idle'), 1500);
-    } catch {
-      setCopyState('failed');
-      setTimeout(() => setCopyState('idle'), 1800);
-    }
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const validationErrors = validate();
@@ -110,7 +96,7 @@ const AddProfileWithLoginModal: React.FC<AddProfileWithLoginModalProps> = ({
 
     setSubmitting(true);
     try {
-      const profile = await createProfileWithLogin(role, name.trim(), email.trim(), password);
+      const profile = await createProfileWithLogin(role, name.trim(), email.trim(), password.trim());
       onSuccess?.({ id: profile.id, name: profile.name, role: profile.role });
       setToast({ type: 'success', message: labels.successLabel });
       onOpenChange(false);
@@ -227,39 +213,17 @@ const AddProfileWithLoginModal: React.FC<AddProfileWithLoginModalProps> = ({
           {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
         </div>
 
-        <div>
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <label className="text-sm font-semibold text-gray-700">كلمة المرور</label>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleGeneratePassword}
-                className="min-h-[40px] rounded-lg px-2 text-sm font-semibold text-primary transition-colors hover:text-primary-hover"
-              >
-                توليد عشوائي
-              </button>
-              <button
-                type="button"
-                onClick={handleCopyPassword}
-                disabled={!password}
-                className="min-h-[40px] rounded-lg px-2 text-sm font-semibold text-primary transition-colors hover:text-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {copyState === 'done' ? 'تم النسخ' : copyState === 'failed' ? 'فشل النسخ' : 'نسخ'}
-              </button>
-            </div>
-          </div>
-          <PasswordInput
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setErrors((prev) => ({ ...prev, password: undefined, general: undefined }));
-            }}
-            autoComplete="new-password"
-            inputClassName="min-h-[48px] py-2.5 font-mono text-sm"
-            placeholder="8 أحرف على الأقل"
-          />
-          {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-        </div>
+        <PasswordFieldWithActions
+          label="كلمة المرور"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setErrors((prev) => ({ ...prev, password: undefined, general: undefined }));
+          }}
+          onGenerate={handleGeneratePassword}
+          error={errors.password}
+          showCopy
+        />
 
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {labels.note}

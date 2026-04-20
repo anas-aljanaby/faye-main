@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
       const role = body.role as CreateProfileRole | undefined;
       const name = (body.name as string | undefined)?.trim();
       const email = normalizeEmail(body.email as string | undefined);
-      const password = body.password as string | undefined;
+      const password = (body.password as string | undefined)?.trim();
 
       if (role !== 'team_member' && role !== 'sponsor') {
         return new Response(JSON.stringify({ error: 'invalid_role' }), {
@@ -238,7 +238,7 @@ Deno.serve(async (req) => {
     if (action === 'create') {
       const profileId = body.profileId as string | undefined;
       const email = normalizeEmail(body.email as string | undefined);
-      const password = body.password as string | undefined;
+      const password = (body.password as string | undefined)?.trim();
 
       if (!profileId || !email || !password) {
         return new Response(JSON.stringify({ error: 'invalid_body' }), {
