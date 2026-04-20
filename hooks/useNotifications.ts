@@ -15,7 +15,7 @@ const DEFAULT_PREFERENCES: NotificationPreference = {
 };
 
 const MISSING_TABLE_ERROR_CODE = 'PGRST205';
-const SCHEMA_CACHE_PREFIX = 'faye:notification-schema';
+const SCHEMA_CACHE_PREFIX = 'yetim:notification-schema';
 
 type SchemaAvailability = 'unknown' | 'available' | 'missing';
 

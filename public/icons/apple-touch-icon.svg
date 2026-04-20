@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
   <defs>
-    <linearGradient id="appleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="appleGradientYetim" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0f766e" />
       <stop offset="100%" stop-color="#0d9488" />
     </linearGradient>
   </defs>
-  <rect width="180" height="180" rx="40" fill="url(#appleGradient)" />
-  <path d="M60 118V62h26c20 0 34 10 34 27s-14 29-34 29H60Zm18-15h8c9 0 15-5 15-14s-6-12-15-12h-8v26Z" fill="#fff"/>
+  <rect width="180" height="180" rx="40" fill="url(#appleGradientYetim)" />
+  <circle cx="90" cy="90" r="53" fill="#ffffff" fill-opacity="0.15" />
+  <path d="M48 56h20l22 36 22-36h20L100 111v22H80v-22L48 56Z" fill="#ffffff" />
 </svg>

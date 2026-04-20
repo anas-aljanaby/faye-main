@@ -498,7 +498,7 @@ const SponsorPage: React.FC = () => {
                 <div className="mt-4 text-blue-600">
                     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                 </div>
-                <h3 className="mt-2 text-lg font-bold text-gray-800 md:text-xl">سياسات فيء</h3>
+                <h3 className="mt-2 text-lg font-bold text-gray-800 md:text-xl">سياسات يتيم</h3>
                 <p className="mt-1 text-sm text-text-secondary">اطلع على شروط وأحكام المنظمة</p>
             </Link>
         </div>
@@ -541,7 +541,7 @@ const SponsorPage: React.FC = () => {
                                 <div className="space-y-2">
                                     <div>
                                         <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">{sponsor.name}</h1>
-                                        <p className="text-sm text-text-secondary md:text-base">كافل مميز في فيء</p>
+                                        <p className="text-sm text-text-secondary md:text-base">كافل مميز في يتيم</p>
                                     </div>
 
                                     <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">

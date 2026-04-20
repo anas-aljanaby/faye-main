@@ -214,7 +214,7 @@ const navItemsById: Record<AppNavItemId, AppNavItemConfig> = {
   policies: {
     id: 'policies',
     to: '/policies',
-    text: 'سياسات فيء',
+    text: 'سياسات يتيم',
     icon: ShieldIcon,
     matchPaths: ['/policies'],
   },

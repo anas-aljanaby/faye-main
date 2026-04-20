@@ -40,12 +40,10 @@ const SignIn: React.FC = () => {
         {/* Logo/Header */}
         <div className="w-full">
           <div className="mb-6 text-center md:mb-8">
-            <div className="mb-3 inline-flex h-16 w-16 items-center justify-center rounded-[1.75rem] bg-primary shadow-lg md:mb-4 md:h-20 md:w-20 md:rounded-full">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 text-white md:h-10 md:w-10">
-                <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-              </svg>
+            <div className="mb-3 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.75rem] shadow-lg md:mb-4 md:h-20 md:w-20 md:rounded-full">
+              <img src="/icons/logo-placeholder.svg" alt="Yetim Logo" className="h-full w-full object-cover" />
             </div>
-            <h1 className="mb-1 text-2xl font-bold text-gray-800 md:mb-2 md:text-3xl">منظمة فيء</h1>
+            <h1 className="mb-1 text-2xl font-bold text-gray-800 md:mb-2 md:text-3xl">منظمة يتيم</h1>
             <p className="mx-auto max-w-xs text-sm text-text-secondary md:text-base">نظام إدارة رعاية الأيتام</p>
           </div>
 
@@ -121,7 +119,7 @@ const SignIn: React.FC = () => {
 
           {/* Footer */}
           <div className="mt-6 text-center text-xs text-text-secondary md:mt-8 md:text-sm">
-            <p>© 2024 منظمة فيء. جميع الحقوق محفوظة.</p>
+            <p>© 2024 منظمة يتيم. جميع الحقوق محفوظة.</p>
           </div>
         </div>
       </div>

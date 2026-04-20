@@ -1,5 +1,5 @@
 -- ============================================================================
--- Faye Organization Data Import
+-- Yetim Organization Data Import
 -- Generated at: 2025-12-24T15:20:34.604Z
 -- ============================================================================
 -- This script imports real organization data from the Excel file
@@ -359,7 +359,7 @@ DECLARE
 
     auth_id UUID;
 BEGIN
-    RAISE NOTICE 'Starting Faye organization data import...';
+    RAISE NOTICE 'Starting Yetim organization data import...';
     
     -- ============================================================================
     -- STEP 1: CREATE ORGANIZATION
@@ -367,10 +367,10 @@ BEGIN
     RAISE NOTICE 'Creating organization...';
     
     INSERT INTO organizations (name) 
-    VALUES ('منظمة فيء')
+    VALUES ('منظمة يتيم')
     RETURNING id INTO org_id;
     
-    RAISE NOTICE '  ✓ Created organization: منظمة فيء (ID: %)', org_id;
+    RAISE NOTICE '  ✓ Created organization: منظمة يتيم (ID: %)', org_id;
 
     -- ============================================================================
     -- STEP 2: CREATE TEAM MEMBER PROFILES
@@ -1523,7 +1523,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'asra_alsamraey',
-            'asra_alsamraey@faye.org',
+            'asra_alsamraey@yetim.org',
             'asra_alsamraeyPass123',
             team_member_1_id
         ) INTO auth_id;
@@ -1535,7 +1535,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'nda_albaaj',
-            'nda_albaaj@faye.org',
+            'nda_albaaj@yetim.org',
             'nda_albaajPass123',
             team_member_2_id
         ) INTO auth_id;
@@ -1547,7 +1547,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'amna_alqysy',
-            'amna_alqysy@faye.org',
+            'amna_alqysy@yetim.org',
             'amna_alqysyPass123',
             team_member_3_id
         ) INTO auth_id;
@@ -1559,7 +1559,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'lyna_qsy',
-            'lyna_qsy@faye.org',
+            'lyna_qsy@yetim.org',
             'lyna_qsyPass123',
             team_member_4_id
         ) INTO auth_id;
@@ -1571,7 +1571,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'd_mysra',
-            'd_mysra@faye.org',
+            'd_mysra@yetim.org',
             'd_mysraPass123',
             team_member_5_id
         ) INTO auth_id;
@@ -1583,7 +1583,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'rqya_alnaymy',
-            'rqya_alnaymy@faye.org',
+            'rqya_alnaymy@yetim.org',
             'rqya_alnaymyPass123',
             team_member_6_id
         ) INTO auth_id;
@@ -1595,7 +1595,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'khdr_alzydy',
-            'khdr_alzydy@faye.org',
+            'khdr_alzydy@yetim.org',
             'khdr_alzydyPass123',
             team_member_7_id
         ) INTO auth_id;
@@ -1607,7 +1607,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'aaesha_alfhdawy',
-            'aaesha_alfhdawy@faye.org',
+            'aaesha_alfhdawy@yetim.org',
             'aaesha_alfhdawyPass123',
             team_member_8_id
         ) INTO auth_id;
@@ -1619,7 +1619,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'asma',
-            'asma@faye.org',
+            'asma@yetim.org',
             'asmaPass123',
             sponsor_1_id
         ) INTO auth_id;
@@ -1631,7 +1631,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'nwra_almnswr',
-            'nwra_almnswr@faye.org',
+            'nwra_almnswr@yetim.org',
             'nwra_almnswrPass123',
             sponsor_2_id
         ) INTO auth_id;
@@ -1643,7 +1643,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'faala_khyr',
-            'faala_khyr@faye.org',
+            'faala_khyr@yetim.org',
             'faala_khyrPass123',
             sponsor_3_id
         ) INTO auth_id;
@@ -1655,7 +1655,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'khyr_rby',
-            'khyr_rby@faye.org',
+            'khyr_rby@yetim.org',
             'khyr_rbyPass123',
             sponsor_4_id
         ) INTO auth_id;
@@ -1667,7 +1667,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'fwzya_altasan',
-            'fwzya_altasan@faye.org',
+            'fwzya_altasan@yetim.org',
             'fwzya_altasanPass123',
             sponsor_5_id
         ) INTO auth_id;
@@ -1679,7 +1679,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'smanta_fdl_allh',
-            'smanta_fdl_allh@faye.org',
+            'smanta_fdl_allh@yetim.org',
             'smanta_fdl_allhPass123',
             sponsor_6_id
         ) INTO auth_id;
@@ -1691,7 +1691,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'hnan_dhlwy',
-            'hnan_dhlwy@faye.org',
+            'hnan_dhlwy@yetim.org',
             'hnan_dhlwyPass123',
             sponsor_7_id
         ) INTO auth_id;
@@ -1703,7 +1703,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'aywb_aljnaby',
-            'aywb_aljnaby@faye.org',
+            'aywb_aljnaby@yetim.org',
             'aywb_aljnabyPass123',
             sponsor_8_id
         ) INTO auth_id;
@@ -1715,7 +1715,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'slyman_mhmd_faal_khyr',
-            'slyman_mhmd_faal_khyr@faye.org',
+            'slyman_mhmd_faal_khyr@yetim.org',
             'slyman_mhmd_faal_khyrPass123',
             sponsor_9_id
         ) INTO auth_id;
@@ -1727,7 +1727,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'khald_al_mhmwd_nwar_aldkhyl',
-            'khald_al_mhmwd_nwar_aldkhyl@faye.org',
+            'khald_al_mhmwd_nwar_aldkhyl@yetim.org',
             'khald_al_mhmwd_nwar_aldkhylPass123',
             sponsor_10_id
         ) INTO auth_id;
@@ -1739,7 +1739,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'lyna_ghndwr',
-            'lyna_ghndwr@faye.org',
+            'lyna_ghndwr@yetim.org',
             'lyna_ghndwrPass123',
             sponsor_11_id
         ) INTO auth_id;
@@ -1751,7 +1751,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'dktwra_mrym',
-            'dktwra_mrym@faye.org',
+            'dktwra_mrym@yetim.org',
             'dktwra_mrymPass123',
             sponsor_12_id
         ) INTO auth_id;
@@ -1763,7 +1763,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'aaesha_almla',
-            'aaesha_almla@faye.org',
+            'aaesha_almla@yetim.org',
             'aaesha_almlaPass123',
             sponsor_13_id
         ) INTO auth_id;
@@ -1775,7 +1775,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'am_abdallh_alqtrya',
-            'am_abdallh_alqtrya@faye.org',
+            'am_abdallh_alqtrya@yetim.org',
             'am_abdallh_alqtryaPass123',
             sponsor_14_id
         ) INTO auth_id;
@@ -1787,7 +1787,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'am_tarq',
-            'am_tarq@faye.org',
+            'am_tarq@yetim.org',
             'am_tarqPass123',
             sponsor_15_id
         ) INTO auth_id;
@@ -1799,7 +1799,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'hnan_abdalghfwr',
-            'hnan_abdalghfwr@faye.org',
+            'hnan_abdalghfwr@yetim.org',
             'hnan_abdalghfwrPass123',
             sponsor_16_id
         ) INTO auth_id;
@@ -1811,7 +1811,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'ayman_allft',
-            'ayman_allft@faye.org',
+            'ayman_allft@yetim.org',
             'ayman_allftPass123',
             sponsor_17_id
         ) INTO auth_id;
@@ -1823,7 +1823,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'lyla_alknaan',
-            'lyla_alknaan@faye.org',
+            'lyla_alknaan@yetim.org',
             'lyla_alknaanPass123',
             sponsor_18_id
         ) INTO auth_id;
@@ -1835,7 +1835,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'alakhwa_walakhwat',
-            'alakhwa_walakhwat@faye.org',
+            'alakhwa_walakhwat@yetim.org',
             'alakhwa_walakhwatPass123',
             sponsor_19_id
         ) INTO auth_id;
@@ -1847,7 +1847,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'nwra_allft',
-            'nwra_allft@faye.org',
+            'nwra_allft@yetim.org',
             'nwra_allftPass123',
             sponsor_20_id
         ) INTO auth_id;
@@ -1859,7 +1859,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'ayman_alhlwany',
-            'ayman_alhlwany@faye.org',
+            'ayman_alhlwany@yetim.org',
             'ayman_alhlwanyPass123',
             sponsor_21_id
         ) INTO auth_id;
@@ -1871,7 +1871,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'am_ahmd',
-            'am_ahmd@faye.org',
+            'am_ahmd@yetim.org',
             'am_ahmdPass123',
             sponsor_22_id
         ) INTO auth_id;
@@ -1883,7 +1883,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'nwra_alqhtany',
-            'nwra_alqhtany@faye.org',
+            'nwra_alqhtany@yetim.org',
             'nwra_alqhtanyPass123',
             sponsor_23_id
         ) INTO auth_id;
@@ -1895,7 +1895,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'ayd_almajd',
-            'ayd_almajd@faye.org',
+            'ayd_almajd@yetim.org',
             'ayd_almajdPass123',
             sponsor_24_id
         ) INTO auth_id;
@@ -1907,7 +1907,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'am_thamr',
-            'am_thamr@faye.org',
+            'am_thamr@yetim.org',
             'am_thamrPass123',
             sponsor_25_id
         ) INTO auth_id;
@@ -1919,7 +1919,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'abw_aly',
-            'abw_aly@faye.org',
+            'abw_aly@yetim.org',
             'abw_alyPass123',
             sponsor_26_id
         ) INTO auth_id;
@@ -1931,7 +1931,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'aml_alhdab',
-            'aml_alhdab@faye.org',
+            'aml_alhdab@yetim.org',
             'aml_alhdabPass123',
             sponsor_27_id
         ) INTO auth_id;
@@ -1943,7 +1943,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'lyla_am_ans',
-            'lyla_am_ans@faye.org',
+            'lyla_am_ans@yetim.org',
             'lyla_am_ansPass123',
             sponsor_28_id
         ) INTO auth_id;
@@ -1955,7 +1955,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'anwar_alabrahym',
-            'anwar_alabrahym@faye.org',
+            'anwar_alabrahym@yetim.org',
             'anwar_alabrahymPass123',
             sponsor_29_id
         ) INTO auth_id;
@@ -1967,7 +1967,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'thany_almalm',
-            'thany_almalm@faye.org',
+            'thany_almalm@yetim.org',
             'thany_almalmPass123',
             sponsor_30_id
         ) INTO auth_id;
@@ -1979,7 +1979,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'am_abdalazyz',
-            'am_abdalazyz@faye.org',
+            'am_abdalazyz@yetim.org',
             'am_abdalazyzPass123',
             sponsor_31_id
         ) INTO auth_id;
@@ -1991,7 +1991,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'ayman_alsqat',
-            'ayman_alsqat@faye.org',
+            'ayman_alsqat@yetim.org',
             'ayman_alsqatPass123',
             sponsor_32_id
         ) INTO auth_id;
@@ -2003,7 +2003,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'abw_abdallh',
-            'abw_abdallh@faye.org',
+            'abw_abdallh@yetim.org',
             'abw_abdallhPass123',
             sponsor_33_id
         ) INTO auth_id;
@@ -2015,7 +2015,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'syna_alamran',
-            'syna_alamran@faye.org',
+            'syna_alamran@yetim.org',
             'syna_alamranPass123',
             sponsor_34_id
         ) INTO auth_id;
@@ -2027,7 +2027,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'aly_al_mhmwd_nwar_aldkhyl',
-            'aly_al_mhmwd_nwar_aldkhyl@faye.org',
+            'aly_al_mhmwd_nwar_aldkhyl@yetim.org',
             'aly_al_mhmwd_nwar_aldkhylPass123',
             sponsor_35_id
         ) INTO auth_id;
@@ -2039,7 +2039,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'sha_alamran',
-            'sha_alamran@faye.org',
+            'sha_alamran@yetim.org',
             'sha_alamranPass123',
             sponsor_36_id
         ) INTO auth_id;
@@ -2051,7 +2051,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'fatma_alasmawy',
-            'fatma_alasmawy@faye.org',
+            'fatma_alasmawy@yetim.org',
             'fatma_alasmawyPass123',
             sponsor_37_id
         ) INTO auth_id;
@@ -2063,7 +2063,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'saad_aldawwd',
-            'saad_aldawwd@faye.org',
+            'saad_aldawwd@yetim.org',
             'saad_aldawwdPass123',
             sponsor_38_id
         ) INTO auth_id;
@@ -2075,7 +2075,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'bdrya_almlhm',
-            'bdrya_almlhm@faye.org',
+            'bdrya_almlhm@yetim.org',
             'bdrya_almlhmPass123',
             sponsor_39_id
         ) INTO auth_id;
@@ -2087,7 +2087,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'sawd_alrmyzan',
-            'sawd_alrmyzan@faye.org',
+            'sawd_alrmyzan@yetim.org',
             'sawd_alrmyzanPass123',
             sponsor_40_id
         ) INTO auth_id;
@@ -2099,7 +2099,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'abw_nhar',
-            'abw_nhar@faye.org',
+            'abw_nhar@yetim.org',
             'abw_nharPass123',
             sponsor_41_id
         ) INTO auth_id;
@@ -2111,7 +2111,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'mhmd_al_mhmwd_nwar_aldkhyl',
-            'mhmd_al_mhmwd_nwar_aldkhyl@faye.org',
+            'mhmd_al_mhmwd_nwar_aldkhyl@yetim.org',
             'mhmd_al_mhmwd_nwar_aldkhylPass123',
             sponsor_42_id
         ) INTO auth_id;
@@ -2123,7 +2123,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'shykha_banmy',
-            'shykha_banmy@faye.org',
+            'shykha_banmy@yetim.org',
             'shykha_banmyPass123',
             sponsor_43_id
         ) INTO auth_id;
@@ -2135,7 +2135,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'ghnyma_alasmawy',
-            'ghnyma_alasmawy@faye.org',
+            'ghnyma_alasmawy@yetim.org',
             'ghnyma_alasmawyPass123',
             sponsor_44_id
         ) INTO auth_id;
@@ -2147,7 +2147,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'shr_ghzaly',
-            'shr_ghzaly@faye.org',
+            'shr_ghzaly@yetim.org',
             'shr_ghzalyPass123',
             sponsor_45_id
         ) INTO auth_id;
@@ -2159,7 +2159,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'ahwd_rjb',
-            'ahwd_rjb@faye.org',
+            'ahwd_rjb@yetim.org',
             'ahwd_rjbPass123',
             sponsor_46_id
         ) INTO auth_id;
@@ -2171,7 +2171,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'am_abdalalh',
-            'am_abdalalh@faye.org',
+            'am_abdalalh@yetim.org',
             'am_abdalalhPass123',
             sponsor_47_id
         ) INTO auth_id;
@@ -2183,7 +2183,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'aatmad_allft',
-            'aatmad_allft@faye.org',
+            'aatmad_allft@yetim.org',
             'aatmad_allftPass123',
             sponsor_48_id
         ) INTO auth_id;
@@ -2195,7 +2195,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'mjd_alhwary',
-            'mjd_alhwary@faye.org',
+            'mjd_alhwary@yetim.org',
             'mjd_alhwaryPass123',
             sponsor_49_id
         ) INTO auth_id;
@@ -2207,7 +2207,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'alya',
-            'alya@faye.org',
+            'alya@yetim.org',
             'alyaPass123',
             sponsor_50_id
         ) INTO auth_id;
@@ -2219,7 +2219,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'mram_alshryf',
-            'mram_alshryf@faye.org',
+            'mram_alshryf@yetim.org',
             'mram_alshryfPass123',
             sponsor_51_id
         ) INTO auth_id;
@@ -2231,7 +2231,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'abrar_alabrahym',
-            'abrar_alabrahym@faye.org',
+            'abrar_alabrahym@yetim.org',
             'abrar_alabrahymPass123',
             sponsor_52_id
         ) INTO auth_id;
@@ -2243,7 +2243,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'mna_alhafz',
-            'mna_alhafz@faye.org',
+            'mna_alhafz@yetim.org',
             'mna_alhafzPass123',
             sponsor_53_id
         ) INTO auth_id;
@@ -2255,7 +2255,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'mha_almrshd',
-            'mha_almrshd@faye.org',
+            'mha_almrshd@yetim.org',
             'mha_almrshdPass123',
             sponsor_54_id
         ) INTO auth_id;
@@ -2267,7 +2267,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'nwra_alhafz',
-            'nwra_alhafz@faye.org',
+            'nwra_alhafz@yetim.org',
             'nwra_alhafzPass123',
             sponsor_55_id
         ) INTO auth_id;
@@ -2279,7 +2279,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'nbyla_marwf_bntn',
-            'nbyla_marwf_bntn@faye.org',
+            'nbyla_marwf_bntn@yetim.org',
             'nbyla_marwf_bntnPass123',
             sponsor_56_id
         ) INTO auth_id;
@@ -2291,7 +2291,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'hnan_allft',
-            'hnan_allft@faye.org',
+            'hnan_allft@yetim.org',
             'hnan_allftPass123',
             sponsor_57_id
         ) INTO auth_id;
@@ -2303,7 +2303,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'najya_alhrby',
-            'najya_alhrby@faye.org',
+            'najya_alhrby@yetim.org',
             'najya_alhrbyPass123',
             sponsor_58_id
         ) INTO auth_id;
@@ -2315,7 +2315,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'shhd_alhlwany',
-            'shhd_alhlwany@faye.org',
+            'shhd_alhlwany@yetim.org',
             'shhd_alhlwanyPass123',
             sponsor_59_id
         ) INTO auth_id;
@@ -2327,7 +2327,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'nwar_aldkhyl',
-            'nwar_aldkhyl@faye.org',
+            'nwar_aldkhyl@yetim.org',
             'nwar_aldkhylPass123',
             sponsor_60_id
         ) INTO auth_id;
@@ -2339,7 +2339,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'dlal_alfyljawy',
-            'dlal_alfyljawy@faye.org',
+            'dlal_alfyljawy@yetim.org',
             'dlal_alfyljawyPass123',
             sponsor_61_id
         ) INTO auth_id;
@@ -2351,7 +2351,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'khwla_aldhan',
-            'khwla_aldhan@faye.org',
+            'khwla_aldhan@yetim.org',
             'khwla_aldhanPass123',
             sponsor_62_id
         ) INTO auth_id;
@@ -2363,7 +2363,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'arwa_alsyd',
-            'arwa_alsyd@faye.org',
+            'arwa_alsyd@yetim.org',
             'arwa_alsydPass123',
             sponsor_63_id
         ) INTO auth_id;
@@ -2375,7 +2375,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'khlwd_aljnaby',
-            'khlwd_aljnaby@faye.org',
+            'khlwd_aljnaby@yetim.org',
             'khlwd_aljnabyPass123',
             sponsor_64_id
         ) INTO auth_id;
@@ -2387,7 +2387,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'mha_alhafz_wjwhra',
-            'mha_alhafz_wjwhra@faye.org',
+            'mha_alhafz_wjwhra@yetim.org',
             'mha_alhafz_wjwhraPass123',
             sponsor_65_id
         ) INTO auth_id;
@@ -2399,7 +2399,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'amna_arnws',
-            'amna_arnws@faye.org',
+            'amna_arnws@yetim.org',
             'amna_arnwsPass123',
             sponsor_66_id
         ) INTO auth_id;
@@ -2411,7 +2411,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'slwa_asmaayl',
-            'slwa_asmaayl@faye.org',
+            'slwa_asmaayl@yetim.org',
             'slwa_asmaaylPass123',
             sponsor_67_id
         ) INTO auth_id;
@@ -2423,7 +2423,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'zyna_alsady',
-            'zyna_alsady@faye.org',
+            'zyna_alsady@yetim.org',
             'zyna_alsadyPass123',
             sponsor_68_id
         ) INTO auth_id;
@@ -2435,7 +2435,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'khlwd_alrashd',
-            'khlwd_alrashd@faye.org',
+            'khlwd_alrashd@yetim.org',
             'khlwd_alrashdPass123',
             sponsor_69_id
         ) INTO auth_id;
@@ -2447,7 +2447,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'saad_abdalazyz_alhmyd',
-            'saad_abdalazyz_alhmyd@faye.org',
+            'saad_abdalazyz_alhmyd@yetim.org',
             'saad_abdalazyz_alhmydPass123',
             sponsor_70_id
         ) INTO auth_id;
@@ -2459,7 +2459,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'alya_hsyn',
-            'alya_hsyn@faye.org',
+            'alya_hsyn@yetim.org',
             'alya_hsynPass123',
             sponsor_71_id
         ) INTO auth_id;
@@ -2471,7 +2471,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'am_mshal',
-            'am_mshal@faye.org',
+            'am_mshal@yetim.org',
             'am_mshalPass123',
             sponsor_72_id
         ) INTO auth_id;
@@ -2483,7 +2483,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'samya_asmaayl',
-            'samya_asmaayl@faye.org',
+            'samya_asmaayl@yetim.org',
             'samya_asmaaylPass123',
             sponsor_73_id
         ) INTO auth_id;
@@ -2495,7 +2495,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'mnyra_alrshyd',
-            'mnyra_alrshyd@faye.org',
+            'mnyra_alrshyd@yetim.org',
             'mnyra_alrshydPass123',
             sponsor_74_id
         ) INTO auth_id;
@@ -2507,7 +2507,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'qasm_aljnaby',
-            'qasm_aljnaby@faye.org',
+            'qasm_aljnaby@yetim.org',
             'qasm_aljnabyPass123',
             sponsor_75_id
         ) INTO auth_id;
@@ -2519,7 +2519,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'swsn_abdalmhsn_alhnyn',
-            'swsn_abdalmhsn_alhnyn@faye.org',
+            'swsn_abdalmhsn_alhnyn@yetim.org',
             'swsn_abdalmhsn_alhnynPass123',
             sponsor_76_id
         ) INTO auth_id;
@@ -2531,7 +2531,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'hna_ismaayl',
-            'hna_ismaayl@faye.org',
+            'hna_ismaayl@yetim.org',
             'hna_ismaaylPass123',
             sponsor_77_id
         ) INTO auth_id;
@@ -2543,7 +2543,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'antsar_albrak',
-            'antsar_albrak@faye.org',
+            'antsar_albrak@yetim.org',
             'antsar_albrakPass123',
             sponsor_78_id
         ) INTO auth_id;
@@ -2555,7 +2555,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'hyaa_allft',
-            'hyaa_allft@faye.org',
+            'hyaa_allft@yetim.org',
             'hyaa_allftPass123',
             sponsor_79_id
         ) INTO auth_id;
@@ -2567,7 +2567,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'momn_alzrzwr',
-            'momn_alzrzwr@faye.org',
+            'momn_alzrzwr@yetim.org',
             'momn_alzrzwrPass123',
             sponsor_80_id
         ) INTO auth_id;
@@ -2579,7 +2579,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'lyla_jmaa',
-            'lyla_jmaa@faye.org',
+            'lyla_jmaa@yetim.org',
             'lyla_jmaaPass123',
             sponsor_81_id
         ) INTO auth_id;
@@ -2591,7 +2591,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'rwny_kaml',
-            'rwny_kaml@faye.org',
+            'rwny_kaml@yetim.org',
             'rwny_kamlPass123',
             sponsor_82_id
         ) INTO auth_id;
@@ -2603,7 +2603,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'mysm_khald',
-            'mysm_khald@faye.org',
+            'mysm_khald@yetim.org',
             'mysm_khaldPass123',
             sponsor_83_id
         ) INTO auth_id;
@@ -2615,7 +2615,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'tlha',
-            'tlha@faye.org',
+            'tlha@yetim.org',
             'tlhaPass123',
             sponsor_84_id
         ) INTO auth_id;
@@ -2627,7 +2627,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'zynb_sad_dha_ala_abd_alwhab',
-            'zynb_sad_dha_ala_abd_alwhab@faye.org',
+            'zynb_sad_dha_ala_abd_alwhab@yetim.org',
             'zynb_sad_dha_ala_abd_alwhabPass123',
             sponsor_85_id
         ) INTO auth_id;
@@ -2639,7 +2639,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'hajr_mthna_nwry',
-            'hajr_mthna_nwry@faye.org',
+            'hajr_mthna_nwry@yetim.org',
             'hajr_mthna_nwryPass123',
             sponsor_86_id
         ) INTO auth_id;
@@ -2651,7 +2651,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'athman_almshaykhy',
-            'athman_almshaykhy@faye.org',
+            'athman_almshaykhy@yetim.org',
             'athman_almshaykhyPass123',
             sponsor_87_id
         ) INTO auth_id;
@@ -2663,7 +2663,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'abd_allh_aly_krym',
-            'abd_allh_aly_krym@faye.org',
+            'abd_allh_aly_krym@yetim.org',
             'abd_allh_aly_krymPass123',
             sponsor_88_id
         ) INTO auth_id;
@@ -2675,7 +2675,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'aynas_jwad_alnaymy_athyr_th',
-            'aynas_jwad_alnaymy_athyr_th@faye.org',
+            'aynas_jwad_alnaymy_athyr_th@yetim.org',
             'aynas_jwad_alnaymy_athyr_thPass123',
             sponsor_89_id
         ) INTO auth_id;
@@ -2687,7 +2687,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'sfa_qasm',
-            'sfa_qasm@faye.org',
+            'sfa_qasm@yetim.org',
             'sfa_qasmPass123',
             sponsor_90_id
         ) INTO auth_id;
@@ -2699,7 +2699,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'qtyba_alghalby',
-            'qtyba_alghalby@faye.org',
+            'qtyba_alghalby@yetim.org',
             'qtyba_alghalbyPass123',
             sponsor_91_id
         ) INTO auth_id;
@@ -2711,7 +2711,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'shfa_qasm',
-            'shfa_qasm@faye.org',
+            'shfa_qasm@yetim.org',
             'shfa_qasmPass123',
             sponsor_92_id
         ) INTO auth_id;
@@ -2723,7 +2723,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'jwana',
-            'jwana@faye.org',
+            'jwana@yetim.org',
             'jwanaPass123',
             sponsor_93_id
         ) INTO auth_id;
@@ -2735,7 +2735,7 @@ BEGIN
     BEGIN
         SELECT create_user_account(
             'yasr_mhysn',
-            'yasr_mhysn@faye.org',
+            'yasr_mhysn@yetim.org',
             'yasr_mhysnPass123',
             sponsor_94_id
         ) INTO auth_id;
@@ -8887,7 +8887,7 @@ BEGIN
     RAISE NOTICE '========================================';
     RAISE NOTICE '';
     RAISE NOTICE 'Summary:';
-    RAISE NOTICE '  - Organization: منظمة فيء';
+    RAISE NOTICE '  - Organization: منظمة يتيم';
     RAISE NOTICE '  - Team Members: 8';
     RAISE NOTICE '  - Sponsors: 94';
     RAISE NOTICE '  - Orphans: 239';

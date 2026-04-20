@@ -1346,7 +1346,7 @@ const OrphanProfile: React.FC = () => {
             };
 
             const prompt = `
-            بصفتك باحث اجتماعي في منظمة "فيء"، قم بإعداد تقرير موجز عن حالة اليتيم "${orphan.name}" بناءً على البيانات التالية. 
+            بصفتك باحث اجتماعي في منظمة "يتيم"، قم بإعداد تقرير موجز عن حالة اليتيم "${orphan.name}" بناءً على البيانات التالية. 
             التقرير يجب أن يكون موجهاً لمدير الحالة للمراجعة السريعة.
             
             ركز على النقاط التالية:
@@ -1393,7 +1393,7 @@ const OrphanProfile: React.FC = () => {
             };
 
             const prompt = `
-            بصفتك خبير في التنمية الاجتماعية ورعاية الأطفال في منظمة "فيء"، قم بتحليل البيانات الشاملة التالية لليتيم "${orphan.name}".
+            بصفتك خبير في التنمية الاجتماعية ورعاية الأطفال في منظمة "يتيم"، قم بتحليل البيانات الشاملة التالية لليتيم "${orphan.name}".
             مهمتك هي إنشاء "تقرير تقييم احتياجات" مفصل ومنظم.
 
             التقرير يجب أن يغطي النقاط التالية بوضوح:
@@ -1916,9 +1916,9 @@ const OrphanProfile: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Faye Programs - Full Width */}
+                        {/* Yetim Programs - Full Width */}
                         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:col-span-2 md:p-6">
-                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">برامج فيء</h3>
+                            <h3 className="font-bold text-lg text-gray-800 mb-4 border-b pb-2">برامج يتيم</h3>
                             <div className="space-y-4">
                                 <ProgramParticipationFields
                                     isEditing={isEditMode && hasEditPermission}

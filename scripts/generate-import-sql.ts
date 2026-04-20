@@ -37,7 +37,7 @@ interface UserCredentials {
 }
 
 // Organization name
-const ORGANIZATION_NAME = 'منظمة فيء';
+const ORGANIZATION_NAME = 'منظمة يتيم';
 
 /**
  * Read and parse Excel file
@@ -151,7 +151,7 @@ function generateSQL(): void {
         password: `${username}Pass123`,
         role: 'sponsor',
         name: row.sponsorName,
-        email: `${username}@faye.org`,
+        email: `${username}@yetim.org`,
         varName: generateVarName(row.sponsorName, 'sponsor', sponsorCounter++),
       });
     }
@@ -164,7 +164,7 @@ function generateSQL(): void {
         password: `${username}Pass123`,
         role: 'team_member',
         name: row.teamMemberName,
-        email: `${username}@faye.org`,
+        email: `${username}@yetim.org`,
         varName: generateVarName(row.teamMemberName, 'team_member', teamMemberCounter++),
       });
     }
@@ -175,7 +175,7 @@ function generateSQL(): void {
 
   // Generate SQL
   let sql = `-- ============================================================================
--- Faye Organization Data Import
+-- Yetim Organization Data Import
 -- Generated at: ${new Date().toISOString()}
 -- ============================================================================
 -- This script imports real organization data from the Excel file
@@ -213,7 +213,7 @@ DECLARE
   sql += `
     auth_id UUID;
 BEGIN
-    RAISE NOTICE 'Starting Faye organization data import...';
+    RAISE NOTICE 'Starting Yetim organization data import...';
     
     -- ============================================================================
     -- STEP 1: CREATE ORGANIZATION
@@ -475,7 +475,7 @@ END $$;
 `;
 
   // Write SQL file
-  const sqlPath = path.join(__dirname, '..', 'supabase', 'migrations', '003_import_faye_data.sql');
+  const sqlPath = path.join(__dirname, '..', 'supabase', 'migrations', '003_import_yetim_data.sql');
   fs.writeFileSync(sqlPath, sql, 'utf-8');
   console.log(`\n✅ SQL file generated: ${sqlPath}`);
 
@@ -510,7 +510,7 @@ END $$;
   console.log('═'.repeat(60));
   console.log('\n📝 Next steps:');
   console.log('   1. Open Supabase SQL Editor');
-  console.log('   2. Copy and paste the contents of 003_import_faye_data.sql');
+  console.log('   2. Copy and paste the contents of 003_import_yetim_data.sql');
   console.log('   3. Run the SQL');
   console.log('   4. Use credentials from user-credentials.json to log in');
   console.log('═'.repeat(60));

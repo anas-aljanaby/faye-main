@@ -1,4 +1,4 @@
-# AGENTS.md — Mobile Optimization for فيء (Faye)
+# AGENTS.md — Mobile Optimization for يتيم (Yetim)
 
 ## Sensitive File Exclusion
 

@@ -1,10 +1,10 @@
 -- Drop All Tables Script
--- WARNING: This will delete ALL data and tables in the public schema used by Faye!
+-- WARNING: This will delete ALL data and tables in the public schema used by Yetim!
 -- Run order after reset:
 --   1. 000_drop_all.sql (this file)
 --   2. 001_initial_schema.sql
 --   3. 002_storage.sql
---   4. 003_import_faye_data.sql (real org data)
+--   4. 003_import_yetim_data.sql (real org data)
 --   5. 004_add_admin_user.sql
 
 -- ============================================================================
@@ -114,5 +114,5 @@ END $$;
 
 DO $$
 BEGIN
-    RAISE NOTICE 'Drop complete. Run 001_initial_schema.sql, then 002_storage.sql, 003_import_faye_data.sql, 004_add_admin_user.sql.';
+    RAISE NOTICE 'Drop complete. Run 001_initial_schema.sql, then 002_storage.sql, 003_import_yetim_data.sql, 004_add_admin_user.sql.';
 END $$;

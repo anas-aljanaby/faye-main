@@ -983,9 +983,9 @@ const Dashboard: React.FC = () => {
                             {ShieldIcon}
                         </div>
                         <div className="max-w-sm space-y-3">
-                            <h3 className="pe-10 text-xl font-bold text-gray-800">سياسات فيء</h3>
+                            <h3 className="pe-10 text-xl font-bold text-gray-800">سياسات يتيم</h3>
                             <p className="text-sm leading-6 text-text-secondary">
-                                اطلع على شروط وأحكام المنظمة وكل السياسات المنظمة للعلاقة مع فيء.
+                                اطلع على شروط وأحكام المنظمة وكل السياسات المنظمة للعلاقة مع يتيم.
                             </p>
                             <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-blue-200 bg-white/80 px-3 py-2 text-sm font-semibold text-blue-700">
                                 الانتقال إلى السياسات
@@ -1052,7 +1052,7 @@ const Dashboard: React.FC = () => {
                 <div className="max-w-2xl">
                   <p className="mb-1 text-sm font-medium text-primary md:text-base">{getGreeting()} 👋</p>
                   <h1 className="mb-2 text-xl font-bold text-gray-800 sm:text-2xl md:text-3xl">
-                    {userProfile?.name || 'مرحباً بك في فيء'}
+                    {userProfile?.name || 'مرحباً بك في يتيم'}
                   </h1>
                   <p className="text-sm leading-6 text-text-secondary md:text-base">
                     لوحة التحكم الرئيسية - نظرة شاملة على أنشطة المنظمة

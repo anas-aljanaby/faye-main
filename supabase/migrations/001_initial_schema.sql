@@ -1,5 +1,5 @@
--- Faye Database Schema Migration
--- Run after 000_drop_all.sql. Then 002_storage.sql, 003_import_faye_data.sql, 004_add_admin_user.sql.
+-- Yetim Database Schema Migration
+-- Run after 000_drop_all.sql. Then 002_storage.sql, 003_import_yetim_data.sql, 004_add_admin_user.sql.
 -- RLS identity: Supabase Auth JWT (auth.uid()) linked via user_profiles.auth_user_id.
 
 -- Note: To enable real-time for messages table, run this in Supabase SQL Editor:

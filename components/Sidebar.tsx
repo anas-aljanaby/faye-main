@@ -204,7 +204,7 @@ const Sidebar: React.FC = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-lg font-bold text-white shadow-sm">
               ف
             </div>
-            <span className="truncate text-xl font-bold text-primary">جمعية فيء</span>
+            <span className="truncate text-xl font-bold text-primary">جمعية يتيم</span>
           </div>
         )}
 
@@ -246,7 +246,7 @@ const Sidebar: React.FC = () => {
 
         {!isCollapsed && (
           <div className="mt-4 text-center text-xs text-gray-400">
-            <p>فيء © {new Date().getFullYear()}</p>
+            <p>يتيم © {new Date().getFullYear()}</p>
             <p>الإصدار 2.1.0</p>
           </div>
         )}

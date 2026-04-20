@@ -31,7 +31,7 @@ BEGIN
     INSERT INTO organizations (id, name, created_at, updated_at)
     VALUES (
         demo_org_id,
-        'منظمة فيء - Demo',
+        'منظمة يتيم - Demo',
         '2026-01-01 08:00:00+00',
         '2026-01-01 08:00:00+00'
     )
@@ -85,50 +85,50 @@ BEGIN
     -- Custom auth accounts (login: username or email, password: admin)
     -- -------------------------------------------------------------------------
     BEGIN
-        SELECT create_user_account('admin', 'admin@faye-demo.com', 'admin', super_admin_id) INTO auth_id;
-        RAISE NOTICE 'Created account مدير النظام (admin@faye-demo.com)';
+        SELECT create_user_account('admin', 'admin@yetim-demo.com', 'admin', super_admin_id) INTO auth_id;
+        RAISE NOTICE 'Created account مدير النظام (admin@yetim-demo.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account مدير النظام: %', SQLERRM;
     END;
     BEGIN
-        SELECT create_user_account('member.khaled', 'member.khaled@faye.com', 'admin', team_khaled_id) INTO auth_id;
-        RAISE NOTICE 'Created account خالد الغامدي (member.khaled@faye.com)';
+        SELECT create_user_account('member.khaled', 'member.khaled@yetim.com', 'admin', team_khaled_id) INTO auth_id;
+        RAISE NOTICE 'Created account خالد الغامدي (member.khaled@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account خالد الغامدي: %', SQLERRM;
     END;
     BEGIN
-        SELECT create_user_account('member.noora', 'member.noora@faye.com', 'admin', team_noora_id) INTO auth_id;
-        RAISE NOTICE 'Created account نورة السعد (member.noora@faye.com)';
+        SELECT create_user_account('member.noora', 'member.noora@yetim.com', 'admin', team_noora_id) INTO auth_id;
+        RAISE NOTICE 'Created account نورة السعد (member.noora@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account نورة السعد: %', SQLERRM;
     END;
     BEGIN
-        SELECT create_user_account('sponsor.abdullah', 'sponsor.abdullah@faye.com', 'admin', sponsor_abdullah_id) INTO auth_id;
-        RAISE NOTICE 'Created account عبدالله الراجحي (sponsor.abdullah@faye.com)';
+        SELECT create_user_account('sponsor.abdullah', 'sponsor.abdullah@yetim.com', 'admin', sponsor_abdullah_id) INTO auth_id;
+        RAISE NOTICE 'Created account عبدالله الراجحي (sponsor.abdullah@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account عبدالله الراجحي: %', SQLERRM;
     END;
     BEGIN
-        SELECT create_user_account('sponsor.fatma', 'sponsor.fatma@faye.com', 'admin', sponsor_fatma_id) INTO auth_id;
-        RAISE NOTICE 'Created account فاطمة الأحمد (sponsor.fatma@faye.com)';
+        SELECT create_user_account('sponsor.fatma', 'sponsor.fatma@yetim.com', 'admin', sponsor_fatma_id) INTO auth_id;
+        RAISE NOTICE 'Created account فاطمة الأحمد (sponsor.fatma@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account فاطمة الأحمد: %', SQLERRM;
     END;
     BEGIN
-        SELECT create_user_account('sponsor.mohammad', 'sponsor.mohammad@faye.com', 'admin', sponsor_mohammad_id) INTO auth_id;
-        RAISE NOTICE 'Created account محمد الشمري (sponsor.mohammad@faye.com)';
+        SELECT create_user_account('sponsor.mohammad', 'sponsor.mohammad@yetim.com', 'admin', sponsor_mohammad_id) INTO auth_id;
+        RAISE NOTICE 'Created account محمد الشمري (sponsor.mohammad@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account محمد الشمري: %', SQLERRM;
     END;
     BEGIN
-        SELECT create_user_account('sponsor.muna', 'sponsor.muna@faye.com', 'admin', sponsor_muna_id) INTO auth_id;
-        RAISE NOTICE 'Created account منى العتيبي (sponsor.muna@faye.com)';
+        SELECT create_user_account('sponsor.muna', 'sponsor.muna@yetim.com', 'admin', sponsor_muna_id) INTO auth_id;
+        RAISE NOTICE 'Created account منى العتيبي (sponsor.muna@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account منى العتيبي: %', SQLERRM;
     END;
     BEGIN
-        SELECT create_user_account('sponsor.saad', 'sponsor.saad@faye.com', 'admin', sponsor_saad_id) INTO auth_id;
-        RAISE NOTICE 'Created account سعد الدوسري (sponsor.saad@faye.com)';
+        SELECT create_user_account('sponsor.saad', 'sponsor.saad@yetim.com', 'admin', sponsor_saad_id) INTO auth_id;
+        RAISE NOTICE 'Created account سعد الدوسري (sponsor.saad@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account سعد الدوسري: %', SQLERRM;
     END;

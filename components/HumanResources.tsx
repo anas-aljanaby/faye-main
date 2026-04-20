@@ -923,7 +923,7 @@ const HumanResources: React.FC = () => {
 
     return (
         <div className="space-y-4 pb-20 md:space-y-6">
-            {/* Header - faye-new design */}
+            {/* Header - yetim-new design */}
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-800 md:text-3xl">الموارد البشرية</h1>
@@ -931,7 +931,7 @@ const HumanResources: React.FC = () => {
                 </div>
             </div>
 
-            {/* Tab Navigation - faye-new pill style */}
+            {/* Tab Navigation - yetim-new pill style */}
             <div className="-mx-4 border-b border-gray-200 px-4 md:mx-0 md:px-0">
                 <div className="flex snap-x snap-mandatory flex-nowrap gap-2 overflow-x-auto pb-3 scrollbar-hide">
                     {HR_TAB_ORDER.map(section => (

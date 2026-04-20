@@ -24,17 +24,17 @@ Ship the smallest safe PWA upgrade for this repo: installable app shell, basic o
 ## Implementation Steps
 
 ### 1) PWA Foundation
-- Update [vite.config.ts](/Users/anas/Workspace/github/faye-main/vite.config.ts):
+- Update [vite.config.ts](/Users/anas/Workspace/github/yetim-main/vite.config.ts):
   - Add `vite-plugin-pwa` using `generateSW`.
   - Use `registerType: "prompt"` and `cleanupOutdatedCaches: true`.
   - Keep `navigateFallback: "/index.html"` for SPA shell behavior.
-- Add [public/manifest.webmanifest](/Users/anas/Workspace/github/faye-main/public/manifest.webmanifest):
+- Add [public/manifest.webmanifest](/Users/anas/Workspace/github/yetim-main/public/manifest.webmanifest):
   - `display: "standalone"`, `orientation: "portrait"`, `start_url: "/#/"`, `scope: "/"`.
   - Arabic app metadata and theme colors.
-- Update [index.html](/Users/anas/Workspace/github/faye-main/index.html):
+- Update [index.html](/Users/anas/Workspace/github/yetim-main/index.html):
   - Remove `/vite.svg` favicon reference.
   - Add manifest link, theme-color, iOS app-capable meta tags, and proper app icons.
-- Add icon assets in [public/icons](/Users/anas/Workspace/github/faye-main/public/icons) (`192`, `512`, maskable, apple-touch, favicon).
+- Add icon assets in [public/icons](/Users/anas/Workspace/github/yetim-main/public/icons) (`192`, `512`, maskable, apple-touch, favicon).
 
 ### 2) Safe Caching Policy
 - Cache only shell/static same-origin assets via Workbox.
@@ -43,16 +43,16 @@ Ship the smallest safe PWA upgrade for this repo: installable app shell, basic o
 - Add update prompt UX (new version available -> refresh action).
 
 ### 3) Minimal Offline UX
-- Add `useNetworkStatus` hook and a global offline banner in [App.tsx](/Users/anas/Workspace/github/faye-main/App.tsx) or [components/Header.tsx](/Users/anas/Workspace/github/faye-main/components/Header.tsx).
+- Add `useNetworkStatus` hook and a global offline banner in [App.tsx](/Users/anas/Workspace/github/yetim-main/App.tsx) or [components/Header.tsx](/Users/anas/Workspace/github/yetim-main/components/Header.tsx).
 - Add a reusable "internet required" state component for screens that cannot function offline.
 - Standardize API error handling to show:
   - offline-specific message when disconnected
   - generic retry message for server/network errors
 
 ### 4) Dashboard-Only Offline Read (Optional MVP+)
-- Keep existing React Query persistence in [index.tsx](/Users/anas/Workspace/github/faye-main/index.tsx) for now.
+- Keep existing React Query persistence in [index.tsx](/Users/anas/Workspace/github/yetim-main/index.tsx) for now.
 - Ensure dashboard query keys are persisted and hydrate correctly on reload.
-- In [components/Dashboard.tsx](/Users/anas/Workspace/github/faye-main/components/Dashboard.tsx):
+- In [components/Dashboard.tsx](/Users/anas/Workspace/github/yetim-main/components/Dashboard.tsx):
   - render cached read-only data when offline and available
   - otherwise show friendly offline empty state ("Connect to internet to load latest dashboard data")
 - No offline write support on dashboard actions.

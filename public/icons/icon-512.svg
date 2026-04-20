@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="fayeGradient512" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="yetimGradient512" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0f766e" />
       <stop offset="100%" stop-color="#0d9488" />
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#fayeGradient512)" />
-  <circle cx="256" cy="256" r="140" fill="#ffffff" fill-opacity="0.15" />
-  <path d="M175 326V186h64c52 0 85 25 85 67s-33 73-85 73h-64Zm43-37h21c26 0 42-12 42-35s-16-31-42-31h-21v66Z" fill="#ffffff"/>
+  <rect width="512" height="512" rx="112" fill="url(#yetimGradient512)" />
+  <circle cx="256" cy="256" r="150" fill="#ffffff" fill-opacity="0.15" />
+  <path d="M134 160h58l64 108 64-108h58L286 344v62h-60v-62L134 160Z" fill="#ffffff" />
 </svg>

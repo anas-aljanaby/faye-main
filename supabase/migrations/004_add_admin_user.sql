@@ -1,8 +1,8 @@
--- System admin profile + permissions for organization "منظمة فيء"
--- Run after 003_import_faye_data.sql (or whenever org data exists).
+-- System admin profile + permissions for organization "منظمة يتيم"
+-- Run after 003_import_yetim_data.sql (or whenever org data exists).
 --
 -- Supabase Auth user creation is NOT done here (requires Auth Admin API or Dashboard).
--- After creating a user in Authentication (e.g. email admin@faye.org), link the profile:
+-- After creating a user in Authentication (e.g. email admin@yetim.org), link the profile:
 --   UPDATE user_profiles SET auth_user_id = '<auth.users.id>' WHERE id = '<admin_profile_id>';
 -- A future Edge Function can automate admin/user provisioning (out of scope).
 
@@ -14,11 +14,11 @@ BEGIN
     SELECT id
     INTO org_id
     FROM organizations
-    WHERE name = 'منظمة فيء'
+    WHERE name = 'منظمة يتيم'
     LIMIT 1;
 
     IF org_id IS NULL THEN
-        RAISE NOTICE '⚠ Organization "منظمة فيء" not found. Skipping admin creation.';
+        RAISE NOTICE '⚠ Organization "منظمة يتيم" not found. Skipping admin creation.';
         RETURN;
     END IF;
 

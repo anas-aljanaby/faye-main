@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="faviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="yetimFaviconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#0f766e" />
       <stop offset="100%" stop-color="#0d9488" />
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="url(#faviconGradient)" />
-  <path d="M20 44V20h10c8 0 14 4 14 11s-6 13-14 13H20Zm8-7h3c3.5 0 5.5-2 5.5-5.5S34.5 27 31 27h-3v10Z" fill="#fff"/>
+  <rect width="64" height="64" rx="14" fill="url(#yetimFaviconGradient)" />
+  <circle cx="32" cy="32" r="19" fill="#ffffff" fill-opacity="0.15" />
+  <path d="M18 20h7l7 12 7-12h7L35.5 40V48h-7v-8L18 20Z" fill="#ffffff" />
 </svg>

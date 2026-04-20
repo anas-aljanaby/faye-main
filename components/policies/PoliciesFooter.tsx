@@ -3,7 +3,7 @@ import React from 'react';
 const verse = 'وَأَمَّا الْيَتِيمَ فَلَا تَقْهَرْ';
 const ref = 'صدق الله العظيم  |  سورة الضحى: 9';
 const notice = 'هذا الدليل وثيقةٌ حيّة تُراجَع سنوياً أو كلما دعت الحاجة.';
-const org = 'جمعية فيء لرعاية الأيتام  |  الإصدار الأول 1445هـ';
+const org = 'جمعية يتيم لرعاية الأيتام  |  الإصدار الأول 1445هـ';
 
 export function PoliciesFooter() {
   return (

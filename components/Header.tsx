@@ -179,7 +179,7 @@ const Header: React.FC = () => {
             className="flex max-w-[11rem] items-center gap-1.5 text-lg font-bold transition-transform hover:scale-105 sm:max-w-none sm:gap-2 sm:text-xl md:text-2xl"
             aria-label="العودة للصفحة الرئيسية"
           >
-            <span className="truncate">فيء</span>
+            <span className="truncate">يتيم</span>
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6 shrink-0 sm:h-7 sm:w-7">
                 <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
             </svg>

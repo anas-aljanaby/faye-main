@@ -6,7 +6,7 @@
       - generic [ref=e35]:
         - link "العودة للصفحة الرئيسية" [ref=e36] [cursor=pointer]:
           - /url: "#/"
-          - generic [ref=e37]: فيء
+          - generic [ref=e37]: يتيم
           - img [ref=e38]
         - button "قائمة المستخدم" [ref=e41] [cursor=pointer]:
           - generic "System Admin" [ref=e42]: S
@@ -299,10 +299,10 @@
           - img
           - generic: الموارد البشرية
           - img
-        - link "سياسات فيء":
+        - link "سياسات يتيم":
           - /url: "#/policies"
           - img
-          - generic: سياسات فيء
+          - generic: سياسات يتيم
           - img
         - button "تسجيل الخروج":
           - img

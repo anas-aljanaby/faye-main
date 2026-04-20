@@ -1,6 +1,6 @@
 # UI guide (frontend perspective)
 
-This document describes what users **see and interact with** in the Faye web app: global chrome, navigation, and each main screen. Copy and labels are largely **Arabic**; layout follows **RTL** conventions.
+This document describes what users **see and interact with** in the Yetim web app: global chrome, navigation, and each main screen. Copy and labels are largely **Arabic**; layout follows **RTL** conventions.
 
 For architecture and routes, see [PROJECT_OVERVIEW.md](./PROJECT_OVERVIEW.md).
 
@@ -24,7 +24,7 @@ The sidebar **hides** some destinations by role (users never see a dead link):
 **Sign-in (`/signin`)**
 
 - Full-screen **soft gradient** background.
-- Centered **branding** (heart icon, “منظمة فيء”, subtitle “نظام إدارة رعاية الأيتام”).
+- Centered **branding** (heart icon, “منظمة يتيم”, subtitle “نظام إدارة رعاية الأيتام”).
 - **White card** with email and password fields (email field LTR), error alert if login fails, primary **تسجيل الدخول** button with loading state.
 
 ---
@@ -54,7 +54,7 @@ Otherwise:
 3. **الأيتام المكفولين** — Grid of avatar cards (up to four) → orphan profiles.
 4. **فريق المتابعة** — Assigned team members as clickable rows; separate **مدير المنظمة** card when available.
 5. **السجل المالي الذكي** — Large card: totals (تبرعات، متأخر، مستحق), per-orphan payment status rows, recent donations list; primary button **عرض جميع الدفعات** → `/payments`.
-6. **Two promo-style cards** — **تواصل معنا** (hours + call button) and link tile to **سياسات فيء**.
+6. **Two promo-style cards** — **تواصل معنا** (hours + call button) and link tile to **سياسات يتيم**.
 7. **Mobile bottom bar** — رجوع، scroll to orphans، رسالة، تصدير.
 
 ---
@@ -152,7 +152,7 @@ Otherwise:
 
 ---
 
-## سياسات فيء — Policies (`/policies`)
+## سياسات يتيم — Policies (`/policies`)
 
 - **Distinct reading layout** (`PoliciesLayout`): `dir="rtl"`, light gray background.
 - **Thin progress bar** fixed at the very top of the viewport (reading progress while scrolling).

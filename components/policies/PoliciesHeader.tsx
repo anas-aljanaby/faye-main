@@ -15,7 +15,7 @@ export function PoliciesHeader({ onPrint }: PoliciesHeaderProps) {
         <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-primary leading-tight">
-              سياسات فيء لرعاية الأيتام
+              سياسات يتيم لرعاية الأيتام
             </h1>
             <p className="mt-3 text-sm leading-6 text-text-secondary">{tagline}</p>
             <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-text-secondary">

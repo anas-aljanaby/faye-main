@@ -228,7 +228,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const keysToRemove: string[] = [];
       for (let i = 0; i < window.localStorage.length; i++) {
         const key = window.localStorage.key(i);
-        if (key && key.startsWith('FAYE_REACT_QUERY_CACHE_v')) {
+        if (key && key.startsWith('YETIM_REACT_QUERY_CACHE_v')) {
           keysToRemove.push(key);
         }
       }

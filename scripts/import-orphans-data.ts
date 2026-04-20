@@ -78,7 +78,7 @@ interface ImportResult {
 }
 
 // Organization name
-const ORGANIZATION_NAME = 'منظمة فيء';
+const ORGANIZATION_NAME = 'منظمة يتيم';
 
 /**
  * Read and parse Excel file
@@ -224,7 +224,7 @@ async function createUsers(
   for (const name of teamMembers) {
     const username = generateUsername(name, usedUsernames);
     const password = `${username}Pass123`;
-    const email = `${username}@faye.org`;
+    const email = `${username}@yetim.org`;
 
     // Create user profile
     const { data: profile, error: profileError } = await supabase
@@ -286,7 +286,7 @@ async function createUsers(
   for (const name of sponsors) {
     const username = generateUsername(name, usedUsernames);
     const password = `${username}Pass123`;
-    const email = `${username}@faye.org`;
+    const email = `${username}@yetim.org`;
 
     // Create user profile
     const { data: profile, error: profileError } = await supabase

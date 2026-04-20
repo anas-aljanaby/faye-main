@@ -6,10 +6,10 @@
 -- DEMO USER ACCOUNTS
 -- ============================================================================
 -- These accounts correspond to the demo organization members:
--- - sponsor.fatma@faye.com -> فاطمة الأحمد (sponsor)
--- - sponsor.abdullah@faye.com -> عبدالله الراجحي (sponsor)
--- - member.noora@faye.com -> نورة السعد (team member)
--- - member.khaled@faye.com -> خالد الغامدي (team member)
+-- - sponsor.fatma@yetim.com -> فاطمة الأحمد (sponsor)
+-- - sponsor.abdullah@yetim.com -> عبدالله الراجحي (sponsor)
+-- - member.noora@yetim.com -> نورة السعد (team member)
+-- - member.khaled@yetim.com -> خالد الغامدي (team member)
 -- All passwords: "admin"
 -- ============================================================================
 
@@ -82,54 +82,54 @@ BEGIN
     -- CREATE AUTH ACCOUNTS
     -- ============================================================================
     
-    -- Create account for خالد الغامدي (member.khaled@faye.com)
+    -- Create account for خالد الغامدي (member.khaled@yetim.com)
     BEGIN
         SELECT create_user_account(
             'member.khaled',
-            'member.khaled@faye.com',
+            'member.khaled@yetim.com',
             'admin',
             team_member_khaled_id
         ) INTO auth_id;
-        RAISE NOTICE 'Created auth account for خالد الغامدي (member.khaled@faye.com)';
+        RAISE NOTICE 'Created auth account for خالد الغامدي (member.khaled@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account for خالد الغامدي already exists or error: %', SQLERRM;
     END;
     
-    -- Create account for نورة السعد (member.noora@faye.com)
+    -- Create account for نورة السعد (member.noora@yetim.com)
     BEGIN
         SELECT create_user_account(
             'member.noora',
-            'member.noora@faye.com',
+            'member.noora@yetim.com',
             'admin',
             team_member_noora_id
         ) INTO auth_id;
-        RAISE NOTICE 'Created auth account for نورة السعد (member.noora@faye.com)';
+        RAISE NOTICE 'Created auth account for نورة السعد (member.noora@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account for نورة السعد already exists or error: %', SQLERRM;
     END;
     
-    -- Create account for عبدالله الراجحي (sponsor.abdullah@faye.com)
+    -- Create account for عبدالله الراجحي (sponsor.abdullah@yetim.com)
     BEGIN
         SELECT create_user_account(
             'sponsor.abdullah',
-            'sponsor.abdullah@faye.com',
+            'sponsor.abdullah@yetim.com',
             'admin',
             sponsor_abdullah_id
         ) INTO auth_id;
-        RAISE NOTICE 'Created auth account for عبدالله الراجحي (sponsor.abdullah@faye.com)';
+        RAISE NOTICE 'Created auth account for عبدالله الراجحي (sponsor.abdullah@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account for عبدالله الراجحي already exists or error: %', SQLERRM;
     END;
     
-    -- Create account for فاطمة الأحمد (sponsor.fatma@faye.com)
+    -- Create account for فاطمة الأحمد (sponsor.fatma@yetim.com)
     BEGIN
         SELECT create_user_account(
             'sponsor.fatma',
-            'sponsor.fatma@faye.com',
+            'sponsor.fatma@yetim.com',
             'admin',
             sponsor_fatma_id
         ) INTO auth_id;
-        RAISE NOTICE 'Created auth account for فاطمة الأحمد (sponsor.fatma@faye.com)';
+        RAISE NOTICE 'Created auth account for فاطمة الأحمد (sponsor.fatma@yetim.com)';
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'Account for فاطمة الأحمد already exists or error: %', SQLERRM;
     END;
@@ -137,10 +137,10 @@ BEGIN
     RAISE NOTICE 'Demo auth accounts creation completed!';
     RAISE NOTICE '';
     RAISE NOTICE 'You can now log in with:';
-    RAISE NOTICE '  - member.khaled@faye.com or member.khaled (password: admin)';
-    RAISE NOTICE '  - member.noora@faye.com or member.noora (password: admin)';
-    RAISE NOTICE '  - sponsor.abdullah@faye.com or sponsor.abdullah (password: admin)';
-    RAISE NOTICE '  - sponsor.fatma@faye.com or sponsor.fatma (password: admin)';
+    RAISE NOTICE '  - member.khaled@yetim.com or member.khaled (password: admin)';
+    RAISE NOTICE '  - member.noora@yetim.com or member.noora (password: admin)';
+    RAISE NOTICE '  - sponsor.abdullah@yetim.com or sponsor.abdullah (password: admin)';
+    RAISE NOTICE '  - sponsor.fatma@yetim.com or sponsor.fatma (password: admin)';
     
 END $$;
 

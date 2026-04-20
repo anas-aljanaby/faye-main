@@ -1,6 +1,6 @@
 # Demo Seed Scripts
 
-This folder contains SQL scripts that create a **complete demo organization** with realistic, well-distributed data for testing every major module of the Faye app. The data timeline runs from **2026-01-01** through **2026-03-31**.
+This folder contains SQL scripts that create a **complete demo organization** with realistic, well-distributed data for testing every major module of the Yetim app. The data timeline runs from **2026-01-01** through **2026-03-31**.
 
 ## Prerequisites
 
@@ -27,14 +27,14 @@ All demo passwords: **`admin`**
 
 | Role | Login (email or username) |
 |------|---------------------------|
-| **Super admin** (system admin, invisible in team/sponsor lists) | `admin@faye-demo.com` or `admin` |
-| Team (manager) | `member.khaled@faye.com` or `member.khaled` |
-| Team (staff) | `member.noora@faye.com` or `member.noora` |
-| Sponsor | `sponsor.abdullah@faye.com` or `sponsor.abdullah` |
-| Sponsor | `sponsor.fatma@faye.com` or `sponsor.fatma` |
-| Sponsor | `sponsor.mohammad@faye.com` or `sponsor.mohammad` |
-| Sponsor | `sponsor.muna@faye.com` or `sponsor.muna` |
-| Sponsor | `sponsor.saad@faye.com` or `sponsor.saad` |
+| **Super admin** (system admin, invisible in team/sponsor lists) | `admin@yetim-demo.com` or `admin` |
+| Team (manager) | `member.khaled@yetim.com` or `member.khaled` |
+| Team (staff) | `member.noora@yetim.com` or `member.noora` |
+| Sponsor | `sponsor.abdullah@yetim.com` or `sponsor.abdullah` |
+| Sponsor | `sponsor.fatma@yetim.com` or `sponsor.fatma` |
+| Sponsor | `sponsor.mohammad@yetim.com` or `sponsor.mohammad` |
+| Sponsor | `sponsor.muna@yetim.com` or `sponsor.muna` |
+| Sponsor | `sponsor.saad@yetim.com` or `sponsor.saad` |
 
 ---
 
@@ -42,8 +42,8 @@ All demo passwords: **`admin`**
 
 ### 1. Organization and users (007)
 
-- **1 organization:** منظمة فيء - Demo  
-- **1 super admin:** مدير النظام (`is_system_admin = TRUE`) – invisible in team/sponsor lists; full permissions; login `admin` / `admin@faye-demo.com`.  
+- **1 organization:** منظمة يتيم - Demo  
+- **1 super admin:** مدير النظام (`is_system_admin = TRUE`) – invisible in team/sponsor lists; full permissions; login `admin` / `admin@yetim-demo.com`.  
 - **2 team members:** خالد الغامدي (manager, full permissions), نورة السعد (staff, limited: no approve/create expense)  
 - **5 sponsors:** عبدالله الراجحي, فاطمة الأحمد (Jan); محمد الشمري, منى العتيبي (Feb); سعد الدوسري (Mar)  
 - **User permissions:** Super admin + manager + staff permission sets  

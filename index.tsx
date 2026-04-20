@@ -25,7 +25,7 @@ const queryClient = new QueryClient({
 
 const persister = createSyncStoragePersister({
   storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-  key: `FAYE_REACT_QUERY_CACHE_v${CACHE_VERSION}`,
+  key: `YETIM_REACT_QUERY_CACHE_v${CACHE_VERSION}`,
 });
 
 const rootElement = document.getElementById('root');

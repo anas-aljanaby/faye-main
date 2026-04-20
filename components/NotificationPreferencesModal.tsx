@@ -22,7 +22,7 @@ const pushStatusCopy: Record<PushNotificationStatus, { title: string; descriptio
   },
   install_required: {
     title: 'يلزم فتح التطبيق المثبت',
-    description: 'أضف فيء إلى الشاشة الرئيسية وافتح النسخة المثبتة لتفعيل تنبيهات الجهاز.',
+    description: 'أضف يتيم إلى الشاشة الرئيسية وافتح النسخة المثبتة لتفعيل تنبيهات الجهاز.',
   },
   permission_denied: {
     title: 'تم حظر إذن الإشعارات',
@@ -189,7 +189,7 @@ const NotificationPreferencesModal: React.FC<NotificationPreferencesModalProps> 
         <label className="flex min-h-[56px] items-center justify-between gap-4 rounded-xl border border-gray-200 p-4">
           <div>
             <span className="block font-semibold text-text-primary">داخل التطبيق</span>
-            <span className="mt-1 block text-sm text-text-secondary">تظهر في الجرس ولوحة الإشعارات داخل فيء.</span>
+            <span className="mt-1 block text-sm text-text-secondary">تظهر في الجرس ولوحة الإشعارات داخل يتيم.</span>
           </div>
           <input
             type="checkbox"

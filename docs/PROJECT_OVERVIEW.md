@@ -1,8 +1,8 @@
-# Project overview: فيء (Faye)
+# Project overview: يتيم (Yetim)
 
 ## Purpose
 
-**Faye** is a web application for managing orphan care operations for an association (جمعية فيء). It centralizes records for orphans and sponsors, internal team and permissions, messaging, financial transactions, and published internal policies. The UI is primarily **Arabic (RTL)** and is built as a **single-page application** backed by **Supabase** (database, auth, storage) with optional **Google Gemini** integration for AI-assisted reporting on the dashboard.
+**Yetim** is a web application for managing orphan care operations for an association (جمعية يتيم). It centralizes records for orphans and sponsors, internal team and permissions, messaging, financial transactions, and published internal policies. The UI is primarily **Arabic (RTL)** and is built as a **single-page application** backed by **Supabase** (database, auth, storage) with optional **Google Gemini** integration for AI-assisted reporting on the dashboard.
 
 ## Who uses it
 
@@ -33,7 +33,7 @@ These are the main **navigation panels** (sidebar labels are Arabic as in the pr
 | Human resources | `/human-resources` | `HumanResources` | **Team members only.** Legacy path `/team` redirects here. Member detail: `/team/:id` → `TeamMemberPage`. |
 | Messages | `/messages` | `Messages` | Internal messaging / conversations. |
 | Financial system | `/financial-system` | `FinancialSystem` | **Team members only**; transactions and related workflows. |
-| Faye policies | `/policies` | `PoliciesPage` | Static policy content with its own sub-layout (`components/policies/*`). |
+| Yetim policies | `/policies` | `PoliciesPage` | Static policy content with its own sub-layout (`components/policies/*`). |
 
 Additional routes without sidebar entries:
 
@@ -55,7 +55,7 @@ Unknown paths under the authenticated area fall through to the dashboard (`Navig
 ## General file outline
 
 ```
-faye-main/
+yetim-main/
 ├── App.tsx                 # Routes, layout shell, auth/policy providers
 ├── index.tsx               # React mount, React Query persistence, ThemeProvider
 ├── index.css               # Global styles (Tailwind entry)

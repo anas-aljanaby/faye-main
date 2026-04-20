@@ -63,7 +63,7 @@ const toAppUrl = (actionUrl?: string) => {
 
 self.addEventListener('push', (event) => {
   const payload = event.data?.json() as PushPayload | undefined;
-  const title = payload?.title ?? 'فيء';
+  const title = payload?.title ?? 'يتيم';
   const body = payload?.body ?? 'لديك إشعار جديد.';
 
   event.waitUntil(

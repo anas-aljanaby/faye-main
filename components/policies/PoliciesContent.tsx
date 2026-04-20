@@ -325,7 +325,7 @@ const exitProcedures = [
   'تدريب على المهارات الحياتية الأساسية (إدارة المال، السكن، العمل).',
   'ربط اليتيم بشبكات الدعم المجتمعي والمهني.',
   'توثيق ملفه كاملاً وتسليم نسخة منه له ولولي أمره.',
-  'متابعة لمدة سنة ما بعد الخروج ضمن برنامج "خريجي فيء".',
+  'متابعة لمدة سنة ما بعد الخروج ضمن برنامج "خريجي يتيم".',
 ];
 const sponsorTerminationItems = [
   'إشعار مسبق بمدة لا تقل عن ثلاثة أشهر.',
@@ -359,7 +359,7 @@ export function PoliciesContent() {
           <FeatureGrid cards={visionMissionCards} columns={2} />
         </PolicySubSection>
         <PolicySubSection title="ثانياً: المبادئ الحاكمة">
-          <p className="text-gray-600 mb-3">المبادئ العشرة الحاكمة لعمل جمعية فيء</p>
+          <p className="text-gray-600 mb-3">المبادئ العشرة الحاكمة لعمل جمعية يتيم</p>
           <IconList items={principles} />
         </PolicySubSection>
         <PolicySubSection title="ثالثاً: نطاق تطبيق السياسات">
@@ -398,7 +398,7 @@ export function PoliciesContent() {
       <PolicySection id={POLICIES_TOC[2].id} title={POLICIES_TOC[2].title}>
         <PolicySubSection title="أولاً: طبيعة الكفالة وأنواعها">
           <p className="text-gray-600 mb-3">
-            الكفالة في جمعية فيء عقدٌ إنساني منضبط يُنظّم العلاقة بين الكافل واليتيم والجمعية وفق ضوابط واضحة:
+            الكفالة في جمعية يتيم عقدٌ إنساني منضبط يُنظّم العلاقة بين الكافل واليتيم والجمعية وفق ضوابط واضحة:
           </p>
           <FeatureGrid cards={sponsorshipTypes} columns={3} />
         </PolicySubSection>
@@ -454,12 +454,12 @@ export function PoliciesContent() {
 
       <PolicySection id={POLICIES_TOC[4].id} title={POLICIES_TOC[4].title}>
         <PolicySubSection title="أولاً: ميثاق حقوق الأيتام">
-          <p className="text-gray-600 mb-3">تُعلن جمعية فيء عن التزامها الراسخ بضمان الحقوق التالية لكل يتيم مسجل:</p>
+          <p className="text-gray-600 mb-3">تُعلن جمعية يتيم عن التزامها الراسخ بضمان الحقوق التالية لكل يتيم مسجل:</p>
           <p className="font-medium text-gray-800 mb-2">الحقوق الأساسية المصونة</p>
           <IconList items={rightsCharter} />
         </PolicySubSection>
         <PolicySubSection title="ثانياً: سياسة الحماية من الإيذاء">
-          <p className="text-gray-600 mb-2">تتخذ جمعية فيء نهجاً صفرياً تجاه أي شكل من أشكال الإيذاء:</p>
+          <p className="text-gray-600 mb-2">تتخذ جمعية يتيم نهجاً صفرياً تجاه أي شكل من أشكال الإيذاء:</p>
           <IconList items={abuseTypes} />
           <Callout variant="danger" className="mt-4" title="إجراءات الإبلاغ والتحقيق">
             <IconList items={abuseProcedures} />
@@ -469,7 +469,7 @@ export function PoliciesContent() {
 
       <PolicySection id={POLICIES_TOC[5].id} title={POLICIES_TOC[5].title}>
         <PolicySubSection title="أولاً: دور الأسرة في منظومة الرعاية">
-          <p className="text-gray-600 mb-2">تؤمن جمعية فيء بأن الأسرة ركيزةٌ لا غنى عنها في رعاية اليتيم، وتسعى إلى:</p>
+          <p className="text-gray-600 mb-2">تؤمن جمعية يتيم بأن الأسرة ركيزةٌ لا غنى عنها في رعاية اليتيم، وتسعى إلى:</p>
           <IconList items={familyRoleItems} />
         </PolicySubSection>
         <PolicySubSection title="ثانياً: اتفاقية الأسرة">
@@ -504,7 +504,7 @@ export function PoliciesContent() {
 
       <PolicySection id={POLICIES_TOC[8].id} title={POLICIES_TOC[8].title}>
         <PolicySubSection title="أولاً: الهيكل الحوكمي">
-          <p className="text-gray-600 mb-3">تعمل جمعية فيء وفق منظومة حوكمة متكاملة ذات ثلاثة مستويات:</p>
+          <p className="text-gray-600 mb-3">تعمل جمعية يتيم وفق منظومة حوكمة متكاملة ذات ثلاثة مستويات:</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {governanceLevels.map((level, i) => (
               <div key={i} className="bg-bg-card border border-gray-200 rounded-xl p-5">
