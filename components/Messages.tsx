@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { messageTemplates, MessageTemplate } from '../data';
 import { useConversations } from '../hooks/useConversations';
 import { useMessages } from '../hooks/useMessages';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,6 +8,35 @@ import { findOrCreateConversation, formatTimestamp } from '../utils/messaging';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
 import ResponsiveState from './ResponsiveState';
+
+interface MessageTemplate {
+    id: number;
+    title: string;
+    body: string;
+}
+
+const DEFAULT_MESSAGE_TEMPLATES: MessageTemplate[] = [
+    {
+        id: 1,
+        title: 'ترحيب بكافل جديد',
+        body: 'أهلاً بك {اسم_الكافل} في عائلة فيء! نشكرك جزيل الشكر على كفالتك لليتيم {اسم_اليتيم}. مساهمتك ستصنع فرقاً كبيراً في حياته.'
+    },
+    {
+        id: 2,
+        title: 'تقرير أداء شهري',
+        body: 'السلام عليكم {اسم_الكافل},\n\nيسعدنا أن نشاركك التقرير الشهري لليتيم {اسم_اليتيم}...\n\nمع خالص الشكر،\nفريق فيء'
+    },
+    {
+        id: 3,
+        title: 'تذكير بالدفعة المستحقة',
+        body: 'مرحباً {اسم_الكافل},\n\nنود تذكيركم بأن دفعة الكفالة الشهرية مستحقة. دعمكم المستمر هو سر نجاحنا في رعاية أبنائنا.\n\nشكراً لكم.'
+    },
+    {
+        id: 4,
+        title: 'شكر على المساهمة',
+        body: 'السيد/ة {اسم_الكافل}،\n\nنتقدم لكم بجزيل الشكر والعرفان على مساهمتكم السخية في حملة الشتاء. عطاؤكم أدفأ قلوباً كثيرة.\n\nمع تحيات،\nإدارة فيء'
+    }
+];
 
 const TemplatesModal: React.FC<{
     isOpen: boolean;
@@ -281,7 +309,7 @@ const Messages: React.FC = () => {
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
     const [showNewConversationModal, setShowNewConversationModal] = useState(false);
     const [availableUsers, setAvailableUsers] = useState<Array<{ id: string; name: string; avatar_url?: string; role: string }>>([]);
-    const [templates, setTemplates] = useState<MessageTemplate[]>(messageTemplates);
+    const [templates, setTemplates] = useState<MessageTemplate[]>(DEFAULT_MESSAGE_TEMPLATES);
     const [searchParams, setSearchParams] = useSearchParams();
     
     const { conversations, loading: conversationsLoading, refetch: refetchConversations } = useConversations();

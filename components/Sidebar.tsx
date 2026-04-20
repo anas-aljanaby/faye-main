@@ -10,13 +10,14 @@ type NavItemProps = Pick<AppNavItemConfig, 'to' | 'text' | 'icon'> & {
 
 const NavItem = React.memo(({ to, text, icon, count, isCollapsed }: NavItemProps) => {
   const Icon = icon;
+  const showCount = Boolean(count && count > 0);
 
   return (
     <NavLink
       to={to}
       end={to === '/'}
       className={({ isActive }) =>
-        `group relative flex items-center gap-4 p-3 rounded-xl transition-all duration-300 ease-in-out font-medium overflow-hidden
+        `group relative flex items-center gap-4 rounded-xl p-3 font-medium transition-all duration-300 ease-in-out
         ${isActive 
           ? 'bg-primary text-white shadow-lg shadow-primary/30 translate-x-1' 
           : 'text-text-secondary hover:bg-white hover:text-primary hover:shadow-md'
@@ -30,19 +31,24 @@ const NavItem = React.memo(({ to, text, icon, count, isCollapsed }: NavItemProps
       </div>
 
       {!isCollapsed && (
-        <span className="whitespace-nowrap opacity-100 transition-opacity duration-300">
-          {text}
-        </span>
+        <>
+          <span className="flex-1 truncate whitespace-nowrap opacity-100 transition-opacity duration-300">
+            {text}
+          </span>
+
+          {showCount ? (
+            <span className="inline-flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold leading-none text-white shadow-sm">
+              {count! > 99 ? '99+' : count}
+            </span>
+          ) : null}
+        </>
       )}
 
-      {count && count > 0 ? (
+      {isCollapsed && showCount ? (
         <div className={`absolute flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full shadow-sm ring-2 ring-bg-sidebar transition-all duration-300
-          ${isCollapsed
-            ? 'top-1 end-1 h-4 w-4'
-            : 'start-3 top-1/2 h-5 min-w-[20px] -translate-y-1/2 px-1.5'
-          }`}
+          top-1 end-1 h-4 min-w-4 px-1`}
         >
-          {count > 99 ? '99+' : count}
+          {count! > 99 ? '99+' : count}
         </div>
       ) : null}
 

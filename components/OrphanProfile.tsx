@@ -6,7 +6,7 @@ import { useSponsorsBasic } from '../hooks/useSponsors';
 import { useTeamMembers } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
 import { findById } from '../utils/idMapper';
-import { financialTransactions } from '../data';
+import { useFinancialTransactions } from '../hooks/useFinancialTransactions';
 import { Payment, PaymentStatus, Achievement, SpecialOccasion, Gift, TransactionType, Orphan, UpdateLog, ProgramParticipation } from '../types';
 import { uploadOrphanAchievementMedia } from '../utils/orphanAchievementUpload';
 import { GoogleGenAI } from "@google/genai";
@@ -453,20 +453,24 @@ const YearlyPaymentSummary: React.FC<{ payments: Payment[] }> = ({ payments }) =
 };
 
 const FinancialRecordCard: React.FC<{ orphanId: number }> = ({ orphanId }) => {
+    const { transactions, loading } = useFinancialTransactions();
+
     const relatedTransactions = useMemo(() => {
-        return financialTransactions
+        return transactions
             .filter(tx => 
                 tx.orphanId === orphanId || 
                 tx.receipt?.relatedOrphanIds?.includes(orphanId)
             )
             .sort((a, b) => b.date.getTime() - a.date.getTime());
-    }, [orphanId]);
+    }, [orphanId, transactions]);
 
     const CashIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="6" x2="6" y1="12" y2="12"/><line x1="18" x2="18" y1="12" y2="12"/></svg>;
     
     return (
         <InfoCard title="السجل المالي" icon={CashIcon}>
-            {relatedTransactions.length > 0 ? (
+            {loading ? (
+                <p>جاري تحميل الحركات المالية...</p>
+            ) : relatedTransactions.length > 0 ? (
                 <div className="max-h-60 space-y-3 overflow-y-auto pe-2">
                     {relatedTransactions.map(tx => (
                         <div key={tx.id} className="flex flex-col gap-3 rounded-lg bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between">

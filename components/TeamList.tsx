@@ -761,8 +761,8 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
         }
     };
     
-    const handleSendMessage = (message: string) => {
-        alert(`(محاكاة) تم إرسال الرسالة:\n"${message}"\nإلى ${selectedIds.size} من أعضاء الفريق.`);
+    const handleSendMessage = (_message: string) => {
+        alert('ميزة الإرسال الجماعي لأعضاء الفريق ليست مفعلة بعد. افتح صفحة الرسائل لإرسال محادثة مباشرة.');
         setIsMessageModalOpen(false);
         setSelectedIds(new Set());
     };

@@ -392,8 +392,8 @@ const OrphansList: React.FC = () => {
         }
     };
     
-    const handleSendMessage = (message: string) => {
-        alert(`(محاكاة) تم إرسال الرسالة:\n"${message}"\nإلى ${selectedIds.size} من الأيتام.`);
+    const handleSendMessage = (_message: string) => {
+        alert('الإرسال المباشر للأيتام غير متاح من هذه الشاشة حالياً. يمكنك استخدام قنوات المتابعة المعتمدة لإرسال هذه الرسالة.');
         setIsMessageModalOpen(false);
         setSelectedIds(new Set());
     };

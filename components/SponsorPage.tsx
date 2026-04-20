@@ -3,8 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useSponsorDetail } from '../hooks/useSponsors';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
-import { financialTransactions } from '../data';
-import { Orphan, PaymentStatus, Sponsor, TransactionType } from '../types';
+import { useFinancialTransactions } from '../hooks/useFinancialTransactions';
+import { Orphan, PaymentStatus, Sponsor, TransactionType, TransactionStatus, FinancialTransaction } from '../types';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
 import { AccountAccessSection } from './account/AccountAccessSection';
 import ResponsiveState from './ResponsiveState';
+import { findOrCreateConversation } from '../utils/messaging';
 
 type SponsorTab = 'overview' | 'orphans' | 'financial' | 'support';
 
@@ -20,7 +21,7 @@ const formatCurrency = (amount: number) => `$${amount.toLocaleString()}`;
 const SendMessageModal: React.FC<{
     isOpen: boolean;
     onClose: () => void;
-    onSend: (message: string) => void;
+    onSend: (message: string) => Promise<void>;
     title: string;
 }> = ({ isOpen, onClose, onSend, title }) => {
     const [message, setMessage] = useState('');
@@ -30,9 +31,9 @@ const SendMessageModal: React.FC<{
         onClose();
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (message.trim()) {
-            onSend(message.trim());
+            await onSend(message.trim());
             setMessage('');
         }
     };
@@ -103,11 +104,12 @@ const SponsorTabButton: React.FC<{
 const SponsorFinancialRecord: React.FC<{
     sponsor: Sponsor;
     sponsoredOrphans: Orphan[];
-    sponsorTransactions: typeof financialTransactions;
+    sponsorTransactions: ReadonlyArray<FinancialTransaction>;
     totalDonations: number;
     paymentStats: { overdue: number; due: number };
+    loading?: boolean;
     isViewingOwnPage?: boolean;
-}> = ({ sponsor, sponsoredOrphans, sponsorTransactions, totalDonations, paymentStats, isViewingOwnPage = false }) => {
+}> = ({ sponsor, sponsoredOrphans, sponsorTransactions, totalDonations, paymentStats, loading = false, isViewingOwnPage = false }) => {
     const paymentLink = isViewingOwnPage ? '/payments' : '/financial-system';
     const paymentLinkLabel = isViewingOwnPage ? 'عرض جميع الدفعات' : 'تسديد دفعة جديدة';
 
@@ -126,7 +128,7 @@ const SponsorFinancialRecord: React.FC<{
             <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3 md:gap-4">
                 <SummaryCard
                     title="إجمالي التبرعات"
-                    value={formatCurrency(totalDonations)}
+                    value={loading ? '—' : formatCurrency(totalDonations)}
                     icon={<span className="text-xl">💰</span>}
                     tone="bg-green-100 text-green-800"
                 />
@@ -204,7 +206,9 @@ const SponsorFinancialRecord: React.FC<{
                     <span className="text-xs text-text-secondary md:text-sm">يمكن التمرير أفقيًا عند الحاجة</span>
                 </div>
 
-                {sponsorTransactions.length > 0 ? (
+                {loading ? (
+                    <p className="rounded-lg bg-gray-50 px-4 py-6 text-center text-sm text-text-secondary">جاري تحميل التبرعات المسجلة...</p>
+                ) : sponsorTransactions.length > 0 ? (
                     <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
                         <table className="min-w-[30rem] w-full text-sm">
                             <thead>
@@ -245,6 +249,7 @@ const SponsorPage: React.FC = () => {
     const { sponsor, assignedOrphanIds, setAssignedOrphanIds, loading: sponsorsLoading, refetch: refetchSponsors } = useSponsorDetail(id);
     const { orphans: orphansData } = useOrphansBasic();
     const { canEditOrphans, canEditSponsors, isManager, userProfile, isSystemAdmin } = useAuth();
+    const { transactions: financialTransactions, loading: financialLoading } = useFinancialTransactions();
     const navigate = useNavigate();
     const receiptRef = useRef<HTMLDivElement>(null);
 
@@ -266,9 +271,12 @@ const SponsorPage: React.FC = () => {
     const sponsorTransactions = useMemo(() => {
         if (!sponsor) return [];
         return financialTransactions.filter(
-            tx => tx.type === TransactionType.Income && tx.receipt?.sponsorName === sponsor.name
+            (tx) =>
+                tx.type === TransactionType.Income &&
+                tx.status === TransactionStatus.Completed &&
+                tx.receipt?.sponsorName === sponsor.name
         );
-    }, [sponsor]);
+    }, [financialTransactions, sponsor]);
 
     const totalDonations = useMemo(() => {
         return sponsorTransactions.reduce((sum, tx) => sum + tx.amount, 0);
@@ -312,9 +320,38 @@ const SponsorPage: React.FC = () => {
         );
     }
 
-    const handleSendMessage = (message: string) => {
-        alert(`(محاكاة) تم إرسال الرسالة إلى ${sponsor.name}:\n"${message}"`);
+    const handleSendMessage = async (message: string) => {
+        if (!userProfile || !sponsor.uuid) {
+            alert('تعذر بدء المحادثة حالياً.');
+            return;
+        }
+
+        const { conversation, error } = await findOrCreateConversation(
+            userProfile.id,
+            sponsor.uuid,
+            userProfile.organization_id
+        );
+
+        if (error || !conversation) {
+            alert('تعذر فتح المحادثة الآن. حاول مرة أخرى.');
+            return;
+        }
+
+        const { error: messageError } = await supabase
+            .from('messages')
+            .insert({
+                conversation_id: conversation.id,
+                sender_id: userProfile.id,
+                content: message,
+            });
+
+        if (messageError) {
+            alert('تعذر إرسال الرسالة الآن. حاول مرة أخرى.');
+            return;
+        }
+
         setIsMessageModalOpen(false);
+        navigate(`/messages?conversation=${conversation.id}`);
     };
 
     const handleExportPDF = () => {
@@ -346,7 +383,7 @@ const SponsorPage: React.FC = () => {
                 />
                 <SummaryCard
                     title="إجمالي التبرعات"
-                    value={formatCurrency(totalDonations)}
+                    value={financialLoading ? '—' : formatCurrency(totalDonations)}
                     tone="bg-green-100 text-green-800"
                     icon={<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>}
                 />
@@ -433,6 +470,7 @@ const SponsorPage: React.FC = () => {
             sponsorTransactions={sponsorTransactions}
             totalDonations={totalDonations}
             paymentStats={paymentStats}
+            loading={financialLoading}
             isViewingOwnPage={isViewingOwnPage}
         />
     );
@@ -447,10 +485,10 @@ const SponsorPage: React.FC = () => {
                 <p className="mb-4 text-sm leading-7 text-text-secondary md:text-base">
                     لأية استفسارات، نحن متواجدون من الأحد إلى الخميس، 9 صباحًا - 5 مساءً.
                 </p>
-                <a href="tel:+123456789" className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-bold text-white shadow-lg transition-colors hover:bg-primary-hover hover:shadow-primary/40 sm:w-auto">
-                    <span>اتصل بنا الآن</span>
+                <Link to="/messages" className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 font-bold text-white shadow-lg transition-colors hover:bg-primary-hover hover:shadow-primary/40 sm:w-auto">
+                    <span>التواصل عبر الرسائل</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                </a>
+                </Link>
             </div>
 
             <Link to="/policies" className="relative flex flex-col items-center rounded-xl bg-blue-50 p-5 text-center shadow-md transition-transform duration-300 hover:scale-[1.01] md:p-6">

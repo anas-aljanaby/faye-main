@@ -7,6 +7,7 @@ import { useTeamMembersBasic } from '../hooks/useTeamMembers';
 import { useAuth } from '../contexts/AuthContext';
 import { TransactionStatus, Orphan, Sponsor, PaymentStatus, TransactionType } from '../types';
 import { useFinancialTransactions } from '../hooks/useFinancialTransactions';
+import { useNotifications } from '../hooks/useNotifications';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AvatarUpload } from './AvatarUpload';
@@ -17,8 +18,7 @@ import { GoogleGenAI } from '@google/genai';
 import ResponsiveState from './ResponsiveState';
 import InternetRequiredState from './InternetRequiredState';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
-
-type TimeRange = 'week' | 'month' | 'year';
+import { formatTimestamp } from '../utils/messaging';
 
 const sectionActionLinkClass = 'inline-flex min-h-11 items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 hover:text-primary-hover md:min-h-0 md:rounded-none md:px-0 md:py-0 md:hover:bg-transparent';
 
@@ -61,38 +61,48 @@ const StatWidget: React.FC<{ title: string; value: number; icon: React.ReactNode
                 {icon}
             </div>
         </div>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs md:text-sm">
-            <span className="inline-flex items-center gap-1 font-bold text-green-500">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-4 md:w-4"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                +12%
-            </span>
-            <span className="text-gray-400">{subtext}</span>
-        </div>
+        <p className="text-xs text-gray-400 md:text-sm">{subtext}</p>
     </div>
 );
 
-const ActivityList: React.FC = () => {
-    const activities = [
-        { id: 1, text: 'تم تسجيل يتيم جديد في النظام', time: 'منذ ساعتين', type: 'success' },
-        { id: 2, text: 'دفعة كفالة متأخرة تحتاج متابعة', time: 'منذ 5 ساعات', type: 'warning' },
-        { id: 3, text: 'تمت الموافقة على مصروفات تعليمية', time: 'أمس', type: 'info' },
-        { id: 4, text: 'اجتماع فريق العمل الشهري', time: 'أمس', type: 'info' },
-    ];
+type ActivityItem = {
+    id: string;
+    text: string;
+    time: string;
+    tone: 'success' | 'warning' | 'info';
+};
 
+const ActivityList: React.FC<{ items: ActivityItem[]; loading: boolean }> = ({ items, loading }) => {
     return (
         <div className="mt-2 space-y-3">
-            {activities.map(act => (
-                <div key={act.id} className="flex items-start gap-3 rounded-xl border-b border-gray-100 px-3 py-3 transition-colors hover:bg-gray-50 last:border-0 md:px-3.5">
-                    <div className={`w-2 h-2 mt-2 rounded-full flex-shrink-0 ${
-                        act.type === 'success' ? 'bg-green-500' : 
-                        act.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-                    }`} />
-                    <div className="min-w-0">
-                        <p className="text-[13px] font-semibold leading-6 text-gray-800 md:text-sm">{act.text}</p>
-                        <p className="text-xs text-gray-400">{act.time}</p>
+            {loading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="flex items-start gap-3 rounded-xl border-b border-gray-100 px-3 py-3 last:border-0 md:px-3.5">
+                        <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-gray-200" />
+                        <div className="min-w-0 flex-1 space-y-2">
+                            <div className="h-4 w-3/4 animate-pulse rounded bg-gray-100" />
+                            <div className="h-3 w-24 animate-pulse rounded bg-gray-100" />
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))
+            ) : items.length > 0 ? (
+                items.map((item) => (
+                    <div key={item.id} className="flex items-start gap-3 rounded-xl border-b border-gray-100 px-3 py-3 transition-colors hover:bg-gray-50 last:border-0 md:px-3.5">
+                        <div className={`mt-2 h-2 w-2 flex-shrink-0 rounded-full ${
+                            item.tone === 'success' ? 'bg-green-500' :
+                            item.tone === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
+                        }`} />
+                        <div className="min-w-0">
+                            <p className="text-[13px] font-semibold leading-6 text-gray-800 md:text-sm">{item.text}</p>
+                            <p className="text-xs text-gray-400">{item.time}</p>
+                        </div>
+                    </div>
+                ))
+            ) : (
+                <p className="rounded-xl border border-dashed border-gray-200 px-4 py-5 text-center text-sm text-gray-500">
+                    لا توجد أنشطة حديثة لعرضها الآن.
+                </p>
+            )}
         </div>
     );
 };
@@ -150,27 +160,52 @@ const AiSummaryWidget: React.FC = () => {
 };
 
 const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: number }> = ({ orphansCount, sponsorsCount }) => {
-    const [timeRange, setTimeRange] = useState<TimeRange>('month');
+    const { notifications, loading: notificationsLoading } = useNotifications();
+    const { transactions, loading: transactionsLoading } = useFinancialTransactions('dashboard');
+
+    const totalDonations = useMemo(() => {
+        return transactions
+            .filter((transaction) => transaction.type === TransactionType.Income && transaction.status === TransactionStatus.Completed)
+            .reduce((sum, transaction) => sum + transaction.amount, 0);
+    }, [transactions]);
+
+    const recentActivities = useMemo<ActivityItem[]>(() => {
+        if (notifications.length > 0) {
+            return notifications.slice(0, 4).map((notification) => ({
+                id: notification.id,
+                text: notification.title,
+                time: formatTimestamp(notification.createdAt),
+                tone:
+                    notification.type === 'financial_transaction_pending_approval' ||
+                    notification.type === 'financial_transaction_rejected' ||
+                    notification.type === 'payment_overdue'
+                        ? 'warning'
+                        : notification.type === 'financial_transaction_approved' || notification.type === 'payment_received'
+                            ? 'success'
+                            : 'info',
+            }));
+        }
+
+        return transactions.slice(0, 4).map((transaction) => ({
+            id: transaction.id,
+            text:
+                transaction.type === TransactionType.Income
+                    ? `تم تسجيل تبرع جديد: ${transaction.description}`
+                    : `تم تحديث معاملة مالية: ${transaction.description}`,
+            time: formatTimestamp(transaction.date),
+            tone:
+                transaction.status === TransactionStatus.Pending || transaction.status === TransactionStatus.Rejected
+                    ? 'warning'
+                    : 'success',
+        }));
+    }, [notifications, transactions]);
 
     return (
         <section className="space-y-4 md:space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="space-y-1">
                 <div className="space-y-1">
                     <h2 className="text-xl font-bold text-gray-800 md:text-2xl">نظرة سريعة على المؤشرات</h2>
-                    <p className="text-text-secondary text-sm">قسم تحليلي تجريبي مستورد من النسخة الجديدة.</p>
-                </div>
-                <div className="grid w-full grid-cols-3 gap-1 rounded-xl border border-gray-200 bg-white p-1 shadow-sm md:w-auto">
-                    {(['week', 'month', 'year'] as TimeRange[]).map((t) => (
-                        <button
-                            key={t}
-                            onClick={() => setTimeRange(t)}
-                            className={`min-h-11 rounded-lg px-2 py-2 text-xs font-medium transition-all sm:text-sm md:px-4 ${
-                                timeRange === t ? 'bg-primary text-white shadow' : 'text-gray-500 hover:bg-gray-50'
-                            }`}
-                        >
-                            {t === 'week' ? 'أسبوعي' : t === 'month' ? 'شهري' : 'سنوي'}
-                        </button>
-                    ))}
+                    <p className="text-sm text-text-secondary">ملخص حيّ يعتمد على بيانات النظام الحالية.</p>
                 </div>
             </div>
 
@@ -179,7 +214,7 @@ const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: n
                     <StatWidget
                         title="إجمالي الأيتام"
                         value={orphansCount}
-                        subtext="مقارنة بالشهر الماضي"
+                        subtext="عدد السجلات النشطة في النظام حالياً"
                         color="text-primary bg-primary"
                         icon={
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-6 md:w-6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -190,7 +225,7 @@ const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: n
                     <StatWidget
                         title="إجمالي الكفلاء"
                         value={sponsorsCount}
-                        subtext="زيادة مستمرة"
+                        subtext="عدد الكفلاء المرتبطين بالمنظمة"
                         color="text-blue-600 bg-blue-600"
                         icon={
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-6 md:w-6"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -199,9 +234,9 @@ const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: n
                 </div>
                 <div className="rounded-2xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-5">
                     <StatWidget
-                        title="التبرعات (تجريبي)"
-                        value={15400}
-                        subtext="إجمالي التبرعات التقديرية"
+                        title="إجمالي التبرعات"
+                        value={totalDonations}
+                        subtext="قيمة الإيرادات المكتملة والمسجلة فعلياً"
                         color="text-green-600 bg-green-600"
                         icon={
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-6 md:w-6"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -214,7 +249,7 @@ const AdvancedOverviewSection: React.FC<{ orphansCount: number; sponsorsCount: n
                 <AiSummaryWidget />
                 <div className="rounded-2xl border border-gray-100 bg-bg-card p-4 shadow-sm md:p-5">
                     <h3 className="mb-2 text-base font-bold text-gray-800 md:text-lg">آخر الأنشطة</h3>
-                    <ActivityList />
+                    <ActivityList items={recentActivities} loading={notificationsLoading || transactionsLoading} />
                 </div>
             </div>
         </section>
@@ -936,10 +971,10 @@ const Dashboard: React.FC = () => {
                             <p className="text-sm leading-6 text-text-secondary">
                                 لأية استفسارات، نحن متواجدون من الأحد إلى الخميس، 9 صباحاً - 5 مساءً.
                             </p>
-                            <a href="tel:+123456789" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover md:w-auto">
-                                <span>اتصل بنا الآن</span>
+                            <Link to="/messages" className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover md:w-auto">
+                                <span>التواصل عبر الرسائل</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:h-5 md:w-5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                            </a>
+                            </Link>
                         </div>
                     </div>
 

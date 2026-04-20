@@ -35,15 +35,7 @@ interface VolunteerLogEntry {
     achievements: string;
 }
 
-const initialVolunteerData: VolunteerLogEntry[] = [
-    { id: 1, volunteerName: 'علياء منصور', opportunity: 'حملة الشتاء', date: new Date('2024-01-15'), tasks: 'توزيع البطانيات والمواد الغذائية', durationHours: 5, completionPercentage: 100, performanceRating: 5, classification: 'مروج', achievements: 'قامت بتنظيم فريق التوزيع بكفاءة عالية.' },
-    { id: 2, volunteerName: 'محمد عبدالله', opportunity: 'يوم اليتيم العالمي', date: new Date('2024-04-01'), tasks: 'تنظيم الأنشطة الترفيهية للأطفال', durationHours: 8, completionPercentage: 100, performanceRating: 4, classification: 'موظف', achievements: '' },
-    { id: 3, volunteerName: 'سارة كريم', opportunity: 'حملة الشتاء', date: new Date('2024-01-20'), tasks: 'فرز وتعبئة المساعدات', durationHours: 4, completionPercentage: 80, performanceRating: 3, classification: 'سلبي', achievements: 'بحاجة لمزيد من المبادرة.' },
-    { id: 4, volunteerName: 'أحمد حسين', opportunity: 'تبرعات رمضان', date: new Date('2024-03-25'), tasks: 'جمع التبرعات في المراكز التجارية', durationHours: 6, completionPercentage: 100, performanceRating: 5, classification: 'مانح', achievements: 'تجاوز الهدف المحدد لجمع التبرعات بنسبة 20%.' },
-    { id: 5, volunteerName: 'فاطمة الزهراء', opportunity: 'يوم اليتيم العالمي', date: new Date('2024-04-01'), tasks: 'تقديم الدعم النفسي والإرشاد', durationHours: 8, completionPercentage: 100, performanceRating: 5, classification: 'موظف', achievements: 'حصلت على ردود فعل إيجابية جداً من الأطفال.' },
-];
-
-const opportunities = [...new Set(initialVolunteerData.map(v => v.opportunity))];
+const initialVolunteerData: VolunteerLogEntry[] = [];
 const classifications: VolunteerClassification[] = ['موظف', 'مروج', 'مانح', 'سلبي'];
 
 const formatVolunteerDate = (date: Date) =>
@@ -203,93 +195,49 @@ const KPICard: React.FC<{
 
 const VolunteerKPIs: React.FC<{ logs: VolunteerLogEntry[] }> = ({ logs }) => {
     const kpiData = useMemo(() => {
-        const uniqueVolunteers = new Set(logs.map(log => log.volunteerName));
-        const totalVolunteers = uniqueVolunteers.size;
-        if (totalVolunteers === 0) return {};
+        const totalVolunteers = new Set(logs.map((log) => log.volunteerName)).size;
+        if (totalVolunteers === 0) return [];
 
-        // KPIs with direct calculation
         const totalHours = logs.reduce((sum, log) => sum + log.durationHours, 0);
         const avgPerformance = logs.reduce((sum, log) => sum + log.performanceRating, 0) / logs.length;
         const avgCompletion = logs.reduce((sum, log) => sum + log.completionPercentage, 0) / logs.length;
-        const employeeCount = logs.filter(l => l.classification === 'موظف').length;
-        const donorCount = logs.filter(l => l.classification === 'مانح').length;
-        
-        const promoters = logs.filter(l => ['مروج', 'مانح'].includes(l.classification)).length;
-        const detractors = logs.filter(l => l.classification === 'سلبي').length;
+        const employeeCount = logs.filter((log) => log.classification === 'موظف').length;
+        const donorCount = logs.filter((log) => log.classification === 'مانح').length;
+        const promoters = logs.filter((log) => ['مروج', 'مانح'].includes(log.classification)).length;
+        const detractors = logs.filter((log) => log.classification === 'سلبي').length;
         const nps = ((promoters / totalVolunteers) - (detractors / totalVolunteers)) * 100;
 
-        // KPIs with assumed data
-        const assumedHourlyWage = 15; // دولار
-        const assumedProgramCost = 5000; // دولار
-        const assumedTotalApplicants = 20;
-        const assumedStartDate = new Date();
-        assumedStartDate.setMonth(assumedStartDate.getMonth() - 6);
-        const assumedInitialVolunteers = 7;
-        
-        return {
-            value_of_volunteer_hours: { value: `$${(totalHours * assumedHourlyWage).toLocaleString()}`, note: 'تم الحساب بناءً على متوسط أجر افتراضي قدره 15$ للساعة.' },
-            strategic_goals_achievement_rate: { value: '80%', note: 'قيمة افتراضية. يتطلب ربط أداء المتطوعين بالأهداف الاستراتيجية للمنظمة.' },
-            quality_of_volunteer_work: { value: `${avgPerformance.toFixed(1)} / 5`, note: 'متوسط تقييم الأداء من سجلات المتطوعين.' },
-            task_closure_rate: { value: `${avgCompletion.toFixed(0)}%`, note: 'متوسط نسبة إنجاز المهام من سجلات المتطوعين.' },
-            average_cost_per_volunteer: { value: `$${(assumedProgramCost / totalVolunteers).toFixed(0)}`, note: 'تم الحساب بناءً على مصروفات برنامج افتراضية قدرها 5000$.' },
-            conversion_rate_recruitment: { value: `${((totalVolunteers / assumedTotalApplicants) * 100).toFixed(0)}%`, note: 'تم الحساب بناءً على عدد متقدمين إجمالي افتراضي (20 متقدم).' },
-            avg_time_to_first_assignment: { value: '30 يوم', note: 'قيمة افتراضية. يتطلب تاريخ تسجيل لكل متطوع.' },
-            skills_utilization_rate: { value: '75%', note: 'قيمة افتراضية. يتطلب ربط مهارات المتطوعين بالمهام الموكلة.' },
-            retention_rate: { value: `${((totalVolunteers / assumedInitialVolunteers) * 100).toFixed(0)}%`, note: 'تم الحساب بناءً على عدد متطوعين افتراضي في بداية الفترة (7 متطوعين).' },
-            nps: { value: `${nps.toFixed(0)}`, note: 'تم الحساب بناءً على تصنيف المتطوعين (المروجون - السالبون).' },
-            diversity_index: { value: '0.65', note: 'قيمة افتراضية. يتطلب بيانات ديموغرافية للمتطوعين.' },
-            social_event_participation: { value: '60%', note: 'قيمة افتراضية. يتطلب سجل حضور للفعاليات.' },
-            volunteers_to_leaders: { value: '20%', note: 'قيمة افتراضية. يتطلب تتبع مسار المتطوعين القيادي.' },
-            avg_new_skills_acquired: { value: '2', note: 'قيمة افتراضية. يتطلب نظام تتبع للمهارات المكتسبة.' },
-            volunteer_to_employee: { value: `${((employeeCount / totalVolunteers) * 100).toFixed(0)}%`, note: 'تم الحساب من المتطوعين المصنفين كـ "موظف".' },
-            volunteer_to_donor: { value: `${((donorCount / totalVolunteers) * 100).toFixed(0)}%`, note: 'تم الحساب من المتطوعين المصنفين كـ "مانح".' },
-        };
+        return [
+            { id: 'total_volunteers', title: 'إجمالي المتطوعين', value: `${totalVolunteers}`, note: 'عدد الأسماء الفريدة المسجلة في السجل.', icon: '👥' },
+            { id: 'total_hours', title: 'إجمالي الساعات', value: `${totalHours}`, note: 'مجموع ساعات التطوع المسجلة فعلياً.', icon: '⏱️' },
+            { id: 'avg_performance', title: 'متوسط الأداء', value: `${avgPerformance.toFixed(1)} / 5`, note: 'متوسط تقييم جودة الأداء من السجلات الحالية.', icon: '⭐' },
+            { id: 'avg_completion', title: 'متوسط الإنجاز', value: `${avgCompletion.toFixed(0)}%`, note: 'متوسط نسب إنجاز المهام للمتطوعين المسجلين.', icon: '✅' },
+            { id: 'nps', title: 'صافي نقاط المروجين', value: `${nps.toFixed(0)}`, note: 'محسوب من تصنيفات المروجين والسلبيين داخل السجل.', icon: '📈' },
+            { id: 'volunteer_to_employee', title: 'التحول إلى موظفين', value: `${((employeeCount / totalVolunteers) * 100).toFixed(0)}%`, note: 'نسبة المتطوعين المصنفين كموظفين.', icon: '💼' },
+            { id: 'volunteer_to_donor', title: 'التحول إلى مانحين', value: `${((donorCount / totalVolunteers) * 100).toFixed(0)}%`, note: 'نسبة المتطوعين المصنفين كمانحين.', icon: '💖' },
+        ];
     }, [logs]);
-
-    const kpiList = [
-        { id: 'value_of_volunteer_hours', title: 'قيمة الساعات التطوعية', icon: '💰' },
-        { id: 'strategic_goals_achievement_rate', title: 'تحقيق الأهداف الاستراتيجية', icon: '🎯' },
-        { id: 'quality_of_volunteer_work', title: 'جودة العمل التطوعي', icon: '⭐' },
-        { id: 'task_closure_rate', title: 'معدل إغلاق المهام', icon: '✅' },
-        { id: 'average_cost_per_volunteer', title: 'متوسط التكلفة للمتطوع', icon: '💸' },
-        { id: 'conversion_rate_recruitment', title: 'التحويل من طلب لتوظيف', icon: '🤝' },
-        { id: 'avg_time_to_first_assignment', title: 'متوسط وقت أول تكليف', icon: '⏱️' },
-        { id: 'skills_utilization_rate', title: 'الاستفادة من المهارات', icon: '🛠️' },
-        { id: 'retention_rate', title: 'الاحتفاظ بالمتطوعين', icon: '🔄' },
-        { id: 'nps', title: 'صافي نقاط المروجين (NPS)', icon: '📈' },
-        { id: 'diversity_index', title: 'تنوع المتطوعين', icon: '🌍' },
-        { id: 'social_event_participation', title: 'المشاركة بالفعاليات', icon: '🎉' },
-        { id: 'volunteers_to_leaders', title: 'التحول إلى قادة', icon: '👑' },
-        { id: 'avg_new_skills_acquired', title: 'متوسط المهارات المكتسبة', icon: '🧠' },
-        { id: 'volunteer_to_employee', title: 'التحول إلى موظفين', icon: '💼' },
-        { id: 'volunteer_to_donor', title: 'التحول إلى مانحين', icon: '💖' },
-    ];
     
     return (
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-gray-800 md:text-2xl">مؤشرات أداء المتطوعين</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {kpiList.map(kpi => {
-                    const data = (kpiData as any)[kpi.id];
-                    if (!data) return null;
-                    return (
-                        <KPICard 
-                            key={kpi.id} 
-                            title={kpi.title} 
-                            value={data.value}
-                            note={data.note}
-                            icon={<span className="text-xl">{kpi.icon}</span>} 
+            {kpiData.length > 0 ? (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {kpiData.map((kpi) => (
+                        <KPICard
+                            key={kpi.id}
+                            title={kpi.title}
+                            value={kpi.value}
+                            note={kpi.note}
+                            icon={<span className="text-xl">{kpi.icon}</span>}
                         />
-                    );
-                })}
-            </div>
-             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800">
-                <h4 className="font-bold mb-2">ملاحظة هامة</h4>
-                <p className="text-sm">
-                    بعض المؤشرات تم حسابها بناءً على قيم افتراضية نظراً لعدم توفر البيانات الكاملة في النظام حالياً (مثل: التكاليف المالية، عدد المتقدمين، تواريخ التسجيل، وغيرها). مرر الفأرة فوق أي بطاقة لعرض طريقة الحساب.
-                    للحصول على قراءات دقيقة، يرجى استكمال البيانات المطلوبة.
-                </p>
-            </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-8 text-center text-sm text-gray-500">
+                    أضف أول سجل تطوعي لعرض مؤشرات الأداء الحقيقية هنا.
+                </div>
+            )}
         </div>
     );
 };
@@ -303,6 +251,11 @@ const VolunteersSection: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingLog, setEditingLog] = useState<VolunteerLogEntry | null>(null);
 
+    const opportunities = useMemo(
+        () => [...new Set(logs.map((log) => log.opportunity))].sort((a, b) => a.localeCompare(b, 'ar')),
+        [logs]
+    );
+
     const summary = useMemo(() => {
         const uniqueVolunteers = new Set(logs.map(log => log.volunteerName));
         // FIX: Explicitly set the generic type for `reduce` to `number`.
@@ -313,7 +266,7 @@ const VolunteersSection: React.FC = () => {
             acc[log.opportunity] = (acc[log.opportunity] || 0) + 1;
             return acc;
         }, {} as Record<string, number>);
-        const mostActiveOpportunity = Object.entries(opportunityCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+        const mostActiveOpportunity = Object.entries(opportunityCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'لا توجد بيانات بعد';
         return {
             totalVolunteers: uniqueVolunteers.size,
             totalHours,
@@ -419,7 +372,11 @@ const VolunteersSection: React.FC = () => {
                             </button>
                         </div>
                     ))}
-                    {filteredLogs.length === 0 && <p className="rounded-2xl border border-dashed border-gray-200 bg-white py-10 text-center text-sm text-gray-500">لا توجد نتائج مطابقة.</p>}
+                    {filteredLogs.length === 0 && (
+                        <p className="rounded-2xl border border-dashed border-gray-200 bg-white py-10 text-center text-sm text-gray-500">
+                            {logs.length === 0 ? 'لا توجد سجلات متطوعين بعد.' : 'لا توجد نتائج مطابقة.'}
+                        </p>
+                    )}
                 </div>
 
                 <div className="hidden overflow-x-auto md:block">
@@ -455,7 +412,11 @@ const VolunteersSection: React.FC = () => {
                             ))}
                         </tbody>
                     </table>
-                     {filteredLogs.length === 0 && <p className="py-10 text-center text-gray-500">لا توجد نتائج مطابقة.</p>}
+                     {filteredLogs.length === 0 && (
+                        <p className="py-10 text-center text-gray-500">
+                            {logs.length === 0 ? 'لا توجد سجلات متطوعين بعد.' : 'لا توجد نتائج مطابقة.'}
+                        </p>
+                     )}
                 </div>
             </div>
 
@@ -932,9 +893,7 @@ const HR_TAB_LABELS: Record<HrSection, string> = {
 };
 
 const HR_TAB_ORDER: HrSection[] = [
-    'team', 'volunteers', 'delegates', 'leaves', 'attendance',
-    'regulations', 'holidays', 'incentives', 'circulars',
-    'disciplinary', 'advances', 'salaries',
+    'team', 'volunteers',
 ];
 
 

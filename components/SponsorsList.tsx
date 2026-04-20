@@ -591,8 +591,8 @@ const SponsorsList: React.FC = () => {
         }
     };
 
-    const handleSendMessage = (message: string) => {
-        alert(`(محاكاة) تم إرسال الرسالة:\n"${message}"\nإلى ${selectedIds.size} من الكفلاء.`);
+    const handleSendMessage = (_message: string) => {
+        alert('ميزة الإرسال الجماعي للكفلاء ليست مفعلة بعد. افتح صفحة الرسائل لإرسال محادثة مباشرة.');
         setIsMessageModalOpen(false);
         setSelectedIds(new Set());
     };

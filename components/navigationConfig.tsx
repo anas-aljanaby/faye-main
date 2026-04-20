@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { conversations, financialTransactions } from '../data';
-import { TransactionStatus } from '../types';
+import { useNotifications } from '../hooks/useNotifications';
+import type { NotificationType } from '../types';
 
 export type AppRole = 'team_member' | 'sponsor';
 export type NavigationCountKey = 'messages' | 'financial';
@@ -250,22 +250,35 @@ export const getMobileMoreNavItems = (role?: AppRole | null) =>
 export const isNavigationItemActive = (pathname: string, item: AppNavItemConfig) =>
   item.matchPaths.some((matchPath) => (matchPath === '/' ? pathname === '/' : pathname.startsWith(matchPath)));
 
-export const useNavigationCounts = () =>
-  useMemo(() => {
-    let unreadMessages = 0;
-    let pendingFinancial = 0;
+const MESSAGE_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set(['message_received']);
+const FINANCIAL_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
+  'financial_transaction_pending_approval',
+  'financial_transaction_approved',
+  'financial_transaction_rejected',
+]);
 
-    try {
-      unreadMessages = conversations.filter((conversation) => conversation.unread).length;
-      pendingFinancial = financialTransactions.filter(
-        (transaction) => transaction.status === TransactionStatus.Pending
-      ).length;
-    } catch (error) {
-      console.error('خطأ في حساب عدادات التنقل:', error);
-    }
+export const useNavigationCounts = () => {
+  const { notifications } = useNotifications();
 
-    return {
-      messages: unreadMessages,
-      financial: pendingFinancial,
-    };
-  }, []);
+  return useMemo(() => {
+    let messages = 0;
+    let financial = 0;
+
+    notifications.forEach((notification) => {
+      if (notification.readAt) {
+        return;
+      }
+
+      if (MESSAGE_NOTIFICATION_TYPES.has(notification.type)) {
+        messages += 1;
+        return;
+      }
+
+      if (FINANCIAL_NOTIFICATION_TYPES.has(notification.type)) {
+        financial += 1;
+      }
+    });
+
+    return { messages, financial };
+  }, [notifications]);
+};
