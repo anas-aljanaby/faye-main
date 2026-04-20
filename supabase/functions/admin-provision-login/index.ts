@@ -13,6 +13,8 @@ type CallerProfile = {
   is_system_admin: boolean;
 };
 
+type CreateProfileRole = 'team_member' | 'sponsor';
+
 async function getCallerProfile(
   adminClient: ReturnType<typeof createClient>,
   authUserId: string
@@ -41,6 +43,14 @@ function accountPayload(
     return { status: 'pending_first_login', email, lastSignInAt: null };
   }
   return { status: 'active', email, lastSignInAt };
+}
+
+function normalizeEmail(email?: string): string {
+  return (email ?? '').trim().toLowerCase();
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 Deno.serve(async (req) => {
@@ -100,9 +110,134 @@ Deno.serve(async (req) => {
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const action = body.action as string;
 
+    if (action === 'create_profile_with_login') {
+      const role = body.role as CreateProfileRole | undefined;
+      const name = (body.name as string | undefined)?.trim();
+      const email = normalizeEmail(body.email as string | undefined);
+      const password = body.password as string | undefined;
+
+      if (role !== 'team_member' && role !== 'sponsor') {
+        return new Response(JSON.stringify({ error: 'invalid_role' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!name) {
+        return new Response(JSON.stringify({ error: 'name_required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!email || !isValidEmail(email)) {
+        return new Response(JSON.stringify({ error: 'invalid_email' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!password) {
+        return new Response(JSON.stringify({ error: 'password_required' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (password.length < 8) {
+        return new Response(JSON.stringify({ error: 'password_too_short' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const { data: created, error: createErr } = await adminClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      });
+
+      if (createErr || !created?.user) {
+        const msg = createErr?.message?.toLowerCase() ?? '';
+        if (msg.includes('already been registered') || msg.includes('already registered')) {
+          return new Response(JSON.stringify({ error: 'email_already_exists' }), {
+            status: 409,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        console.error('create_profile_with_login createUser', createErr);
+        return new Response(
+          JSON.stringify({ error: 'auth_create_failed', message: createErr?.message ?? null }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      const authUserId = created.user.id;
+
+      const { data: profile, error: profileErr } = await adminClient
+        .from('user_profiles')
+        .insert({
+          auth_user_id: authUserId,
+          organization_id: caller.organization_id,
+          role,
+          name,
+          is_system_admin: false,
+        })
+        .select('id, name, role, auth_user_id')
+        .single();
+
+      if (profileErr || !profile) {
+        console.error('create_profile_with_login profile insert', profileErr);
+        await adminClient.auth.admin.deleteUser(authUserId);
+        return new Response(JSON.stringify({ error: 'profile_create_failed' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (role === 'team_member') {
+        const { error: permErr } = await adminClient.from('user_permissions').insert({
+          user_id: profile.id,
+          can_edit_orphans: false,
+          can_edit_sponsors: false,
+          can_edit_transactions: false,
+          can_create_expense: false,
+          can_approve_expense: false,
+          can_view_financials: false,
+          is_manager: false,
+        });
+
+        if (permErr) {
+          console.error('create_profile_with_login permissions insert', permErr);
+          await adminClient.from('user_profiles').delete().eq('id', profile.id);
+          await adminClient.auth.admin.deleteUser(authUserId);
+          return new Response(JSON.stringify({ error: 'profile_create_failed' }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          profile: {
+            id: profile.id,
+            name: profile.name,
+            role: profile.role,
+            auth_user_id: profile.auth_user_id,
+          },
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (action === 'create') {
       const profileId = body.profileId as string | undefined;
-      const email = (body.email as string | undefined)?.trim().toLowerCase();
+      const email = normalizeEmail(body.email as string | undefined);
       const password = body.password as string | undefined;
 
       if (!profileId || !email || !password) {

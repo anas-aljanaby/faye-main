@@ -27,6 +27,16 @@ type UnlinkResponse = {
   lastSignInAt: null;
 };
 
+type CreateProfileWithLoginResponse = {
+  success: boolean;
+  profile: {
+    id: string;
+    name: string;
+    role: 'team_member' | 'sponsor';
+    auth_user_id: string;
+  };
+};
+
 type ErrorBody = { error?: string; message?: string };
 
 async function getAccessToken(): Promise<string> {
@@ -65,7 +75,13 @@ export async function mapAdminAccountError(error: unknown): Promise<string> {
     invalid_role: 'لا يمكن إنشاء حساب دخول لهذا النوع من الملف.',
     already_has_login: 'يوجد حساب دخول مرتبط بهذا الملف مسبقاً.',
     email_taken: 'البريد الإلكتروني مسجّل مسبقاً.',
+    email_already_exists: 'هذا البريد الإلكتروني مستخدم مسبقًا.',
+    name_required: 'الاسم مطلوب.',
+    invalid_email: 'صيغة البريد الإلكتروني غير صحيحة.',
+    password_required: 'كلمة المرور مطلوبة.',
     password_too_short: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل.',
+    auth_create_failed: body?.message ? `فشل إنشاء حساب الدخول: ${body.message}` : 'فشل إنشاء حساب الدخول.',
+    profile_create_failed: 'تم التراجع عن العملية لأن إنشاء الملف فشل. حاول مرة أخرى.',
     create_failed: body?.message ? `فشل إنشاء الحساب: ${body.message}` : 'فشل إنشاء حساب الدخول.',
     link_failed: 'تم إنشاء المستخدم لكن فشل الربط بالملف. اتصل بالمسؤول.',
     query_failed: 'تعذّر جلب حالة الحساب.',
@@ -146,6 +162,37 @@ export async function createProfileLogin(
     email: data.email,
     lastSignInAt: data.lastSignInAt,
   };
+}
+
+export async function createProfileWithLogin(
+  role: 'team_member' | 'sponsor',
+  name: string,
+  email: string,
+  password: string
+): Promise<CreateProfileWithLoginResponse['profile']> {
+  await getAccessToken();
+  const { data, error } = await supabase.functions.invoke<CreateProfileWithLoginResponse>(
+    'admin-provision-login',
+    {
+      body: {
+        action: 'create_profile_with_login',
+        role,
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      },
+    }
+  );
+
+  if (error) {
+    throw new Error(await mapAdminAccountError(error));
+  }
+
+  if (!data?.success || !data.profile) {
+    throw new Error('فشل إنشاء المستخدم.');
+  }
+
+  return data.profile;
 }
 
 export function generateRandomPassword(length = 16): string {

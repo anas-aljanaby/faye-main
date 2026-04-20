@@ -13,64 +13,7 @@ import { useAccountStatusesMap } from '../hooks/useAccountStatus';
 import { AccountStatusBadge } from './account/AccountStatusBadge';
 import { CreateLoginModal } from './account/CreateLoginModal';
 import { useQueryClient } from '@tanstack/react-query';
-
-const AddSponsorModal: React.FC<{
-    isOpen: boolean;
-    onClose: () => void;
-    onSave: (name: string) => void;
-}> = ({ isOpen, onClose, onSave }) => {
-    const [name, setName] = useState('');
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (name.trim()) {
-            onSave(name.trim());
-            setName('');
-        }
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={onClose}>
-            <div
-                className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
-                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">إضافة كافل جديد</h3>
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
-                        aria-label="إغلاق"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                    </button>
-                </div>
-                <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-                    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 md:px-6">
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700">اسم الكافل</label>
-                            <input
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                required
-                                autoFocus
-                            />
-                        </div>
-                    </div>
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6">
-                        <button type="button" onClick={onClose} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
-                        <button type="submit" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover">إضافة</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
-};
+import AddProfileWithLoginModal from './account/AddProfileWithLoginModal';
 
 const EditSponsorModal: React.FC<{
     sponsor: Sponsor;
@@ -619,17 +562,6 @@ const SponsorsList: React.FC = () => {
         setEditingSponsor(null);
     };
 
-    const handleSaveNewSponsor = (name: string) => {
-        const newSponsor: Sponsor = {
-            id: Date.now(),
-            name,
-            avatarUrl: '',
-            sponsoredOrphanIds: [],
-        };
-        setSponsorList(prev => [newSponsor, ...prev]);
-        setIsAddModalOpen(false);
-    };
-
     const handleResetFilters = () => {
         setSortBy('name-asc');
         setFilterOnlyNoAccount(false);
@@ -1027,10 +959,17 @@ const SponsorsList: React.FC = () => {
                 />
             )}
 
-            <AddSponsorModal
-                isOpen={isAddModalOpen}
-                onClose={() => setIsAddModalOpen(false)}
-                onSave={handleSaveNewSponsor}
+            <AddProfileWithLoginModal
+                open={isAddModalOpen}
+                onOpenChange={setIsAddModalOpen}
+                role="sponsor"
+                onSuccess={() => {
+                    void refetchSponsors();
+                    void queryClient.invalidateQueries({ queryKey: ['sponsors-basic'] });
+                    void queryClient.invalidateQueries({ queryKey: ['sponsors'] });
+                    void queryClient.invalidateQueries({ queryKey: ['account-statuses'] });
+                    void queryClient.invalidateQueries({ queryKey: ['account-status'] });
+                }}
             />
 
             <SendMessageModal
