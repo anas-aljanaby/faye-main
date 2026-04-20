@@ -304,6 +304,13 @@ mobile sheets with 48px actions, removed the obsolete page-level mobile bar,
 and improved selection handling so the bulk action strip sits safely above
 the global bottom navigation.
 
+Follow-up (2026-04-20): Refined `components/SponsorsList.tsx` again after a
+live 390px viewport audit by preventing the mobile results-count badge from
+stretching across the full toolbar card, turning the top control row into a
+horizontal-scroll action rail on phones, and adding dedicated search fields
+inside both orphan-assignment modal steps so large sponsor/orphan datasets
+remain usable on small screens.
+
 **Known Issues:** `npm run build` completed successfully, but the existing
 `baseline-browser-mapping` update notice and Vite chunk-size warning for the
 large main bundle still remain.

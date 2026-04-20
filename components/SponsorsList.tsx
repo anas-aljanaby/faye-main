@@ -312,6 +312,8 @@ const SponsorsList: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [filterOnlyNoAccount, setFilterOnlyNoAccount] = useState(false);
     const [createLoginTarget, setCreateLoginTarget] = useState<{ profileId: string; name: string } | null>(null);
+    const [assignmentSponsorSearchQuery, setAssignmentSponsorSearchQuery] = useState('');
+    const [assignmentOrphanSearchQuery, setAssignmentOrphanSearchQuery] = useState('');
 
     useEffect(() => {
         if (!loading && sponsorsData) {
@@ -486,6 +488,18 @@ const SponsorsList: React.FC = () => {
         }
     }, [selectedSponsorForAssignment, showAssignOrphansModal]);
 
+    useEffect(() => {
+        if (!showAssignOrphansModal) {
+            setAssignmentSponsorSearchQuery('');
+            setAssignmentOrphanSearchQuery('');
+            return;
+        }
+
+        if (!selectedSponsorForAssignment) {
+            setAssignmentOrphanSearchQuery('');
+        }
+    }, [selectedSponsorForAssignment, showAssignOrphansModal]);
+
     const filteredSponsors = useMemo(() => {
         let sortedAndFiltered = [...sponsorList];
 
@@ -512,6 +526,27 @@ const SponsorsList: React.FC = () => {
 
         return sortedAndFiltered;
     }, [accountsMap, filterOnlyNoAccount, isSysAdmin, searchQuery, sortBy, sponsorList]);
+
+    const assignmentSponsors = useMemo(() => {
+        const normalizedQuery = assignmentSponsorSearchQuery.trim().toLowerCase();
+        const sortedSponsors = [...sponsorList].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+
+        if (!normalizedQuery) {
+            return sortedSponsors;
+        }
+
+        return sortedSponsors.filter((sponsor) => sponsor.name.toLowerCase().includes(normalizedQuery));
+    }, [assignmentSponsorSearchQuery, sponsorList]);
+
+    const assignmentOrphans = useMemo(() => {
+        const normalizedQuery = assignmentOrphanSearchQuery.trim().toLowerCase();
+
+        if (!normalizedQuery) {
+            return orphansData;
+        }
+
+        return orphansData.filter((orphan) => orphan.name.toLowerCase().includes(normalizedQuery));
+    }, [assignmentOrphanSearchQuery, orphansData]);
 
     useEffect(() => {
         setCurrentPage(1);
@@ -604,6 +639,8 @@ const SponsorsList: React.FC = () => {
     const closeAssignOrphansModal = () => {
         setShowAssignOrphansModal(false);
         setSelectedSponsorForAssignment(null);
+        setAssignmentSponsorSearchQuery('');
+        setAssignmentOrphanSearchQuery('');
     };
 
     return (
@@ -710,9 +747,9 @@ const SponsorsList: React.FC = () => {
 
                 <div>
                     <div className="mb-4 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+                        <div className="flex flex-col items-start gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="-mx-1 flex w-full items-center gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 lg:w-auto">
+                                <div className="flex shrink-0 items-center gap-1 rounded-xl bg-gray-100 p-1">
                                     <button
                                         onClick={() => setViewMode('list')}
                                         className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-primary'}`}
@@ -728,10 +765,10 @@ const SponsorsList: React.FC = () => {
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
                                     </button>
                                 </div>
-                                <div className="relative">
+                                <div className="relative shrink-0">
                                     <button
                                         onClick={() => setIsPopoverOpen(prev => !prev)}
-                                        className={`relative inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors ${isPopoverOpen || activeFiltersCount > 0 ? 'border-primary/30 bg-primary-light text-primary' : 'border-gray-200 text-gray-600 hover:border-primary/30 hover:text-primary'}`}
+                                        className={`relative inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-semibold transition-colors ${isPopoverOpen || activeFiltersCount > 0 ? 'border-primary/30 bg-primary-light text-primary' : 'border-gray-200 text-gray-600 hover:border-primary/30 hover:text-primary'}`}
                                         aria-label="الفرز والتصفية"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
@@ -757,7 +794,7 @@ const SponsorsList: React.FC = () => {
                                         </>
                                     )}
                                 </div>
-                                <label htmlFor="selectAllCheckbox" className={`inline-flex min-h-[44px] cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:border-primary/30 hover:bg-primary-light/40 ${viewMode === 'list' ? 'md:hidden' : ''}`}>
+                                <label htmlFor="selectAllCheckbox" className={`inline-flex min-h-[44px] shrink-0 cursor-pointer items-center gap-3 rounded-xl border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:border-primary/30 hover:bg-primary-light/40 ${viewMode === 'list' ? 'md:hidden' : ''}`}>
                                     <input
                                         type="checkbox"
                                         id="selectAllCheckbox"
@@ -772,14 +809,14 @@ const SponsorsList: React.FC = () => {
                                 {canAssignOrphansToSponsors && (
                                     <button
                                         onClick={() => setShowAssignOrphansModal(true)}
-                                        className="hidden min-h-[44px] items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:inline-flex"
+                                        className="hidden min-h-[44px] shrink-0 items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:inline-flex"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                                         <span>تعيين أيتام لكافل</span>
                                     </button>
                                 )}
                             </div>
-                            <span className="inline-flex min-h-[40px] items-center rounded-xl bg-gray-100 px-3 text-sm text-text-secondary">
+                            <span className="inline-flex min-h-[40px] self-start rounded-xl bg-gray-100 px-3 text-sm text-text-secondary lg:self-auto">
                                 تم العثور على {filteredSponsors.length} كافل
                             </span>
                         </div>
@@ -1036,22 +1073,46 @@ const SponsorsList: React.FC = () => {
                                     </button>
                                 </div>
                                 <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-6">
-                                    {filteredSponsors.map((sponsor) => (
-                                        <button
-                                            key={sponsor.id}
-                                            onClick={() => setSelectedSponsorForAssignment(sponsor)}
-                                            className="flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl border border-gray-200 px-4 py-3 text-right transition-colors hover:bg-gray-50"
-                                        >
-                                            <div className="flex min-w-0 items-center gap-3">
-                                                <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" />
-                                                <div className="min-w-0">
-                                                    <p className="truncate font-semibold text-gray-900">{sponsor.name}</p>
-                                                    <p className="text-sm text-gray-500">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
-                                                </div>
+                                    <div className="sticky top-0 z-10 -mx-4 space-y-3 border-b border-gray-100 bg-white/95 px-4 pb-3 backdrop-blur md:-mx-6 md:px-6">
+                                        <div className="relative">
+                                            <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                                             </div>
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-gray-400"><path d="m9 18 6-6-6-6"/></svg>
-                                        </button>
-                                    ))}
+                                            <input
+                                                type="text"
+                                                value={assignmentSponsorSearchQuery}
+                                                onChange={(e) => setAssignmentSponsorSearchQuery(e.target.value)}
+                                                placeholder="ابحث عن كافل للتعيين..."
+                                                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary"
+                                            />
+                                        </div>
+                                        <p className="text-xs font-medium text-gray-500">
+                                            عرض {assignmentSponsors.length} من أصل {sponsorList.length} كافل
+                                        </p>
+                                    </div>
+
+                                    {assignmentSponsors.length > 0 ? (
+                                        assignmentSponsors.map((sponsor) => (
+                                            <button
+                                                key={sponsor.id}
+                                                onClick={() => setSelectedSponsorForAssignment(sponsor)}
+                                                className="flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl border border-gray-200 px-4 py-3 text-right transition-colors hover:bg-gray-50"
+                                            >
+                                                <div className="flex min-w-0 items-center gap-3">
+                                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" />
+                                                    <div className="min-w-0">
+                                                        <p className="truncate font-semibold text-gray-900">{sponsor.name}</p>
+                                                        <p className="text-sm text-gray-500">يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}</p>
+                                                    </div>
+                                                </div>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-gray-400"><path d="m9 18 6-6-6-6"/></svg>
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+                                            لا يوجد كافل مطابق لعبارة البحث الحالية.
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         ) : (
@@ -1065,7 +1126,10 @@ const SponsorsList: React.FC = () => {
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                                         </button>
-                                        <h3 className="truncate text-lg font-bold text-gray-900 md:text-xl">تعيين أيتام لـ {selectedSponsorForAssignment.name}</h3>
+                                        <div className="min-w-0">
+                                            <h3 className="truncate text-lg font-bold text-gray-900 md:text-xl">تعيين أيتام لـ {selectedSponsorForAssignment.name}</h3>
+                                            <p className="text-xs text-gray-500">يمكنك البحث داخل قائمة الأيتام قبل التعيين</p>
+                                        </div>
                                     </div>
                                     <button
                                         type="button"
@@ -1077,7 +1141,28 @@ const SponsorsList: React.FC = () => {
                                     </button>
                                 </div>
                                 <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-6">
-                                    {orphansData.map((orphan) => {
+                                    <div className="sticky top-0 z-10 -mx-4 space-y-3 border-b border-gray-100 bg-white/95 px-4 pb-3 backdrop-blur md:-mx-6 md:px-6">
+                                        <div className="relative">
+                                            <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={assignmentOrphanSearchQuery}
+                                                onChange={(e) => setAssignmentOrphanSearchQuery(e.target.value)}
+                                                placeholder="ابحث باسم اليتيم..."
+                                                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary"
+                                            />
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-500">
+                                            <span className="rounded-full bg-primary-light px-3 py-1 text-primary">
+                                                {sponsorAssignedOrphanIds.length} أيتام معيّنين
+                                            </span>
+                                            <span>يعرض {assignmentOrphans.length} من أصل {orphansData.length} يتيم</span>
+                                        </div>
+                                    </div>
+
+                                    {assignmentOrphans.length > 0 ? assignmentOrphans.map((orphan) => {
                                         const isAssigned = orphan.uuid ? sponsorAssignedOrphanIds.includes(orphan.uuid) : false;
 
                                         return (
@@ -1135,7 +1220,11 @@ const SponsorsList: React.FC = () => {
                                                 </button>
                                             </div>
                                         );
-                                    })}
+                                    }) : (
+                                        <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+                                            لا يوجد يتيم مطابق لعبارة البحث الحالية.
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         )}
