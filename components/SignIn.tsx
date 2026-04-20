@@ -19,7 +19,7 @@ const SignIn: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error } = await signIn(email.trim(), password);
+      const { error } = await signIn(email.trim(), password.trim());
       
       if (error) {
         setError(error || 'حدث خطأ أثناء تسجيل الدخول');

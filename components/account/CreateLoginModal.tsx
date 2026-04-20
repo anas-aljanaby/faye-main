@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createProfileLogin, generateRandomPassword } from '../../lib/adminAccountApi';
 import ResponsiveModalShell from '../ResponsiveModalShell';
-import PasswordInput from '../PasswordInput';
+import PasswordFieldWithActions from './PasswordFieldWithActions';
 
 export const CreateLoginModal: React.FC<{
   isOpen: boolean;
@@ -44,7 +44,7 @@ export const CreateLoginModal: React.FC<{
     }
     setSubmitting(true);
     try {
-      await createProfileLogin(profileId, email.trim(), password);
+      await createProfileLogin(profileId, email.trim(), password.trim());
       onSuccess();
       onClose();
     } catch (err) {
@@ -106,26 +106,12 @@ export const CreateLoginModal: React.FC<{
               dir="ltr"
             />
           </div>
-          <div>
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <label className="text-sm font-semibold text-gray-700">كلمة المرور المؤقتة</label>
-              <button
-                type="button"
-                onClick={handleGeneratePassword}
-                className="min-h-[44px] rounded-lg px-2 text-sm font-semibold text-primary transition-colors hover:text-primary-hover"
-              >
-                توليد عشوائي
-              </button>
-            </div>
-            <PasswordInput
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              inputClassName="min-h-[48px] py-2.5 font-mono text-sm"
-              inputDir="ltr"
-              placeholder="8 أحرف على الأقل"
-            />
-          </div>
+          <PasswordFieldWithActions
+            label="كلمة المرور المؤقتة"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onGenerate={handleGeneratePassword}
+          />
 
           {error && (
             <div className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</div>
