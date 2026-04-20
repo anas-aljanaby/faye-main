@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Sponsor } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { findById, uuidToNumber } from '../utils/idMapper';
+import { getFriendlyDataError } from '../utils/networkErrors';
 
 export const useSponsors = () => {
   const { userProfile } = useAuth();
@@ -25,7 +26,7 @@ export const useSponsors = () => {
   return {
     sponsors,
     loading,
-    error: error ? (error instanceof Error ? error.message : 'Failed to fetch sponsors') : null,
+    error: error ? getFriendlyDataError(error) : null,
     refetch: fetchSponsors,
   };
 };
@@ -132,7 +133,7 @@ export const useSponsorsBasic = () => {
   return {
     sponsors,
     loading,
-    error: error ? (error instanceof Error ? error.message : 'Failed to fetch sponsors') : null,
+    error: error ? getFriendlyDataError(error) : null,
     refetch,
   };
 };
@@ -161,7 +162,7 @@ export const useSponsorDetail = (sponsorId: string | undefined) => {
       setAssignedOrphanIds((data || []).map((row) => row.orphan_id));
     } catch (err) {
       console.error('Error fetching assigned orphans:', err);
-      setErrorAssigned(err instanceof Error ? err.message : 'Failed to fetch assigned orphans');
+      setErrorAssigned(getFriendlyDataError(err));
     } finally {
       setLoadingAssigned(false);
     }

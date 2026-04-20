@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Orphan, Payment, Achievement, SpecialOccasion, Gift, UpdateLog, ProgramParticipation, PaymentStatus } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { uuidToNumber } from '../utils/idMapper';
+import { getFriendlyDataError } from '../utils/networkErrors';
 
 /** Profile shape needed for orphans basic fetch (from AuthContext userProfile) */
 type OrphansBasicProfile = { organization_id: string; id: string; role: 'team_member' | 'sponsor' };
@@ -380,7 +381,7 @@ export const useOrphans = () => {
       setOrphans(enrichedOrphans);
     } catch (err) {
       console.error('Error fetching orphans:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch orphans');
+      setError(getFriendlyDataError(err));
     } finally {
       setLoading(false);
     }
@@ -698,7 +699,7 @@ export const useOrphansBasic = () => {
   return {
     orphans,
     loading,
-    error: error ? (error instanceof Error ? error.message : 'Failed to fetch orphans') : null,
+    error: error ? getFriendlyDataError(error) : null,
     refetch,
   };
 };
@@ -721,7 +722,7 @@ export const useOrphansPaginated = (filters: OrphansPaginatedFilters) => {
     orphans: data?.orphans ?? EMPTY_ORPHANS,
     totalCount: data?.totalCount ?? 0,
     loading,
-    error: error ? (error instanceof Error ? error.message : 'Failed to fetch orphans') : null,
+    error: error ? getFriendlyDataError(error) : null,
     refetch,
   };
 };
@@ -1223,7 +1224,7 @@ export const useOrphanDetail = (orphanId?: string | null) => {
   return {
     orphan,
     loading,
-    error: error ? (error instanceof Error ? error.message : 'Failed to fetch orphan') : null,
+    error: error ? getFriendlyDataError(error) : null,
     refetch,
     updateOrphan,
     insertUpdateLog,

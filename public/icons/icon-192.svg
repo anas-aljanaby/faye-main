@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="fayeGradient192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#fayeGradient192)" />
+  <circle cx="96" cy="96" r="52" fill="#ffffff" fill-opacity="0.15" />
+  <path d="M66 122V70h24c19 0 31 9 31 25s-12 27-31 27H66Zm16-14h8c9.5 0 15-4.4 15-13s-5.5-12-15-12h-8v25Z" fill="#ffffff"/>
+</svg>

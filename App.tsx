@@ -4,6 +4,8 @@ import { AuthProvider } from './contexts/AuthContext';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import MobileBottomNav from './components/MobileBottomNav';
+import OfflineBanner from './components/OfflineBanner';
+import PwaUpdatePrompt from './components/PwaUpdatePrompt';
 import Dashboard from './components/Dashboard';
 import OrphanProfile from './components/OrphanProfile';
 import SponsorPage from './components/SponsorPage';
@@ -19,8 +21,11 @@ import { PoliciesNavProvider } from './components/policies/PoliciesNavContext';
 import SignIn from './components/SignIn';
 import ProtectedRoute from './components/ProtectedRoute';
 import TeamMemberRoute from './components/TeamMemberRoute';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
 
 function App() {
+  const { isOnline } = useNetworkStatus();
+
   return (
     <AuthProvider>
       <HashRouter>
@@ -35,6 +40,7 @@ function App() {
                   <Sidebar />
                   <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                     <Header />
+                    {!isOnline ? <OfflineBanner /> : null}
                     <div className="flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pt-6 md:p-8">
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
@@ -60,6 +66,7 @@ function App() {
             }
           />
         </Routes>
+        <PwaUpdatePrompt />
       </HashRouter>
     </AuthProvider>
   );

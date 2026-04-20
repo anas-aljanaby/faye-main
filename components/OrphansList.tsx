@@ -8,6 +8,7 @@ import EntityCard, { EntityCardField } from './EntityCard';
 import { DataTable } from './DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import Avatar from './Avatar';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 const AddOrphanModal: React.FC<{
     isOpen: boolean;
@@ -221,6 +222,7 @@ const ResponsivePagination: React.FC<{
 const ITEMS_PER_PAGE = 12;
 
 const OrphansList: React.FC = () => {
+    const { isOnline } = useNetworkStatus();
     const { userProfile } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
@@ -422,6 +424,10 @@ const OrphansList: React.FC = () => {
     });
 
     const handleSaveNewOrphan = (data: { name: string; age: number; grade: string; country: string }) => {
+        if (!isOnline) {
+            alert('لا يمكن إضافة يتيم أثناء انقطاع الإنترنت. يرجى الاتصال ثم إعادة المحاولة.');
+            return;
+        }
         createOrphanMutation.mutate(data);
         setIsAddModalOpen(false);
     };
@@ -452,6 +458,11 @@ const OrphansList: React.FC = () => {
     return (
         <>
         <div className={`space-y-6 ${selectedIds.size > 0 ? 'pb-40' : 'pb-24'}`}>
+            {!isOnline ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    لا يمكن تنفيذ عمليات الإضافة أثناء عدم الاتصال بالإنترنت.
+                </div>
+            ) : null}
             <header className="space-y-4">
                 <div className="flex items-start justify-between gap-3 sm:items-center">
                     <div className="min-w-0">
@@ -479,6 +490,7 @@ const OrphansList: React.FC = () => {
                                             setIsAddModalOpen(true);
                                             setIsActionsMenuOpen(false);
                                         }}
+                                        disabled={!isOnline}
                                         className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-primary-light hover:text-primary"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
@@ -502,6 +514,7 @@ const OrphansList: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsAddModalOpen(true)}
+                            disabled={!isOnline}
                             className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-primary-hover"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>

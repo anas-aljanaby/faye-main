@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { TeamMember, Task } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { uuidToNumber } from '../utils/idMapper';
+import { getFriendlyDataError } from '../utils/networkErrors';
 
 export const useTeamMembers = () => {
   const { userProfile } = useAuth();
@@ -26,7 +27,7 @@ export const useTeamMembers = () => {
   return {
     teamMembers,
     loading,
-    error: error ? (error instanceof Error ? error.message : 'Failed to fetch team members') : null,
+    error: error ? getFriendlyDataError(error) : null,
     refetch: refetchTeamMembers,
   };
 };
@@ -118,7 +119,7 @@ export const useTeamMembersBasic = () => {
   return {
     teamMembers,
     loading,
-    error: error ? (error instanceof Error ? error.message : 'Failed to fetch team members') : null,
+    error: error ? getFriendlyDataError(error) : null,
     refetch,
   };
 };

@@ -1,0 +1,33 @@
+{
+  "name": "فيء - منصة رعاية الأيتام",
+  "short_name": "فيء",
+  "description": "منصة فيء لإدارة بيانات الأيتام والكفلاء والمدفوعات.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/#/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#0f766e",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -15,6 +15,8 @@ import Avatar from './Avatar';
 import OccasionsManagementModal from './OccasionsManagementModal';
 import { GoogleGenAI } from '@google/genai';
 import ResponsiveState from './ResponsiveState';
+import InternetRequiredState from './InternetRequiredState';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 
 type TimeRange = 'week' | 'month' | 'year';
 
@@ -572,6 +574,7 @@ const SponsorFinancialRecord: React.FC<{ sponsor: Sponsor; sponsoredOrphans: Orp
 };
 
 const Dashboard: React.FC = () => {
+    const { isOnline } = useNetworkStatus();
     const { orphans: orphansData, loading: orphansLoading } = useOrphansBasic();
     const { sponsors: sponsorsData, loading: sponsorsLoading } = useSponsorsBasic();
     const { teamMembers: teamMembersData, loading: teamMembersLoading } = useTeamMembersBasic();
@@ -583,6 +586,7 @@ const Dashboard: React.FC = () => {
     const [manager, setManager] = useState<{ id: string; name: string; avatar_url?: string } | null>(null);
     const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
     const [isOccasionsModalOpen, setIsOccasionsModalOpen] = useState(false);
+    const hasAnyCachedDashboardData = orphansData.length > 0 || sponsorsData.length > 0 || teamMembersData.length > 0;
 
     // Find the current sponsor based on user profile
     const sponsor = useMemo(() => {
@@ -717,6 +721,15 @@ const Dashboard: React.FC = () => {
 
     // If sponsor, show sponsor profile content
     if (userProfile?.role === 'sponsor') {
+        if (!isOnline && !countsLoading && !hasAnyCachedDashboardData) {
+            return (
+                <InternetRequiredState
+                    title="الاتصال مطلوب لفتح لوحة الكافل"
+                    description="لا توجد بيانات محفوظة لهذه اللوحة حتى الآن. اتصل بالإنترنت لعرض أحدث المعلومات."
+                />
+            );
+        }
+
         if (!sponsor) {
             return (
                 <ResponsiveState
@@ -742,6 +755,11 @@ const Dashboard: React.FC = () => {
 
         return (
             <div ref={receiptRef} className="space-y-6 pb-2 md:space-y-8 md:pb-0">
+                {!isOnline ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        أنت في وضع دون اتصال. يتم عرض آخر بيانات متاحة للقراءة فقط.
+                    </div>
+                ) : null}
                 <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-l from-primary/15 via-white to-primary/5 p-4 sm:p-5 md:rounded-2xl md:p-8">
                     <div className="absolute start-0 top-0 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 md:h-32 md:w-32"></div>
                     <div className="absolute bottom-0 end-0 h-32 w-32 translate-x-1/4 translate-y-1/4 rounded-full bg-primary/5 md:h-48 md:w-48"></div>
@@ -946,6 +964,14 @@ const Dashboard: React.FC = () => {
     }
 
     // Team member dashboard (existing content)
+    if (!isOnline && !countsLoading && !hasAnyCachedDashboardData) {
+        return (
+            <InternetRequiredState
+                title="الاتصال مطلوب لفتح لوحة التحكم"
+                description="هذه أول زيارة أو لا توجد بيانات محفوظة بعد. اتصل بالإنترنت لتحميل لوحة التحكم."
+            />
+        );
+    }
 
     // Calculate stats
     const overduePayments = orphansData.reduce((count, orphan) => 
@@ -976,6 +1002,11 @@ const Dashboard: React.FC = () => {
     
     return (
         <div className="space-y-8 md:space-y-12">
+          {!isOnline ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              أنت في وضع دون اتصال. يتم عرض البيانات المحفوظة فقط، ولا يمكن تنفيذ عمليات تعديل جديدة.
+            </div>
+          ) : null}
           {/* Welcome Hero Section */}
           <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-l from-primary/10 via-primary/5 to-transparent p-4 sm:p-5 md:rounded-2xl md:p-8">
             <div className="absolute start-0 top-0 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/10 md:h-32 md:w-32"></div>
