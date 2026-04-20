@@ -36,6 +36,10 @@ export type NotificationType =
   | 'payment_received'
   | 'payment_reminder'
   | 'payment_status_changed'
+  | 'message_received'
+  | 'financial_transaction_pending_approval'
+  | 'financial_transaction_approved'
+  | 'financial_transaction_rejected'
   | 'general';
 
 export interface AppNotification {
@@ -47,8 +51,12 @@ export interface AppNotification {
   body: string;
   relatedEntityType?: string;
   relatedEntityId?: string;
+  actionUrl?: string;
+  metadata?: Record<string, unknown>;
   readAt?: Date;
   emailSentAt?: Date;
+  pushSentAt?: Date;
+  lastPushError?: string;
   createdAt: Date;
 }
 
@@ -56,6 +64,9 @@ export interface NotificationPreference {
   userId: string;
   inAppEnabled: boolean;
   emailEnabled: boolean;
+  messageNotificationsEnabled: boolean;
+  financialNotificationsEnabled: boolean;
+  paymentNotificationsEnabled: boolean;
   paymentDueReminderDays: number;
   overdueReminderFrequencyDays: number;
 }

@@ -19,35 +19,14 @@ export default defineConfig(({ mode }) => {
       plugins: [
         react(),
         VitePWA({
+          strategies: 'injectManifest',
+          srcDir: '.',
+          filename: 'service-worker.ts',
           registerType: 'prompt',
           includeAssets: ['icons/favicon.svg', 'icons/apple-touch-icon.svg'],
           manifest: false,
-          workbox: {
-            cleanupOutdatedCaches: true,
-            navigateFallback: '/index.html',
+          injectManifest: {
             maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-            navigateFallbackDenylist: [
-              /^\/#\/signin/,
-              /^https:\/\/.*\.supabase\.co\/.*/i,
-            ],
-            runtimeCaching: [
-              {
-                urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-                handler: 'NetworkOnly',
-              },
-              {
-                urlPattern: ({ request, url }) =>
-                  request.destination === 'image' && url.origin === self.location.origin,
-                handler: 'StaleWhileRevalidate',
-                options: {
-                  cacheName: 'local-images',
-                  expiration: {
-                    maxEntries: 100,
-                    maxAgeSeconds: 7 * 24 * 60 * 60,
-                  },
-                },
-              },
-            ],
           },
         }),
       ],

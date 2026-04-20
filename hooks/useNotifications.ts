@@ -6,7 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 const DEFAULT_PREFERENCES: NotificationPreference = {
   userId: '',
   inAppEnabled: true,
-  emailEnabled: true,
+  emailEnabled: false,
+  messageNotificationsEnabled: true,
+  financialNotificationsEnabled: true,
+  paymentNotificationsEnabled: true,
   paymentDueReminderDays: 7,
   overdueReminderFrequencyDays: 3,
 };
@@ -168,8 +171,15 @@ export const useNotifications = () => {
     body: row.body,
     relatedEntityType: row.related_entity_type ?? undefined,
     relatedEntityId: row.related_entity_id ?? undefined,
+    actionUrl: row.action_url ?? undefined,
+    metadata:
+      row.metadata && typeof row.metadata === 'object'
+        ? (row.metadata as Record<string, unknown>)
+        : undefined,
     readAt: row.read_at ? new Date(row.read_at) : undefined,
     emailSentAt: row.email_sent_at ? new Date(row.email_sent_at) : undefined,
+    pushSentAt: row.push_sent_at ? new Date(row.push_sent_at) : undefined,
+    lastPushError: row.last_push_error ?? undefined,
     createdAt: new Date(row.created_at),
   }), []);
 
@@ -231,7 +241,10 @@ export const useNotifications = () => {
       setPreferences({
         userId: result.data.user_id,
         inAppEnabled: result.data.in_app_enabled,
-        emailEnabled: result.data.email_enabled,
+        emailEnabled: false,
+        messageNotificationsEnabled: result.data.message_notifications_enabled ?? true,
+        financialNotificationsEnabled: result.data.financial_notifications_enabled ?? true,
+        paymentNotificationsEnabled: result.data.payment_notifications_enabled ?? true,
         paymentDueReminderDays: result.data.payment_due_reminder_days,
         overdueReminderFrequencyDays: result.data.overdue_reminder_frequency_days,
       });
@@ -267,7 +280,10 @@ export const useNotifications = () => {
     const payload = {
       user_id: userProfile.id,
       in_app_enabled: next.inAppEnabled,
-      email_enabled: next.emailEnabled,
+      email_enabled: false,
+      message_notifications_enabled: next.messageNotificationsEnabled,
+      financial_notifications_enabled: next.financialNotificationsEnabled,
+      payment_notifications_enabled: next.paymentNotificationsEnabled,
       payment_due_reminder_days: next.paymentDueReminderDays,
       overdue_reminder_frequency_days: next.overdueReminderFrequencyDays,
     };
@@ -328,11 +344,22 @@ export const useNotifications = () => {
     userProfile,
   ]);
 
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.readAt).length, [notifications]);
+  const visibleNotifications = useMemo(() => {
+    if (preferences?.inAppEnabled === false) {
+      return [];
+    }
+
+    return notifications;
+  }, [notifications, preferences?.inAppEnabled]);
+
+  const unreadCount = useMemo(
+    () => visibleNotifications.filter((n) => !n.readAt).length,
+    [visibleNotifications]
+  );
 
   return {
     loading,
-    notifications,
+    notifications: visibleNotifications,
     unreadCount,
     preferences,
     refetch: fetchNotifications,

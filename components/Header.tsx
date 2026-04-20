@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Avatar from './Avatar';
 import ThemeSettings from './ThemeSettings';
 import { useNotifications } from '../hooks/useNotifications';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import NotificationPanel from './NotificationPanel';
 
 interface BellIconProps {
@@ -51,6 +52,7 @@ const Header: React.FC = () => {
   const [notificationPosition, setNotificationPosition] = useState({ top: 0, left: 0, width: 320 });
   const [userMenuPosition, setUserMenuPosition] = useState({ top: 0, left: 0, width: 192 });
   const { notifications, unreadCount, markAsRead, markAllAsRead, preferences, updatePreferences } = useNotifications();
+  const { status: pushStatus, busy: pushBusy, error: pushError, enablePush, disablePush } = usePushNotifications();
 
   const handleSignOut = async () => {
     await signOut();
@@ -224,6 +226,11 @@ const Header: React.FC = () => {
               onMarkAllAsRead={markAllAsRead}
               preferences={preferences}
               onSavePreferences={updatePreferences}
+              pushStatus={pushStatus}
+              pushBusy={pushBusy}
+              pushError={pushError}
+              onEnablePush={enablePush}
+              onDisablePush={disablePush}
             />
           </div>
         </>

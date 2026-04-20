@@ -1,4 +1,7 @@
+/// <reference lib="deno.ns" />
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.8';
+import webpush from 'npm:web-push';
 
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +14,10 @@ type NotificationType =
   | 'payment_received'
   | 'payment_reminder'
   | 'payment_status_changed'
+  | 'message_received'
+  | 'financial_transaction_pending_approval'
+  | 'financial_transaction_approved'
+  | 'financial_transaction_rejected'
   | 'general';
 
 type NotificationRow = {
@@ -19,50 +26,141 @@ type NotificationRow = {
   type: NotificationType;
   title: string;
   body: string;
-  email_sent_at: string | null;
+  push_sent_at: string | null;
+  action_url: string | null;
+  related_entity_type: string | null;
+  related_entity_id: string | null;
+  metadata: Record<string, unknown> | null;
 };
 
-function buildEmailHtml(title: string, body: string, type: NotificationType): string {
-  const accent = type === 'payment_overdue' ? '#dc2626' : type === 'payment_received' ? '#16a34a' : '#2563eb';
-  return `
-  <div dir="rtl" style="font-family: Arial, sans-serif; background:#f8fafc; padding:24px;">
-    <div style="max-width:600px;margin:0 auto;background:white;border-radius:12px;padding:24px;border:1px solid #e2e8f0;">
-      <h2 style="margin:0 0 16px;color:${accent};font-size:22px;">${title}</h2>
-      <p style="margin:0 0 16px;color:#1f2937;line-height:1.8;font-size:16px;">${body}</p>
-      <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;" />
-      <p style="margin:0;color:#6b7280;font-size:13px;">
-        هذا إشعار تلقائي من نظام فيء لإدارة الدفعات.
-      </p>
-    </div>
-  </div>`;
+type PushSubscriptionRow = {
+  id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  expiration_time: string | null;
+};
+
+function getPushKeys() {
+  const subject = Deno.env.get('WEB_PUSH_SUBJECT');
+  const publicKey = Deno.env.get('WEB_PUSH_PUBLIC_KEY');
+  const privateKey = Deno.env.get('WEB_PUSH_PRIVATE_KEY');
+
+  if (!subject || !publicKey || !privateKey) {
+    return null;
+  }
+
+  return { subject, publicKey, privateKey };
 }
 
-async function sendWithResend(to: string, subject: string, html: string): Promise<void> {
-  const resendApiKey = Deno.env.get('RESEND_API_KEY');
-  const resendFrom = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Faye <noreply@faye.local>';
+function toAppUrl(actionUrl: string | null | undefined): string {
+  const path = actionUrl && actionUrl.startsWith('/') ? actionUrl : '/';
+  return `/#${path}`;
+}
 
-  if (!resendApiKey) {
-    throw new Error('RESEND_API_KEY is missing');
-  }
-
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json',
+function buildPushPayload(notification: NotificationRow) {
+  return JSON.stringify({
+    title: notification.title,
+    body: notification.body,
+    tag: notification.related_entity_id ?? `notification:${notification.id}`,
+    icon: '/icons/icon-192.svg',
+    badge: '/icons/favicon.svg',
+    data: {
+      notificationId: notification.id,
+      actionUrl: notification.action_url ?? '/',
+      relatedEntityType: notification.related_entity_type,
+      relatedEntityId: notification.related_entity_id,
+      metadata: notification.metadata ?? {},
     },
-    body: JSON.stringify({
-      from: resendFrom,
-      to: [to],
-      subject,
-      html,
-    }),
   });
+}
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Resend error ${response.status}: ${text}`);
+function describePushError(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
+
+  if (error && typeof error === 'object' && 'body' in error) {
+    return String((error as { body?: unknown }).body ?? 'push_failed');
+  }
+
+  return String(error);
+}
+
+function shouldDisableSubscription(error: unknown): boolean {
+  if (error && typeof error === 'object' && 'statusCode' in error) {
+    const statusCode = Number((error as { statusCode?: unknown }).statusCode);
+    return statusCode === 404 || statusCode === 410;
+  }
+
+  return false;
+}
+
+async function sendPushNotifications(
+  adminClient: any,
+  notification: NotificationRow,
+  subscriptions: PushSubscriptionRow[]
+): Promise<{ delivered: boolean; error: string | null }> {
+  if (subscriptions.length === 0) {
+    return { delivered: false, error: null };
+  }
+
+  const vapidKeys = getPushKeys();
+  if (!vapidKeys) {
+    return { delivered: false, error: 'web_push_not_configured' };
+  }
+
+  webpush.setVapidDetails(vapidKeys.subject, vapidKeys.publicKey, vapidKeys.privateKey);
+
+  const payload = buildPushPayload(notification);
+  const now = new Date().toISOString();
+  let delivered = false;
+  let lastError: string | null = null;
+
+  await Promise.allSettled(
+    subscriptions.map(async (subscription) => {
+      try {
+        await webpush.sendNotification(
+          {
+            endpoint: subscription.endpoint,
+            expirationTime: subscription.expiration_time
+              ? new Date(subscription.expiration_time).getTime()
+              : null,
+            keys: {
+              p256dh: subscription.p256dh,
+              auth: subscription.auth,
+            },
+          },
+          payload
+        );
+
+        delivered = true;
+        await adminClient
+          .from('push_subscriptions')
+          .update({
+            last_seen_at: now,
+            last_failure_at: null,
+            failure_reason: null,
+            disabled_at: null,
+          })
+          .eq('id', subscription.id);
+      } catch (error) {
+        lastError = describePushError(error);
+        const nextState: Record<string, string | null> = {
+          last_failure_at: now,
+          failure_reason: lastError,
+        };
+
+        if (shouldDisableSubscription(error)) {
+          nextState.disabled_at = now;
+        }
+
+        await adminClient.from('push_subscriptions').update(nextState).eq('id', subscription.id);
+      }
+    })
+  );
+
+  return { delivered, error: lastError };
 }
 
 Deno.serve(async (req) => {
@@ -96,7 +194,9 @@ Deno.serve(async (req) => {
 
     const { data: notification, error: notificationError } = await adminClient
       .from('notifications')
-      .select('id, user_id, type, title, body, email_sent_at')
+      .select(
+        'id, user_id, type, title, body, push_sent_at, action_url, related_entity_type, related_entity_id, metadata'
+      )
       .eq('id', notificationId)
       .maybeSingle();
 
@@ -108,60 +208,58 @@ Deno.serve(async (req) => {
     }
 
     const n = notification as NotificationRow;
-    if (n.email_sent_at) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'already_sent' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    const shouldAttemptPush = !n.push_sent_at;
+    let pushSentAt: string | null = null;
+    let lastPushError: string | null = null;
+
+    if (shouldAttemptPush) {
+      const { data: subscriptions, error: subscriptionError } = await adminClient
+        .from('push_subscriptions')
+        .select('id, endpoint, p256dh, auth, expiration_time')
+        .eq('user_id', n.user_id)
+        .is('disabled_at', null);
+
+      if (!subscriptionError && subscriptions && subscriptions.length > 0) {
+        const pushResult = await sendPushNotifications(
+          adminClient,
+          {
+            ...n,
+            action_url: n.action_url ?? '/',
+            metadata: n.metadata ?? { notificationType: n.type, actionUrl: toAppUrl(n.action_url) },
+          },
+          subscriptions as PushSubscriptionRow[]
+        );
+
+        if (pushResult.delivered) {
+          pushSentAt = new Date().toISOString();
+          lastPushError = null;
+        } else {
+          lastPushError = pushResult.error;
+        }
+      }
     }
 
-    const { data: pref } = await adminClient
-      .from('notification_preferences')
-      .select('email_enabled')
-      .eq('user_id', n.user_id)
-      .maybeSingle();
-
-    if (pref && pref.email_enabled === false) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'email_disabled' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (pushSentAt || lastPushError !== null) {
+      await adminClient
+        .from('notifications')
+        .update({
+          ...(pushSentAt ? { push_sent_at: pushSentAt } : {}),
+          last_push_error: lastPushError,
+        })
+        .eq('id', n.id);
     }
 
-    const { data: profile, error: profileError } = await adminClient
-      .from('user_profiles')
-      .select('auth_user_id')
-      .eq('id', n.user_id)
-      .maybeSingle();
-
-    if (profileError || !profile?.auth_user_id) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'no_auth_user' }), {
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        push_sent_at: pushSentAt,
+        push_error: lastPushError,
+      }),
+      {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const authUser = await adminClient.auth.admin.getUserById(profile.auth_user_id);
-    const email = authUser.data?.user?.email;
-    if (!email) {
-      return new Response(JSON.stringify({ ok: true, skipped: 'no_email' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const html = buildEmailHtml(n.title, n.body, n.type);
-    await sendWithResend(email, n.title, html);
-
-    await adminClient
-      .from('notifications')
-      .update({ email_sent_at: new Date().toISOString() })
-      .eq('id', n.id);
-
-    return new Response(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      }
+    );
   } catch (error) {
     console.error('notification-dispatcher error', error);
     return new Response(JSON.stringify({ error: 'internal_error', detail: String(error) }), {

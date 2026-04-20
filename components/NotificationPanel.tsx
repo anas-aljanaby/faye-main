@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppNotification, NotificationPreference } from '../types';
+import type { PushNotificationStatus } from '../hooks/usePushNotifications';
 import NotificationPreferencesModal from './NotificationPreferencesModal';
 import ResponsiveState from './ResponsiveState';
 
@@ -11,6 +12,11 @@ interface NotificationPanelProps {
   onMarkAllAsRead: () => Promise<void>;
   preferences: NotificationPreference | null;
   onSavePreferences: (next: Omit<NotificationPreference, 'userId'>) => Promise<void>;
+  pushStatus: PushNotificationStatus;
+  pushBusy: boolean;
+  pushError: string | null;
+  onEnablePush: () => Promise<void>;
+  onDisablePush: () => Promise<void>;
 }
 
 const NotificationPanel: React.FC<NotificationPanelProps> = ({
@@ -20,6 +26,11 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
   onMarkAllAsRead,
   preferences,
   onSavePreferences,
+  pushStatus,
+  pushBusy,
+  pushError,
+  onEnablePush,
+  onDisablePush,
 }) => {
   const [showPreferences, setShowPreferences] = useState(false);
   const navigate = useNavigate();
@@ -28,14 +39,33 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
     if (type === 'payment_overdue') return '⏳';
     if (type === 'payment_received') return '✅';
     if (type === 'payment_due' || type === 'payment_reminder') return '🔔';
+    if (type === 'message_received') return '💬';
+    if (type === 'financial_transaction_pending_approval') return '🧾';
+    if (type === 'financial_transaction_approved') return '✔️';
+    if (type === 'financial_transaction_rejected') return '⚠️';
     return 'ℹ️';
   };
 
   const openNotification = async (notification: AppNotification) => {
     await onMarkAsRead(notification.id);
     onClose();
+    if (notification.actionUrl) {
+      navigate(notification.actionUrl);
+      return;
+    }
     if (notification.relatedEntityType === 'payment') {
       navigate('/payments');
+      return;
+    }
+    if (notification.relatedEntityType === 'conversation') {
+      const conversationId = typeof notification.metadata?.conversation_id === 'string'
+        ? notification.metadata.conversation_id
+        : notification.relatedEntityId;
+      navigate(conversationId ? `/messages?conversation=${conversationId}` : '/messages');
+      return;
+    }
+    if (notification.relatedEntityType === 'financial_transaction') {
+      navigate('/financial-system');
       return;
     }
     if (notification.relatedEntityType === 'orphan' && notification.relatedEntityId) {
@@ -67,7 +97,15 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {notifications.length === 0 ? (
+          {preferences?.inAppEnabled === false ? (
+            <div className="p-3 sm:p-4">
+              <ResponsiveState
+                compact
+                title="الإشعارات داخل التطبيق متوقفة"
+                description="يمكنك إعادة تفعيلها من الإعدادات إذا أردت ظهور التنبيهات هنا مرة أخرى."
+              />
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="p-3 sm:p-4">
               <ResponsiveState
                 compact
@@ -103,8 +141,13 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
       <NotificationPreferencesModal
         isOpen={showPreferences}
         preferences={preferences}
+        pushStatus={pushStatus}
+        pushBusy={pushBusy}
+        pushError={pushError}
         onClose={() => setShowPreferences(false)}
         onSave={onSavePreferences}
+        onEnablePush={onEnablePush}
+        onDisablePush={onDisablePush}
       />
     </>
   );

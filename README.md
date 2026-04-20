@@ -20,6 +20,7 @@ A comprehensive orphan care management system built with React, TypeScript, and 
    # Supabase Configuration
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_WEB_PUSH_PUBLIC_KEY=your_vapid_public_key
 
    # Google Gemini API Key
    GEMINI_API_KEY=your_gemini_api_key
@@ -40,6 +41,8 @@ Team/sponsor login creation and **unlinking** (delete Auth user + clear `user_pr
 
 ```bash
 supabase functions deploy admin-provision-login
+supabase functions deploy notification-subscriptions
+supabase functions deploy notification-dispatcher
 ```
 
 On hosted Supabase, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` are available to the function automatically. The handler validates the caller’s JWT and checks `is_system_admin` before running any admin action.
@@ -47,6 +50,67 @@ On hosted Supabase, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_R
 **Local development:** run `supabase start`, link your project if needed, then serve or deploy the function per [Supabase Edge Functions docs](https://supabase.com/docs/guides/functions).
 
 The Vite app only needs the existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; never put the service role key in the frontend.
+
+### Web Push Setup
+
+The notifications system now supports installed-PWA push notifications only.
+
+1. Generate a VAPID keypair once:
+
+```bash
+npx web-push generate-vapid-keys
+```
+
+This prints:
+
+```txt
+=======================================
+
+Public Key:
+...
+
+Private Key:
+...
+
+=======================================
+```
+
+2. Put the public key in the frontend `.env`:
+
+```env
+VITE_WEB_PUSH_PUBLIC_KEY=your_vapid_public_key
+```
+
+3. Put the same public key plus the private key in your Supabase Edge Function secrets:
+
+```env
+WEB_PUSH_PUBLIC_KEY=your_vapid_public_key
+WEB_PUSH_PRIVATE_KEY=your_vapid_private_key
+WEB_PUSH_SUBJECT=mailto:you@example.com
+```
+
+With the Supabase CLI:
+
+```bash
+supabase secrets set \
+  WEB_PUSH_PUBLIC_KEY=your_vapid_public_key \
+  WEB_PUSH_PRIVATE_KEY=your_vapid_private_key \
+  WEB_PUSH_SUBJECT=mailto:you@example.com
+```
+
+4. Deploy the edge functions after setting secrets:
+
+```bash
+supabase functions deploy notification-subscriptions
+supabase functions deploy notification-dispatcher
+```
+
+5. Open the installed PWA on a device, sign in, then go to notification settings and enable device push on that device.
+
+Notes:
+- Generate the VAPID keys once per environment, not per user.
+- `WEB_PUSH_SUBJECT` should be a valid contact, usually `mailto:team@yourdomain.com`.
+- Vercel only needs `VITE_WEB_PUSH_PUBLIC_KEY`. The private key must stay in Supabase secrets only.
 
 ## Build for Production
 
@@ -75,6 +139,7 @@ The build output will be in the `dist` directory.
    In the Vercel project settings, add the following environment variables:
    - `VITE_SUPABASE_URL` - Your Supabase project URL
    - `VITE_SUPABASE_ANON_KEY` - Your Supabase anonymous key
+   - `VITE_WEB_PUSH_PUBLIC_KEY` - Your VAPID public key for browser push subscriptions
    - `GEMINI_API_KEY` - Your Google Gemini API key
 
 4. **Deploy:**

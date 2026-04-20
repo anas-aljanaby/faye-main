@@ -13,6 +13,7 @@
 
 DROP TABLE IF EXISTS messages CASCADE;
 DROP TABLE IF EXISTS conversations CASCADE;
+DROP TABLE IF EXISTS push_subscriptions CASCADE;
 DROP TABLE IF EXISTS notification_preferences CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS payment_status_history CASCADE;
@@ -59,8 +60,15 @@ DROP FUNCTION IF EXISTS send_payment_reminders() CASCADE;
 DROP FUNCTION IF EXISTS mark_overdue_payments() CASCADE;
 DROP FUNCTION IF EXISTS generate_monthly_payments() CASCADE;
 DROP FUNCTION IF EXISTS trigger_notification_dispatch() CASCADE;
+DROP FUNCTION IF EXISTS ensure_notification_preferences_for_user_profile() CASCADE;
+DROP FUNCTION IF EXISTS notification_type_category(TEXT) CASCADE;
+DROP FUNCTION IF EXISTS is_notification_type_enabled(UUID, TEXT) CASCADE;
+DROP FUNCTION IF EXISTS enqueue_user_notification(UUID, UUID, TEXT, TEXT, TEXT, TEXT, UUID, TEXT, JSONB) CASCADE;
 DROP FUNCTION IF EXISTS handle_payment_status_change() CASCADE;
 DROP FUNCTION IF EXISTS handle_payment_insert_notification() CASCADE;
+DROP FUNCTION IF EXISTS handle_message_insert_notification() CASCADE;
+DROP FUNCTION IF EXISTS handle_pending_expense_notification() CASCADE;
+DROP FUNCTION IF EXISTS handle_expense_status_notification() CASCADE;
 DROP FUNCTION IF EXISTS get_payment_organization_id(UUID) CASCADE;
 DROP FUNCTION IF EXISTS enqueue_payment_notification(UUID, UUID, TEXT, TEXT, TEXT, TEXT, UUID) CASCADE;
 

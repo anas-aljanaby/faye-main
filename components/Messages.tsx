@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { messageTemplates, MessageTemplate } from '../data';
 import { useConversations } from '../hooks/useConversations';
 import { useMessages } from '../hooks/useMessages';
@@ -281,10 +282,39 @@ const Messages: React.FC = () => {
     const [showNewConversationModal, setShowNewConversationModal] = useState(false);
     const [availableUsers, setAvailableUsers] = useState<Array<{ id: string; name: string; avatar_url?: string; role: string }>>([]);
     const [templates, setTemplates] = useState<MessageTemplate[]>(messageTemplates);
+    const [searchParams, setSearchParams] = useSearchParams();
     
     const { conversations, loading: conversationsLoading, refetch: refetchConversations } = useConversations();
     const { messages, loading: messagesLoading, sendMessage } = useMessages(selectedConversationId);
     const { userProfile, user } = useAuth();
+    const selectedConversationFromUrl = searchParams.get('conversation');
+
+    useEffect(() => {
+        if (!selectedConversationFromUrl || !conversations.some(c => c.id === selectedConversationFromUrl)) {
+            return;
+        }
+
+        setSelectedConversationId(prev => prev === selectedConversationFromUrl ? prev : selectedConversationFromUrl);
+    }, [conversations, selectedConversationFromUrl]);
+
+    useEffect(() => {
+        const currentConversation = searchParams.get('conversation');
+        if (!selectedConversationId) {
+            if (!currentConversation) return;
+            const nextParams = new URLSearchParams(searchParams);
+            nextParams.delete('conversation');
+            setSearchParams(nextParams, { replace: true });
+            return;
+        }
+
+        if (currentConversation === selectedConversationId) {
+            return;
+        }
+
+        const nextParams = new URLSearchParams(searchParams);
+        nextParams.set('conversation', selectedConversationId);
+        setSearchParams(nextParams, { replace: true });
+    }, [searchParams, selectedConversationId, setSearchParams]);
 
     // Fetch available users for starting new conversations
     useEffect(() => {
