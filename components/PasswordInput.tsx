@@ -6,6 +6,7 @@ interface PasswordInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
   wrapperClassName?: string;
   inputClassName?: string;
   inputDir?: 'ltr' | 'rtl' | 'auto';
+  toggleButtonSide?: 'start' | 'end';
 }
 
 const joinClasses = (...classes: Array<string | false | null | undefined>) =>
@@ -58,17 +59,22 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
   wrapperClassName,
   inputClassName,
   inputDir = 'ltr',
+  toggleButtonSide = 'start',
   className: _ignoredClassName,
   ...inputProps
 }) => {
   const generatedId = useId();
   const resolvedId = id ?? generatedId;
   const [isVisible, setIsVisible] = useState(false);
+  const isRtlInput = inputDir === 'rtl';
+  const inputPaddingClass = toggleButtonSide === 'start'
+    ? (isRtlInput ? 'ps-14 pe-4' : 'ps-4 pe-14')
+    : (isRtlInput ? 'ps-4 pe-14' : 'ps-14 pe-4');
 
   return (
     <div className={wrapperClassName}>
       {label ? (
-        <label htmlFor={resolvedId} className={joinClasses('mb-2 block text-sm font-medium text-gray-700', labelClassName)}>
+        <label htmlFor={resolvedId} className={joinClasses('mb-2.5 block text-sm font-semibold text-gray-700', labelClassName)}>
           {label}
         </label>
       ) : null}
@@ -80,7 +86,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
           type={isVisible ? 'text' : 'password'}
           dir={inputDir}
           className={joinClasses(
-            'w-full rounded-xl border border-gray-300 bg-white py-3 ps-4 pe-14 text-sm transition focus:border-primary focus:ring-2 focus:ring-primary md:text-base',
+            `w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 text-base text-slate-900 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow,background-color,color] placeholder:text-slate-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 ${inputPaddingClass}`,
             inputClassName
           )}
         />
@@ -88,7 +94,10 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
         <button
           type="button"
           onClick={() => setIsVisible((current) => !current)}
-          className="absolute end-2 top-1/2 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-primary"
+          className={joinClasses(
+            'absolute top-1/2 inline-flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-white hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20',
+            toggleButtonSide === 'start' ? 'start-2' : 'end-2'
+          )}
           aria-label={isVisible ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
           title={isVisible ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
         >

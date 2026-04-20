@@ -121,6 +121,12 @@ down below `md` while preserving the larger desktop presentation. Inputs and
 the submit button now use full-width 48px+ touch targets inside a nearly
 full-width card, and the gradient background remains intact.
 
+Follow-up (2026-04-20): Refined the sign-in field styling in
+`components/SignIn.tsx` and the shared `components/PasswordInput.tsx` to fix
+the mobile password-field offset caused by mixed RTL/LTR spacing, raise the
+email/password text sizing to a more readable 16px mobile baseline, and give
+both fields more consistent touch-friendly sizing, focus states, and spacing.
+
 **Known Issues:** No new sign-in specific issues were found during code
 review. `npm run build` still reports the existing Vite chunk-size warning
 for the large main bundle.
