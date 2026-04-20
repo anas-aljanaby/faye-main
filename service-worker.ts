@@ -5,6 +5,7 @@ import { clientsClaim } from 'workbox-core';
 import { createHandlerBoundToURL, precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
 import { NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
+import { resolveOrganizationForHostname } from './config/organizations';
 
 declare let self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<unknown>;
@@ -63,14 +64,15 @@ const toAppUrl = (actionUrl?: string) => {
 
 self.addEventListener('push', (event) => {
   const payload = event.data?.json() as PushPayload | undefined;
+  const organization = resolveOrganizationForHostname(self.location.hostname).organization;
   const title = payload?.title ?? 'يتيم';
   const body = payload?.body ?? 'لديك إشعار جديد.';
 
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
-      icon: payload?.icon ?? '/icons/icon-192.svg',
-      badge: payload?.badge ?? '/icons/favicon.svg',
+      icon: payload?.icon ?? organization.assets.icon192,
+      badge: payload?.badge ?? organization.assets.favicon,
       tag: payload?.tag,
       data: payload?.data ?? { actionUrl: '/' },
       dir: 'rtl',

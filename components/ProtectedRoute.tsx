@@ -1,6 +1,8 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useOrganization } from '../contexts/OrganizationContext';
+import OrganizationAccessState from './organization/OrganizationAccessState';
 import ResponsiveState from './ResponsiveState';
 
 interface ProtectedRouteProps {
@@ -8,7 +10,8 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, userProfile } = useAuth();
+  const { organization } = useOrganization();
 
   if (loading) {
     return (
@@ -23,6 +26,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/signin" replace />;
+  }
+
+  if (userProfile && userProfile.organization_id !== organization.id) {
+    return <OrganizationAccessState userOrganizationId={userProfile.organization_id} />;
   }
 
   return <>{children}</>;

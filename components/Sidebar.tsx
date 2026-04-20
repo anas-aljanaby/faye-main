@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useOrganization } from '../contexts/OrganizationContext';
 import { getSidebarNavItems, useNavigationCounts, type AppNavItemConfig } from './navigationConfig';
 
 type NavItemProps = Pick<AppNavItemConfig, 'to' | 'text' | 'icon'> & {
@@ -80,6 +81,7 @@ const clampSidebarWidthForViewport = (preferredWidth: number, viewportWidth: num
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { signOut, userProfile } = useAuth();
+  const { organization } = useOrganization();
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
@@ -198,13 +200,16 @@ const Sidebar: React.FC = () => {
         </div>
       )}
 
-      <div className={`flex h-16 items-center border-b border-gray-200/50 p-4 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+        <div className={`flex h-16 items-center border-b border-gray-200/50 p-4 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         {!isCollapsed && (
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-lg font-bold text-white shadow-sm">
-              ف
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-sm ring-1 ring-black/5">
+              <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full object-contain" />
             </div>
-            <span className="truncate text-xl font-bold text-primary">منصة يتيم</span>
+            <div className="min-w-0">
+              <span className="block truncate text-xl font-bold text-primary">{organization.name}</span>
+              <span className="block truncate text-xs text-text-secondary">{organization.productName}</span>
+            </div>
           </div>
         )}
 
@@ -246,7 +251,7 @@ const Sidebar: React.FC = () => {
 
         {!isCollapsed && (
           <div className="mt-4 text-center text-xs text-gray-400">
-            <p>يتيم © {new Date().getFullYear()}</p>
+            <p>{organization.name} © {new Date().getFullYear()}</p>
             <p>الإصدار 2.1.0</p>
           </div>
         )}

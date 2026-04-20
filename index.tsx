@@ -4,6 +4,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import './index.css';
+import { OrganizationProvider } from './contexts/OrganizationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import App from './App';
 
@@ -36,30 +37,32 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister,
-        maxAge: PERSIST_MAX_AGE,
-        dehydrateOptions: {
-          shouldDehydrateQuery: (query) => {
-            // Never persist queries that failed — bad results should not survive a reload
-            if (query.state.status === 'error') return false;
-            // Never persist list queries that resolved to an empty array — these are the most
-            // likely victims of a race between RLS header setup and the first fetch
-            const listQueryKeys = ['orphans-basic', 'sponsors-basic', 'team-members-basic'];
-            const firstKey = Array.isArray(query.queryKey) ? String(query.queryKey[0]) : '';
-            if (listQueryKeys.includes(firstKey) && Array.isArray(query.state.data) && query.state.data.length === 0) {
-              return false;
-            }
-            return true;
+    <OrganizationProvider>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister,
+          maxAge: PERSIST_MAX_AGE,
+          dehydrateOptions: {
+            shouldDehydrateQuery: (query) => {
+              // Never persist queries that failed — bad results should not survive a reload
+              if (query.state.status === 'error') return false;
+              // Never persist list queries that resolved to an empty array — these are the most
+              // likely victims of a race between RLS header setup and the first fetch
+              const listQueryKeys = ['orphans-basic', 'sponsors-basic', 'team-members-basic'];
+              const firstKey = Array.isArray(query.queryKey) ? String(query.queryKey[0]) : '';
+              if (listQueryKeys.includes(firstKey) && Array.isArray(query.state.data) && query.state.data.length === 0) {
+                return false;
+              }
+              return true;
+            },
           },
-        },
-      }}
-    >
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </PersistQueryClientProvider>
+        }}
+      >
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </PersistQueryClientProvider>
+    </OrganizationProvider>
   </React.StrictMode>
 );

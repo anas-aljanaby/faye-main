@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { useTheme, ThemeMode, BrandColor, FontSize } from '../contexts/ThemeContext';
+import { useOrganization } from '../contexts/OrganizationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
@@ -9,7 +10,8 @@ interface ThemeSettingsProps {
 }
 
 const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
-  const { mode, setMode, brandColor, setBrandColor, fontSize, setFontSize } = useTheme();
+  const { mode, setMode, brandColor, setBrandColor, brandColorLocked, fontSize, setFontSize } = useTheme();
+  const { organization } = useOrganization();
   const modalRef = useRef<HTMLDivElement>(null);
 
   useBodyScrollLock(isOpen);
@@ -25,7 +27,7 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   const colors: { id: BrandColor; color: string; label: string }[] = [
-    { id: 'default', color: '#8c1c3e', label: 'العنابي (الأصلي)' },
+    { id: 'organization', color: organization.theme.light.primary, label: `${organization.name} (المعتمد)` },
     { id: 'blue', color: '#2563eb', label: 'الأزرق' },
     { id: 'green', color: '#059669', label: 'الأخضر' },
     { id: 'purple', color: '#7c3aed', label: 'البنفسجي' },
@@ -91,25 +93,43 @@ const ThemeSettings: React.FC<ThemeSettingsProps> = ({ isOpen, onClose }) => {
 
                 <section>
                   <h4 className="text-sm font-bold text-text-secondary uppercase mb-3 tracking-wider">لون السمة</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {colors.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => setBrandColor(c.id)}
-                        className={`group relative w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900
-                          ${brandColor === c.id ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-offset-gray-900' : ''}`}
-                        style={{ backgroundColor: c.color }}
-                        title={c.label}
-                        aria-label={`تغيير اللون إلى ${c.label}`}
-                      >
-                        {brandColor === c.id && (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  {brandColorLocked ? (
+                    <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800/70">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="inline-flex h-12 w-12 shrink-0 rounded-full ring-2 ring-gray-200 ring-offset-2 dark:ring-gray-600 dark:ring-offset-gray-900"
+                          style={{ backgroundColor: organization.theme.light.primary }}
+                          aria-hidden="true"
+                        />
+                        <div>
+                          <p className="font-semibold text-text-primary">{organization.name}</p>
+                          <p className="text-sm text-text-secondary">
+                            ألوان الهوية تُدار من إعدادات المنظمة للحفاظ على نفس العلامة عبر هذا النطاق.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-3">
+                      {colors.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => setBrandColor(c.id)}
+                          className={`group relative w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-900
+                            ${brandColor === c.id ? 'ring-2 ring-offset-2 ring-gray-400 dark:ring-offset-gray-900' : ''}`}
+                          style={{ backgroundColor: c.color }}
+                          title={c.label}
+                          aria-label={`تغيير اللون إلى ${c.label}`}
+                        >
+                          {brandColor === c.id && (
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </section>
 
                 <section>

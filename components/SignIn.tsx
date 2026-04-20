@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useOrganization } from '../contexts/OrganizationContext';
+import OrganizationAccessState from './organization/OrganizationAccessState';
 import PasswordInput from './PasswordInput';
 
 const SignIn: React.FC = () => {
@@ -8,10 +10,19 @@ const SignIn: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, userProfile } = useAuth();
+  const { organization } = useOrganization();
   const navigate = useNavigate();
   const fieldLabelClassName = 'mb-2.5 block text-sm font-semibold text-slate-700';
   const fieldInputClassName = 'min-h-[56px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-base text-slate-900 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow,background-color,color] placeholder:text-slate-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10';
+
+  if (user && userProfile && userProfile.organization_id !== organization.id) {
+    return <OrganizationAccessState userOrganizationId={userProfile.organization_id} />;
+  }
+
+  if (user && userProfile) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,11 +51,11 @@ const SignIn: React.FC = () => {
         {/* Logo/Header */}
         <div className="w-full">
           <div className="mb-6 text-center md:mb-8">
-            <div className="mb-3 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.75rem] shadow-lg md:mb-4 md:h-20 md:w-20 md:rounded-full">
-              <img src="/icons/logo-placeholder.svg" alt="Yetim Logo" className="h-full w-full object-cover" />
+            <div className="mb-3 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-[1.75rem] bg-white p-1.5 shadow-lg md:mb-4 md:h-20 md:w-20 md:rounded-full md:p-2">
+              <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full object-contain" />
             </div>
-            <h1 className="mb-1 text-2xl font-bold text-gray-800 md:mb-2 md:text-3xl">منصة يتيم</h1>
-            <p className="mx-auto max-w-xs text-sm text-text-secondary md:text-base">نظام إدارة رعاية الأيتام</p>
+            <h1 className="mb-1 text-2xl font-bold text-gray-800 md:mb-2 md:text-3xl">{organization.name}</h1>
+            <p className="mx-auto max-w-xs text-sm text-text-secondary md:text-base">{organization.subtitle}</p>
           </div>
 
           {/* Sign In Form */}
@@ -119,7 +130,7 @@ const SignIn: React.FC = () => {
 
           {/* Footer */}
           <div className="mt-6 text-center text-xs text-text-secondary md:mt-8 md:text-sm">
-            <p>© 2024 منصة يتيم. جميع الحقوق محفوظة.</p>
+            <p>© {new Date().getFullYear()} {organization.name}. جميع الحقوق محفوظة.</p>
           </div>
         </div>
       </div>

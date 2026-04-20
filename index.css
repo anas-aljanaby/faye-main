@@ -6,28 +6,28 @@
 
 /* Light mode defaults */
 :root {
-  --color-primary: #8c1c3e;
-  --color-primary-hover: #701631;
-  --color-primary-light: #fbe9ef;
+  --color-primary: #0f766e;
+  --color-primary-hover: #0b5e58;
+  --color-primary-light: #d9f3ef;
 
-  --bg-page: #fdfaf6;
-  --bg-sidebar: #fcf8f3;
+  --bg-page: #f4fbf8;
+  --bg-sidebar: #eef8f5;
   --bg-card: #ffffff;
-  --text-primary: #1f2937;
-  --text-secondary: #6b7280;
+  --text-primary: #16313a;
+  --text-secondary: #5f7280;
 }
 
 /* Dark mode overrides */
 html.dark {
-  --color-primary: #b93c66;
-  --color-primary-hover: #d65d85;
-  --color-primary-light: #3a1d26;
+  --color-primary: #34d3c5;
+  --color-primary-hover: #5ee2d6;
+  --color-primary-light: #12383a;
 
-  --bg-page: #111827;
-  --bg-sidebar: #1f2937;
-  --bg-card: #1f2937;
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
+  --bg-page: #07181d;
+  --bg-sidebar: #0c2429;
+  --bg-card: #10262c;
+  --text-primary: #f2fffd;
+  --text-secondary: #99b8b4;
 }
 
 @layer base {
@@ -125,4 +125,3 @@ html[dir="rtl"] select:not([multiple]) {
   color: #9ca3af; /* gray-400 */
   opacity: 1;
 }
-

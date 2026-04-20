@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
           srcDir: '.',
           filename: 'service-worker.ts',
           registerType: 'prompt',
-          includeAssets: ['icons/favicon.svg', 'icons/apple-touch-icon.svg'],
+          includeAssets: ['icons/favicon.svg', 'icons/apple-touch-icon.svg', 'orgs/**/*'],
           manifest: false,
           injectManifest: {
             maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,

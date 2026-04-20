@@ -63,8 +63,6 @@ function buildPushPayload(notification: NotificationRow) {
     title: notification.title,
     body: notification.body,
     tag: notification.related_entity_id ?? `notification:${notification.id}`,
-    icon: '/icons/icon-192.svg',
-    badge: '/icons/favicon.svg',
     data: {
       notificationId: notification.id,
       actionUrl: notification.action_url ?? '/',

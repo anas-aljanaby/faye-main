@@ -1,5 +1,7 @@
 # Vercel Deployment Checklist
 
+For the current org-domain setup and the future-org workflow, see [docs/ORGANIZATION_SUBDOMAINS.md](/Users/anas/Workspace/github/faye-main/docs/ORGANIZATION_SUBDOMAINS.md).
+
 ## Pre-Deployment Checklist
 
 ### 1. Environment Variables
@@ -57,6 +59,17 @@ In the Vercel project settings:
 1. Click **Deploy**
 2. Wait for the build to complete
 3. Your app will be live at `https://your-project.vercel.app`
+
+### Step 5: Attach Yetim Domains
+Attach these domains to the same Vercel project:
+
+- `yetim.app`
+- `*.yetim.app`
+
+Current org mapping:
+
+- `oted.yetim.app` -> OTED
+- `yetim.app` -> redirects to OTED inside the app
 
 ## Post-Deployment
 
@@ -128,4 +141,3 @@ If you encounter issues:
 2. Check browser console for errors
 3. Verify environment variables are set correctly
 4. Test locally first to isolate issues
-

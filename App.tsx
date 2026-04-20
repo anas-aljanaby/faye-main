@@ -21,10 +21,49 @@ import { PoliciesNavProvider } from './components/policies/PoliciesNavContext';
 import SignIn from './components/SignIn';
 import ProtectedRoute from './components/ProtectedRoute';
 import TeamMemberRoute from './components/TeamMemberRoute';
+import ResponsiveState from './components/ResponsiveState';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { useOrganization } from './contexts/OrganizationContext';
 
 function App() {
   const { isOnline } = useNetworkStatus();
+  const { canonicalOrigin, organization, resolution } = useOrganization();
+
+  if (resolution.kind === 'redirect') {
+    return (
+      <ResponsiveState
+        variant="loading"
+        fullScreen
+        title="جارٍ فتح نطاق المنظمة"
+        description={`ننقلك الآن إلى نطاق ${organization.name} المعتمد.`}
+      />
+    );
+  }
+
+  if (resolution.kind === 'unknown-subdomain') {
+    const unknownHostname = resolution.requestedSlug
+      ? `${resolution.requestedSlug}.yetim.app`
+      : resolution.hostname;
+
+    return (
+      <ResponsiveState
+        variant="error"
+        fullScreen
+        title="هذا النطاق غير مهيأ بعد"
+        description={`لا توجد منظمة مفعلة على ${unknownHostname}. افتح النطاق الصحيح أو أضف المنظمة إلى إعدادات التطبيق أولاً.`}
+      >
+        <div className="mt-6 flex w-full flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => window.location.assign(canonicalOrigin)}
+            className="min-h-[48px] rounded-xl bg-primary px-4 py-3 font-semibold text-white transition-colors hover:bg-primary-hover"
+          >
+            فتح نطاق {organization.name}
+          </button>
+        </div>
+      </ResponsiveState>
+    );
+  }
 
   return (
     <AuthProvider>

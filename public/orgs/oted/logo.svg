@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="otedLogoTitle otedLogoDesc">
+  <title id="otedLogoTitle">OTED Logo</title>
+  <desc id="otedLogoDesc">Starter monogram logo for the OTED organization on Yetim.</desc>
+  <defs>
+    <linearGradient id="otedLogoBg" x1="32" x2="224" y1="28" y2="228" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f766e" />
+      <stop offset="1" stop-color="#115e59" />
+    </linearGradient>
+  </defs>
+  <rect width="224" height="224" x="16" y="16" rx="56" fill="url(#otedLogoBg)" />
+  <path d="M73 116c0-31 25-56 56-56 18 0 34 8 45 21" fill="none" stroke="#d9f3ef" stroke-linecap="round" stroke-width="18" />
+  <path d="M181 114c0 30-24 54-54 54-22 0-40-10-50-28" fill="none" stroke="#ecfdf9" stroke-linecap="round" stroke-width="18" />
+  <circle cx="183" cy="84" r="13" fill="#fef3c7" />
+  <text x="128" y="212" fill="#f8fffd" font-family="Arial, sans-serif" font-size="40" font-weight="700" letter-spacing="8" text-anchor="middle">OTED</text>
+</svg>
