@@ -538,13 +538,13 @@ interface TeamListProps {
 
 const MobileTeamMemberCard: React.FC<{
     member: TeamMember;
-    role: string;
-    isSysAdmin: boolean;
+    roleLabel: string;
+    showAdminDetails: boolean;
     accountsLoading: boolean;
     accountStatus?: string;
     canQuickCreate: boolean;
     onQuickCreate: () => void;
-}> = ({ member, role, isSysAdmin, accountsLoading, accountStatus, canQuickCreate, onQuickCreate }) => (
+}> = ({ member, roleLabel, showAdminDetails, accountsLoading, accountStatus, canQuickCreate, onQuickCreate }) => (
     <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex items-start gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-light text-lg font-bold text-primary">
@@ -554,12 +554,12 @@ const MobileTeamMemberCard: React.FC<{
                 <div className="flex flex-wrap items-center gap-2">
                     <h3 className="truncate text-base font-bold text-gray-800">{member.name}</h3>
                     <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-600">
-                        {role}
+                        {roleLabel}
                     </span>
                 </div>
-                <div className="mt-2">
-                    {isSysAdmin ? (
-                        member.uuid ? (
+                {showAdminDetails && (
+                    <div className="mt-2">
+                        {member.uuid ? (
                             <AccountStatusBadge
                                 status={accountStatus as any}
                                 loading={accountsLoading}
@@ -567,13 +567,9 @@ const MobileTeamMemberCard: React.FC<{
                             />
                         ) : (
                             <span className="text-xs text-gray-400">لا يوجد ملف مرتبط</span>
-                        )
-                    ) : (
-                        <span className="rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-bold text-green-600">
-                            نشط
-                        </span>
-                    )}
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
 
@@ -600,7 +596,7 @@ const MobileTeamMemberCard: React.FC<{
 const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
     const { teamMembers: teamMembersData, loading, refetch: refetchTeamMembers } = useTeamMembersBasic();
     const { teamMembers: teamMembersWithPermissions, togglePermission, isManager, loading: permissionsLoading, refetch: refetchPermissions } = usePermissions();
-    const { isManager: checkIsManager, userProfile } = useAuth();
+    const { userProfile } = useAuth();
     const queryClient = useQueryClient();
     const isSysAdmin = userProfile?.is_system_admin === true;
     const [teamList, setTeamList] = useState<TeamMember[]>([]);
@@ -769,7 +765,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
         <>
         <div className="space-y-6 pb-24">
             {/* Permissions Panel for Managers */}
-            {isManager && (
+            {isSysAdmin && isManager && (
                 <PermissionsPanel
                     teamMembers={teamMembersWithPermissions}
                     loading={permissionsLoading}
@@ -811,7 +807,9 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                         <button onClick={() => setTeamViewMode('table')} className={`px-3 py-2 rounded-lg transition-all ${teamViewMode === 'table' ? 'bg-white text-primary shadow-sm font-bold' : 'text-gray-500'}`}>جدول</button>
                         <button onClick={() => setTeamViewMode('grid')} className={`px-3 py-2 rounded-lg transition-all ${teamViewMode === 'grid' ? 'bg-white text-primary shadow-sm font-bold' : 'text-gray-500'}`}>بطاقات</button>
                     </div>
-                    <button className="min-h-[48px] w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg md:w-auto" onClick={() => setIsAddModalOpen(true)}>إضافة موظف</button>
+                    {isSysAdmin && (
+                        <button className="min-h-[48px] w-full rounded-xl bg-primary px-6 py-2.5 text-sm font-bold text-white shadow-lg md:w-auto" onClick={() => setIsAddModalOpen(true)}>إضافة موظف</button>
+                    )}
                 </div>
             </div>
 
@@ -824,17 +822,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                     <div className="space-y-3 md:hidden">
                         {filteredTeamMembers.map(member => {
                             const memberPerms = getMemberPermissions(member.id);
-                            const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
-                            const memberPermissions = memberPerms?.permissions;
-                            const hasNoPermissions = !memberPermissions || (
-                                !memberPermissions.can_view_financials &&
-                                !memberPermissions.can_edit_orphans &&
-                                !memberPermissions.can_edit_sponsors &&
-                                !memberPermissions.can_create_expense &&
-                                !memberPermissions.can_approve_expense &&
-                                !memberPermissions.can_edit_transactions &&
-                                !memberPermissions.is_manager
-                            );
+                            const roleLabel = isSysAdmin && memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
                             const acc = member.uuid ? accountsMap[member.uuid] : undefined;
                             const canQuickCreate =
                                 isSysAdmin && member.uuid && acc?.status === 'no_login';
@@ -843,8 +831,8 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                 <MobileTeamMemberCard
                                     key={member.id}
                                     member={member}
-                                    role={role}
-                                    isSysAdmin={isSysAdmin}
+                                    roleLabel={roleLabel}
+                                    showAdminDetails={isSysAdmin}
                                     accountsLoading={accountsLoading}
                                     accountStatus={acc?.status}
                                     canQuickCreate={Boolean(canQuickCreate)}
@@ -863,20 +851,16 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                             <tr>
                                                 <th className="p-4 border-b">الاسم</th>
                                                 <th className="p-4 border-b">الدور</th>
-                                                {isSysAdmin ? (
-                                                    <th className="p-4 border-b">حساب الدخول</th>
-                                                ) : (
-                                                    <th className="p-4 border-b">الحالة</th>
-                                                )}
+                                                {isSysAdmin && <th className="p-4 border-b">حساب الدخول</th>}
                                                 <th className="p-4 border-b text-center">الإجراءات</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-50">
                                             {filteredTeamMembers.map(member => {
                                                 const memberPerms = getMemberPermissions(member.id);
-                                                const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
+                                                const role = isSysAdmin && memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
                                                 const memberPermissions = memberPerms?.permissions;
-                                                const hasNoPermissions = !memberPermissions || (
+                                                const hasNoPermissions = isSysAdmin && (!memberPermissions || (
                                                     !memberPermissions.can_view_financials &&
                                                     !memberPermissions.can_edit_orphans &&
                                                     !memberPermissions.can_edit_sponsors &&
@@ -884,7 +868,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                     !memberPermissions.can_approve_expense &&
                                                     !memberPermissions.can_edit_transactions &&
                                                     !memberPermissions.is_manager
-                                                );
+                                                ));
                                                 const acc = member.uuid ? accountsMap[member.uuid] : undefined;
                                                 const canQuickCreate =
                                                     isSysAdmin && member.uuid && acc?.status === 'no_login';
@@ -894,16 +878,16 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                         <td className="p-4 text-gray-600">
                                                             <div className="flex items-center gap-2">
                                                                 <span>{role}</span>
-                                                                {hasNoPermissions && (
+                                                                {hasNoPermissions ? (
                                                                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
                                                                         بدون صلاحيات
                                                                     </span>
-                                                                )}
+                                                                ) : null}
                                                             </div>
                                                         </td>
-                                                        <td className="p-4">
-                                                            {isSysAdmin ? (
-                                                                member.uuid ? (
+                                                        {isSysAdmin && (
+                                                            <td className="p-4">
+                                                                {member.uuid ? (
                                                                     <AccountStatusBadge
                                                                         status={acc?.status}
                                                                         loading={accountsLoading}
@@ -911,11 +895,9 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                                     />
                                                                 ) : (
                                                                     <span className="text-xs text-gray-400">—</span>
-                                                                )
-                                                            ) : (
-                                                                <span className="text-[10px] font-bold text-green-600">نشط</span>
-                                                            )}
-                                                        </td>
+                                                                )}
+                                                            </td>
+                                                        )}
                                                         <td className="p-4 text-center">
                                                             <div className="flex items-center justify-center gap-2 flex-wrap">
                                                                 <Link to={`/team/${member.id}`} onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-primary transition-colors">عرض</Link>
@@ -943,9 +925,9 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                 <motion.div key="grid" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
                                     {filteredTeamMembers.map(member => {
                                         const memberPerms = getMemberPermissions(member.id);
-                                        const role = memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
+                                        const role = isSysAdmin && memberPerms?.permissions?.is_manager ? 'مدير' : 'عضو فريق';
                                         const memberPermissions = memberPerms?.permissions;
-                                        const hasNoPermissions = !memberPermissions || (
+                                        const hasNoPermissions = isSysAdmin && (!memberPermissions || (
                                             !memberPermissions.can_view_financials &&
                                             !memberPermissions.can_edit_orphans &&
                                             !memberPermissions.can_edit_sponsors &&
@@ -953,7 +935,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                             !memberPermissions.can_approve_expense &&
                                             !memberPermissions.can_edit_transactions &&
                                             !memberPermissions.is_manager
-                                        );
+                                        ));
                                         const acc = member.uuid ? accountsMap[member.uuid] : undefined;
                                         const canQuickCreate =
                                             isSysAdmin && member.uuid && acc?.status === 'no_login';
@@ -965,11 +947,11 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                 <h4 className="font-bold text-gray-800">{member.name}</h4>
                                                 <div className="mb-2 flex items-center gap-2">
                                                     <p className="text-xs text-gray-500">{role}</p>
-                                                    {hasNoPermissions && (
+                                                    {hasNoPermissions ? (
                                                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
                                                             بدون صلاحيات
                                                         </span>
-                                                    )}
+                                                    ) : null}
                                                 </div>
                                                 {isSysAdmin && member.uuid && (
                                                     <div className="mb-2" onClick={(e) => e.stopPropagation()}>
@@ -981,9 +963,6 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                                     </div>
                                                 )}
                                                 <div className="flex flex-col sm:flex-row gap-2 w-full mt-auto">
-                                                    {!isSysAdmin && (
-                                                        <span className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-green-50 text-green-600">نشط</span>
-                                                    )}
                                                     <Link
                                                         to={`/team/${member.id}`}
                                                         onClick={(e) => e.stopPropagation()}
@@ -1048,10 +1027,12 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
                     <span className="text-xs">تصدير</span>
                 </button>
-                <button onClick={() => setIsAddModalOpen(true)} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                    <span className="text-xs">إضافة</span>
-                </button>
+                {isSysAdmin && (
+                    <button onClick={() => setIsAddModalOpen(true)} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        <span className="text-xs">إضافة</span>
+                    </button>
+                )}
             </div>
         )}
 
@@ -1062,19 +1043,21 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                 onSave={handleSaveMember}
             />
         )}
-        <AddProfileWithLoginModal
-            open={isAddModalOpen}
-            onOpenChange={setIsAddModalOpen}
-            role="team_member"
-            onSuccess={() => {
-                void refetchTeamMembers();
-                void refetchPermissions();
-                void queryClient.invalidateQueries({ queryKey: ['team-members-basic'] });
-                void queryClient.invalidateQueries({ queryKey: ['team-members'] });
-                void queryClient.invalidateQueries({ queryKey: ['account-statuses'] });
-                void queryClient.invalidateQueries({ queryKey: ['account-status'] });
-            }}
-        />
+        {isSysAdmin && (
+            <AddProfileWithLoginModal
+                open={isAddModalOpen}
+                onOpenChange={setIsAddModalOpen}
+                role="team_member"
+                onSuccess={() => {
+                    void refetchTeamMembers();
+                    void refetchPermissions();
+                    void queryClient.invalidateQueries({ queryKey: ['team-members-basic'] });
+                    void queryClient.invalidateQueries({ queryKey: ['team-members'] });
+                    void queryClient.invalidateQueries({ queryKey: ['account-statuses'] });
+                    void queryClient.invalidateQueries({ queryKey: ['account-status'] });
+                }}
+            />
+        )}
          <SendMessageModal
             isOpen={isMessageModalOpen}
             onClose={() => setIsMessageModalOpen(false)}

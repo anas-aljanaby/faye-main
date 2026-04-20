@@ -13,6 +13,76 @@ import Avatar from './Avatar';
 import { AccountAccessSection } from './account/AccountAccessSection';
 import ResponsiveState from './ResponsiveState';
 
+type TeamMemberPermissionSummary = {
+  can_edit_orphans: boolean;
+  can_edit_sponsors: boolean;
+  can_edit_transactions: boolean;
+  can_create_expense: boolean;
+  can_approve_expense: boolean;
+  can_view_financials: boolean;
+  is_manager: boolean;
+};
+
+const DEFAULT_TEAM_MEMBER_PERMISSIONS: TeamMemberPermissionSummary = {
+  can_edit_orphans: false,
+  can_edit_sponsors: false,
+  can_edit_transactions: false,
+  can_create_expense: false,
+  can_approve_expense: false,
+  can_view_financials: false,
+  is_manager: false,
+};
+
+const TEAM_MEMBER_PERMISSION_LABELS: Array<{
+  key: keyof TeamMemberPermissionSummary;
+  label: string;
+}> = [
+  { key: 'can_view_financials', label: 'عرض النظام المالي' },
+  { key: 'can_edit_orphans', label: 'إدارة الأيتام' },
+  { key: 'can_edit_sponsors', label: 'إدارة الكفلاء' },
+  { key: 'can_create_expense', label: 'إنشاء المصروفات مباشرة' },
+  { key: 'can_approve_expense', label: 'اعتماد المصروفات' },
+  { key: 'can_edit_transactions', label: 'تعديل المعاملات المالية' },
+  { key: 'is_manager', label: 'إدارة صلاحيات الفريق' },
+];
+
+const PermissionsSummaryCard: React.FC<{
+  permissions: TeamMemberPermissionSummary;
+  isOwnProfile: boolean;
+}> = ({ permissions, isOwnProfile }) => {
+  const enabledPermissions = TEAM_MEMBER_PERMISSION_LABELS.filter(({ key }) => permissions[key]);
+
+  return (
+    <section className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+      <div className="mb-4">
+        <h2 className="text-lg font-bold text-gray-700 md:text-xl">
+          {isOwnProfile ? 'صلاحياتك الحالية' : 'صلاحيات عضو الفريق'}
+        </h2>
+        <p className="mt-1 text-sm text-text-secondary">
+          {isOwnProfile ? 'هذه هي الصلاحيات المفعّلة لحسابك داخل المنصة.' : 'عرض للصلاحيات المفعّلة لهذا العضو.'}
+        </p>
+      </div>
+
+      {enabledPermissions.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {enabledPermissions.map(({ key, label }) => (
+            <span
+              key={key}
+              className="inline-flex min-h-10 items-center rounded-full bg-primary-light px-3 py-2 text-sm font-semibold text-primary"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="rounded-xl border border-dashed border-gray-200 px-4 py-4 text-sm text-text-secondary">
+          لا توجد صلاحيات إضافية مفعلة حالياً.
+        </p>
+      )}
+    </section>
+  );
+};
+
 
 const BellIcon: React.FC<{ count: number }> = ({ count }) => (
     <div className="relative">
@@ -83,7 +153,7 @@ const TeamMemberPage: React.FC = () => {
   const { teamMembers: teamMembersData, loading: teamMembersLoading } = useTeamMembers();
   const { orphans: orphansData, refetch: refetchOrphans } = useOrphansBasic();
   const { sponsors: sponsorsData, refetch: refetchSponsors } = useSponsorsBasic();
-  const { canEditOrphans, canEditSponsors, isManager, isSystemAdmin } = useAuth();
+  const { userProfile, permissions, isSystemAdmin } = useAuth();
   const member = useMemo(() => findById(teamMembersData, id || ''), [teamMembersData, id]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -95,16 +165,74 @@ const TeamMemberPage: React.FC = () => {
   const [showAssignSponsorsModal, setShowAssignSponsorsModal] = useState(false);
   const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
   const [assignedSponsorIds, setAssignedSponsorIds] = useState<string[]>([]);
+  const [visiblePermissions, setVisiblePermissions] = useState<TeamMemberPermissionSummary | null>(null);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
 
   const [suggestions, setSuggestions] = useState<{ orphanId: number; orphanName: string; suggestionText: string; }[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState('');
+  const isSysAdmin = isSystemAdmin();
+  const isOwnProfile = Boolean(userProfile?.id && member?.uuid && userProfile.id === member.uuid);
+  const canSeeSensitiveTeamData = isSysAdmin || isOwnProfile;
+  const canManageAssignments = isSysAdmin;
+  const canManageProfileMedia = isSysAdmin || isOwnProfile;
 
   useEffect(() => {
     if (member?.tasks) {
       setTasks(member.tasks);
     }
   }, [member]);
+
+  useEffect(() => {
+    if (!member?.uuid || !canSeeSensitiveTeamData) {
+      setVisiblePermissions(null);
+      setPermissionsLoading(false);
+      return;
+    }
+
+    if (isOwnProfile) {
+      setVisiblePermissions({
+        ...DEFAULT_TEAM_MEMBER_PERMISSIONS,
+        ...(permissions ?? {}),
+      });
+      setPermissionsLoading(false);
+      return;
+    }
+
+    let active = true;
+    setPermissionsLoading(true);
+
+    void supabase
+      .from('user_permissions')
+      .select(
+        'can_edit_orphans, can_edit_sponsors, can_edit_transactions, can_create_expense, can_approve_expense, can_view_financials, is_manager'
+      )
+      .eq('user_id', member.uuid)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return;
+
+        if (error) {
+          console.error('Error fetching team member permissions:', error);
+          setVisiblePermissions(DEFAULT_TEAM_MEMBER_PERMISSIONS);
+          return;
+        }
+
+        setVisiblePermissions({
+          ...DEFAULT_TEAM_MEMBER_PERMISSIONS,
+          ...(data ?? {}),
+        });
+      })
+      .finally(() => {
+        if (active) {
+          setPermissionsLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [canSeeSensitiveTeamData, isOwnProfile, member?.uuid, permissions]);
 
   // Fetch assigned orphans for this team member
   useEffect(() => {
@@ -155,10 +283,6 @@ const TeamMemberPage: React.FC = () => {
     if (!member || assignedOrphanIds.length === 0) return [];
     return orphansData.filter(o => assignedOrphanIds.includes(o.uuid || ''));
   }, [member, orphansData, assignedOrphanIds]);
-
-  const canAssign = useMemo(() => {
-    return isManager() || canEditSponsors() || canEditOrphans();
-  }, [isManager, canEditSponsors, canEditOrphans]);
 
   const pendingTasks = useMemo(() => tasks.filter(task => !task.completed), [tasks]);
 
@@ -362,7 +486,7 @@ const TeamMemberPage: React.FC = () => {
             </div>
             <div className="flex flex-col items-center gap-4 text-center md:flex-row md:items-center md:text-start">
               <div className="[&_img]:h-24 [&_img]:w-24 [&_img]:text-2xl md:[&_img]:h-32 md:[&_img]:w-32 md:[&_img]:text-3xl">
-                {member.uuid ? (
+                {member.uuid && canManageProfileMedia ? (
                   <AvatarUpload
                     currentAvatarUrl={member.avatarUrl}
                     userId={member.uuid}
@@ -441,8 +565,22 @@ const TeamMemberPage: React.FC = () => {
           </Link>
         </div>
 
-        {isSystemAdmin() && member.uuid && (
+        {canSeeSensitiveTeamData && member.uuid && (
           <AccountAccessSection profileId={member.uuid} displayName={member.name} />
+        )}
+
+        {canSeeSensitiveTeamData && (
+          permissionsLoading ? (
+            <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+              <div className="animate-pulse space-y-3">
+                <div className="h-6 w-36 rounded bg-gray-200" />
+                <div className="h-10 w-full rounded bg-gray-100" />
+                <div className="h-10 w-3/4 rounded bg-gray-100" />
+              </div>
+            </div>
+          ) : visiblePermissions ? (
+            <PermissionsSummaryCard permissions={visiblePermissions} isOwnProfile={isOwnProfile} />
+          ) : null
         )}
         
         <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
@@ -518,7 +656,7 @@ const TeamMemberPage: React.FC = () => {
         <div ref={assignedOrphansRef} className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 className="text-lg font-bold text-gray-700 md:text-xl">الأيتام قيد المتابعة</h2>
-                {canAssign && (
+                {canManageAssignments && (
                     <button
                         onClick={() => setShowAssignOrphansModal(true)}
                         className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto"
@@ -543,10 +681,10 @@ const TeamMemberPage: React.FC = () => {
         </div>
 
         {/* Assigned Sponsors Section */}
-        {canAssign && (
-            <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
-                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 className="text-lg font-bold text-gray-700 md:text-xl">الكفلاء المعينون</h2>
+        <div className="rounded-2xl bg-bg-card p-4 shadow-md md:p-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-lg font-bold text-gray-700 md:text-xl">الكفلاء المعينون</h2>
+                {canManageAssignments && (
                     <button
                         onClick={() => setShowAssignSponsorsModal(true)}
                         className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover sm:w-auto"
@@ -554,23 +692,23 @@ const TeamMemberPage: React.FC = () => {
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
                         تعيين كفلاء
                     </button>
-                </div>
-                <div className="space-y-4">
-                    {assignedSponsorIds.length > 0 ? (
-                        sponsorsData
-                            .filter(s => s.uuid && assignedSponsorIds.includes(s.uuid))
-                            .map(sponsor => (
-                                <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="flex min-h-16 items-center gap-3 rounded-xl bg-gray-50 p-3 transition-colors hover:bg-gray-100">
-                                    <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="lg" className="shrink-0" />
-                                    <p className="font-semibold text-gray-800">{sponsor.name}</p>
-                                </Link>
-                            ))
-                    ) : (
-                        <p className="text-text-secondary text-center py-4">لا يوجد كفلاء معينون</p>
-                    )}
-                </div>
+                )}
             </div>
-        )}
+            <div className="space-y-4">
+                {assignedSponsorIds.length > 0 ? (
+                    sponsorsData
+                        .filter(s => s.uuid && assignedSponsorIds.includes(s.uuid))
+                        .map(sponsor => (
+                            <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="flex min-h-16 items-center gap-3 rounded-xl bg-gray-50 p-3 transition-colors hover:bg-gray-100">
+                                <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="lg" className="shrink-0" />
+                                <p className="font-semibold text-gray-800">{sponsor.name}</p>
+                            </Link>
+                        ))
+                ) : (
+                    <p className="text-text-secondary text-center py-4">لا يوجد كفلاء معينون</p>
+                )}
+            </div>
+        </div>
 
       </div>
       

@@ -24,13 +24,31 @@ export const AccountAccessSection: React.FC<{
   displayName: string;
 }> = ({ profileId, displayName }) => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const { data, isLoading, isError, error, refetch } = useAccountStatus(profileId, true);
+  const { user, session, isSystemAdmin } = useAuth();
+  const isOwnProfile = user?.id === profileId;
+  const canManageAccess = isSystemAdmin() && !isOwnProfile;
+  const shouldUseAdminLookup = isSystemAdmin();
+  const { data, isLoading, isError, error, refetch } = useAccountStatus(profileId, shouldUseAdminLookup);
   const [modalOpen, setModalOpen] = useState(false);
   const [unlinkConfirmOpen, setUnlinkConfirmOpen] = useState(false);
   const [unlinkSubmitting, setUnlinkSubmitting] = useState(false);
   const [unlinkError, setUnlinkError] = useState<string | null>(null);
-  const isOwnProfile = user?.id === profileId;
+  const effectiveData = shouldUseAdminLookup
+    ? data
+    : isOwnProfile
+      ? {
+          status: 'active' as const,
+          email: session?.user?.email ?? null,
+          lastSignInAt: session?.user?.last_sign_in_at ?? null,
+        }
+      : undefined;
+  const effectiveLoading = shouldUseAdminLookup ? isLoading : false;
+  const effectiveError = shouldUseAdminLookup ? isError : false;
+  const effectiveErrorMessage = shouldUseAdminLookup
+    ? error instanceof Error
+      ? error.message
+      : 'تعذّر تحميل حالة الحساب.'
+    : null;
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['account-status', profileId] });
@@ -48,19 +66,21 @@ export const AccountAccessSection: React.FC<{
           <div>
             <h2 className="text-lg font-bold text-text-primary">حساب الدخول إلى المنصة</h2>
             <p className="text-sm text-text-secondary mt-1">
-              منفصلة عن تعديل بيانات الملف الشخصي في الأعلى.
+              {canManageAccess
+                ? 'منفصلة عن تعديل بيانات الملف الشخصي في الأعلى.'
+                : 'ملخص حالة حساب الدخول المرتبط بملفك.'}
             </p>
           </div>
-          <AccountStatusBadge status={data?.status} loading={isLoading} />
+          <AccountStatusBadge status={effectiveData?.status} loading={effectiveLoading} />
         </div>
 
-        {isError && (
+        {effectiveError && (
           <p className="text-sm text-red-600 mb-4">
-            {error instanceof Error ? error.message : 'تعذّر تحميل حالة الحساب.'}
+            {effectiveErrorMessage}
           </p>
         )}
 
-        {!isLoading && !isError && data?.status === 'no_login' && (
+        {!effectiveLoading && !effectiveError && effectiveData?.status === 'no_login' && canManageAccess && (
           <div className="rounded-lg bg-white/80 border border-stone-200 px-4 py-4 sm:px-5 sm:py-5 flex flex-col sm:flex-row sm:items-center gap-4">
             <p className="text-sm text-gray-700 flex-1 leading-relaxed">
               لم يتم إنشاء حساب دخول لهذا العضو بعد. يمكنك إنشاء حساباً وتسليم بيانات الدخول بشكل آمن.
@@ -75,67 +95,71 @@ export const AccountAccessSection: React.FC<{
           </div>
         )}
 
-        {!isLoading && !isError && data && data.status !== 'no_login' && (
+        {!effectiveLoading && !effectiveError && effectiveData && effectiveData.status !== 'no_login' && (
           <div className="space-y-4">
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="bg-white/80 rounded-lg px-4 py-3 border border-stone-200">
                 <dt className="font-semibold text-gray-600">البريد المرتبط</dt>
                 <dd className="mt-1 font-mono text-gray-900 break-all" dir="ltr">
-                  {data.email ?? '—'}
+                  {effectiveData.email ?? '—'}
                 </dd>
               </div>
               <div className="bg-white/80 rounded-lg px-4 py-3 border border-stone-200">
                 <dt className="font-semibold text-gray-600">آخر تسجيل دخول</dt>
-                <dd className="mt-1 text-gray-900">{formatLastSignIn(data.lastSignInAt)}</dd>
+                <dd className="mt-1 text-gray-900">{formatLastSignIn(effectiveData.lastSignInAt)}</dd>
               </div>
             </dl>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <button
-                type="button"
-                disabled
-                title="سيُفعّل لاحقاً عند تهيئة البريد"
-                className="min-h-[44px] rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed"
-              >
-                إعادة تعيين كلمة المرور
-              </button>
-              <button
-                type="button"
-                disabled={isOwnProfile}
-                title={
-                  isOwnProfile
-                    ? 'لا يمكن فك ربط حسابك من هنا'
-                    : 'حذف مستخدم المصادقة وفك الربط عن الملف'
-                }
-                onClick={() => {
-                  setUnlinkError(null);
-                  setUnlinkConfirmOpen(true);
-                }}
-                className="min-h-[44px] rounded-xl border-2 border-red-600 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:opacity-50 disabled:hover:bg-white"
-              >
-                فك الربط وتعطيل الدخول
-              </button>
-              <button
-                type="button"
-                disabled
-                title="سيُفعّل لاحقاً مع SMTP"
-                className="min-h-[44px] rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed"
-              >
-                إعادة إرسال الدعوة
-              </button>
-            </div>
+            {canManageAccess && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled
+                  title="سيُفعّل لاحقاً عند تهيئة البريد"
+                  className="min-h-[44px] rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed"
+                >
+                  إعادة تعيين كلمة المرور
+                </button>
+                <button
+                  type="button"
+                  disabled={isOwnProfile}
+                  title={
+                    isOwnProfile
+                      ? 'لا يمكن فك ربط حسابك من هنا'
+                      : 'حذف مستخدم المصادقة وفك الربط عن الملف'
+                  }
+                  onClick={() => {
+                    setUnlinkError(null);
+                    setUnlinkConfirmOpen(true);
+                  }}
+                  className="min-h-[44px] rounded-xl border-2 border-red-600 bg-white px-4 py-2.5 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:text-gray-400 disabled:opacity-50 disabled:hover:bg-white"
+                >
+                  فك الربط وتعطيل الدخول
+                </button>
+                <button
+                  type="button"
+                  disabled
+                  title="سيُفعّل لاحقاً مع SMTP"
+                  className="min-h-[44px] rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed"
+                >
+                  إعادة إرسال الدعوة
+                </button>
+              </div>
+            )}
           </div>
         )}
       </section>
 
-      <CreateLoginModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        profileId={profileId}
-        displayName={displayName}
-        onSuccess={invalidate}
-      />
+      {canManageAccess && (
+        <CreateLoginModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          profileId={profileId}
+          displayName={displayName}
+          onSuccess={invalidate}
+        />
+      )}
 
-      {unlinkConfirmOpen && (
+      {canManageAccess && unlinkConfirmOpen && (
         <ResponsiveModalShell
           isOpen={unlinkConfirmOpen}
           onClose={() => setUnlinkConfirmOpen(false)}
