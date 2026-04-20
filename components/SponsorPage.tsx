@@ -11,6 +11,7 @@ import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
 import { AccountAccessSection } from './account/AccountAccessSection';
+import ResponsiveState from './ResponsiveState';
 
 type SponsorTab = 'overview' | 'orphans' | 'financial' | 'support';
 
@@ -292,11 +293,23 @@ const SponsorPage: React.FC = () => {
     }, [isManager, canEditOrphans, canEditSponsors]);
 
     if (sponsorsLoading) {
-        return <div className="py-8 text-center">جاري التحميل...</div>;
+        return (
+            <ResponsiveState
+                variant="loading"
+                title="جاري تحميل ملف الكافل"
+                description="نجهز البيانات المالية والملف الشخصي بتخطيط يلائم الشاشات الصغيرة."
+            />
+        );
     }
 
     if (!sponsor) {
-        return <div className="text-center text-red-500">لم يتم العثور على الكافل.</div>;
+        return (
+            <ResponsiveState
+                variant="error"
+                title="تعذر العثور على الكافل"
+                description="تأكد من صحة الرابط أو حاول العودة إلى قائمة الكفلاء."
+            />
+        );
     }
 
     const handleSendMessage = (message: string) => {

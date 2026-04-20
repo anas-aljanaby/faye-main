@@ -3,7 +3,7 @@
 > This document tracks progress across multiple Codex runs.
 > **Read before starting. Update after finishing.**
 
-Last updated: 2026-04-16
+Last updated: 2026-04-20
 
 ---
 
@@ -617,7 +617,7 @@ large main bundle.
 
 ---
 
-### Task 3.4: Loading & Empty States on Mobile `[~]`
+### Task 3.4: Loading & Empty States on Mobile `[x]`
 **Priority:** P3
 **Depends on:** All Phase 2 tasks
 
@@ -626,15 +626,25 @@ large main bundle.
 - Empty state illustrations/text should be centered and sized for mobile
 - Error messages should not overflow on small screens
 
-**Completion Notes:** Several core screens already render mobile-friendly
-empty states and compact loading treatments, and some pages now use skeletons
-or card-based placeholders that fit narrow widths. This remains partial
-because those states were improved opportunistically during page work, not
-through a dedicated consistency review across the whole app.
+**Completion Notes:** Added a shared `components/ResponsiveState.tsx`
+primitive to unify mobile loading, empty, and error states with centered
+copy, compact card spacing, and mobile-sized skeletons instead of desktop-
+leaning text blocks. Applied the new state treatment to the remaining shared
+and utility surfaces that still needed a dedicated pass, including route
+guards (`components/ProtectedRoute.tsx`, `components/TeamMemberRoute.tsx`),
+profile/detail fallbacks (`components/OrphanProfile.tsx`,
+`components/SponsorPage.tsx`, `components/TeamMemberPage.tsx`,
+`components/SponsorPaymentsPage.tsx`, sponsor dashboard fallback in
+`components/Dashboard.tsx`), plus older overlay/list UIs such as
+`components/Messages.tsx`, `components/NotificationPanel.tsx`, and
+`components/OccasionsManagementModal.tsx`. Also tightened the inline message
+error box for narrow widths and adjusted `components/account/AccountStatusBadge.tsx`
+so its loading pill truncates safely on mobile.
 
-**Known Issues:** Global/shared loading states such as route guards and some
-older utility views still rely on simple centered text or desktop-leaning
-layouts. The remaining work is mainly a consistency polish pass.
+**Known Issues:** No new loading/empty-state-specific issues were found
+during code review. `npm run build` completed successfully, but the existing
+`baseline-browser-mapping` update notice and Vite chunk-size warning for the
+large main bundle still remain.
 
 ---
 
@@ -644,10 +654,10 @@ layouts. The remaining work is mainly a consistency polish pass.
 |-------|-------|--------|
 | Phase 1: Navigation | 1.1, 1.2, 1.3 | Completed |
 | Phase 2: Pages | 2.1 – 2.13 | Completed |
-| Phase 3: Polish | 3.1 – 3.4 | Partially complete |
+| Phase 3: Polish | 3.1 – 3.4 | Completed |
 
 **Total tasks:** 20
-**Completed:** 19
-**In progress:** 1
+**Completed:** 20
+**In progress:** 0
 **Not started:** 0
-**Remaining to finish:** 1
+**Remaining to finish:** 0

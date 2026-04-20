@@ -7,6 +7,7 @@ import { Conversation, Message } from '../types';
 import { findOrCreateConversation, formatTimestamp } from '../utils/messaging';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
+import ResponsiveState from './ResponsiveState';
 
 const TemplatesModal: React.FC<{
     isOpen: boolean;
@@ -232,7 +233,7 @@ const MessageComposer: React.FC<{
     return (
         <>
             <form onSubmit={handleSendMessage} className="space-y-3">
-                 {error && <div className="rounded-xl bg-red-50 p-2 text-sm text-red-600">{error}</div>}
+                 {error && <div className="rounded-2xl border border-red-100 bg-red-50 px-3 py-2 text-sm leading-6 text-red-700 break-words">{error}</div>}
                  
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
                     <textarea
@@ -393,9 +394,34 @@ const Messages: React.FC = () => {
                 </div>
                 <div className="overflow-y-auto flex-1">
                     {conversationsLoading ? (
-                        <div className="p-4 text-center text-gray-500">جاري التحميل...</div>
+                        <div className="p-3 md:p-4">
+                            <ResponsiveState
+                                variant="loading"
+                                compact
+                                title="جاري تحميل المحادثات"
+                                description="نجهز أحدث المحادثات والرسائل غير المقروءة."
+                            >
+                                <div className="mt-5 w-full space-y-3">
+                                    {Array.from({ length: 3 }).map((_, index) => (
+                                        <div key={index} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-3 py-3">
+                                            <div className="h-12 w-12 shrink-0 animate-pulse rounded-full bg-gray-200" />
+                                            <div className="flex-1 space-y-2">
+                                                <div className="h-3 w-32 animate-pulse rounded-full bg-gray-200" />
+                                                <div className="h-3 w-full animate-pulse rounded-full bg-gray-100" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </ResponsiveState>
+                        </div>
                     ) : filteredConversations.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500">لا توجد محادثات</div>
+                        <div className="p-3 md:p-4">
+                            <ResponsiveState
+                                compact
+                                title="لا توجد محادثات"
+                                description="ابدأ محادثة جديدة وسيظهر سجل الرسائل هنا."
+                            />
+                        </div>
                     ) : (
                         filteredConversations.map(conv => (
                         <div 
@@ -454,9 +480,24 @@ const Messages: React.FC = () => {
                         <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/50 px-3 py-4 md:px-6 md:py-6">
                             <div className="space-y-4 md:space-y-6">
                             {messagesLoading ? (
-                                <div className="text-center text-gray-500">جاري تحميل الرسائل...</div>
+                                <ResponsiveState
+                                    variant="loading"
+                                    compact
+                                    title="جاري تحميل الرسائل"
+                                    description="نستعيد الرسائل الأخيرة داخل هذه المحادثة."
+                                >
+                                    <div className="mt-5 w-full space-y-3">
+                                        <div className="ms-auto h-20 w-[72%] animate-pulse rounded-[1.5rem] bg-primary/10" />
+                                        <div className="h-24 w-[82%] animate-pulse rounded-[1.5rem] bg-white shadow-sm" />
+                                        <div className="ms-auto h-16 w-[64%] animate-pulse rounded-[1.5rem] bg-primary/10" />
+                                    </div>
+                                </ResponsiveState>
                             ) : messages.length === 0 ? (
-                                <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-8 text-center text-gray-500">لا توجد رسائل بعد</div>
+                                <ResponsiveState
+                                    compact
+                                    title="لا توجد رسائل بعد"
+                                    description="اكتب أول رسالة لبدء المحادثة من هنا."
+                                />
                             ) : (
                                 messages.map((msg: Message) => {
                                     const isCurrentUser = msg.sender_id === user?.id;
@@ -522,7 +563,11 @@ const Messages: React.FC = () => {
                     </div>
                     <div className="flex-1 overflow-y-auto px-4 py-4 md:px-6">
                         {availableUsers.length === 0 ? (
-                            <div className="text-center text-gray-500 py-4">لا يوجد مستخدمون متاحون</div>
+                            <ResponsiveState
+                                compact
+                                title="لا يوجد مستخدمون متاحون"
+                                description="عند توفر مستلمين جدد ستتمكن من بدء محادثة مباشرة من هذه النافذة."
+                            />
                         ) : (
                             <div className="space-y-2">
                                 {availableUsers.map(user => (

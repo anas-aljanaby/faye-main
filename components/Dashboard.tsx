@@ -14,6 +14,7 @@ import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
 import OccasionsManagementModal from './OccasionsManagementModal';
 import { GoogleGenAI } from '@google/genai';
+import ResponsiveState from './ResponsiveState';
 
 type TimeRange = 'week' | 'month' | 'year';
 
@@ -718,9 +719,11 @@ const Dashboard: React.FC = () => {
     if (userProfile?.role === 'sponsor') {
         if (!sponsor) {
             return (
-                <div className="text-center text-red-500 py-8">
-                    <p>لم يتم العثور على معلومات الكافل.</p>
-                </div>
+                <ResponsiveState
+                    variant="error"
+                    title="تعذر العثور على معلومات الكافل"
+                    description="لم نتمكن من تحميل لوحة الكافل الآن. حاول تحديث الصفحة أو العودة لاحقًا."
+                />
             );
         }
 

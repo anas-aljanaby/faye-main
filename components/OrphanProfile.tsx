@@ -18,6 +18,7 @@ import Avatar from './Avatar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import OptimizedImage from './OptimizedImage';
+import ResponsiveState from './ResponsiveState';
 
 /** React Query persistence (or other hydration) may restore dates as strings — normalize before calling Date methods. */
 function coerceToDate(value: unknown): Date | null {
@@ -1028,11 +1029,23 @@ const OrphanProfile: React.FC = () => {
   };
 
   if (orphansLoading || orphanLoading) {
-    return <div className="text-center py-8">جاري التحميل...</div>;
+    return (
+      <ResponsiveState
+        variant="loading"
+        title="جاري تحميل ملف اليتيم"
+        description="نرتب البيانات الأساسية والتفاصيل المرتبطة بالشكل الأنسب للهاتف."
+      />
+    );
   }
 
   if (!orphan && !orphanLoading) {
-    return <div className="text-center text-red-500">لم يتم العثور على اليتيم.</div>;
+    return (
+      <ResponsiveState
+        variant="error"
+        title="تعذر العثور على اليتيم"
+        description="قد يكون الرابط غير مكتمل أو أن السجل غير متاح حاليًا."
+      />
+    );
   }
 
   const handleBackNavigation = () => {

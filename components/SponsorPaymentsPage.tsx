@@ -7,6 +7,7 @@ import { PaymentStatus, PaymentStatusHistory } from '../types';
 import PaymentStatusBadge from './PaymentStatusBadge';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
+import ResponsiveState from './ResponsiveState';
 
 type StatusFilter = 'all' | PaymentStatus;
 
@@ -173,7 +174,15 @@ const SponsorPaymentsPage: React.FC = () => {
   };
 
   if (userProfile?.role !== 'sponsor') return <Navigate to="/" replace />;
-  if (!sponsor) return <div className="py-8 text-center text-red-500">لم يتم العثور على معلومات الكافل.</div>;
+  if (!sponsor) {
+    return (
+      <ResponsiveState
+        variant="error"
+        title="تعذر العثور على معلومات الكافل"
+        description="تعذر تحميل بيانات الدفعات لهذا الحساب في الوقت الحالي."
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 pb-2 md:space-y-6">

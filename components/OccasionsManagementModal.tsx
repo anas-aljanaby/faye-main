@@ -5,6 +5,7 @@ import { useOrphansBasic } from '../hooks/useOrphans';
 import { useAuth } from '../contexts/AuthContext';
 import { SpecialOccasion } from '../types';
 import ResponsiveModalShell from './ResponsiveModalShell';
+import ResponsiveState from './ResponsiveState';
 
 interface OccasionsManagementModalProps {
   isOpen: boolean;
@@ -354,14 +355,18 @@ const OccasionsManagementModal: React.FC<OccasionsManagementModalProps> = ({ isO
 
       <div className="px-4 py-4 md:px-6 md:py-5">
         {loading ? (
-          <div className="py-8 text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
-            <p className="mt-2 text-gray-600">جاري التحميل...</p>
-          </div>
+          <ResponsiveState
+            variant="loading"
+            compact
+            title="جاري تحميل المناسبات"
+            description="نرتب المناسبات الحالية لتظهر بشكل مريح على الجوال."
+          />
         ) : filteredOccasions.length === 0 ? (
-          <div className="py-8 text-center text-gray-500">
-            <p>لا توجد مناسبات مطابقة للبحث</p>
-          </div>
+          <ResponsiveState
+            compact
+            title="لا توجد مناسبات مطابقة"
+            description="جرّب تعديل البحث أو الفلاتر لعرض نتائج أخرى."
+          />
         ) : (
           <div className="space-y-3">
             {filteredOccasions.map(occasion => {

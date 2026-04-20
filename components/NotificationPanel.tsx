@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppNotification, NotificationPreference } from '../types';
 import NotificationPreferencesModal from './NotificationPreferencesModal';
+import ResponsiveState from './ResponsiveState';
 
 interface NotificationPanelProps {
   notifications: AppNotification[];
@@ -67,8 +68,12 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {notifications.length === 0 ? (
-            <div className="px-4 py-8 text-center text-text-secondary">
-              <p className="text-sm">لا توجد إشعارات جديدة</p>
+            <div className="p-3 sm:p-4">
+              <ResponsiveState
+                compact
+                title="لا توجد إشعارات جديدة"
+                description="عندما يصل إشعار جديد سيظهر هنا بشكل منظم وواضح."
+              />
             </div>
           ) : (
             notifications.map((notification) => (

@@ -21,9 +21,10 @@ export const AccountStatusBadge: React.FC<{
   if (loading) {
     return (
       <span
-        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border border-gray-200 bg-gray-50 text-gray-500 animate-pulse ${className}`}
+        className={`inline-flex max-w-full items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] font-bold text-gray-500 ${className}`}
       >
-        جاري التحميل…
+        <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-primary/50" />
+        <span className="truncate">جاري التحميل…</span>
       </span>
     );
   }

@@ -11,6 +11,7 @@ import { AvatarUpload } from './AvatarUpload';
 import { supabase } from '../lib/supabase';
 import Avatar from './Avatar';
 import { AccountAccessSection } from './account/AccountAccessSection';
+import ResponsiveState from './ResponsiveState';
 
 
 const BellIcon: React.FC<{ count: number }> = ({ count }) => (
@@ -184,11 +185,23 @@ const TeamMemberPage: React.FC = () => {
 
   // Early returns must come AFTER all hooks
   if (teamMembersLoading) {
-    return <div className="text-center py-8">جاري التحميل...</div>;
+    return (
+      <ResponsiveState
+        variant="loading"
+        title="جاري تحميل ملف عضو الفريق"
+        description="نجهز المهام والتفاصيل والروابط المرتبطة بما يتناسب مع شاشة الهاتف."
+      />
+    );
   }
 
   if (!member) {
-    return <div className="text-center text-red-500">لم يتم العثور على عضو الفريق.</div>;
+    return (
+      <ResponsiveState
+        variant="error"
+        title="تعذر العثور على عضو الفريق"
+        description="قد يكون الملف غير متاح أو أن الرابط المستخدم غير صحيح."
+      />
+    );
   }
 
   const toggleTask = (taskId: number) => {
