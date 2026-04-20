@@ -1,0 +1,26 @@
+- generic [ref=e5]:
+  - generic [ref=e6]:
+    - img [ref=e8]
+    - heading "منظمة فيء" [level=1] [ref=e10]
+    - paragraph [ref=e11]: نظام إدارة رعاية الأيتام
+  - generic [ref=e12]:
+    - heading "تسجيل الدخول" [level=2] [ref=e13]
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]: البريد الإلكتروني
+        - textbox "البريد الإلكتروني" [ref=e17]:
+          - /placeholder: name@example.com
+          - text: member.khaled@faye.com
+      - generic [ref=e18]:
+        - generic [ref=e19]: كلمة المرور
+        - generic [ref=e20]:
+          - textbox "كلمة المرور" [ref=e21]:
+            - /placeholder: ••••••••
+            - text: admin
+          - button "إظهار كلمة المرور" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+      - button "جاري تسجيل الدخول..." [disabled] [ref=e33]:
+        - img [ref=e34]
+        - generic [ref=e37]: جاري تسجيل الدخول...
+    - paragraph [ref=e30]: للمساعدة، يرجى التواصل مع مدير النظام
+  - paragraph [ref=e32]: © 2024 منظمة فيء. جميع الحقوق محفوظة.

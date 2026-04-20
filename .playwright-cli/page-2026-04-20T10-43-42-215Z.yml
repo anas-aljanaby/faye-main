@@ -1,0 +1,309 @@
+- generic [ref=e24]:
+  - main [ref=e25]:
+    - generic [ref=e27]:
+      - button "الإشعارات" [ref=e31] [cursor=pointer]:
+        - img [ref=e32]
+      - generic [ref=e35]:
+        - link "العودة للصفحة الرئيسية" [ref=e36] [cursor=pointer]:
+          - /url: "#/"
+          - generic [ref=e37]: فيء
+          - img [ref=e38]
+        - button "قائمة المستخدم" [ref=e41] [cursor=pointer]:
+          - generic "System Admin" [ref=e42]: S
+    - generic [ref=e3319]:
+      - generic [ref=e3320]:
+        - generic [ref=e3321]:
+          - generic [ref=e3322]:
+            - heading "قائمة الكفلاء" [level=1] [ref=e3323]
+            - paragraph [ref=e3324]: عرض وإدارة بيانات الكفلاء بتنسيق متقدم
+          - generic [ref=e3326]:
+            - button "إجراءات الصفحة" [expanded] [active] [ref=e3327] [cursor=pointer]:
+              - img [ref=e3328]
+            - generic [ref=e3592]:
+              - button "إضافة كافل" [ref=e3593] [cursor=pointer]:
+                - img [ref=e3594]
+                - text: إضافة كافل
+              - button "تصدير" [ref=e3595] [cursor=pointer]:
+                - img [ref=e3596]
+                - text: تصدير
+              - button "تعيين أيتام" [ref=e3599] [cursor=pointer]:
+                - img [ref=e3600]
+                - text: تعيين أيتام
+        - generic [ref=e3333]:
+          - generic:
+            - img
+          - textbox "ابحث باسم الكافل..." [ref=e3334]
+      - generic [ref=e3335]:
+        - generic [ref=e3337]:
+          - generic [ref=e3338]:
+            - generic [ref=e3339]:
+              - button "عرض قائمة" [ref=e3340] [cursor=pointer]:
+                - img [ref=e3341]
+              - button "عرض شبكي" [ref=e3342] [cursor=pointer]:
+                - img [ref=e3343]
+            - button "الفرز والتصفية" [ref=e3349] [cursor=pointer]:
+              - img [ref=e3350]
+            - generic [ref=e3351] [cursor=pointer]:
+              - checkbox "تحديد الكل" [ref=e3352]
+              - generic [ref=e3353]: تحديد الكل
+          - generic [ref=e3354]: تم العثور على 94 كافل
+        - generic [ref=e3355]:
+          - generic [ref=e3356] [cursor=pointer]:
+            - generic [ref=e3357]:
+              - checkbox "تحديد ابرار الابراهيم" [ref=e3359]
+              - generic "ابرار الابراهيم" [ref=e3361]: ا
+              - generic [ref=e3362]:
+                - heading "ابرار الابراهيم" [level=3] [ref=e3363]
+                - paragraph [ref=e3364]: يكفل 1 يتيم
+            - generic [ref=e3365]:
+              - generic [ref=e3366]:
+                - generic [ref=e3367]: "عدد الأيتام:"
+                - generic [ref=e3368]: 1 يتيم
+              - generic [ref=e3369]:
+                - generic [ref=e3370]: "حساب المنصة:"
+                - generic [ref=e3371]: لا يوجد حساب دخول
+            - generic [ref=e3372]:
+              - button "عرض الملف الكامل" [ref=e3373]
+              - button "إنشاء حساب دخول" [ref=e3374]
+          - generic [ref=e3375] [cursor=pointer]:
+            - generic [ref=e3376]:
+              - checkbox "تحديد أبو عبدالله" [ref=e3378]
+              - generic "أبو عبدالله" [ref=e3380]: أ
+              - generic [ref=e3381]:
+                - heading "أبو عبدالله" [level=3] [ref=e3382]
+                - paragraph [ref=e3383]: يكفل 1 يتيم
+            - generic [ref=e3384]:
+              - generic [ref=e3385]:
+                - generic [ref=e3386]: "عدد الأيتام:"
+                - generic [ref=e3387]: 1 يتيم
+              - generic [ref=e3388]:
+                - generic [ref=e3389]: "حساب المنصة:"
+                - generic [ref=e3390]: لا يوجد حساب دخول
+            - generic [ref=e3391]:
+              - button "عرض الملف الكامل" [ref=e3392]
+              - button "إنشاء حساب دخول" [ref=e3393]
+          - generic [ref=e3394] [cursor=pointer]:
+            - generic [ref=e3395]:
+              - checkbox "تحديد أبو علي" [ref=e3397]
+              - generic "أبو علي" [ref=e3399]: أ
+              - generic [ref=e3400]:
+                - heading "أبو علي" [level=3] [ref=e3401]
+                - paragraph [ref=e3402]: يكفل 3 أيتام
+            - generic [ref=e3403]:
+              - generic [ref=e3404]:
+                - generic [ref=e3405]: "عدد الأيتام:"
+                - generic [ref=e3406]: 3 أيتام
+              - generic [ref=e3407]:
+                - generic [ref=e3408]: "حساب المنصة:"
+                - generic [ref=e3409]: لا يوجد حساب دخول
+            - generic [ref=e3410]:
+              - button "عرض الملف الكامل" [ref=e3411]
+              - button "إنشاء حساب دخول" [ref=e3412]
+          - generic [ref=e3413] [cursor=pointer]:
+            - generic [ref=e3414]:
+              - checkbox "تحديد أبو نهار" [ref=e3416]
+              - generic "أبو نهار" [ref=e3418]: أ
+              - generic [ref=e3419]:
+                - heading "أبو نهار" [level=3] [ref=e3420]
+                - paragraph [ref=e3421]: يكفل 1 يتيم
+            - generic [ref=e3422]:
+              - generic [ref=e3423]:
+                - generic [ref=e3424]: "عدد الأيتام:"
+                - generic [ref=e3425]: 1 يتيم
+              - generic [ref=e3426]:
+                - generic [ref=e3427]: "حساب المنصة:"
+                - generic [ref=e3428]: لا يوجد حساب دخول
+            - generic [ref=e3429]:
+              - button "عرض الملف الكامل" [ref=e3430]
+              - button "إنشاء حساب دخول" [ref=e3431]
+          - generic [ref=e3432] [cursor=pointer]:
+            - generic [ref=e3433]:
+              - checkbox "تحديد اروى السيد" [ref=e3435]
+              - generic "اروى السيد" [ref=e3437]: ا
+              - generic [ref=e3438]:
+                - heading "اروى السيد" [level=3] [ref=e3439]
+                - paragraph [ref=e3440]: يكفل 2 أيتام
+            - generic [ref=e3441]:
+              - generic [ref=e3442]:
+                - generic [ref=e3443]: "عدد الأيتام:"
+                - generic [ref=e3444]: 2 أيتام
+              - generic [ref=e3445]:
+                - generic [ref=e3446]: "حساب المنصة:"
+                - generic [ref=e3447]: لا يوجد حساب دخول
+            - generic [ref=e3448]:
+              - button "عرض الملف الكامل" [ref=e3449]
+              - button "إنشاء حساب دخول" [ref=e3450]
+          - generic [ref=e3451] [cursor=pointer]:
+            - generic [ref=e3452]:
+              - checkbox "تحديد اسماء" [ref=e3454]
+              - generic "اسماء" [ref=e3456]: ا
+              - generic [ref=e3457]:
+                - heading "اسماء" [level=3] [ref=e3458]
+                - paragraph [ref=e3459]: يكفل 31 أيتام
+            - generic [ref=e3460]:
+              - generic [ref=e3461]:
+                - generic [ref=e3462]: "عدد الأيتام:"
+                - generic [ref=e3463]: 31 أيتام
+              - generic [ref=e3464]:
+                - generic [ref=e3465]: "حساب المنصة:"
+                - generic [ref=e3466]: لا يوجد حساب دخول
+            - generic [ref=e3467]:
+              - button "عرض الملف الكامل" [ref=e3468]
+              - button "إنشاء حساب دخول" [ref=e3469]
+          - generic [ref=e3470] [cursor=pointer]:
+            - generic [ref=e3471]:
+              - checkbox "تحديد اعتماد اللفت" [ref=e3473]
+              - generic "اعتماد اللفت" [ref=e3475]: ا
+              - generic [ref=e3476]:
+                - heading "اعتماد اللفت" [level=3] [ref=e3477]
+                - paragraph [ref=e3478]: يكفل 1 يتيم
+            - generic [ref=e3479]:
+              - generic [ref=e3480]:
+                - generic [ref=e3481]: "عدد الأيتام:"
+                - generic [ref=e3482]: 1 يتيم
+              - generic [ref=e3483]:
+                - generic [ref=e3484]: "حساب المنصة:"
+                - generic [ref=e3485]: لا يوجد حساب دخول
+            - generic [ref=e3486]:
+              - button "عرض الملف الكامل" [ref=e3487]
+              - button "إنشاء حساب دخول" [ref=e3488]
+          - generic [ref=e3489] [cursor=pointer]:
+            - generic [ref=e3490]:
+              - checkbox "تحديد الاخوة والاخوات" [ref=e3492]
+              - generic "الاخوة والاخوات" [ref=e3494]: ا
+              - generic [ref=e3495]:
+                - heading "الاخوة والاخوات" [level=3] [ref=e3496]
+                - paragraph [ref=e3497]: يكفل 10 أيتام
+            - generic [ref=e3498]:
+              - generic [ref=e3499]:
+                - generic [ref=e3500]: "عدد الأيتام:"
+                - generic [ref=e3501]: 10 أيتام
+              - generic [ref=e3502]:
+                - generic [ref=e3503]: "حساب المنصة:"
+                - generic [ref=e3504]: لا يوجد حساب دخول
+            - generic [ref=e3505]:
+              - button "عرض الملف الكامل" [ref=e3506]
+              - button "إنشاء حساب دخول" [ref=e3507]
+          - generic [ref=e3508] [cursor=pointer]:
+            - generic [ref=e3509]:
+              - checkbox "تحديد ام احمد" [ref=e3511]
+              - generic "ام احمد" [ref=e3513]: ا
+              - generic [ref=e3514]:
+                - heading "ام احمد" [level=3] [ref=e3515]
+                - paragraph [ref=e3516]: يكفل 1 يتيم
+            - generic [ref=e3517]:
+              - generic [ref=e3518]:
+                - generic [ref=e3519]: "عدد الأيتام:"
+                - generic [ref=e3520]: 1 يتيم
+              - generic [ref=e3521]:
+                - generic [ref=e3522]: "حساب المنصة:"
+                - generic [ref=e3523]: لا يوجد حساب دخول
+            - generic [ref=e3524]:
+              - button "عرض الملف الكامل" [ref=e3525]
+              - button "إنشاء حساب دخول" [ref=e3526]
+          - generic [ref=e3527] [cursor=pointer]:
+            - generic [ref=e3528]:
+              - checkbox "تحديد ام ثامر" [ref=e3530]
+              - generic "ام ثامر" [ref=e3532]: ا
+              - generic [ref=e3533]:
+                - heading "ام ثامر" [level=3] [ref=e3534]
+                - paragraph [ref=e3535]: يكفل 2 أيتام
+            - generic [ref=e3536]:
+              - generic [ref=e3537]:
+                - generic [ref=e3538]: "عدد الأيتام:"
+                - generic [ref=e3539]: 2 أيتام
+              - generic [ref=e3540]:
+                - generic [ref=e3541]: "حساب المنصة:"
+                - generic [ref=e3542]: لا يوجد حساب دخول
+            - generic [ref=e3543]:
+              - button "عرض الملف الكامل" [ref=e3544]
+              - button "إنشاء حساب دخول" [ref=e3545]
+          - generic [ref=e3546] [cursor=pointer]:
+            - generic [ref=e3547]:
+              - checkbox "تحديد ام طارق" [ref=e3549]
+              - generic "ام طارق" [ref=e3551]: ا
+              - generic [ref=e3552]:
+                - heading "ام طارق" [level=3] [ref=e3553]
+                - paragraph [ref=e3554]: يكفل 1 يتيم
+            - generic [ref=e3555]:
+              - generic [ref=e3556]:
+                - generic [ref=e3557]: "عدد الأيتام:"
+                - generic [ref=e3558]: 1 يتيم
+              - generic [ref=e3559]:
+                - generic [ref=e3560]: "حساب المنصة:"
+                - generic [ref=e3561]: لا يوجد حساب دخول
+            - generic [ref=e3562]:
+              - button "عرض الملف الكامل" [ref=e3563]
+              - button "إنشاء حساب دخول" [ref=e3564]
+          - generic [ref=e3565] [cursor=pointer]:
+            - generic [ref=e3566]:
+              - checkbox "تحديد ام عبدالاله" [ref=e3568]
+              - generic "ام عبدالاله" [ref=e3570]: ا
+              - generic [ref=e3571]:
+                - heading "ام عبدالاله" [level=3] [ref=e3572]
+                - paragraph [ref=e3573]: يكفل 1 يتيم
+            - generic [ref=e3574]:
+              - generic [ref=e3575]:
+                - generic [ref=e3576]: "عدد الأيتام:"
+                - generic [ref=e3577]: 1 يتيم
+              - generic [ref=e3578]:
+                - generic [ref=e3579]: "حساب المنصة:"
+                - generic [ref=e3580]: لا يوجد حساب دخول
+            - generic [ref=e3581]:
+              - button "عرض الملف الكامل" [ref=e3582]
+              - button "إنشاء حساب دخول" [ref=e3583]
+        - generic [ref=e3584]:
+          - button "الصفحة السابقة" [disabled] [ref=e3585]:
+            - img [ref=e3586]
+          - generic [ref=e3588]: صفحة 1 من 8
+          - button "الصفحة التالية" [ref=e3589] [cursor=pointer]:
+            - img [ref=e3590]
+  - navigation "التنقل السفلي" [ref=e330]:
+    - link "لوحة التحكم" [ref=e331] [cursor=pointer]:
+      - /url: "#/"
+      - img [ref=e332]
+      - generic [ref=e335]: لوحة التحكم
+    - link "الأيتام" [ref=e336] [cursor=pointer]:
+      - /url: "#/orphans"
+      - img [ref=e337]
+      - generic [ref=e342]: الأيتام
+    - link "المراسلات" [ref=e343] [cursor=pointer]:
+      - /url: "#/messages"
+      - img [ref=e344]
+      - generic [ref=e346]: "2"
+      - generic [ref=e347]: المراسلات
+    - link "النظام المالي" [ref=e348] [cursor=pointer]:
+      - /url: "#/financial-system"
+      - img [ref=e349]
+      - generic [ref=e352]: "2"
+      - generic [ref=e353]: النظام المالي
+    - button "المزيد" [ref=e354] [cursor=pointer]:
+      - img [ref=e355]
+      - generic [ref=e359]: المزيد
+  - dialog "قائمة المزيد":
+    - generic:
+      - generic:
+        - generic:
+          - paragraph: روابط إضافية
+          - heading "المزيد" [level=2]
+        - button "إغلاق":
+          - img
+      - generic:
+        - link "الكفلاء":
+          - /url: "#/sponsors"
+          - img
+          - generic: الكفلاء
+          - img
+        - link "الموارد البشرية":
+          - /url: "#/human-resources"
+          - img
+          - generic: الموارد البشرية
+          - img
+        - link "سياسات فيء":
+          - /url: "#/policies"
+          - img
+          - generic: سياسات فيء
+          - img
+        - button "تسجيل الخروج":
+          - img
+          - generic: تسجيل الخروج

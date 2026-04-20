@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "bootstrap-admin": "tsx scripts/bootstrap-admin.ts",
     "generate-import-sql": "tsx scripts/generate-import-sql.ts",
-    "import-orphans-data": "tsx scripts/import-orphans-data.ts"
+    "import-orphans-data": "tsx scripts/import-orphans-data.ts",
+    "add-admin": "tsx scripts/add-admin.ts"
   },
   "dependencies": {
     "@google/genai": "^1.21.0",

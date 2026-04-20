@@ -1,0 +1,964 @@
+- generic [ref=e24]:
+  - main [ref=e25]:
+    - generic [ref=e27]:
+      - button "الإشعارات" [ref=e31] [cursor=pointer]:
+        - img [ref=e32]
+      - generic [ref=e35]:
+        - link "العودة للصفحة الرئيسية" [ref=e36] [cursor=pointer]:
+          - /url: "#/"
+          - generic [ref=e37]: فيء
+          - img [ref=e38]
+        - button "قائمة المستخدم" [ref=e41] [cursor=pointer]:
+          - generic "System Admin" [ref=e42]: S
+    - generic [ref=e43]:
+      - generic [ref=e360]:
+        - generic [ref=e361]:
+          - generic [ref=e362]:
+            - generic [ref=e363]:
+              - heading "قائمة الكفلاء" [level=1] [ref=e364]
+              - paragraph [ref=e365]: عرض وإدارة بيانات الكفلاء بتنسيق متقدم
+            - button "إجراءات الصفحة" [ref=e368] [cursor=pointer]:
+              - img [ref=e369]
+          - generic [ref=e374]:
+            - generic:
+              - img
+            - textbox "ابحث باسم الكافل..." [ref=e375]
+        - generic [ref=e376]:
+          - generic [ref=e378]:
+            - generic [ref=e379]:
+              - generic [ref=e380]:
+                - button "عرض قائمة" [ref=e381] [cursor=pointer]:
+                  - img [ref=e382]
+                - button "عرض شبكي" [ref=e383] [cursor=pointer]:
+                  - img [ref=e384]
+              - button "الفرز والتصفية" [ref=e390] [cursor=pointer]:
+                - img [ref=e391]
+              - generic [ref=e392] [cursor=pointer]:
+                - checkbox "تحديد الكل" [ref=e393]
+                - generic [ref=e394]: تحديد الكل
+            - generic [ref=e395]: تم العثور على 94 كافل
+          - generic [ref=e633]:
+            - generic [ref=e634]:
+              - generic [ref=e635] [cursor=pointer]:
+                - generic [ref=e636]:
+                  - checkbox "تحديد ابرار الابراهيم" [ref=e638]
+                  - generic "ابرار الابراهيم" [ref=e640]: ا
+                  - generic [ref=e641]:
+                    - heading "ابرار الابراهيم" [level=3] [ref=e642]
+                    - paragraph [ref=e643]: يكفل 1 يتيم
+                - generic [ref=e644]:
+                  - generic [ref=e645]:
+                    - generic [ref=e646]: "عدد الأيتام:"
+                    - generic [ref=e647]: 1 يتيم
+                  - generic [ref=e648]:
+                    - generic [ref=e649]: "حساب المنصة:"
+                    - generic [ref=e650]: لا يوجد حساب دخول
+                - generic [ref=e651]:
+                  - button "عرض الملف" [ref=e652]
+                  - button "إنشاء حساب دخول" [ref=e653]
+              - generic [ref=e654] [cursor=pointer]:
+                - generic [ref=e655]:
+                  - checkbox "تحديد أبو عبدالله" [ref=e657]
+                  - generic "أبو عبدالله" [ref=e659]: أ
+                  - generic [ref=e660]:
+                    - heading "أبو عبدالله" [level=3] [ref=e661]
+                    - paragraph [ref=e662]: يكفل 1 يتيم
+                - generic [ref=e663]:
+                  - generic [ref=e664]:
+                    - generic [ref=e665]: "عدد الأيتام:"
+                    - generic [ref=e666]: 1 يتيم
+                  - generic [ref=e667]:
+                    - generic [ref=e668]: "حساب المنصة:"
+                    - generic [ref=e669]: لا يوجد حساب دخول
+                - generic [ref=e670]:
+                  - button "عرض الملف" [ref=e671]
+                  - button "إنشاء حساب دخول" [ref=e672]
+              - generic [ref=e673] [cursor=pointer]:
+                - generic [ref=e674]:
+                  - checkbox "تحديد أبو علي" [ref=e676]
+                  - generic "أبو علي" [ref=e678]: أ
+                  - generic [ref=e679]:
+                    - heading "أبو علي" [level=3] [ref=e680]
+                    - paragraph [ref=e681]: يكفل 3 أيتام
+                - generic [ref=e682]:
+                  - generic [ref=e683]:
+                    - generic [ref=e684]: "عدد الأيتام:"
+                    - generic [ref=e685]: 3 أيتام
+                  - generic [ref=e686]:
+                    - generic [ref=e687]: "حساب المنصة:"
+                    - generic [ref=e688]: لا يوجد حساب دخول
+                - generic [ref=e689]:
+                  - button "عرض الملف" [ref=e690]
+                  - button "إنشاء حساب دخول" [ref=e691]
+              - generic [ref=e692] [cursor=pointer]:
+                - generic [ref=e693]:
+                  - checkbox "تحديد أبو نهار" [ref=e695]
+                  - generic "أبو نهار" [ref=e697]: أ
+                  - generic [ref=e698]:
+                    - heading "أبو نهار" [level=3] [ref=e699]
+                    - paragraph [ref=e700]: يكفل 1 يتيم
+                - generic [ref=e701]:
+                  - generic [ref=e702]:
+                    - generic [ref=e703]: "عدد الأيتام:"
+                    - generic [ref=e704]: 1 يتيم
+                  - generic [ref=e705]:
+                    - generic [ref=e706]: "حساب المنصة:"
+                    - generic [ref=e707]: لا يوجد حساب دخول
+                - generic [ref=e708]:
+                  - button "عرض الملف" [ref=e709]
+                  - button "إنشاء حساب دخول" [ref=e710]
+              - generic [ref=e711] [cursor=pointer]:
+                - generic [ref=e712]:
+                  - checkbox "تحديد اروى السيد" [ref=e714]
+                  - generic "اروى السيد" [ref=e716]: ا
+                  - generic [ref=e717]:
+                    - heading "اروى السيد" [level=3] [ref=e718]
+                    - paragraph [ref=e719]: يكفل 2 أيتام
+                - generic [ref=e720]:
+                  - generic [ref=e721]:
+                    - generic [ref=e722]: "عدد الأيتام:"
+                    - generic [ref=e723]: 2 أيتام
+                  - generic [ref=e724]:
+                    - generic [ref=e725]: "حساب المنصة:"
+                    - generic [ref=e726]: لا يوجد حساب دخول
+                - generic [ref=e727]:
+                  - button "عرض الملف" [ref=e728]
+                  - button "إنشاء حساب دخول" [ref=e729]
+              - generic [ref=e730] [cursor=pointer]:
+                - generic [ref=e731]:
+                  - checkbox "تحديد اسماء" [ref=e733]
+                  - generic "اسماء" [ref=e735]: ا
+                  - generic [ref=e736]:
+                    - heading "اسماء" [level=3] [ref=e737]
+                    - paragraph [ref=e738]: يكفل 31 أيتام
+                - generic [ref=e739]:
+                  - generic [ref=e740]:
+                    - generic [ref=e741]: "عدد الأيتام:"
+                    - generic [ref=e742]: 31 أيتام
+                  - generic [ref=e743]:
+                    - generic [ref=e744]: "حساب المنصة:"
+                    - generic [ref=e745]: لا يوجد حساب دخول
+                - generic [ref=e746]:
+                  - button "عرض الملف" [ref=e747]
+                  - button "إنشاء حساب دخول" [ref=e748]
+              - generic [ref=e749] [cursor=pointer]:
+                - generic [ref=e750]:
+                  - checkbox "تحديد اعتماد اللفت" [ref=e752]
+                  - generic "اعتماد اللفت" [ref=e754]: ا
+                  - generic [ref=e755]:
+                    - heading "اعتماد اللفت" [level=3] [ref=e756]
+                    - paragraph [ref=e757]: يكفل 1 يتيم
+                - generic [ref=e758]:
+                  - generic [ref=e759]:
+                    - generic [ref=e760]: "عدد الأيتام:"
+                    - generic [ref=e761]: 1 يتيم
+                  - generic [ref=e762]:
+                    - generic [ref=e763]: "حساب المنصة:"
+                    - generic [ref=e764]: لا يوجد حساب دخول
+                - generic [ref=e765]:
+                  - button "عرض الملف" [ref=e766]
+                  - button "إنشاء حساب دخول" [ref=e767]
+              - generic [ref=e768] [cursor=pointer]:
+                - generic [ref=e769]:
+                  - checkbox "تحديد الاخوة والاخوات" [ref=e771]
+                  - generic "الاخوة والاخوات" [ref=e773]: ا
+                  - generic [ref=e774]:
+                    - heading "الاخوة والاخوات" [level=3] [ref=e775]
+                    - paragraph [ref=e776]: يكفل 10 أيتام
+                - generic [ref=e777]:
+                  - generic [ref=e778]:
+                    - generic [ref=e779]: "عدد الأيتام:"
+                    - generic [ref=e780]: 10 أيتام
+                  - generic [ref=e781]:
+                    - generic [ref=e782]: "حساب المنصة:"
+                    - generic [ref=e783]: لا يوجد حساب دخول
+                - generic [ref=e784]:
+                  - button "عرض الملف" [ref=e785]
+                  - button "إنشاء حساب دخول" [ref=e786]
+              - generic [ref=e787] [cursor=pointer]:
+                - generic [ref=e788]:
+                  - checkbox "تحديد ام احمد" [ref=e790]
+                  - generic "ام احمد" [ref=e792]: ا
+                  - generic [ref=e793]:
+                    - heading "ام احمد" [level=3] [ref=e794]
+                    - paragraph [ref=e795]: يكفل 1 يتيم
+                - generic [ref=e796]:
+                  - generic [ref=e797]:
+                    - generic [ref=e798]: "عدد الأيتام:"
+                    - generic [ref=e799]: 1 يتيم
+                  - generic [ref=e800]:
+                    - generic [ref=e801]: "حساب المنصة:"
+                    - generic [ref=e802]: لا يوجد حساب دخول
+                - generic [ref=e803]:
+                  - button "عرض الملف" [ref=e804]
+                  - button "إنشاء حساب دخول" [ref=e805]
+              - generic [ref=e806] [cursor=pointer]:
+                - generic [ref=e807]:
+                  - checkbox "تحديد ام ثامر" [ref=e809]
+                  - generic "ام ثامر" [ref=e811]: ا
+                  - generic [ref=e812]:
+                    - heading "ام ثامر" [level=3] [ref=e813]
+                    - paragraph [ref=e814]: يكفل 2 أيتام
+                - generic [ref=e815]:
+                  - generic [ref=e816]:
+                    - generic [ref=e817]: "عدد الأيتام:"
+                    - generic [ref=e818]: 2 أيتام
+                  - generic [ref=e819]:
+                    - generic [ref=e820]: "حساب المنصة:"
+                    - generic [ref=e821]: لا يوجد حساب دخول
+                - generic [ref=e822]:
+                  - button "عرض الملف" [ref=e823]
+                  - button "إنشاء حساب دخول" [ref=e824]
+              - generic [ref=e825] [cursor=pointer]:
+                - generic [ref=e826]:
+                  - checkbox "تحديد ام طارق" [ref=e828]
+                  - generic "ام طارق" [ref=e830]: ا
+                  - generic [ref=e831]:
+                    - heading "ام طارق" [level=3] [ref=e832]
+                    - paragraph [ref=e833]: يكفل 1 يتيم
+                - generic [ref=e834]:
+                  - generic [ref=e835]:
+                    - generic [ref=e836]: "عدد الأيتام:"
+                    - generic [ref=e837]: 1 يتيم
+                  - generic [ref=e838]:
+                    - generic [ref=e839]: "حساب المنصة:"
+                    - generic [ref=e840]: لا يوجد حساب دخول
+                - generic [ref=e841]:
+                  - button "عرض الملف" [ref=e842]
+                  - button "إنشاء حساب دخول" [ref=e843]
+              - generic [ref=e844] [cursor=pointer]:
+                - generic [ref=e845]:
+                  - checkbox "تحديد ام عبدالاله" [ref=e847]
+                  - generic "ام عبدالاله" [ref=e849]: ا
+                  - generic [ref=e850]:
+                    - heading "ام عبدالاله" [level=3] [ref=e851]
+                    - paragraph [ref=e852]: يكفل 1 يتيم
+                - generic [ref=e853]:
+                  - generic [ref=e854]:
+                    - generic [ref=e855]: "عدد الأيتام:"
+                    - generic [ref=e856]: 1 يتيم
+                  - generic [ref=e857]:
+                    - generic [ref=e858]: "حساب المنصة:"
+                    - generic [ref=e859]: لا يوجد حساب دخول
+                - generic [ref=e860]:
+                  - button "عرض الملف" [ref=e861]
+                  - button "إنشاء حساب دخول" [ref=e862]
+            - generic [ref=e863]:
+              - button "الصفحة السابقة" [disabled] [ref=e864]:
+                - img [ref=e865]
+              - generic [ref=e867]: صفحة 1 من 8
+              - button "الصفحة التالية" [ref=e868] [cursor=pointer]:
+                - img [ref=e869]
+      - generic [ref=e881]:
+        - generic [ref=e882]:
+          - heading "اختر كافل" [level=3] [ref=e883]
+          - button "إغلاق" [ref=e884] [cursor=pointer]:
+            - img [ref=e885]
+        - generic [ref=e888]:
+          - button "ا ابرار الابراهيم يكفل 1 يتيم" [ref=e889] [cursor=pointer]:
+            - generic [ref=e890]:
+              - generic "ابرار الابراهيم" [ref=e891]: ا
+              - generic [ref=e892]:
+                - paragraph [ref=e893]: ابرار الابراهيم
+                - paragraph [ref=e894]: يكفل 1 يتيم
+            - img [ref=e895]
+          - button "أ أبو عبدالله يكفل 1 يتيم" [ref=e897] [cursor=pointer]:
+            - generic [ref=e898]:
+              - generic "أبو عبدالله" [ref=e899]: أ
+              - generic [ref=e900]:
+                - paragraph [ref=e901]: أبو عبدالله
+                - paragraph [ref=e902]: يكفل 1 يتيم
+            - img [ref=e903]
+          - button "أ أبو علي يكفل 3 أيتام" [ref=e905] [cursor=pointer]:
+            - generic [ref=e906]:
+              - generic "أبو علي" [ref=e907]: أ
+              - generic [ref=e908]:
+                - paragraph [ref=e909]: أبو علي
+                - paragraph [ref=e910]: يكفل 3 أيتام
+            - img [ref=e911]
+          - button "أ أبو نهار يكفل 1 يتيم" [ref=e913] [cursor=pointer]:
+            - generic [ref=e914]:
+              - generic "أبو نهار" [ref=e915]: أ
+              - generic [ref=e916]:
+                - paragraph [ref=e917]: أبو نهار
+                - paragraph [ref=e918]: يكفل 1 يتيم
+            - img [ref=e919]
+          - button "ا اروى السيد يكفل 2 أيتام" [ref=e921] [cursor=pointer]:
+            - generic [ref=e922]:
+              - generic "اروى السيد" [ref=e923]: ا
+              - generic [ref=e924]:
+                - paragraph [ref=e925]: اروى السيد
+                - paragraph [ref=e926]: يكفل 2 أيتام
+            - img [ref=e927]
+          - button "ا اسماء يكفل 31 أيتام" [ref=e929] [cursor=pointer]:
+            - generic [ref=e930]:
+              - generic "اسماء" [ref=e931]: ا
+              - generic [ref=e932]:
+                - paragraph [ref=e933]: اسماء
+                - paragraph [ref=e934]: يكفل 31 أيتام
+            - img [ref=e935]
+          - button "ا اعتماد اللفت يكفل 1 يتيم" [ref=e937] [cursor=pointer]:
+            - generic [ref=e938]:
+              - generic "اعتماد اللفت" [ref=e939]: ا
+              - generic [ref=e940]:
+                - paragraph [ref=e941]: اعتماد اللفت
+                - paragraph [ref=e942]: يكفل 1 يتيم
+            - img [ref=e943]
+          - button "ا الاخوة والاخوات يكفل 10 أيتام" [ref=e945] [cursor=pointer]:
+            - generic [ref=e946]:
+              - generic "الاخوة والاخوات" [ref=e947]: ا
+              - generic [ref=e948]:
+                - paragraph [ref=e949]: الاخوة والاخوات
+                - paragraph [ref=e950]: يكفل 10 أيتام
+            - img [ref=e951]
+          - button "ا ام احمد يكفل 1 يتيم" [ref=e953] [cursor=pointer]:
+            - generic [ref=e954]:
+              - generic "ام احمد" [ref=e955]: ا
+              - generic [ref=e956]:
+                - paragraph [ref=e957]: ام احمد
+                - paragraph [ref=e958]: يكفل 1 يتيم
+            - img [ref=e959]
+          - button "ا ام ثامر يكفل 2 أيتام" [ref=e961] [cursor=pointer]:
+            - generic [ref=e962]:
+              - generic "ام ثامر" [ref=e963]: ا
+              - generic [ref=e964]:
+                - paragraph [ref=e965]: ام ثامر
+                - paragraph [ref=e966]: يكفل 2 أيتام
+            - img [ref=e967]
+          - button "ا ام طارق يكفل 1 يتيم" [ref=e969] [cursor=pointer]:
+            - generic [ref=e970]:
+              - generic "ام طارق" [ref=e971]: ا
+              - generic [ref=e972]:
+                - paragraph [ref=e973]: ام طارق
+                - paragraph [ref=e974]: يكفل 1 يتيم
+            - img [ref=e975]
+          - button "ا ام عبدالاله يكفل 1 يتيم" [ref=e977] [cursor=pointer]:
+            - generic [ref=e978]:
+              - generic "ام عبدالاله" [ref=e979]: ا
+              - generic [ref=e980]:
+                - paragraph [ref=e981]: ام عبدالاله
+                - paragraph [ref=e982]: يكفل 1 يتيم
+            - img [ref=e983]
+          - button "ا ام عبدالعزيز يكفل 1 يتيم" [ref=e985] [cursor=pointer]:
+            - generic [ref=e986]:
+              - generic "ام عبدالعزيز" [ref=e987]: ا
+              - generic [ref=e988]:
+                - paragraph [ref=e989]: ام عبدالعزيز
+                - paragraph [ref=e990]: يكفل 1 يتيم
+            - img [ref=e991]
+          - button "ا ام عبدالله القطرية يكفل 2 أيتام" [ref=e993] [cursor=pointer]:
+            - generic [ref=e994]:
+              - generic "ام عبدالله القطرية" [ref=e995]: ا
+              - generic [ref=e996]:
+                - paragraph [ref=e997]: ام عبدالله القطرية
+                - paragraph [ref=e998]: يكفل 2 أيتام
+            - img [ref=e999]
+          - button "ا ام مشعل يكفل 1 يتيم" [ref=e1001] [cursor=pointer]:
+            - generic [ref=e1002]:
+              - generic "ام مشعل" [ref=e1003]: ا
+              - generic [ref=e1004]:
+                - paragraph [ref=e1005]: ام مشعل
+                - paragraph [ref=e1006]: يكفل 1 يتيم
+            - img [ref=e1007]
+          - button "ا امل الهداب يكفل 2 أيتام" [ref=e1009] [cursor=pointer]:
+            - generic [ref=e1010]:
+              - generic "امل الهداب" [ref=e1011]: ا
+              - generic [ref=e1012]:
+                - paragraph [ref=e1013]: امل الهداب
+                - paragraph [ref=e1014]: يكفل 2 أيتام
+            - img [ref=e1015]
+          - button "ا امنة عرنوص يكفل 1 يتيم" [ref=e1017] [cursor=pointer]:
+            - generic [ref=e1018]:
+              - generic "امنة عرنوص" [ref=e1019]: ا
+              - generic [ref=e1020]:
+                - paragraph [ref=e1021]: امنة عرنوص
+                - paragraph [ref=e1022]: يكفل 1 يتيم
+            - img [ref=e1023]
+          - button "ا انتصار البراك يكفل 1 يتيم" [ref=e1025] [cursor=pointer]:
+            - generic [ref=e1026]:
+              - generic "انتصار البراك" [ref=e1027]: ا
+              - generic [ref=e1028]:
+                - paragraph [ref=e1029]: انتصار البراك
+                - paragraph [ref=e1030]: يكفل 1 يتيم
+            - img [ref=e1031]
+          - button "ا انوار الابراهيم يكفل 2 أيتام" [ref=e1033] [cursor=pointer]:
+            - generic [ref=e1034]:
+              - generic "انوار الابراهيم" [ref=e1035]: ا
+              - generic [ref=e1036]:
+                - paragraph [ref=e1037]: انوار الابراهيم
+                - paragraph [ref=e1038]: يكفل 2 أيتام
+            - img [ref=e1039]
+          - button "ا ايمان الحلواني يكفل 6 أيتام" [ref=e1041] [cursor=pointer]:
+            - generic [ref=e1042]:
+              - generic "ايمان الحلواني" [ref=e1043]: ا
+              - generic [ref=e1044]:
+                - paragraph [ref=e1045]: ايمان الحلواني
+                - paragraph [ref=e1046]: يكفل 6 أيتام
+            - img [ref=e1047]
+          - button "ا ايمان السقاط يكفل 1 يتيم" [ref=e1049] [cursor=pointer]:
+            - generic [ref=e1050]:
+              - generic "ايمان السقاط" [ref=e1051]: ا
+              - generic [ref=e1052]:
+                - paragraph [ref=e1053]: ايمان السقاط
+                - paragraph [ref=e1054]: يكفل 1 يتيم
+            - img [ref=e1055]
+          - button "ا ايمان اللفت يكفل 1 يتيم" [ref=e1057] [cursor=pointer]:
+            - generic [ref=e1058]:
+              - generic "ايمان اللفت" [ref=e1059]: ا
+              - generic [ref=e1060]:
+                - paragraph [ref=e1061]: ايمان اللفت
+                - paragraph [ref=e1062]: يكفل 1 يتيم
+            - img [ref=e1063]
+          - button "ا ايناس جواد النعيمي / اثير طه يكفل 1 يتيم" [ref=e1065] [cursor=pointer]:
+            - generic [ref=e1066]:
+              - generic "ايناس جواد النعيمي / اثير طه" [ref=e1067]: ا
+              - generic [ref=e1068]:
+                - paragraph [ref=e1069]: ايناس جواد النعيمي / اثير طه
+                - paragraph [ref=e1070]: يكفل 1 يتيم
+            - img [ref=e1071]
+          - button "أ أيوب الجنابي يكفل 1 يتيم" [ref=e1073] [cursor=pointer]:
+            - generic [ref=e1074]:
+              - generic "أيوب الجنابي" [ref=e1075]: أ
+              - generic [ref=e1076]:
+                - paragraph [ref=e1077]: أيوب الجنابي
+                - paragraph [ref=e1078]: يكفل 1 يتيم
+            - img [ref=e1079]
+          - button "ب بدرية الملحم يكفل 1 يتيم" [ref=e1081] [cursor=pointer]:
+            - generic [ref=e1082]:
+              - generic "بدرية الملحم" [ref=e1083]: ب
+              - generic [ref=e1084]:
+                - paragraph [ref=e1085]: بدرية الملحم
+                - paragraph [ref=e1086]: يكفل 1 يتيم
+            - img [ref=e1087]
+          - button "ت تهاني المعلم يكفل 1 يتيم" [ref=e1089] [cursor=pointer]:
+            - generic [ref=e1090]:
+              - generic "تهاني المعلم" [ref=e1091]: ت
+              - generic [ref=e1092]:
+                - paragraph [ref=e1093]: تهاني المعلم
+                - paragraph [ref=e1094]: يكفل 1 يتيم
+            - img [ref=e1095]
+          - button "ج جوانة يكفل 1 يتيم" [ref=e1097] [cursor=pointer]:
+            - generic [ref=e1098]:
+              - generic "جوانة" [ref=e1099]: ج
+              - generic [ref=e1100]:
+                - paragraph [ref=e1101]: جوانة
+                - paragraph [ref=e1102]: يكفل 1 يتيم
+            - img [ref=e1103]
+          - button "ح حنان اللفت يكفل 1 يتيم" [ref=e1105] [cursor=pointer]:
+            - generic [ref=e1106]:
+              - generic "حنان اللفت" [ref=e1107]: ح
+              - generic [ref=e1108]:
+                - paragraph [ref=e1109]: حنان اللفت
+                - paragraph [ref=e1110]: يكفل 1 يتيم
+            - img [ref=e1111]
+          - button "ح حنان دهلوي يكفل 5 أيتام" [ref=e1113] [cursor=pointer]:
+            - generic [ref=e1114]:
+              - generic "حنان دهلوي" [ref=e1115]: ح
+              - generic [ref=e1116]:
+                - paragraph [ref=e1117]: حنان دهلوي
+                - paragraph [ref=e1118]: يكفل 5 أيتام
+            - img [ref=e1119]
+          - button "ح حنان عبدالغفور يكفل 3 أيتام" [ref=e1121] [cursor=pointer]:
+            - generic [ref=e1122]:
+              - generic "حنان عبدالغفور" [ref=e1123]: ح
+              - generic [ref=e1124]:
+                - paragraph [ref=e1125]: حنان عبدالغفور
+                - paragraph [ref=e1126]: يكفل 3 أيتام
+            - img [ref=e1127]
+          - button "ح حياة اللفت يكفل 1 يتيم" [ref=e1129] [cursor=pointer]:
+            - generic [ref=e1130]:
+              - generic "حياة اللفت" [ref=e1131]: ح
+              - generic [ref=e1132]:
+                - paragraph [ref=e1133]: حياة اللفت
+                - paragraph [ref=e1134]: يكفل 1 يتيم
+            - img [ref=e1135]
+          - button "خ خالد ال محمود (نوار الدخيل) يكفل 1 يتيم" [ref=e1137] [cursor=pointer]:
+            - generic [ref=e1138]:
+              - generic "خالد ال محمود (نوار الدخيل)" [ref=e1139]: خ
+              - generic [ref=e1140]:
+                - paragraph [ref=e1141]: خالد ال محمود (نوار الدخيل)
+                - paragraph [ref=e1142]: يكفل 1 يتيم
+            - img [ref=e1143]
+          - button "خ خلود الجنابي يكفل 1 يتيم" [ref=e1145] [cursor=pointer]:
+            - generic [ref=e1146]:
+              - generic "خلود الجنابي" [ref=e1147]: خ
+              - generic [ref=e1148]:
+                - paragraph [ref=e1149]: خلود الجنابي
+                - paragraph [ref=e1150]: يكفل 1 يتيم
+            - img [ref=e1151]
+          - button "خ خلود الراشد يكفل 1 يتيم" [ref=e1153] [cursor=pointer]:
+            - generic [ref=e1154]:
+              - generic "خلود الراشد" [ref=e1155]: خ
+              - generic [ref=e1156]:
+                - paragraph [ref=e1157]: خلود الراشد
+                - paragraph [ref=e1158]: يكفل 1 يتيم
+            - img [ref=e1159]
+          - button "خ خولة الدحان يكفل 3 أيتام" [ref=e1161] [cursor=pointer]:
+            - generic [ref=e1162]:
+              - generic "خولة الدحان" [ref=e1163]: خ
+              - generic [ref=e1164]:
+                - paragraph [ref=e1165]: خولة الدحان
+                - paragraph [ref=e1166]: يكفل 3 أيتام
+            - img [ref=e1167]
+          - button "خ خير ربي يكفل 11 أيتام" [ref=e1169] [cursor=pointer]:
+            - generic [ref=e1170]:
+              - generic "خير ربي" [ref=e1171]: خ
+              - generic [ref=e1172]:
+                - paragraph [ref=e1173]: خير ربي
+                - paragraph [ref=e1174]: يكفل 11 أيتام
+            - img [ref=e1175]
+          - button "د دكتورة مريم يكفل 2 أيتام" [ref=e1177] [cursor=pointer]:
+            - generic [ref=e1178]:
+              - generic "دكتورة مريم" [ref=e1179]: د
+              - generic [ref=e1180]:
+                - paragraph [ref=e1181]: دكتورة مريم
+                - paragraph [ref=e1182]: يكفل 2 أيتام
+            - img [ref=e1183]
+          - button "د دلال الفيلجاوي يكفل 1 يتيم" [ref=e1185] [cursor=pointer]:
+            - generic [ref=e1186]:
+              - generic "دلال الفيلجاوي" [ref=e1187]: د
+              - generic [ref=e1188]:
+                - paragraph [ref=e1189]: دلال الفيلجاوي
+                - paragraph [ref=e1190]: يكفل 1 يتيم
+            - img [ref=e1191]
+          - button "ر روني كامل يكفل 6 أيتام" [ref=e1193] [cursor=pointer]:
+            - generic [ref=e1194]:
+              - generic "روني كامل" [ref=e1195]: ر
+              - generic [ref=e1196]:
+                - paragraph [ref=e1197]: روني كامل
+                - paragraph [ref=e1198]: يكفل 6 أيتام
+            - img [ref=e1199]
+          - button "ز زينب سعد / ضحى علاء عبد الوهاب يكفل 1 يتيم" [ref=e1201] [cursor=pointer]:
+            - generic [ref=e1202]:
+              - generic "زينب سعد / ضحى علاء عبد الوهاب" [ref=e1203]: ز
+              - generic [ref=e1204]:
+                - paragraph [ref=e1205]: زينب سعد / ضحى علاء عبد الوهاب
+                - paragraph [ref=e1206]: يكفل 1 يتيم
+            - img [ref=e1207]
+          - button "ز زينة السعدي يكفل 2 أيتام" [ref=e1209] [cursor=pointer]:
+            - generic [ref=e1210]:
+              - generic "زينة السعدي" [ref=e1211]: ز
+              - generic [ref=e1212]:
+                - paragraph [ref=e1213]: زينة السعدي
+                - paragraph [ref=e1214]: يكفل 2 أيتام
+            - img [ref=e1215]
+          - button "س سامية اسماعيل يكفل 1 يتيم" [ref=e1217] [cursor=pointer]:
+            - generic [ref=e1218]:
+              - generic "سامية اسماعيل" [ref=e1219]: س
+              - generic [ref=e1220]:
+                - paragraph [ref=e1221]: سامية اسماعيل
+                - paragraph [ref=e1222]: يكفل 1 يتيم
+            - img [ref=e1223]
+          - button "س سحر غزالي يكفل 1 يتيم" [ref=e1225] [cursor=pointer]:
+            - generic [ref=e1226]:
+              - generic "سحر غزالي" [ref=e1227]: س
+              - generic [ref=e1228]:
+                - paragraph [ref=e1229]: سحر غزالي
+                - paragraph [ref=e1230]: يكفل 1 يتيم
+            - img [ref=e1231]
+          - button "س سعاد الداوود يكفل 1 يتيم" [ref=e1233] [cursor=pointer]:
+            - generic [ref=e1234]:
+              - generic "سعاد الداوود" [ref=e1235]: س
+              - generic [ref=e1236]:
+                - paragraph [ref=e1237]: سعاد الداوود
+                - paragraph [ref=e1238]: يكفل 1 يتيم
+            - img [ref=e1239]
+          - button "س سعاد عبدالعزيز الحميد يكفل 1 يتيم" [ref=e1241] [cursor=pointer]:
+            - generic [ref=e1242]:
+              - generic "سعاد عبدالعزيز الحميد" [ref=e1243]: س
+              - generic [ref=e1244]:
+                - paragraph [ref=e1245]: سعاد عبدالعزيز الحميد
+                - paragraph [ref=e1246]: يكفل 1 يتيم
+            - img [ref=e1247]
+          - button "س سعود الرميزان يكفل 4 أيتام" [ref=e1249] [cursor=pointer]:
+            - generic [ref=e1250]:
+              - generic "سعود الرميزان" [ref=e1251]: س
+              - generic [ref=e1252]:
+                - paragraph [ref=e1253]: سعود الرميزان
+                - paragraph [ref=e1254]: يكفل 4 أيتام
+            - img [ref=e1255]
+          - button "س سلوى اسماعيل يكفل 1 يتيم" [ref=e1257] [cursor=pointer]:
+            - generic [ref=e1258]:
+              - generic "سلوى اسماعيل" [ref=e1259]: س
+              - generic [ref=e1260]:
+                - paragraph [ref=e1261]: سلوى اسماعيل
+                - paragraph [ref=e1262]: يكفل 1 يتيم
+            - img [ref=e1263]
+          - button "س سليمان محمد (فاعل خير) يكفل 3 أيتام" [ref=e1265] [cursor=pointer]:
+            - generic [ref=e1266]:
+              - generic "سليمان محمد (فاعل خير)" [ref=e1267]: س
+              - generic [ref=e1268]:
+                - paragraph [ref=e1269]: سليمان محمد (فاعل خير)
+                - paragraph [ref=e1270]: يكفل 3 أيتام
+            - img [ref=e1271]
+          - button "س سمانتا فضل الله يكفل 1 يتيم" [ref=e1273] [cursor=pointer]:
+            - generic [ref=e1274]:
+              - generic "سمانتا فضل الله" [ref=e1275]: س
+              - generic [ref=e1276]:
+                - paragraph [ref=e1277]: سمانتا فضل الله
+                - paragraph [ref=e1278]: يكفل 1 يتيم
+            - img [ref=e1279]
+          - button "س سهى العمران يكفل 1 يتيم" [ref=e1281] [cursor=pointer]:
+            - generic [ref=e1282]:
+              - generic "سهى العمران" [ref=e1283]: س
+              - generic [ref=e1284]:
+                - paragraph [ref=e1285]: سهى العمران
+                - paragraph [ref=e1286]: يكفل 1 يتيم
+            - img [ref=e1287]
+          - button "س سوسن عبدالمحسن الحنين يكفل 1 يتيم" [ref=e1289] [cursor=pointer]:
+            - generic [ref=e1290]:
+              - generic "سوسن عبدالمحسن الحنين" [ref=e1291]: س
+              - generic [ref=e1292]:
+                - paragraph [ref=e1293]: سوسن عبدالمحسن الحنين
+                - paragraph [ref=e1294]: يكفل 1 يتيم
+            - img [ref=e1295]
+          - button "س سيناء العمران يكفل 1 يتيم" [ref=e1297] [cursor=pointer]:
+            - generic [ref=e1298]:
+              - generic "سيناء العمران" [ref=e1299]: س
+              - generic [ref=e1300]:
+                - paragraph [ref=e1301]: سيناء العمران
+                - paragraph [ref=e1302]: يكفل 1 يتيم
+            - img [ref=e1303]
+          - button "ش شفاء قاسم يكفل 1 يتيم" [ref=e1305] [cursor=pointer]:
+            - generic [ref=e1306]:
+              - generic "شفاء قاسم" [ref=e1307]: ش
+              - generic [ref=e1308]:
+                - paragraph [ref=e1309]: شفاء قاسم
+                - paragraph [ref=e1310]: يكفل 1 يتيم
+            - img [ref=e1311]
+          - button "ش شهد الحلواني يكفل 4 أيتام" [ref=e1313] [cursor=pointer]:
+            - generic [ref=e1314]:
+              - generic "شهد الحلواني" [ref=e1315]: ش
+              - generic [ref=e1316]:
+                - paragraph [ref=e1317]: شهد الحلواني
+                - paragraph [ref=e1318]: يكفل 4 أيتام
+            - img [ref=e1319]
+          - button "ش شيخة بانمي يكفل 2 أيتام" [ref=e1321] [cursor=pointer]:
+            - generic [ref=e1322]:
+              - generic "شيخة بانمي" [ref=e1323]: ش
+              - generic [ref=e1324]:
+                - paragraph [ref=e1325]: شيخة بانمي
+                - paragraph [ref=e1326]: يكفل 2 أيتام
+            - img [ref=e1327]
+          - button "ص صفا قاسم يكفل 3 أيتام" [ref=e1329] [cursor=pointer]:
+            - generic [ref=e1330]:
+              - generic "صفا قاسم" [ref=e1331]: ص
+              - generic [ref=e1332]:
+                - paragraph [ref=e1333]: صفا قاسم
+                - paragraph [ref=e1334]: يكفل 3 أيتام
+            - img [ref=e1335]
+          - button "ط طلحة يكفل 3 أيتام" [ref=e1337] [cursor=pointer]:
+            - generic [ref=e1338]:
+              - generic "طلحة" [ref=e1339]: ط
+              - generic [ref=e1340]:
+                - paragraph [ref=e1341]: طلحة
+                - paragraph [ref=e1342]: يكفل 3 أيتام
+            - img [ref=e1343]
+          - button "ع عائشة الملا يكفل 5 أيتام" [ref=e1345] [cursor=pointer]:
+            - generic [ref=e1346]:
+              - generic "عائشة الملا" [ref=e1347]: ع
+              - generic [ref=e1348]:
+                - paragraph [ref=e1349]: عائشة الملا
+                - paragraph [ref=e1350]: يكفل 5 أيتام
+            - img [ref=e1351]
+          - button "ع عبد الله علي كريم يكفل 1 يتيم" [ref=e1353] [cursor=pointer]:
+            - generic [ref=e1354]:
+              - generic "عبد الله علي كريم" [ref=e1355]: ع
+              - generic [ref=e1356]:
+                - paragraph [ref=e1357]: عبد الله علي كريم
+                - paragraph [ref=e1358]: يكفل 1 يتيم
+            - img [ref=e1359]
+          - button "ع عثمان المشايخي يكفل 1 يتيم" [ref=e1361] [cursor=pointer]:
+            - generic [ref=e1362]:
+              - generic "عثمان المشايخي" [ref=e1363]: ع
+              - generic [ref=e1364]:
+                - paragraph [ref=e1365]: عثمان المشايخي
+                - paragraph [ref=e1366]: يكفل 1 يتيم
+            - img [ref=e1367]
+          - button "ع علي ال محمود (نوار الدخيل) يكفل 1 يتيم" [ref=e1369] [cursor=pointer]:
+            - generic [ref=e1370]:
+              - generic "علي ال محمود (نوار الدخيل)" [ref=e1371]: ع
+              - generic [ref=e1372]:
+                - paragraph [ref=e1373]: علي ال محمود (نوار الدخيل)
+                - paragraph [ref=e1374]: يكفل 1 يتيم
+            - img [ref=e1375]
+          - button "ع علياء يكفل 1 يتيم" [ref=e1377] [cursor=pointer]:
+            - generic [ref=e1378]:
+              - generic "علياء" [ref=e1379]: ع
+              - generic [ref=e1380]:
+                - paragraph [ref=e1381]: علياء
+                - paragraph [ref=e1382]: يكفل 1 يتيم
+            - img [ref=e1383]
+          - button "ع علية حسين يكفل 1 يتيم" [ref=e1385] [cursor=pointer]:
+            - generic [ref=e1386]:
+              - generic "علية حسين" [ref=e1387]: ع
+              - generic [ref=e1388]:
+                - paragraph [ref=e1389]: علية حسين
+                - paragraph [ref=e1390]: يكفل 1 يتيم
+            - img [ref=e1391]
+          - button "ع عهود رجب يكفل 2 أيتام" [ref=e1393] [cursor=pointer]:
+            - generic [ref=e1394]:
+              - generic "عهود رجب" [ref=e1395]: ع
+              - generic [ref=e1396]:
+                - paragraph [ref=e1397]: عهود رجب
+                - paragraph [ref=e1398]: يكفل 2 أيتام
+            - img [ref=e1399]
+          - button "ع عيد الماجد يكفل 1 يتيم" [ref=e1401] [cursor=pointer]:
+            - generic [ref=e1402]:
+              - generic "عيد الماجد" [ref=e1403]: ع
+              - generic [ref=e1404]:
+                - paragraph [ref=e1405]: عيد الماجد
+                - paragraph [ref=e1406]: يكفل 1 يتيم
+            - img [ref=e1407]
+          - button "غ غنيمة العسماوي يكفل 1 يتيم" [ref=e1409] [cursor=pointer]:
+            - generic [ref=e1410]:
+              - generic "غنيمة العسماوي" [ref=e1411]: غ
+              - generic [ref=e1412]:
+                - paragraph [ref=e1413]: غنيمة العسماوي
+                - paragraph [ref=e1414]: يكفل 1 يتيم
+            - img [ref=e1415]
+          - button "ف فاطمة العسماوي يكفل 1 يتيم" [ref=e1417] [cursor=pointer]:
+            - generic [ref=e1418]:
+              - generic "فاطمة العسماوي" [ref=e1419]: ف
+              - generic [ref=e1420]:
+                - paragraph [ref=e1421]: فاطمة العسماوي
+                - paragraph [ref=e1422]: يكفل 1 يتيم
+            - img [ref=e1423]
+          - button "ف فاعلة خير يكفل 31 أيتام" [ref=e1425] [cursor=pointer]:
+            - generic [ref=e1426]:
+              - generic "فاعلة خير" [ref=e1427]: ف
+              - generic [ref=e1428]:
+                - paragraph [ref=e1429]: فاعلة خير
+                - paragraph [ref=e1430]: يكفل 31 أيتام
+            - img [ref=e1431]
+          - button "ف فوزية الطاسان يكفل 2 أيتام" [ref=e1433] [cursor=pointer]:
+            - generic [ref=e1434]:
+              - generic "فوزية الطاسان" [ref=e1435]: ف
+              - generic [ref=e1436]:
+                - paragraph [ref=e1437]: فوزية الطاسان
+                - paragraph [ref=e1438]: يكفل 2 أيتام
+            - img [ref=e1439]
+          - button "ق قاسم الجنابي يكفل 1 يتيم" [ref=e1441] [cursor=pointer]:
+            - generic [ref=e1442]:
+              - generic "قاسم الجنابي" [ref=e1443]: ق
+              - generic [ref=e1444]:
+                - paragraph [ref=e1445]: قاسم الجنابي
+                - paragraph [ref=e1446]: يكفل 1 يتيم
+            - img [ref=e1447]
+          - button "ق قتيبة الغالبي يكفل 1 يتيم" [ref=e1449] [cursor=pointer]:
+            - generic [ref=e1450]:
+              - generic "قتيبة الغالبي" [ref=e1451]: ق
+              - generic [ref=e1452]:
+                - paragraph [ref=e1453]: قتيبة الغالبي
+                - paragraph [ref=e1454]: يكفل 1 يتيم
+            - img [ref=e1455]
+          - button "ل ليلى (ام انس) يكفل 1 يتيم" [ref=e1457] [cursor=pointer]:
+            - generic [ref=e1458]:
+              - generic "ليلى (ام انس)" [ref=e1459]: ل
+              - generic [ref=e1460]:
+                - paragraph [ref=e1461]: ليلى (ام انس)
+                - paragraph [ref=e1462]: يكفل 1 يتيم
+            - img [ref=e1463]
+          - button "ل ليلى الكنعان يكفل 1 يتيم" [ref=e1465] [cursor=pointer]:
+            - generic [ref=e1466]:
+              - generic "ليلى الكنعان" [ref=e1467]: ل
+              - generic [ref=e1468]:
+                - paragraph [ref=e1469]: ليلى الكنعان
+                - paragraph [ref=e1470]: يكفل 1 يتيم
+            - img [ref=e1471]
+          - button "ل ليلى جمعة يكفل 1 يتيم" [ref=e1473] [cursor=pointer]:
+            - generic [ref=e1474]:
+              - generic "ليلى جمعة" [ref=e1475]: ل
+              - generic [ref=e1476]:
+                - paragraph [ref=e1477]: ليلى جمعة
+                - paragraph [ref=e1478]: يكفل 1 يتيم
+            - img [ref=e1479]
+          - button "ل لينا غندور يكفل 1 يتيم" [ref=e1481] [cursor=pointer]:
+            - generic [ref=e1482]:
+              - generic "لينا غندور" [ref=e1483]: ل
+              - generic [ref=e1484]:
+                - paragraph [ref=e1485]: لينا غندور
+                - paragraph [ref=e1486]: يكفل 1 يتيم
+            - img [ref=e1487]
+          - button "م مؤمن الزرزور يكفل 1 يتيم" [ref=e1489] [cursor=pointer]:
+            - generic [ref=e1490]:
+              - generic "مؤمن الزرزور" [ref=e1491]: م
+              - generic [ref=e1492]:
+                - paragraph [ref=e1493]: مؤمن الزرزور
+                - paragraph [ref=e1494]: يكفل 1 يتيم
+            - img [ref=e1495]
+          - button "م مجد الحواري يكفل 4 أيتام" [ref=e1497] [cursor=pointer]:
+            - generic [ref=e1498]:
+              - generic "مجد الحواري" [ref=e1499]: م
+              - generic [ref=e1500]:
+                - paragraph [ref=e1501]: مجد الحواري
+                - paragraph [ref=e1502]: يكفل 4 أيتام
+            - img [ref=e1503]
+          - button "م محمد ال محمود (نوار الدخيل) يكفل 1 يتيم" [ref=e1505] [cursor=pointer]:
+            - generic [ref=e1506]:
+              - generic "محمد ال محمود (نوار الدخيل)" [ref=e1507]: م
+              - generic [ref=e1508]:
+                - paragraph [ref=e1509]: محمد ال محمود (نوار الدخيل)
+                - paragraph [ref=e1510]: يكفل 1 يتيم
+            - img [ref=e1511]
+          - button "م مرام الشريف يكفل 1 يتيم" [ref=e1513] [cursor=pointer]:
+            - generic [ref=e1514]:
+              - generic "مرام الشريف" [ref=e1515]: م
+              - generic [ref=e1516]:
+                - paragraph [ref=e1517]: مرام الشريف
+                - paragraph [ref=e1518]: يكفل 1 يتيم
+            - img [ref=e1519]
+          - button "م منى الحافظ يكفل 1 يتيم" [ref=e1521] [cursor=pointer]:
+            - generic [ref=e1522]:
+              - generic "منى الحافظ" [ref=e1523]: م
+              - generic [ref=e1524]:
+                - paragraph [ref=e1525]: منى الحافظ
+                - paragraph [ref=e1526]: يكفل 1 يتيم
+            - img [ref=e1527]
+          - button "م منيرة الرشيد يكفل 1 يتيم" [ref=e1529] [cursor=pointer]:
+            - generic [ref=e1530]:
+              - generic "منيرة الرشيد" [ref=e1531]: م
+              - generic [ref=e1532]:
+                - paragraph [ref=e1533]: منيرة الرشيد
+                - paragraph [ref=e1534]: يكفل 1 يتيم
+            - img [ref=e1535]
+          - button "م مها الحافظ وجوهرة يكفل 1 يتيم" [ref=e1537] [cursor=pointer]:
+            - generic [ref=e1538]:
+              - generic "مها الحافظ وجوهرة" [ref=e1539]: م
+              - generic [ref=e1540]:
+                - paragraph [ref=e1541]: مها الحافظ وجوهرة
+                - paragraph [ref=e1542]: يكفل 1 يتيم
+            - img [ref=e1543]
+          - button "م مها المرشد يكفل 4 أيتام" [ref=e1545] [cursor=pointer]:
+            - generic [ref=e1546]:
+              - generic "مها المرشد" [ref=e1547]: م
+              - generic [ref=e1548]:
+                - paragraph [ref=e1549]: مها المرشد
+                - paragraph [ref=e1550]: يكفل 4 أيتام
+            - img [ref=e1551]
+          - button "م ميسم خالد يكفل 1 يتيم" [ref=e1553] [cursor=pointer]:
+            - generic [ref=e1554]:
+              - generic "ميسم خالد" [ref=e1555]: م
+              - generic [ref=e1556]:
+                - paragraph [ref=e1557]: ميسم خالد
+                - paragraph [ref=e1558]: يكفل 1 يتيم
+            - img [ref=e1559]
+          - button "ن ناجية الحربي يكفل 1 يتيم" [ref=e1561] [cursor=pointer]:
+            - generic [ref=e1562]:
+              - generic "ناجية الحربي" [ref=e1563]: ن
+              - generic [ref=e1564]:
+                - paragraph [ref=e1565]: ناجية الحربي
+                - paragraph [ref=e1566]: يكفل 1 يتيم
+            - img [ref=e1567]
+          - button "ن نبيلة معروف بنتن يكفل 1 يتيم" [ref=e1569] [cursor=pointer]:
+            - generic [ref=e1570]:
+              - generic "نبيلة معروف بنتن" [ref=e1571]: ن
+              - generic [ref=e1572]:
+                - paragraph [ref=e1573]: نبيلة معروف بنتن
+                - paragraph [ref=e1574]: يكفل 1 يتيم
+            - img [ref=e1575]
+          - button "ن نوار الدخيل يكفل 1 يتيم" [ref=e1577] [cursor=pointer]:
+            - generic [ref=e1578]:
+              - generic "نوار الدخيل" [ref=e1579]: ن
+              - generic [ref=e1580]:
+                - paragraph [ref=e1581]: نوار الدخيل
+                - paragraph [ref=e1582]: يكفل 1 يتيم
+            - img [ref=e1583]
+          - button "ن نورة الحافظ يكفل 3 أيتام" [ref=e1585] [cursor=pointer]:
+            - generic [ref=e1586]:
+              - generic "نورة الحافظ" [ref=e1587]: ن
+              - generic [ref=e1588]:
+                - paragraph [ref=e1589]: نورة الحافظ
+                - paragraph [ref=e1590]: يكفل 3 أيتام
+            - img [ref=e1591]
+          - button "ن نورة القحطاني يكفل 3 أيتام" [ref=e1593] [cursor=pointer]:
+            - generic [ref=e1594]:
+              - generic "نورة القحطاني" [ref=e1595]: ن
+              - generic [ref=e1596]:
+                - paragraph [ref=e1597]: نورة القحطاني
+                - paragraph [ref=e1598]: يكفل 3 أيتام
+            - img [ref=e1599]
+          - button "ن نورة اللفت يكفل 6 أيتام" [ref=e1601] [cursor=pointer]:
+            - generic [ref=e1602]:
+              - generic "نورة اللفت" [ref=e1603]: ن
+              - generic [ref=e1604]:
+                - paragraph [ref=e1605]: نورة اللفت
+                - paragraph [ref=e1606]: يكفل 6 أيتام
+            - img [ref=e1607]
+          - button "ن نورة المنصور يكفل 5 أيتام" [ref=e1609] [cursor=pointer]:
+            - generic [ref=e1610]:
+              - generic "نورة المنصور" [ref=e1611]: ن
+              - generic [ref=e1612]:
+                - paragraph [ref=e1613]: نورة المنصور
+                - paragraph [ref=e1614]: يكفل 5 أيتام
+            - img [ref=e1615]
+          - button "ه هاجر مثنى نوري يكفل 1 يتيم" [ref=e1617] [cursor=pointer]:
+            - generic [ref=e1618]:
+              - generic "هاجر مثنى نوري" [ref=e1619]: ه
+              - generic [ref=e1620]:
+                - paragraph [ref=e1621]: هاجر مثنى نوري
+                - paragraph [ref=e1622]: يكفل 1 يتيم
+            - img [ref=e1623]
+          - button "ه هناء إسماعيل يكفل 2 أيتام" [ref=e1625] [cursor=pointer]:
+            - generic [ref=e1626]:
+              - generic "هناء إسماعيل" [ref=e1627]: ه
+              - generic [ref=e1628]:
+                - paragraph [ref=e1629]: هناء إسماعيل
+                - paragraph [ref=e1630]: يكفل 2 أيتام
+            - img [ref=e1631]
+          - button "ي ياسر محيسن يكفل 1 يتيم" [ref=e1633] [cursor=pointer]:
+            - generic [ref=e1634]:
+              - generic "ياسر محيسن" [ref=e1635]: ي
+              - generic [ref=e1636]:
+                - paragraph [ref=e1637]: ياسر محيسن
+                - paragraph [ref=e1638]: يكفل 1 يتيم
+            - img [ref=e1639]
+  - navigation "التنقل السفلي" [ref=e330]:
+    - link "لوحة التحكم" [ref=e331] [cursor=pointer]:
+      - /url: "#/"
+      - img [ref=e332]
+      - generic [ref=e335]: لوحة التحكم
+    - link "الأيتام" [ref=e336] [cursor=pointer]:
+      - /url: "#/orphans"
+      - img [ref=e337]
+      - generic [ref=e342]: الأيتام
+    - link "المراسلات" [ref=e343] [cursor=pointer]:
+      - /url: "#/messages"
+      - img [ref=e344]
+      - generic [ref=e346]: "2"
+      - generic [ref=e347]: المراسلات
+    - link "النظام المالي" [ref=e348] [cursor=pointer]:
+      - /url: "#/financial-system"
+      - img [ref=e349]
+      - generic [ref=e352]: "2"
+      - generic [ref=e353]: النظام المالي
+    - button "المزيد" [ref=e354] [cursor=pointer]:
+      - img [ref=e355]
+      - generic [ref=e359]: المزيد
+  - dialog "قائمة المزيد":
+    - generic:
+      - generic:
+        - generic:
+          - paragraph: روابط إضافية
+          - heading "المزيد" [level=2]
+        - button "إغلاق":
+          - img
+      - generic:
+        - link "الكفلاء":
+          - /url: "#/sponsors"
+          - img
+          - generic: الكفلاء
+          - img
+        - link "الموارد البشرية":
+          - /url: "#/human-resources"
+          - img
+          - generic: الموارد البشرية
+          - img
+        - link "سياسات فيء":
+          - /url: "#/policies"
+          - img
+          - generic: سياسات فيء
+          - img
+        - button "تسجيل الخروج":
+          - img
+          - generic: تسجيل الخروج
