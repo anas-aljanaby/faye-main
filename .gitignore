@@ -25,6 +25,11 @@ dist-ssr
 
 .env
 .env.local
+LOCAL_CREDENTIALS_REFERENCE.md
+oted-org-credentials.md
+.cursorignore
+.claudeignore
+.codexignore
 
 # Credentials file (contains passwords)
 user-credentials.json

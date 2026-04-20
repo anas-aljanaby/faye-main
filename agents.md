@@ -1,5 +1,10 @@
 # AGENTS.md — Mobile Optimization for فيء (Faye)
 
-demo admin account if needed, with populated demo data
-email: anas.aljanaby00@gmail.com
-password: ChangeMe123!
+## Sensitive File Exclusion
+
+All agents (Cursor, Claude, Codex) must not read, index, summarize, quote, or share:
+
+- `LOCAL_CREDENTIALS_REFERENCE.md`
+- `user-credentials.json`
+
+If credentials are required, request them from the user directly instead of scanning files.
