@@ -8,25 +8,25 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "theme_color": "#0f766e",
-  "background_color": "#f4fbf8",
+  "theme_color": "#059669",
+  "background_color": "#f3fbf7",
   "icons": [
     {
-      "src": "/orgs/oted/icon-192.svg",
+      "src": "/orgs/oted/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/orgs/oted/icon-512.svg",
+      "src": "/orgs/oted/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/orgs/oted/maskable-icon.svg",
+      "src": "/orgs/oted/maskable-icon.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ]

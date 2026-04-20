@@ -51,6 +51,22 @@ const ensureHeadMeta = (
   return meta;
 };
 
+const getAssetMimeType = (assetPath: string) => {
+  if (assetPath.endsWith('.png')) {
+    return 'image/png';
+  }
+
+  if (assetPath.endsWith('.webp')) {
+    return 'image/webp';
+  }
+
+  if (assetPath.endsWith('.svg')) {
+    return 'image/svg+xml';
+  }
+
+  return '';
+};
+
 export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const resolution = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -99,8 +115,14 @@ export const OrganizationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     document.documentElement.lang = 'ar';
     document.documentElement.dir = 'rtl';
 
-    ensureHeadLink('link[rel="icon"]', { rel: 'icon', type: 'image/svg+xml' }).href =
-      organization.assets.favicon;
+    const iconLink = ensureHeadLink('link[rel="icon"]', { rel: 'icon', type: 'image/png' });
+    iconLink.href = organization.assets.favicon;
+    const iconMimeType = getAssetMimeType(organization.assets.favicon);
+    if (iconMimeType) {
+      iconLink.type = iconMimeType;
+    } else {
+      iconLink.removeAttribute('type');
+    }
     ensureHeadLink('link[rel="apple-touch-icon"]', { rel: 'apple-touch-icon' }).href =
       organization.assets.appleTouchIcon;
     ensureHeadLink('link[rel="manifest"]', { rel: 'manifest' }).href =
