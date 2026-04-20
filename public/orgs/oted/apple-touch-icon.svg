@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
-  <rect width="164" height="164" x="8" y="8" rx="42" fill="#0f766e" />
-  <path d="M50 84c0-22.09 17.91-40 40-40 12.81 0 24.24 5.87 31.59 15.08" fill="none" stroke="#d9f3ef" stroke-linecap="round" stroke-width="13" />
-  <path d="M127 83c0 20.99-17.01 38-38 38-14.82 0-27.45-7.37-33.83-19.45" fill="none" stroke="#ecfdf9" stroke-linecap="round" stroke-width="13" />
-  <circle cx="128" cy="58" r="9" fill="#fef3c7" />
-  <text x="90" y="149" fill="#f8fffd" font-family="Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="4" text-anchor="middle">OTED</text>
-</svg>

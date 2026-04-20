@@ -1,6 +1,12 @@
 import React, { useMemo } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import type { NotificationType } from '../types';
+import {
+  canAccessFinancialSystem,
+  canAccessOrphans,
+  canAccessSponsors,
+  type AccessContext,
+} from '../lib/accessControl';
 
 export type AppRole = 'team_member' | 'sponsor';
 export type NavigationCountKey = 'messages' | 'financial';
@@ -239,13 +245,30 @@ const resolveRole = (role?: AppRole | null): AppRole => (role === 'sponsor' ? 's
 
 const mapNavigationItems = (itemIds: AppNavItemId[]) => itemIds.map((itemId) => navItemsById[itemId]);
 
-export const getSidebarNavItems = (role?: AppRole | null) => mapNavigationItems(sidebarNavOrder[resolveRole(role)]);
+const canAccessNavigationItem = (itemId: AppNavItemId, access: AccessContext) => {
+  switch (itemId) {
+    case 'orphans':
+      return canAccessOrphans(access);
+    case 'sponsors':
+      return canAccessSponsors(access);
+    case 'financial-system':
+      return canAccessFinancialSystem(access);
+    default:
+      return true;
+  }
+};
 
-export const getMobilePrimaryNavItems = (role?: AppRole | null) =>
-  mapNavigationItems(mobilePrimaryNavOrder[resolveRole(role)]);
+const getVisibleNavItems = (itemIds: AppNavItemId[], access: AccessContext) =>
+  mapNavigationItems(itemIds.filter((itemId) => canAccessNavigationItem(itemId, access)));
 
-export const getMobileMoreNavItems = (role?: AppRole | null) =>
-  mapNavigationItems(mobileMoreNavOrder[resolveRole(role)]);
+export const getSidebarNavItems = (access: AccessContext = {}) =>
+  getVisibleNavItems(sidebarNavOrder[resolveRole(access.role as AppRole | null)], access);
+
+export const getMobilePrimaryNavItems = (access: AccessContext = {}) =>
+  getVisibleNavItems(mobilePrimaryNavOrder[resolveRole(access.role as AppRole | null)], access);
+
+export const getMobileMoreNavItems = (access: AccessContext = {}) =>
+  getVisibleNavItems(mobileMoreNavOrder[resolveRole(access.role as AppRole | null)], access);
 
 export const isNavigationItemActive = (pathname: string, item: AppNavItemConfig) =>
   item.matchPaths.some((matchPath) => (matchPath === '/' ? pathname === '/' : pathname.startsWith(matchPath)));

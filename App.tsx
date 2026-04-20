@@ -21,6 +21,7 @@ import { PoliciesNavProvider } from './components/policies/PoliciesNavContext';
 import SignIn from './components/SignIn';
 import ProtectedRoute from './components/ProtectedRoute';
 import TeamMemberRoute from './components/TeamMemberRoute';
+import AccessRoute from './components/AccessRoute';
 import ResponsiveState from './components/ResponsiveState';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { useOrganization } from './contexts/OrganizationContext';
@@ -83,13 +84,13 @@ function App() {
                     <div className="flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pt-6 md:p-8">
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
-                        <Route path="/financial-system" element={<TeamMemberRoute><FinancialSystem /></TeamMemberRoute>} />
-                        <Route path="/orphan/:id" element={<OrphanProfile />} />
-                        <Route path="/sponsor/:id" element={<SponsorPage />} />
+                        <Route path="/financial-system" element={<AccessRoute access="financial"><FinancialSystem /></AccessRoute>} />
+                        <Route path="/orphan/:id" element={<AccessRoute access="orphans"><OrphanProfile /></AccessRoute>} />
+                        <Route path="/sponsor/:id" element={<AccessRoute access="sponsors"><SponsorPage /></AccessRoute>} />
                         <Route path="/payments" element={<SponsorPaymentsPage />} />
                         <Route path="/team/:id" element={<TeamMemberPage />} />
-                        <Route path="/orphans" element={<OrphansList />} />
-                        <Route path="/sponsors" element={<TeamMemberRoute><SponsorsList /></TeamMemberRoute>} />
+                        <Route path="/orphans" element={<AccessRoute access="orphans"><OrphansList /></AccessRoute>} />
+                        <Route path="/sponsors" element={<AccessRoute access="sponsors"><SponsorsList /></AccessRoute>} />
                         <Route path="/team" element={<Navigate to="/human-resources" replace />} />
                         <Route path="/messages" element={<Messages />} />
                         <Route path="/human-resources" element={<TeamMemberRoute><HumanResources /></TeamMemberRoute>} />

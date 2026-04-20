@@ -80,7 +80,7 @@ const clampSidebarWidthForViewport = (preferredWidth: number, viewportWidth: num
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
-  const { signOut, userProfile } = useAuth();
+  const { signOut, userProfile, permissions, isSystemAdmin } = useAuth();
   const { organization } = useOrganization();
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -176,7 +176,15 @@ const Sidebar: React.FC = () => {
     await signOut();
   };
 
-  const visibleNavItems = useMemo(() => getSidebarNavItems(userProfile?.role), [userProfile?.role]);
+  const visibleNavItems = useMemo(
+    () =>
+      getSidebarNavItems({
+        role: userProfile?.role,
+        permissions,
+        isSystemAdmin: isSystemAdmin(),
+      }),
+    [isSystemAdmin, permissions, userProfile?.role]
+  );
 
   if (!isDesktop) {
     return null;
@@ -203,8 +211,8 @@ const Sidebar: React.FC = () => {
         <div className={`flex h-16 items-center border-b border-gray-200/50 p-4 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
         {!isCollapsed && (
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white p-1 shadow-sm ring-1 ring-black/5">
-              <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full object-contain" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 p-0.5 shadow-sm ring-1 ring-black/5">
+              <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full rounded-full object-contain" />
             </div>
             <div className="min-w-0">
               <span className="block truncate text-xl font-bold text-primary">{organization.name}</span>

@@ -10,11 +10,11 @@
   --color-primary-hover: #047857;
   --color-primary-light: #d1fae5;
 
-  --bg-page: #f3fbf7;
-  --bg-sidebar: #ecf8f1;
+  --bg-page: #fdfaf6;
+  --bg-sidebar: #fcf8f3;
   --bg-card: #ffffff;
-  --text-primary: #163227;
-  --text-secondary: #5f746a;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
 }
 
 /* Dark mode overrides */
@@ -23,11 +23,11 @@ html.dark {
   --color-primary-hover: #6ee7b7;
   --color-primary-light: #064e3b;
 
-  --bg-page: #071b13;
-  --bg-sidebar: #0c241a;
-  --bg-card: #112a20;
-  --text-primary: #f2fffa;
-  --text-secondary: #99b8aa;
+  --bg-page: #111827;
+  --bg-sidebar: #1f2937;
+  --bg-card: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
 }
 
 @layer base {

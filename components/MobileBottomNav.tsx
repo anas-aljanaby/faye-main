@@ -83,12 +83,21 @@ const MobileNavItemButton: React.FC<MobileNavItemButtonProps> = ({ item, isActiv
 
 const MobileBottomNav: React.FC = () => {
   const location = useLocation();
-  const { signOut, userProfile } = useAuth();
+  const { signOut, userProfile, permissions, isSystemAdmin } = useAuth();
   const navigationCounts = useNavigationCounts();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
-  const primaryItems = useMemo(() => getMobilePrimaryNavItems(userProfile?.role), [userProfile?.role]);
-  const moreItems = useMemo(() => getMobileMoreNavItems(userProfile?.role), [userProfile?.role]);
+  const accessContext = useMemo(
+    () => ({
+      role: userProfile?.role,
+      permissions,
+      isSystemAdmin: isSystemAdmin(),
+    }),
+    [isSystemAdmin, permissions, userProfile?.role]
+  );
+
+  const primaryItems = useMemo(() => getMobilePrimaryNavItems(accessContext), [accessContext]);
+  const moreItems = useMemo(() => getMobileMoreNavItems(accessContext), [accessContext]);
 
   useEffect(() => {
     setIsMoreOpen(false);

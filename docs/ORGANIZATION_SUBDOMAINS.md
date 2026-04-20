@@ -57,12 +57,12 @@ Recommended checks after Vercel domain setup:
 1. Create the organization record in Supabase and note its `organizations.id`.
 2. Pick a slug, for example `acme`, which will map to `acme.yetim.app`.
 3. Add branded assets in `public/orgs/<slug>/`:
-   - `logo.svg`
-   - `favicon.svg`
-   - `apple-touch-icon.svg`
-   - `icon-192.svg`
-   - `icon-512.svg`
-   - `maskable-icon.svg`
+   - `logo.<ext>`
+   - `favicon.<ext>`
+   - `apple-touch-icon.<ext>`
+   - `icon-192.<ext>`
+   - `icon-512.<ext>`
+   - `maskable-icon.<ext>`
    - `manifest.webmanifest`
 4. Add a new organization entry in [config/organizations.ts](/Users/anas/Workspace/github/faye-main/config/organizations.ts):
    - `id`
@@ -89,7 +89,7 @@ The OTED assets committed now are starter assets so the multitenant path is comp
 
 When the final OTED brand files are ready:
 
-1. Replace the SVGs inside [public/orgs/oted](/Users/anas/Workspace/github/faye-main/public/orgs/oted).
+1. Replace the OTED brand assets inside [public/orgs/oted](/Users/anas/Workspace/github/faye-main/public/orgs/oted).
 2. Update the OTED palette inside [config/organizations.ts](/Users/anas/Workspace/github/faye-main/config/organizations.ts).
 3. Run `npm run build`.
 4. Redeploy.

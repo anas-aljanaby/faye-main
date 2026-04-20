@@ -19,6 +19,7 @@ import ResponsiveState from './ResponsiveState';
 import InternetRequiredState from './InternetRequiredState';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { formatTimestamp } from '../utils/messaging';
+import { canAccessFinancialSystem, canAccessOrphans, canAccessSponsors } from '../lib/accessControl';
 
 const sectionActionLinkClass = 'inline-flex min-h-11 items-center justify-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 hover:text-primary-hover md:min-h-0 md:rounded-none md:px-0 md:py-0 md:hover:bg-transparent';
 
@@ -614,7 +615,7 @@ const Dashboard: React.FC = () => {
     const { sponsors: sponsorsData, loading: sponsorsLoading } = useSponsorsBasic();
     const { teamMembers: teamMembersData, loading: teamMembersLoading } = useTeamMembersBasic();
     const countsLoading = orphansLoading || sponsorsLoading || teamMembersLoading;
-    const { userProfile } = useAuth();
+    const { userProfile, permissions, isSystemAdmin } = useAuth();
     const receiptRef = useRef<HTMLDivElement>(null);
     const orphansSectionRef = useRef<HTMLDivElement>(null);
     const [assignedTeamMembers, setAssignedTeamMembers] = useState<Array<{ id: string; name: string; avatar_url?: string }>>([]);
@@ -622,6 +623,17 @@ const Dashboard: React.FC = () => {
     const [assignedOrphanIds, setAssignedOrphanIds] = useState<string[]>([]);
     const [isOccasionsModalOpen, setIsOccasionsModalOpen] = useState(false);
     const hasAnyCachedDashboardData = orphansData.length > 0 || sponsorsData.length > 0 || teamMembersData.length > 0;
+    const accessContext = useMemo(
+        () => ({
+            role: userProfile?.role,
+            permissions,
+            isSystemAdmin: isSystemAdmin(),
+        }),
+        [isSystemAdmin, permissions, userProfile?.role]
+    );
+    const canOpenOrphans = canAccessOrphans(accessContext);
+    const canOpenSponsors = canAccessSponsors(accessContext);
+    const canOpenFinancials = canAccessFinancialSystem(accessContext);
 
     // Find the current sponsor based on user profile
     const sponsor = useMemo(() => {
@@ -1060,10 +1072,12 @@ const Dashboard: React.FC = () => {
                 </div>
                 
                 <div className="grid w-full grid-cols-1 gap-3 min-[400px]:grid-cols-2 md:flex md:w-auto md:flex-wrap">
-                  <Link to="/orphans" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover md:px-5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    عرض الأيتام
-                  </Link>
+                  {canOpenOrphans && (
+                    <Link to="/orphans" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover md:px-5">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                      عرض الأيتام
+                    </Link>
+                  )}
                   <Link to="/messages" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border bg-white px-4 py-3 font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50 md:px-5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     الرسائل
@@ -1135,7 +1149,7 @@ const Dashboard: React.FC = () => {
           <section>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
               <UpcomingOccasions onViewAll={() => setIsOccasionsModalOpen(true)} />
-              <PendingApprovals />
+              {canOpenFinancials && <PendingApprovals />}
               <LatestAchievements orphans={orphansData} />
             </div>
           </section>
@@ -1145,6 +1159,7 @@ const Dashboard: React.FC = () => {
             onClose={() => setIsOccasionsModalOpen(false)}
           />
 
+          {canOpenOrphans && (
           <section>
             <div className="mb-4 flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
               <h2 className="text-xl font-bold text-gray-700 md:text-2xl">الأيتام</h2>
@@ -1165,7 +1180,9 @@ const Dashboard: React.FC = () => {
               ))}
             </div>
           </section>
+          )}
 
+          {canOpenSponsors && (
           <section>
             <div className="mb-4 flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
               <h2 className="text-xl font-bold text-gray-700 md:text-2xl">الكفلاء</h2>
@@ -1190,6 +1207,7 @@ const Dashboard: React.FC = () => {
               ))}
             </div>
           </section>
+          )}
 
           <section>
             <div className="mb-4 flex flex-col gap-3 min-[400px]:flex-row min-[400px]:items-center min-[400px]:justify-between">
