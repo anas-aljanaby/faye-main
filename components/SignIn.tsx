@@ -15,6 +15,7 @@ const SignIn: React.FC = () => {
   const navigate = useNavigate();
   const fieldLabelClassName = 'mb-2.5 block text-sm font-semibold text-slate-700';
   const fieldInputClassName = 'min-h-[56px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 text-base text-slate-900 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-[border-color,box-shadow,background-color,color] placeholder:text-slate-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10';
+  const platformName = organization.productName || 'منصة يتيم';
 
   if (user && userProfile && userProfile.organization_id !== organization.id) {
     return <OrganizationAccessState userOrganizationId={userProfile.organization_id} />;
@@ -50,11 +51,16 @@ const SignIn: React.FC = () => {
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-md items-start justify-center px-4 pt-7 pb-8 md:items-center md:px-4 md:py-8">
         {/* Logo/Header */}
         <div className="w-full">
-          <div className="mb-6 text-center md:mb-8">
-            <div className="mb-3 inline-flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 md:mb-4 md:h-32 md:w-32 md:p-2.5">
+          <div className="mb-7 flex flex-col items-center text-center md:mb-9">
+            <div className="mb-4 flex h-32 w-32 items-center justify-center overflow-hidden rounded-full bg-white/95 p-2.5 shadow-[0_18px_42px_rgba(5,150,105,0.16)] ring-1 ring-primary/10 md:mb-5 md:h-40 md:w-40 md:p-3">
               <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full rounded-full object-contain" />
             </div>
-            <p className="mx-auto max-w-xs text-sm text-text-secondary md:text-base">{organization.subtitle}</p>
+            <div className="flex flex-col items-center" dir="rtl">
+              <p className="text-[1.65rem] font-extrabold leading-tight text-text-primary md:text-[2rem]">
+                {platformName}
+              </p>
+              <span className="mt-2 block h-0.5 w-12 rounded-full bg-primary shadow-[0_6px_16px_rgba(5,150,105,0.18)]" aria-hidden="true" />
+            </div>
           </div>
 
           {/* Sign In Form */}
@@ -129,7 +135,7 @@ const SignIn: React.FC = () => {
 
           {/* Footer */}
           <div className="mt-6 text-center text-xs text-text-secondary md:mt-8 md:text-sm">
-            <p>© {new Date().getFullYear()} {organization.name}. جميع الحقوق محفوظة.</p>
+            <p>© {new Date().getFullYear()} {platformName}. جميع الحقوق محفوظة.</p>
           </div>
         </div>
       </div>

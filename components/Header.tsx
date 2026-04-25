@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useOrganization } from '../contexts/OrganizationContext';
 import Avatar from './Avatar';
 import ThemeSettings from './ThemeSettings';
 import { useNotifications } from '../hooks/useNotifications';
@@ -43,7 +42,6 @@ const BellIcon: React.FC<BellIconProps> = ({ onClick, unreadCount, buttonRef }) 
 
 const Header: React.FC = () => {
   const { userProfile, signOut } = useAuth();
-  const { organization } = useOrganization();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -176,19 +174,6 @@ const Header: React.FC = () => {
             </div>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-3">
-          <Link
-            to="/"
-            className="flex max-w-[11rem] items-center gap-2 text-lg font-bold transition-transform hover:scale-105 sm:max-w-none sm:gap-3 sm:text-xl md:text-2xl"
-            aria-label="العودة للصفحة الرئيسية"
-          >
-            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 p-0.5 shadow-sm ring-1 ring-white/60 sm:h-10 sm:w-10">
-              <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full rounded-full object-contain" />
-            </span>
-            <div className="min-w-0 text-right leading-tight">
-              <span className="block truncate">{organization.name}</span>
-              <span className="block truncate text-xs font-medium opacity-80">{organization.productName}</span>
-            </div>
-          </Link>
           <div className="relative">
             <button
               ref={userMenuButtonRef}
