@@ -9,6 +9,7 @@ import { DataTable } from './DataTable';
 import { ColumnDef } from '@tanstack/react-table';
 import Avatar from './Avatar';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { formatListDisplayName } from '../utils/displayNames';
 
 const AddOrphanModal: React.FC<{
     isOpen: boolean;
@@ -221,7 +222,11 @@ const ResponsivePagination: React.FC<{
 
 const ITEMS_PER_PAGE = 12;
 
-const OrphansList: React.FC = () => {
+interface OrphansListProps {
+    isSidebarCollapsed?: boolean;
+}
+
+const OrphansList: React.FC<OrphansListProps> = ({ isSidebarCollapsed = false }) => {
     const { isOnline } = useNetworkStatus();
     const { userProfile } = useAuth();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -236,6 +241,7 @@ const OrphansList: React.FC = () => {
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [currentPage, setCurrentPage] = useState(1);
+    const displayNameParts = isSidebarCollapsed ? 3 : 2;
 
     const { orphans: orphanList, totalCount, loading, refetch } = useOrphansPaginated({
         page: currentPage,
@@ -248,6 +254,26 @@ const OrphansList: React.FC = () => {
     // Column definitions for DataTable (list view)
     const tableColumns = useMemo<ColumnDef<Orphan>[]>(() => [
         {
+            accessorKey: 'name',
+            header: 'اليتيم',
+            cell: ({ row }) => {
+                const displayName = formatListDisplayName(row.original.name, displayNameParts);
+
+                return (
+                    <div className="flex min-w-0 items-center gap-3">
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 shadow-sm">
+                            <Avatar src={row.original.photoUrl} name={row.original.name} size="md" className="!h-full !w-full !text-sm" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="line-clamp-2 break-words font-bold leading-snug text-gray-900">{displayName}</div>
+                            <div className="text-[10px] text-gray-500 uppercase tracking-wider">{row.original.age} سنوات</div>
+                        </div>
+                    </div>
+                );
+            },
+            size: 220,
+        },
+        {
             id: 'select',
             header: ({ table }) => (
                 <div className="px-1">
@@ -255,7 +281,7 @@ const OrphansList: React.FC = () => {
                         type="checkbox"
                         checked={table.getIsAllPageRowsSelected()}
                         onChange={table.getToggleAllPageRowsSelectedHandler()}
-                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                        className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary"
                     />
                 </div>
             ),
@@ -266,7 +292,7 @@ const OrphansList: React.FC = () => {
                         checked={row.getIsSelected()}
                         disabled={!row.getCanSelect()}
                         onChange={row.getToggleSelectedHandler()}
-                        className="rounded border-gray-300 text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                        className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary"
                         onClick={(e) => e.stopPropagation()}
                     />
                 </div>
@@ -274,22 +300,6 @@ const OrphansList: React.FC = () => {
             enableSorting: false,
             enableHiding: false,
             size: 40,
-        },
-        {
-            accessorKey: 'name',
-            header: 'اليتيم',
-            cell: ({ row }) => (
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
-                        <Avatar src={row.original.photoUrl} name={row.original.name} size="md" className="!w-full !h-full !text-sm" />
-                    </div>
-                    <div>
-                        <div className="font-bold text-gray-900">{row.original.name}</div>
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider">{row.original.age} سنوات</div>
-                    </div>
-                </div>
-            ),
-            size: 200,
         },
         {
             accessorKey: 'country',
@@ -324,7 +334,7 @@ const OrphansList: React.FC = () => {
             header: 'الحضور',
             cell: ({ getValue }) => <span className="text-gray-600">{getValue() as string}</span>,
         },
-    ], []);
+    ], [displayNameParts]);
 
     const renderBulkActions = (_selectedRows: Orphan[]) => {
         return (
@@ -627,6 +637,7 @@ const OrphansList: React.FC = () => {
                             {paginatedOrphans.length > 0 ? (
                                 paginatedOrphans.map(orphan => {
                                     const isSelected = selectedIds.has(orphan.id);
+                                    const displayName = formatListDisplayName(orphan.name, displayNameParts);
                                     const cardFields: EntityCardField[] = [
                                         { label: 'المرحلة:', value: orphan.grade || 'غير محدد' },
                                         { label: 'الأداء:', value: orphan.performance || 'غير متوفر', type: orphan.performance ? 'pill' : 'text' },
@@ -637,7 +648,7 @@ const OrphansList: React.FC = () => {
                                         <EntityCard
                                             key={orphan.id}
                                             variant="card"
-                                            title={orphan.name}
+                                            title={displayName}
                                             subtitle={`${orphan.age} سنوات${orphan.gender ? ` • ${orphan.gender}` : ''}`}
                                             imageUrl={orphan.photoUrl}
                                             imageAlt={orphan.name}
@@ -679,6 +690,7 @@ const OrphansList: React.FC = () => {
                             <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                                 {paginatedOrphans.map(orphan => {
                                     const isSelected = selectedIds.has(orphan.id);
+                                    const displayName = formatListDisplayName(orphan.name, displayNameParts);
                                     const cardFields: EntityCardField[] = [
                                         { label: 'المرحلة:', value: orphan.grade || 'غير محدد' },
                                         { label: 'الأداء:', value: orphan.performance || 'غير متوفر', type: orphan.performance ? 'pill' : 'text' },
@@ -687,7 +699,7 @@ const OrphansList: React.FC = () => {
                                         <EntityCard
                                             key={orphan.id}
                                             variant="card"
-                                            title={orphan.name}
+                                            title={displayName}
                                             subtitle={`${orphan.age} سنوات${orphan.gender ? ` • ${orphan.gender}` : ''}`}
                                             imageUrl={orphan.photoUrl}
                                             imageAlt={orphan.name}

@@ -14,6 +14,7 @@ import { AccountStatusBadge } from './account/AccountStatusBadge';
 import { CreateLoginModal } from './account/CreateLoginModal';
 import { useQueryClient } from '@tanstack/react-query';
 import AddProfileWithLoginModal from './account/AddProfileWithLoginModal';
+import { formatListDisplayName } from '../utils/displayNames';
 
 const EditSponsorModal: React.FC<{
     sponsor: Sponsor;
@@ -226,7 +227,11 @@ const ResponsivePagination: React.FC<{
 
 const ITEMS_PER_PAGE = 12;
 
-const SponsorsList: React.FC = () => {
+interface SponsorsListProps {
+    isSidebarCollapsed?: boolean;
+}
+
+const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false }) => {
     const { sponsors: sponsorsData, loading, refetch: refetchSponsors } = useSponsorsBasic();
     const { orphans: orphansData } = useOrphansBasic();
     const { userProfile, canEditSponsors, canEditOrphans, isManager } = useAuth();
@@ -257,6 +262,7 @@ const SponsorsList: React.FC = () => {
     const [createLoginTarget, setCreateLoginTarget] = useState<{ profileId: string; name: string } | null>(null);
     const [assignmentSponsorSearchQuery, setAssignmentSponsorSearchQuery] = useState('');
     const [assignmentOrphanSearchQuery, setAssignmentOrphanSearchQuery] = useState('');
+    const displayNameParts = isSidebarCollapsed ? 3 : 2;
 
     useEffect(() => {
         if (!loading && sponsorsData) {
@@ -276,6 +282,25 @@ const SponsorsList: React.FC = () => {
 
     const tableColumns = useMemo<ColumnDef<Sponsor>[]>(() => {
         const cols: ColumnDef<Sponsor>[] = [
+            {
+                accessorKey: 'name',
+                header: 'الكافل',
+                cell: ({ row }) => {
+                    const displayName = formatListDisplayName(row.original.name, displayNameParts);
+
+                    return (
+                        <div className="flex min-w-0 items-center gap-3">
+                            <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 shadow-sm">
+                                <Avatar src={row.original.avatarUrl} name={row.original.name} size="md" className="!h-full !w-full !text-sm" />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="line-clamp-2 break-words font-bold leading-snug text-gray-900">{displayName}</div>
+                            </div>
+                        </div>
+                    );
+                },
+                size: 220,
+            },
             {
                 id: 'select',
                 header: ({ table }) => (
@@ -303,21 +328,6 @@ const SponsorsList: React.FC = () => {
                 enableSorting: false,
                 enableHiding: false,
                 size: 40,
-            },
-            {
-                accessorKey: 'name',
-                header: 'الكافل',
-                cell: ({ row }) => (
-                    <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-gray-200 shadow-sm">
-                            <Avatar src={row.original.avatarUrl} name={row.original.name} size="md" className="!h-full !w-full !text-sm" />
-                        </div>
-                        <div>
-                            <div className="font-bold text-gray-900">{row.original.name}</div>
-                        </div>
-                    </div>
-                ),
-                size: 200,
             },
             {
                 accessorKey: 'sponsoredOrphanIds',
@@ -379,7 +389,7 @@ const SponsorsList: React.FC = () => {
         }
 
         return cols;
-    }, [accountsLoading, accountsMap, isSysAdmin]);
+    }, [accountsLoading, accountsMap, displayNameParts, isSysAdmin]);
 
     const renderBulkActions = (_selectedRows: Sponsor[]) => {
         return (
@@ -765,6 +775,7 @@ const SponsorsList: React.FC = () => {
                                 {paginatedSponsors.length > 0 ? (
                                     paginatedSponsors.map((sponsor) => {
                                         const isSelected = selectedIds.has(sponsor.id);
+                                        const displayName = formatListDisplayName(sponsor.name, displayNameParts);
                                         const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
                                         const canQuickCreate = isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
                                         const cardFields: EntityCardField[] = [
@@ -802,7 +813,7 @@ const SponsorsList: React.FC = () => {
                                             <EntityCard
                                                 key={sponsor.id}
                                                 variant="card"
-                                                title={sponsor.name}
+                                                title={displayName}
                                                 subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
                                                 imageUrl={sponsor.avatarUrl}
                                                 imageAlt={sponsor.name}
@@ -854,6 +865,7 @@ const SponsorsList: React.FC = () => {
                                 <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
                                     {paginatedSponsors.map((sponsor) => {
                                         const isSelected = selectedIds.has(sponsor.id);
+                                        const displayName = formatListDisplayName(sponsor.name, displayNameParts);
                                         const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
                                         const canQuickCreate = isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
                                         const cardFields: EntityCardField[] = [
@@ -891,7 +903,7 @@ const SponsorsList: React.FC = () => {
                                             <EntityCard
                                                 key={sponsor.id}
                                                 variant="card"
-                                                title={sponsor.name}
+                                                title={displayName}
                                                 subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
                                                 imageUrl={sponsor.avatarUrl}
                                                 imageAlt={sponsor.name}

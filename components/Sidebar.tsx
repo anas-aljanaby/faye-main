@@ -63,11 +63,16 @@ const NavItem = React.memo(({ to, text, icon, count, isCollapsed }: NavItemProps
   );
 });
 
-const SIDEBAR_COLLAPSED_WIDTH = 80;
+const SIDEBAR_COLLAPSED_WIDTH = 72;
 const SIDEBAR_EXPANDED_DEFAULT = 288;
 const SIDEBAR_MIN_WIDTH = 220;
 const SIDEBAR_MAX_WIDTH = 400;
 const SIDEBAR_VIEWPORT_RATIO_CAP = 0.36;
+
+interface SidebarProps {
+  isCollapsed: boolean;
+  onCollapsedChange: (collapsed: boolean) => void;
+}
 
 const clampSidebarWidthForViewport = (preferredWidth: number, viewportWidth: number) => {
   const viewportMax = Math.min(
@@ -78,20 +83,10 @@ const clampSidebarWidthForViewport = (preferredWidth: number, viewportWidth: num
   return Math.min(viewportMax, Math.max(SIDEBAR_MIN_WIDTH, preferredWidth));
 };
 
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapsedChange }) => {
   const location = useLocation();
   const { signOut, userProfile, permissions, isSystemAdmin } = useAuth();
   const { organization } = useOrganization();
-
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    try {
-      const savedState = localStorage.getItem('sidebar_collapsed');
-      return savedState ? JSON.parse(savedState) : false;
-    } catch (e) {
-      console.error('فشل في قراءة حالة الشريط الجانبي:', e);
-      return false;
-    }
-  });
 
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     try {
@@ -163,12 +158,8 @@ const Sidebar: React.FC = () => {
   }, [location.pathname]);
 
   const toggleCollapse = useCallback(() => {
-    setIsCollapsed((prev: boolean) => {
-      const newState = !prev;
-      localStorage.setItem('sidebar_collapsed', JSON.stringify(newState));
-      return newState;
-    });
-  }, []);
+    onCollapsedChange(!isCollapsed);
+  }, [isCollapsed, onCollapsedChange]);
 
   const notificationCounts = useNavigationCounts();
 
@@ -190,81 +181,97 @@ const Sidebar: React.FC = () => {
     return null;
   }
 
+  const currentSidebarWidth = isCollapsed
+    ? SIDEBAR_COLLAPSED_WIDTH
+    : clampSidebarWidthForViewport(sidebarWidth, window.innerWidth);
+
   return (
-    <aside
-      className={`relative z-30 flex h-screen shrink-0 flex-col border-l border-white/50 bg-bg-sidebar shadow-2xl ${!isResizing && !isCollapsed ? 'transition-[width] duration-200 ease-out' : ''}`}
-      style={{ width: isCollapsed ? SIDEBAR_COLLAPSED_WIDTH : clampSidebarWidthForViewport(sidebarWidth, window.innerWidth) }}
-      aria-label="القائمة الجانبية"
-    >
-      {!isCollapsed && (
-        <div
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="تغيير عرض القائمة الجانبية"
-          onMouseDown={handleResizeStart}
-          className="absolute left-0 top-0 bottom-0 z-10 flex w-1 cursor-col-resize items-center justify-center group hover:bg-primary/20 active:bg-primary/40"
-        >
-          <span className="h-12 w-0.5 rounded-full bg-gray-300 opacity-0 transition-opacity group-hover:bg-primary/60 group-hover:opacity-100 pointer-events-none" />
+    <>
+      <aside
+        className={`fixed right-0 top-14 z-30 hidden h-[calc(100dvh-3.5rem)] flex-col border-l border-white/50 bg-bg-sidebar shadow-xl sm:top-[3.75rem] sm:h-[calc(100dvh-3.75rem)] md:top-16 md:flex md:h-[calc(100dvh-4rem)] ${!isResizing ? 'transition-[width] duration-200 ease-out' : ''}`}
+        style={{ width: currentSidebarWidth }}
+        aria-label="القائمة الجانبية"
+      >
+        {!isCollapsed && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="تغيير عرض القائمة الجانبية"
+            onMouseDown={handleResizeStart}
+            className="absolute left-0 top-0 bottom-0 z-10 flex w-1 cursor-col-resize items-center justify-center group hover:bg-primary/20 active:bg-primary/40"
+          >
+            <span className="h-12 w-0.5 rounded-full bg-gray-300 opacity-0 transition-opacity group-hover:bg-primary/60 group-hover:opacity-100 pointer-events-none" />
+          </div>
+        )}
+
+        <div className="flex h-14 items-center border-b border-gray-200/50 transition-all duration-300">
+          <div
+            className="flex h-full shrink-0 items-center justify-center"
+            style={{ width: isCollapsed ? '100%' : SIDEBAR_COLLAPSED_WIDTH }}
+          >
+            <button
+              onClick={toggleCollapse}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-200 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50"
+              title={isCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
+              aria-label={isCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
+              aria-expanded={!isCollapsed}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`transition-transform duration-200 ${isCollapsed ? 'rotate-180' : ''}`}
+              >
+                <path d="m6 17 5-5-5-5" />
+                <path d="m13 17 5-5-5-5" />
+              </svg>
+            </button>
+          </div>
         </div>
-      )}
 
-        <div className={`flex h-16 items-center border-b border-gray-200/50 p-4 transition-all duration-300 ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-        {!isCollapsed && (
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/95 p-0.5 shadow-sm ring-1 ring-black/5">
-              <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full rounded-full object-contain" />
+        <nav className="scrollbar-hide flex-1 space-y-2 overflow-y-auto px-3 py-5">
+          {visibleNavItems.map((item) => (
+            <NavItem
+              key={item.to}
+              to={item.to}
+              text={item.text}
+              icon={item.icon}
+              count={item.countKey ? notificationCounts[item.countKey] : undefined}
+              isCollapsed={isCollapsed}
+            />
+          ))}
+        </nav>
+
+        <div className={`flex flex-col items-center border-t border-gray-200/50 bg-gray-50/50 ${isCollapsed ? 'p-3' : 'p-4'}`}>
+          <button
+            onClick={handleSignOut}
+            className={`group flex items-center justify-center rounded-xl font-medium text-text-secondary transition-all duration-300 hover:bg-red-50 hover:text-red-600 ${isCollapsed ? 'h-12 w-12 p-0' : 'w-full gap-3 p-3'}`}
+            title={isCollapsed ? 'تسجيل الخروج' : ''}
+            aria-label="تسجيل الخروج"
+          >
+            <div className="transition-transform group-hover:-translate-x-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             </div>
-            <div className="min-w-0">
-              <span className="block truncate text-xl font-bold text-primary">{organization.name}</span>
-              <span className="block truncate text-xs text-text-secondary">{organization.productName}</span>
+
+            {!isCollapsed && <span>تسجيل الخروج</span>}
+          </button>
+
+          {!isCollapsed && (
+            <div className="mt-4 text-center text-xs text-gray-400">
+              <p>{organization.name} © {new Date().getFullYear()}</p>
+              <p>الإصدار 2.1.0</p>
             </div>
-          </div>
-        )}
-
-        <button
-          onClick={toggleCollapse}
-          className={`hidden md:flex items-center justify-center rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-200 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/50
-            ${isCollapsed ? 'rotate-180' : ''}`}
-          title={isCollapsed ? 'توسيع القائمة' : 'تصغير القائمة'}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="scale-x-[-1]"><path d="m11 17-5-5 5-5"/><path d="m18 17-5-5 5-5"/></svg>
-        </button>
-      </div>
-
-      <nav className="scrollbar-hide flex-1 space-y-2 overflow-y-auto px-3 py-6">
-        {visibleNavItems.map((item) => (
-          <NavItem
-            key={item.to}
-            to={item.to}
-            text={item.text}
-            icon={item.icon}
-            count={item.countKey ? notificationCounts[item.countKey] : undefined}
-            isCollapsed={isCollapsed}
-          />
-        ))}
-      </nav>
-
-      <div className="flex flex-col items-center border-t border-gray-200/50 bg-gray-50/50 p-4">
-        <button
-          onClick={handleSignOut}
-          className="group flex w-full items-center justify-center gap-3 rounded-xl p-3 font-medium text-text-secondary transition-all duration-300 hover:bg-red-50 hover:text-red-600"
-          title={isCollapsed ? 'تسجيل الخروج' : ''}
-        >
-          <div className="transition-transform group-hover:-translate-x-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </div>
-
-          {!isCollapsed && <span>تسجيل الخروج</span>}
-        </button>
-
-        {!isCollapsed && (
-          <div className="mt-4 text-center text-xs text-gray-400">
-            <p>{organization.name} © {new Date().getFullYear()}</p>
-            <p>الإصدار 2.1.0</p>
-          </div>
-        )}
-      </div>
-    </aside>
+          )}
+        </div>
+      </aside>
+      <div aria-hidden="true" className="hidden shrink-0 md:block" style={{ width: currentSidebarWidth }} />
+    </>
   );
 };
 

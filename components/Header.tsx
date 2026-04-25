@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useOrganization } from '../contexts/OrganizationContext';
 import Avatar from './Avatar';
 import ThemeSettings from './ThemeSettings';
 import { useNotifications } from '../hooks/useNotifications';
@@ -17,7 +18,7 @@ const BellIcon: React.FC<BellIconProps> = ({ onClick, unreadCount, buttonRef }) 
     <button 
       ref={buttonRef}
       onClick={onClick}
-      className="relative flex min-h-11 min-w-11 items-center justify-center rounded-xl p-2 transition-colors hover:bg-primary-hover"
+      className="relative flex h-10 w-10 items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 md:h-11 md:w-11"
       aria-label="الإشعارات"
     >
         <svg
@@ -42,6 +43,7 @@ const BellIcon: React.FC<BellIconProps> = ({ onClick, unreadCount, buttonRef }) 
 
 const Header: React.FC = () => {
   const { userProfile, signOut } = useAuth();
+  const { organization } = useOrganization();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -53,6 +55,7 @@ const Header: React.FC = () => {
   const [userMenuPosition, setUserMenuPosition] = useState({ top: 0, left: 0, width: 192 });
   const { notifications, unreadCount, markAsRead, markAllAsRead, preferences, updatePreferences } = useNotifications();
   const { status: pushStatus, busy: pushBusy, error: pushError, enablePush, disablePush } = usePushNotifications();
+  const platformName = organization.productName || 'منصة يتيم';
 
   const handleSignOut = async () => {
     await signOut();
@@ -129,9 +132,21 @@ const Header: React.FC = () => {
 
   return (
     <>
-    <header className="sticky top-0 z-40 bg-primary pt-[env(safe-area-inset-top)] shadow-md md:pt-0">
-      <div className="flex h-14 items-center justify-between ps-3 pe-2 text-white sm:h-[3.75rem] sm:ps-4 sm:pe-3 md:h-16 md:px-6">
-        <div className="flex items-center gap-1.5 sm:gap-3">
+    <header className="fixed inset-x-0 top-0 z-50 bg-primary pt-[env(safe-area-inset-top)] shadow-md md:pt-0">
+      <div className="flex h-14 items-center justify-between px-3 text-white sm:h-[3.75rem] sm:px-4 md:h-16 md:px-6">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            to="/"
+            className="flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-1.5 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:px-2 md:min-h-12"
+            aria-label="العودة للصفحة الرئيسية"
+          >
+            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-white/95 p-0.5 shadow-sm ring-1 ring-white/60 sm:h-12 sm:w-12 md:h-13 md:w-13"> 
+              <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full rounded-full object-contain" />
+            </span>
+            <span className="min-w-0 max-w-[9.5rem] text-right leading-tight sm:max-w-[14rem] md:max-w-[18rem]">
+              <span className="block truncate text-base font-bold text-white sm:text-lg md:text-xl">{platformName}</span>
+            </span>
+          </Link>
            <div className="flex items-center gap-1 md:hidden">
               <div className="relative">
                 <BellIcon 
@@ -141,11 +156,7 @@ const Header: React.FC = () => {
                 />
               </div>
             </div>
-           <div className="hidden items-center gap-6 md:flex">
-              <div className="text-center">
-                  <p className="font-bold text-lg">{userProfile?.name || 'المستخدم'}</p>
-                  <p className="text-sm opacity-80">{roleLabel}</p>
-              </div>
+           <div className="hidden items-center gap-3 md:flex">
               <div className="relative">
                 <BellIcon 
                   buttonRef={notificationButtonRef}
@@ -155,7 +166,7 @@ const Header: React.FC = () => {
               </div>
               <button
                 onClick={openThemeSettings}
-                className="flex min-h-11 min-w-11 items-center justify-center rounded-xl p-2 transition-colors hover:bg-primary-hover"
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 title="تخصيص المظهر"
                 aria-label="تخصيص المظهر"
               >
@@ -173,15 +184,15 @@ const Header: React.FC = () => {
               </button>
             </div>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="relative">
             <button
               ref={userMenuButtonRef}
               onClick={toggleUserMenu}
-              className="flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl px-2 py-1.5 transition-colors hover:bg-primary-hover"
+              className="flex h-11 min-w-11 items-center justify-center gap-2 rounded-xl px-2 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               aria-label="قائمة المستخدم"
             >
-              <Avatar src={userProfile?.avatar_url} name={userProfile?.name || 'مستخدم'} size="sm" />
+              <Avatar src={userProfile?.avatar_url} name={userProfile?.name || 'مستخدم'} size={isMobileViewport ? 'sm' : 'md'} />
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="hidden h-4 w-4 sm:block">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>

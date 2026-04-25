@@ -86,12 +86,12 @@ const EntityCard: React.FC<EntityCardProps> = ({
         ) : (
           <div />
         )}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
             <Avatar src={imageUrl} name={imageAlt ?? title} size="md" className="!w-full !h-full !text-sm" />
           </div>
           <div className="min-w-0">
-            <div className="font-bold text-gray-900 truncate">{title}</div>
+            <div className="line-clamp-2 break-words font-bold leading-snug text-gray-900">{title}</div>
             <div className="text-[10px] text-gray-500 uppercase tracking-wider">{subtitle}</div>
           </div>
         </div>
@@ -117,28 +117,31 @@ const EntityCard: React.FC<EntityCardProps> = ({
 
   return (
     <div
-      className={`group flex h-full min-w-0 cursor-pointer flex-col rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm transition-all md:p-5 ${
+      className={`group relative flex h-full min-w-0 cursor-pointer flex-col rounded-[1.5rem] border border-gray-100 bg-white p-4 shadow-sm transition-all md:p-5 ${
         selected ? 'ring-2 ring-primary border-primary' : 'hover:shadow-[0_20px_25px_-5px_rgb(0_0_0_/_0.1),_0_8px_10px_-6px_rgb(0_0_0_/_0.1)] hover:-translate-y-0.5'
       }`}
       onClick={onClick}
     >
-      <div className="mb-4 flex items-center gap-3 md:mb-5 md:gap-4">
-        {showCheckbox && onSelect && (
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50" onClick={(e) => e.stopPropagation()}>
-            <input
-              type="checkbox"
-              checked={selected}
-              onChange={(e) => onSelect(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-0 cursor-pointer"
-              aria-label={`تحديد ${title}`}
-            />
-          </div>
-        )}
+      {showCheckbox && onSelect && (
+        <div
+          className="absolute end-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white/95 shadow-sm backdrop-blur"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={(e) => onSelect(e.target.checked)}
+            className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-0"
+            aria-label={`تحديد ${title}`}
+          />
+        </div>
+      )}
+      <div className={`mb-4 flex items-start gap-3 md:mb-5 md:gap-4 ${showCheckbox && onSelect ? 'pe-10 md:pe-11' : ''}`}>
         <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-full border-2 border-primary-light transition-colors group-hover:border-primary md:h-16 md:w-16">
           <Avatar src={imageUrl} name={imageAlt ?? title} size="md" className="!w-full !h-full !text-base" />
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="truncate text-base font-bold text-gray-900 transition-colors group-hover:text-primary md:text-lg">
+        <div className="min-w-0 flex-1 pt-0.5">
+          <h3 className="line-clamp-2 break-words text-base font-bold leading-snug text-gray-900 transition-colors group-hover:text-primary md:text-lg">
             {title}
           </h3>
           {subtitle && <p className="truncate text-xs text-gray-500 md:text-sm">{subtitle}</p>}
