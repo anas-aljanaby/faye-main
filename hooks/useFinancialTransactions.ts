@@ -12,6 +12,53 @@ export interface FinancialTransactionWithApproval extends FinancialTransaction {
   rejectionReason?: string;
 }
 
+function toValidDate(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+  return null;
+}
+
+function normalizeHydratedTransaction(
+  tx: FinancialTransactionWithApproval
+): FinancialTransactionWithApproval {
+  const normalizedDate = toValidDate(tx.date) ?? new Date(0);
+  const normalizedReceiptDate = tx.receipt
+    ? toValidDate(tx.receipt.date) ?? normalizedDate
+    : null;
+
+  const needsTransactionDateNormalization =
+    !(tx.date instanceof Date) || Number.isNaN(tx.date.getTime());
+  const needsReceiptDateNormalization = !!tx.receipt && (
+    !(tx.receipt.date instanceof Date) || Number.isNaN(tx.receipt.date.getTime())
+  );
+
+  if (!needsTransactionDateNormalization && !needsReceiptDateNormalization) {
+    return tx;
+  }
+
+  return {
+    ...tx,
+    date: normalizedDate,
+    ...(tx.receipt && normalizedReceiptDate
+      ? {
+          receipt: {
+            ...tx.receipt,
+            date: normalizedReceiptDate,
+          },
+        }
+      : {}),
+  };
+}
+
+const normalizeFinancialTransactions = (
+  transactions: FinancialTransactionWithApproval[]
+) => transactions.map(normalizeHydratedTransaction);
+
 // Helper function to convert numeric ID to UUID (for lookups)
 // This is a simplified approach - in production you'd want a proper mapping
 const numberToUuid = (num: number, uuidMap: Map<number, string>): string | undefined => {
@@ -30,6 +77,8 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
     queryKey: ['financial-transactions', mode, userProfile?.organization_id],
     queryFn: () => fetchFinancialTransactionsData(userProfile!.organization_id, mode),
     enabled: !!userProfile,
+    // Persisted React Query snapshots serialize Date objects to strings.
+    select: normalizeFinancialTransactions,
   });
 
   const fetchTransactions = useCallback(async (_useCache = true, _silent = false) => {
@@ -151,27 +200,29 @@ export const useFinancialTransactions = (mode: 'full' | 'dashboard' = 'full') =>
         console.log('Creating receipt for transaction:', newTransaction.id);
         console.log('Receipt data:', transactionData.receipt);
         
-        // Find sponsor UUID by name or ID
-        let sponsorUuid: string | undefined = undefined;
-        
-        // Try to find sponsor by name first (excluding system admin)
-        const { data: sponsors, error: sponsorError } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('organization_id', userProfile.organization_id)
-          .eq('role', 'sponsor')
-          .eq('is_system_admin', false)
-          .ilike('name', `%${transactionData.receipt.sponsorName}%`)
-          .limit(1);
+        // The financial system modal already knows the selected sponsor. Use that
+        // exact UUID when available and keep a fuzzy-name fallback for older data.
+        let sponsorUuid: string | undefined = transactionData.receipt.sponsorUuid;
 
-        if (sponsorError) {
-          console.error('Error finding sponsor:', sponsorError);
-          throw sponsorError;
-        }
+        if (!sponsorUuid) {
+          const { data: sponsors, error: sponsorError } = await supabase
+            .from('user_profiles')
+            .select('id')
+            .eq('organization_id', userProfile.organization_id)
+            .eq('role', 'sponsor')
+            .eq('is_system_admin', false)
+            .ilike('name', `%${transactionData.receipt.sponsorName}%`)
+            .limit(1);
 
-        if (sponsors && sponsors.length > 0) {
-          sponsorUuid = sponsors[0].id;
-          console.log('Found sponsor UUID:', sponsorUuid);
+          if (sponsorError) {
+            console.error('Error finding sponsor:', sponsorError);
+            throw sponsorError;
+          }
+
+          if (sponsors && sponsors.length > 0) {
+            sponsorUuid = sponsors[0].id;
+            console.log('Found sponsor UUID:', sponsorUuid);
+          }
         }
 
         if (!sponsorUuid) {
@@ -461,18 +512,13 @@ async function fetchFinancialTransactionsData(
 
       receiptOrphansData = receiptOrphans || [];
 
-      const transactionDates = transactionsData
-        .filter(tx => incomeTransactionIds.includes(tx.id))
-        .map(tx => new Date(tx.date).toISOString().split('T')[0]);
-
       const orphanIdsFromReceipts = receiptOrphansData.map(ro => ro.orphan_id);
 
-      if (orphanIdsFromReceipts.length > 0 && transactionDates.length > 0) {
+      if (orphanIdsFromReceipts.length > 0) {
         const { data: payments } = await supabase
           .from('payments')
           .select('*')
           .in('orphan_id', orphanIdsFromReceipts)
-          .in('paid_date', transactionDates)
           .eq('status', 'مدفوع');
 
         paymentsData = payments || [];
@@ -519,10 +565,12 @@ async function fetchFinancialTransactionsData(
       receiptOrphans.forEach(ro => {
         const numId = orphanUuidMap.get(ro.orphan_id);
         const orphanId = numId !== undefined ? numId : uuidToNumber(ro.orphan_id);
-        const relatedPayments = paymentsData.filter(p =>
-          p.orphan_id === ro.orphan_id &&
-          p.paid_date === transactionDateStr
-        );
+        const relatedPayments = paymentsData.filter((p) => {
+          const isLinkedToTransaction = p.paid_transaction_id === tx.id;
+          const isLegacyMatch = !p.paid_transaction_id && p.paid_date === transactionDateStr;
+
+          return p.orphan_id === ro.orphan_id && (isLinkedToTransaction || isLegacyMatch);
+        });
 
         if (relatedPayments.length > 0) {
           const paymentsByYear = new Map<number, any[]>();
@@ -593,4 +641,3 @@ async function fetchFinancialTransactionsData(
     } as FinancialTransactionWithApproval;
   });
 }
-

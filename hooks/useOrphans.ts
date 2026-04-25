@@ -268,6 +268,12 @@ export const useOrphans = () => {
             reminderSentAt: p.reminder_sent_at ? new Date(p.reminder_sent_at) : undefined,
             overdueNotifiedAt: p.overdue_notified_at ? new Date(p.overdue_notified_at) : undefined,
             notes: p.notes ?? undefined,
+            paidTransactionId: p.paid_transaction_id ?? undefined,
+            createdByTransactionId: p.created_by_transaction_id ?? undefined,
+            previousStatusBeforePaid: p.previous_status_before_paid ?? undefined,
+            previousAmountBeforePaid: p.previous_amount_before_paid !== null && p.previous_amount_before_paid !== undefined
+              ? parseFloat(p.previous_amount_before_paid)
+              : undefined,
           }));
 
         const achievements = orphanAchievements
@@ -486,6 +492,12 @@ export async function fetchOrphansBasicData(profile: OrphansBasicProfile): Promi
         reminderSentAt: p.reminder_sent_at ? new Date(p.reminder_sent_at) : undefined,
         overdueNotifiedAt: p.overdue_notified_at ? new Date(p.overdue_notified_at) : undefined,
         notes: p.notes ?? undefined,
+        paidTransactionId: p.paid_transaction_id ?? undefined,
+        createdByTransactionId: p.created_by_transaction_id ?? undefined,
+        previousStatusBeforePaid: p.previous_status_before_paid ?? undefined,
+        previousAmountBeforePaid: p.previous_amount_before_paid !== null && p.previous_amount_before_paid !== undefined
+          ? parseFloat(p.previous_amount_before_paid)
+          : undefined,
       }));
 
     return {
@@ -621,6 +633,12 @@ export async function fetchOrphansPaginatedData(
         reminderSentAt: p.reminder_sent_at ? new Date(p.reminder_sent_at) : undefined,
         overdueNotifiedAt: p.overdue_notified_at ? new Date(p.overdue_notified_at) : undefined,
         notes: p.notes ?? undefined,
+        paidTransactionId: p.paid_transaction_id ?? undefined,
+        createdByTransactionId: p.created_by_transaction_id ?? undefined,
+        previousStatusBeforePaid: p.previous_status_before_paid ?? undefined,
+        previousAmountBeforePaid: p.previous_amount_before_paid !== null && p.previous_amount_before_paid !== undefined
+          ? parseFloat(p.previous_amount_before_paid)
+          : undefined,
       }));
 
     return {
@@ -811,6 +829,12 @@ export async function fetchOrphanDetailData(organizationId: string, orphanId: st
     reminderSentAt: p.reminder_sent_at ? new Date(p.reminder_sent_at) : undefined,
     overdueNotifiedAt: p.overdue_notified_at ? new Date(p.overdue_notified_at) : undefined,
     notes: p.notes ?? undefined,
+    paidTransactionId: p.paid_transaction_id ?? undefined,
+    createdByTransactionId: p.created_by_transaction_id ?? undefined,
+    previousStatusBeforePaid: p.previous_status_before_paid ?? undefined,
+    previousAmountBeforePaid: p.previous_amount_before_paid !== null && p.previous_amount_before_paid !== undefined
+      ? parseFloat(p.previous_amount_before_paid)
+      : undefined,
   })).sort((a, b) => b.dueDate.getTime() - a.dueDate.getTime());
 
   const orphanAchievements = (achievementsData.data || []).map(a => ({

@@ -1196,9 +1196,7 @@ const Dashboard: React.FC = () => {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
               {sponsorsData.slice(0, 6).map(sponsor => (
                 <Link to={`/sponsor/${sponsor.id}`} key={sponsor.id} className="flex items-center gap-3 rounded-xl bg-bg-card p-4 shadow-sm transition-colors hover:bg-gray-50 md:gap-4 md:p-5 md:shadow-md">
-                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary-light text-lg font-bold text-primary-text md:h-12 md:w-12 md:text-xl">
-                    {sponsor.name.charAt(0)}
-                  </div>
+                  <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" className="!h-11 !w-11 !text-lg md:!h-12 md:!w-12 md:!text-xl" />
                   <div className="min-w-0">
                       <h3 className="line-clamp-1 text-base font-semibold text-gray-800 md:text-lg">{sponsor.name}</h3>
                       <p className="text-sm text-text-secondary">يكفل {sponsor.sponsoredOrphanIds.length} يتيم</p>

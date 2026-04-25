@@ -316,25 +316,34 @@ export const useNotifications = () => {
       return;
     }
 
-    const channel = supabase
-      .channel(`notifications:${userProfile.id}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userProfile.id}` },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setNotifications((prev) => [mapNotification(payload.new), ...prev]);
-          } else if (payload.eventType === 'UPDATE') {
-            setNotifications((prev) =>
-              prev.map((n) => (n.id === payload.new.id ? mapNotification(payload.new) : n))
-            );
+    let channel:
+      | ReturnType<typeof supabase.channel>
+      | undefined;
+    const subscriptionSetupTimer = window.setTimeout(() => {
+      const channelName = `notifications:${userProfile.id}:${Math.random().toString(36).slice(2)}`;
+      channel = supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${userProfile.id}` },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              setNotifications((prev) => [mapNotification(payload.new), ...prev]);
+            } else if (payload.eventType === 'UPDATE') {
+              setNotifications((prev) =>
+                prev.map((n) => (n.id === payload.new.id ? mapNotification(payload.new) : n))
+              );
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    }, 0);
 
     return () => {
-      supabase.removeChannel(channel);
+      window.clearTimeout(subscriptionSetupTimer);
+      if (channel) {
+        void supabase.removeChannel(channel);
+      }
     };
   }, [
     fetchNotifications,

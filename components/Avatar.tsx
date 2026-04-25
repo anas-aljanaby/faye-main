@@ -30,17 +30,6 @@ function getColorFromName(name: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-// Get the first letter (handles Arabic and Latin)
-function getFirstLetter(name: string): string {
-  if (!name) return '?';
-  const trimmed = name.trim();
-  if (!trimmed) return '?';
-  
-  // Get first character (handles multi-byte Unicode like Arabic)
-  const firstChar = [...trimmed][0];
-  return firstChar.toUpperCase();
-}
-
 const sizeClasses = {
   xs: 'w-6 h-6 text-xs',
   sm: 'w-8 h-8 text-sm',
@@ -55,15 +44,31 @@ const Avatar: React.FC<AvatarProps> = ({ src, name, size = 'md', className = '' 
   const showFallback = !src || src === '' || imageError;
   const sizeClass = sizeClasses[size];
   const bgColor = getColorFromName(name);
-  const letter = getFirstLetter(name);
 
   if (showFallback) {
     return (
       <div
-        className={`${sizeClass} ${bgColor} rounded-full flex items-center justify-center text-white font-semibold ${className}`}
+        dir="auto"
+        className={`${sizeClass} ${bgColor} inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full text-white ${className}`}
         title={name}
       >
-        {letter}
+        <svg
+          viewBox="0 0 64 64"
+          aria-hidden="true"
+          className="h-[78%] w-[78%] opacity-95"
+          fill="none"
+        >
+          <circle cx="32" cy="32" r="30" fill="currentColor" opacity="0.14" />
+          <circle cx="32" cy="25" r="10" fill="currentColor" />
+          <path
+            d="M16 52c1.8-8.4 8.5-14 16-14s14.2 5.6 16 14"
+            fill="currentColor"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+          />
+        </svg>
       </div>
     );
   }
@@ -72,7 +77,7 @@ const Avatar: React.FC<AvatarProps> = ({ src, name, size = 'md', className = '' 
     <img
       src={src}
       alt={name}
-      className={`${sizeClass} rounded-full object-cover ${className}`}
+      className={`${sizeClass} inline-block shrink-0 overflow-hidden rounded-full object-cover align-middle ${className}`}
       onError={() => setImageError(true)}
     />
   );

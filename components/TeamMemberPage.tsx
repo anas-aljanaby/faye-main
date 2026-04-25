@@ -477,18 +477,19 @@ const TeamMemberPage: React.FC = () => {
                   onClick={() => navigate(-1)}
                   className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-text-primary transition-colors hover:border-primary hover:text-primary"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                   <span>رجوع</span>
                 </button>
                 <div className="rounded-full bg-gray-100 p-2">
                   <BellIcon count={pendingTasks.length} />
                 </div>
             </div>
-            <div className="flex flex-col items-center gap-4 text-center md:flex-row md:items-center md:text-start">
+            <div className="flex flex-col items-start gap-4 text-start md:flex-row md:items-center">
               <div className="[&_img]:h-24 [&_img]:w-24 [&_img]:text-2xl md:[&_img]:h-32 md:[&_img]:w-32 md:[&_img]:text-3xl">
                 {member.uuid && canManageProfileMedia ? (
                   <AvatarUpload
                     currentAvatarUrl={member.avatarUrl}
+                    name={member.name}
                     userId={member.uuid}
                     type="team_member"
                     onUploadComplete={() => {

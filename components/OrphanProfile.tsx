@@ -19,6 +19,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
 import OptimizedImage from './OptimizedImage';
 import ResponsiveState from './ResponsiveState';
+import PaymentStatusBadge from './PaymentStatusBadge';
+import {
+    canAccessFinancialSystem,
+    canAccessOrphanFinancials,
+} from '../lib/accessControl';
+import {
+    buildFinancialSystemUrl,
+    filterTransactionsByOrphan,
+} from '../lib/orphanFinancials';
 
 /** React Query persistence (or other hydration) may restore dates as strings — normalize before calling Date methods. */
 function coerceToDate(value: unknown): Date | null {
@@ -408,8 +417,7 @@ const InfoCard: React.FC<{ title: string; children: React.ReactNode; icon: React
     </div>
 );
 
-const YearlyPaymentSummary: React.FC<{ payments: Payment[] }> = ({ payments }) => {
-    const year = new Date().getFullYear();
+const YearlyPaymentSummary: React.FC<{ payments: Payment[]; year: number }> = ({ payments, year }) => {
     const months = Array.from({ length: 12 }, (_, i) => new Date(year, i, 1));
 
     const getStatusForMonth = (month: Date) => {
@@ -420,31 +428,34 @@ const YearlyPaymentSummary: React.FC<{ payments: Payment[] }> = ({ payments }) =
         });
 
         if (!paymentForMonth) {
-            return { status: 'لا يوجد', color: 'bg-gray-200', textColor: 'text-gray-500' };
+            return { status: 'فارغ', color: 'bg-gray-100', textColor: 'text-gray-500', amount: null };
         }
 
         switch (paymentForMonth.status) {
             case PaymentStatus.Paid:
-                return { status: 'مدفوع', color: 'bg-green-100', textColor: 'text-green-700' };
+                return { status: 'مدفوع', color: 'bg-green-100', textColor: 'text-green-700', amount: paymentForMonth.amount };
             case PaymentStatus.Due:
-                return { status: 'مستحق', color: 'bg-yellow-100', textColor: 'text-yellow-700' };
+                return { status: 'مستحق', color: 'bg-yellow-100', textColor: 'text-yellow-700', amount: paymentForMonth.amount };
             case PaymentStatus.Overdue:
-                return { status: 'متأخر', color: 'bg-red-100', textColor: 'text-red-700' };
+                return { status: 'متأخر', color: 'bg-red-100', textColor: 'text-red-700', amount: paymentForMonth.amount };
             case PaymentStatus.Processing:
-                return { status: 'قيد المعالجة', color: 'bg-blue-100', textColor: 'text-blue-700' };
+                return { status: 'قيد المعالجة', color: 'bg-blue-100', textColor: 'text-blue-700', amount: paymentForMonth.amount };
             default:
-                return { status: 'غير معروف', color: 'bg-gray-200', textColor: 'text-gray-500' };
+                return { status: 'غير معروف', color: 'bg-gray-100', textColor: 'text-gray-500', amount: paymentForMonth.amount };
         }
     };
 
     return (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-6">
             {months.map(month => {
-                const { status, color, textColor } = getStatusForMonth(month);
+                const { status, color, textColor, amount } = getStatusForMonth(month);
                 return (
-                    <div key={month.getMonth()} className={`rounded-lg p-2.5 text-center md:p-3 ${color}`}>
+                    <div key={month.getMonth()} className={`rounded-lg border border-white/60 p-2.5 text-center md:p-3 ${color}`}>
                         <p className="text-sm font-semibold text-gray-800 md:text-base">{month.toLocaleDateString('ar-EG', { month: 'long' })}</p>
                         <p className={`text-xs font-medium md:text-sm ${textColor}`}>{status}</p>
+                        {amount !== null && (
+                            <p className={`mt-1 text-[11px] font-semibold md:text-xs ${textColor}`}>${amount.toLocaleString()}</p>
+                        )}
                     </div>
                 );
             })}
@@ -452,22 +463,34 @@ const YearlyPaymentSummary: React.FC<{ payments: Payment[] }> = ({ payments }) =
     );
 };
 
-const FinancialRecordCard: React.FC<{ orphanId: number }> = ({ orphanId }) => {
+const FinancialRecordCard: React.FC<{
+    orphanId: number;
+    showOpenInFinancialSystem?: boolean;
+}> = ({ orphanId, showOpenInFinancialSystem = false }) => {
     const { transactions, loading } = useFinancialTransactions();
 
     const relatedTransactions = useMemo(() => {
-        return transactions
-            .filter(tx => 
-                tx.orphanId === orphanId || 
-                tx.receipt?.relatedOrphanIds?.includes(orphanId)
-            )
-            .sort((a, b) => b.date.getTime() - a.date.getTime());
+        return filterTransactionsByOrphan(transactions, orphanId)
+            .sort((a, b) => (coerceToDate(b.date)?.getTime() ?? 0) - (coerceToDate(a.date)?.getTime() ?? 0));
     }, [orphanId, transactions]);
 
     const CashIcon = <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="6" x2="6" y1="12" y2="12"/><line x1="18" x2="18" y1="12" y2="12"/></svg>;
     
     return (
-        <InfoCard title="السجل المالي" icon={CashIcon}>
+        <InfoCard
+            title="الحركات المالية المرتبطة"
+            icon={CashIcon}
+            headerActions={
+                showOpenInFinancialSystem ? (
+                    <Link
+                        to={buildFinancialSystemUrl(orphanId)}
+                        className="inline-flex min-h-[36px] items-center rounded-full bg-primary-light px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-white"
+                    >
+                        فتح في النظام المالي
+                    </Link>
+                ) : null
+            }
+        >
             {loading ? (
                 <p>جاري تحميل الحركات المالية...</p>
             ) : relatedTransactions.length > 0 ? (
@@ -483,7 +506,7 @@ const FinancialRecordCard: React.FC<{ orphanId: number }> = ({ orphanId }) => {
                                 </span>
                                 <div className="min-w-0">
                                     <p className="text-sm font-semibold text-gray-800">{tx.description}</p>
-                                    <p className="text-xs text-gray-500">{tx.date.toLocaleDateString('ar-EG')}</p>
+                                    <p className="text-xs text-gray-500">{formatDateArEG(tx.date)}</p>
                                 </div>
                             </div>
                             <span className={`text-base font-bold sm:text-lg ${tx.type === TransactionType.Income ? 'text-green-600' : 'text-red-600'}`}>
@@ -496,6 +519,35 @@ const FinancialRecordCard: React.FC<{ orphanId: number }> = ({ orphanId }) => {
                 <p>لا توجد حركات مالية مسجلة لهذا اليتيم.</p>
             )}
         </InfoCard>
+    );
+};
+
+const FinancialMetricCard: React.FC<{
+    title: string;
+    value: string;
+    helper?: string;
+    tone?: 'primary' | 'green' | 'yellow' | 'slate';
+}> = ({ title, value, helper, tone = 'slate' }) => {
+    const toneStyles = {
+        primary: 'bg-primary text-white',
+        green: 'bg-green-50 text-green-900 ring-1 ring-green-100',
+        yellow: 'bg-yellow-50 text-yellow-900 ring-1 ring-yellow-100',
+        slate: 'bg-white text-gray-900 ring-1 ring-gray-100',
+    };
+
+    const helperStyles = {
+        primary: 'text-white/80',
+        green: 'text-green-700/80',
+        yellow: 'text-yellow-700/80',
+        slate: 'text-gray-500',
+    };
+
+    return (
+        <div className={`rounded-2xl p-4 shadow-sm ${toneStyles[tone]}`}>
+            <p className={`text-xs font-medium md:text-sm ${helperStyles[tone]}`}>{title}</p>
+            <p className="mt-2 text-lg font-bold md:text-2xl">{value}</p>
+            {helper && <p className={`mt-1 text-xs md:text-sm ${helperStyles[tone]}`}>{helper}</p>}
+        </div>
     );
 };
 
@@ -773,16 +825,103 @@ const OrphanProfile: React.FC = () => {
     insertFamilyMember,
     updateFamilyMember,
     deleteFamilyMember,
-    updatePaymentRow,
   } = useOrphanDetail(orphanUuid);
   const { occasions: allOccasions, addOccasion, updateOccasion, deleteOccasion } = useOccasions();
   const { sponsors: sponsorsData } = useSponsorsBasic();
-  const { userProfile, canEditOrphans } = useAuth();
+  const { userProfile, permissions, canEditOrphans, isSystemAdmin } = useAuth();
   const isTeamMember = userProfile?.role === 'team_member';
   const hasEditPermission = isTeamMember && canEditOrphans();
+  const financialAccessContext = {
+    role: userProfile?.role ?? null,
+    permissions,
+    isSystemAdmin: isSystemAdmin(),
+  };
+  const canSeeFinancialTab = canAccessOrphanFinancials(financialAccessContext);
+  const canOpenFinancialSystem = canAccessFinancialSystem(financialAccessContext);
   
   const sponsor = useMemo(() => orphan ? findById(sponsorsData, orphan.sponsorId) : undefined, [orphan, sponsorsData]);
   const profileRef = useRef<HTMLDivElement>(null);
+  const [selectedFinancialYear, setSelectedFinancialYear] = useState<number>(new Date().getFullYear());
+  const financialYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years = new Set<number>([currentYear]);
+
+    orphan?.payments.forEach((payment) => {
+      const dueDate = coerceToDate(payment.dueDate);
+      if (dueDate) {
+        years.add(dueDate.getFullYear());
+      }
+    });
+
+    return Array.from(years).sort((a, b) => b - a);
+  }, [orphan?.payments]);
+
+  useEffect(() => {
+    if (!financialYears.includes(selectedFinancialYear)) {
+      setSelectedFinancialYear(financialYears[0] ?? new Date().getFullYear());
+    }
+  }, [financialYears, selectedFinancialYear]);
+
+  const paymentsSorted = useMemo(() => {
+    if (!orphan) return [];
+
+    return [...orphan.payments].sort((a, b) => {
+      const timeB = coerceToDate(b.dueDate)?.getTime() ?? 0;
+      const timeA = coerceToDate(a.dueDate)?.getTime() ?? 0;
+      return timeB - timeA;
+    });
+  }, [orphan]);
+
+  const selectedYearPayments = useMemo(
+    () => paymentsSorted.filter((payment) => (payment.year ?? coerceToDate(payment.dueDate)?.getFullYear()) === selectedFinancialYear),
+    [paymentsSorted, selectedFinancialYear]
+  );
+
+  const financialOverview = useMemo(() => {
+    const outstandingNow = paymentsSorted
+      .filter((payment) => payment.status === PaymentStatus.Due || payment.status === PaymentStatus.Overdue)
+      .reduce((sum, payment) => sum + payment.amount, 0);
+
+    const processingNow = paymentsSorted
+      .filter((payment) => payment.status === PaymentStatus.Processing)
+      .reduce((sum, payment) => sum + payment.amount, 0);
+
+    const paidThisYear = selectedYearPayments
+      .filter((payment) => payment.status === PaymentStatus.Paid)
+      .reduce((sum, payment) => sum + payment.amount, 0);
+
+    const latestPaidPayment = paymentsSorted.find((payment) => payment.status === PaymentStatus.Paid && payment.paidDate);
+    const nextActionPayment = [...paymentsSorted]
+      .filter((payment) =>
+        payment.status === PaymentStatus.Overdue ||
+        payment.status === PaymentStatus.Due ||
+        payment.status === PaymentStatus.Processing
+      )
+      .sort((a, b) => {
+        const priority = (status: PaymentStatus) =>
+          status === PaymentStatus.Overdue ? 0 :
+          status === PaymentStatus.Due ? 1 :
+          2;
+
+        const priorityDiff = priority(a.status) - priority(b.status);
+        if (priorityDiff !== 0) return priorityDiff;
+
+        const timeA = coerceToDate(a.dueDate)?.getTime() ?? 0;
+        const timeB = coerceToDate(b.dueDate)?.getTime() ?? 0;
+        return timeA - timeB;
+      })[0];
+
+    const referenceMonthlyAmount = paymentsSorted[0]?.amount ?? 0;
+
+    return {
+      outstandingNow,
+      processingNow,
+      paidThisYear,
+      latestPaidPayment,
+      nextActionPayment,
+      referenceMonthlyAmount,
+    };
+  }, [paymentsSorted, selectedYearPayments]);
 
   // Filter occasions linked to this orphan
   const orphanOccasions = useMemo(() => {
@@ -824,18 +963,6 @@ const OrphanProfile: React.FC = () => {
   const [familyDraft, setFamilyDraft] = useState<FamilyDraftRow[]>([]);
   const [hobbyInput, setHobbyInput] = useState('');
   const [needInput, setNeedInput] = useState('');
-  const [editingPaymentId, setEditingPaymentId] = useState<string | null>(null);
-  const [paymentEditDraft, setPaymentEditDraft] = useState<{
-    amount: string;
-    dueDate: string;
-    paidDate: string;
-    status: PaymentStatus;
-  }>({
-    amount: '',
-    dueDate: '',
-    paidDate: '',
-    status: PaymentStatus.Due,
-  });
   
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [summaryReport, setSummaryReport] = useState('');
@@ -866,6 +993,12 @@ const OrphanProfile: React.FC = () => {
     description: '',
     date: '',
   });
+
+  useEffect(() => {
+    if (!canSeeFinancialTab && activeTab === 'financial') {
+      setActiveTab('overview');
+    }
+  }, [activeTab, canSeeFinancialTab]);
 
   // Initialize edit form data when orphan loads or edit mode is enabled
   React.useEffect(() => {
@@ -1538,7 +1671,7 @@ const OrphanProfile: React.FC = () => {
                     onClick={handleBackNavigation}
                     className="flex min-h-[44px] items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/30"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     رجوع
                 </button>
                 <div className="flex max-w-[68%] flex-wrap justify-end gap-2 md:max-w-none">
@@ -1556,11 +1689,12 @@ const OrphanProfile: React.FC = () => {
             </div>
 
             {/* Avatar + Name */}
-            <div className="absolute -bottom-12 start-4 end-4 flex flex-col items-center gap-4 text-center md:-bottom-14 md:start-auto md:end-16 md:flex-row md:items-center md:gap-6 md:text-start">
+            <div className="absolute -bottom-12 start-4 end-4 flex flex-col items-start gap-4 text-start md:-bottom-14 md:start-auto md:end-16 md:flex-row md:items-center md:gap-6">
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-4 border-white bg-white shadow-md md:h-40 md:w-40">
                     {orphan.uuid ? (
                         <AvatarUpload
                             currentAvatarUrl={orphan.photoUrl}
+                            name={orphan.name}
                             userId={orphan.uuid}
                             type="orphan"
                             onUploadComplete={() => window.location.reload()}
@@ -1581,7 +1715,7 @@ const OrphanProfile: React.FC = () => {
                             type="text"
                             value={editFormData.name}
                             onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                            className="w-full max-w-xs rounded-lg border-2 border-primary bg-white/90 px-4 py-2 text-center text-xl font-bold text-gray-900 md:text-start md:text-4xl"
+                            className="w-full max-w-xs rounded-lg border-2 border-primary bg-white/90 px-4 py-2 text-start text-xl font-bold text-gray-900 md:text-4xl"
                         />
                     ) : (
                         <h1 className="text-2xl font-bold md:text-4xl">{orphan.name}</h1>
@@ -1619,7 +1753,9 @@ const OrphanProfile: React.FC = () => {
                 <TabButton active={activeTab === 'education'} label="التعليم" onClick={() => setActiveTab('education')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>} />
                 <TabButton active={activeTab === 'timeline'} label="الجدول الزمني" onClick={() => setActiveTab('timeline')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>} />
                 <TabButton active={activeTab === 'gallery'} label="المعرض" onClick={() => setActiveTab('gallery')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>} />
-                <TabButton active={activeTab === 'financial'} label="المالية" onClick={() => setActiveTab('financial')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
+                {canSeeFinancialTab && (
+                    <TabButton active={activeTab === 'financial'} label="المالية" onClick={() => setActiveTab('financial')} icon={<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>} />
+                )}
             </div>
 
             <div className="min-h-[400px]">
@@ -2332,210 +2468,186 @@ const OrphanProfile: React.FC = () => {
                 )}
 
                 {/* ==================== TAB 5: FINANCIAL ==================== */}
-                {activeTab === 'financial' && (
+                {canSeeFinancialTab && activeTab === 'financial' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-                        <div className="grid gap-4 md:grid-cols-3 md:gap-6">
-                            {/* Payment Records Table */}
-                            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:col-span-2 md:p-6">
-                                <h3 className="mb-4 text-lg font-bold text-gray-800">سجل الدفعات ({new Date().getFullYear()})</h3>
+                        <div className="overflow-hidden rounded-2xl border border-primary/15 bg-gradient-to-br from-primary-light via-white to-white p-5 shadow-sm md:p-6">
+                            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                                <div className="space-y-2">
+                                    <p className="text-sm font-medium text-primary">الملف المالي</p>
+                                    <h3 className="text-xl font-bold text-gray-900 md:text-2xl">قراءة سريعة للوضع المالي لليتيم</h3>
+                                    <p className="max-w-2xl text-sm leading-6 text-gray-600 md:text-base">
+                                        هذا التبويب مخصص للمتابعة والقراءة السريعة: حالة الأشهر، المبالغ المدفوعة والمستحقة، والحركات المالية المرتبطة. التعديلات التشغيلية تتم من النظام المالي.
+                                    </p>
+                                </div>
+                                {canOpenFinancialSystem && (
+                                    <Link
+                                        to={buildFinancialSystemUrl(orphan.id)}
+                                        className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+                                    >
+                                        فتح في النظام المالي
+                                    </Link>
+                                )}
+                            </div>
+                            <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                                <p className="font-semibold">قاعدة العمل</p>
+                                <p className="mt-1">
+                                    حالات <span className="font-semibold">مستحق</span> و<span className="font-semibold">متأخر</span> و<span className="font-semibold">قيد المعالجة</span> تُدار من النظام المالي، أما <span className="font-semibold">مدفوع</span> فتُسجل فقط عند إضافة حركة مالية مرتبطة.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                            <FinancialMetricCard
+                                title="الكافل الحالي"
+                                value={sponsor?.name || 'غير محدد'}
+                                helper={financialOverview.referenceMonthlyAmount > 0 ? `المبلغ المرجعي الشهري: $${financialOverview.referenceMonthlyAmount.toLocaleString()}` : 'لا يوجد مبلغ مرجعي بعد'}
+                                tone="primary"
+                            />
+                            <FinancialMetricCard
+                                title="المستحق الآن"
+                                value={`$${financialOverview.outstandingNow.toLocaleString()}`}
+                                helper={`قيد المعالجة: $${financialOverview.processingNow.toLocaleString()}`}
+                                tone="yellow"
+                            />
+                            <FinancialMetricCard
+                                title={`المدفوع في ${selectedFinancialYear}`}
+                                value={`$${financialOverview.paidThisYear.toLocaleString()}`}
+                                helper={financialOverview.latestPaidPayment ? `آخر دفعة: ${formatDateArShort(financialOverview.latestPaidPayment.paidDate)}` : 'لا توجد دفعات مدفوعة بعد'}
+                                tone="green"
+                            />
+                            <FinancialMetricCard
+                                title="الإجراء التالي"
+                                value={financialOverview.nextActionPayment ? financialOverview.nextActionPayment.status : 'لا يوجد'}
+                                helper={financialOverview.nextActionPayment ? `${formatDateArShort(financialOverview.nextActionPayment.dueDate)} • $${financialOverview.nextActionPayment.amount.toLocaleString()}` : 'لا توجد دفعات تحتاج متابعة حالياً'}
+                                tone="slate"
+                            />
+                        </div>
+
+                        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.6fr),minmax(320px,1fr)]">
+                            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
+                                <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-800">ملخص الأشهر</h3>
+                                        <p className="mt-1 text-sm text-gray-500">عرض حالة كل شهر في السنة المحددة.</p>
+                                    </div>
+                                    <select
+                                        value={selectedFinancialYear}
+                                        onChange={(e) => setSelectedFinancialYear(parseInt(e.target.value, 10))}
+                                        className="min-h-[44px] rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-800"
+                                    >
+                                        {financialYears.map((year) => (
+                                            <option key={year} value={year}>{year}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {selectedYearPayments.length === 0 && (
+                                    <div className="mb-4 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+                                        لا توجد دفعات مسجلة في سنة {selectedFinancialYear} بعد. ستظهر الأشهر هنا تلقائياً عندما يبدأ تسجيل الحالات أو الدفعات.
+                                    </div>
+                                )}
+                                <YearlyPaymentSummary payments={selectedYearPayments} year={selectedFinancialYear} />
+                            </div>
+
+                            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
+                                <h3 className="text-lg font-bold text-gray-800">قراءة تشغيلية سريعة</h3>
+                                <div className="mt-4 space-y-3">
+                                    <div className="rounded-2xl bg-gray-50 p-4">
+                                        <p className="text-sm text-gray-500">آخر دفعة مدفوعة</p>
+                                        <p className="mt-2 text-base font-bold text-gray-900">
+                                            {financialOverview.latestPaidPayment ? formatDateArEG(financialOverview.latestPaidPayment.paidDate) : 'لا يوجد بعد'}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl bg-gray-50 p-4">
+                                        <p className="text-sm text-gray-500">الشهر التالي الذي يحتاج متابعة</p>
+                                        <p className="mt-2 text-base font-bold text-gray-900">
+                                            {financialOverview.nextActionPayment ? formatDateArShort(financialOverview.nextActionPayment.dueDate) : 'لا يوجد حالياً'}
+                                        </p>
+                                        <p className="mt-1 text-sm text-gray-600">
+                                            {financialOverview.nextActionPayment ? `${financialOverview.nextActionPayment.status} • $${financialOverview.nextActionPayment.amount.toLocaleString()}` : 'جميع الدفعات الحالية مستقرة'}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-2xl bg-gray-50 p-4">
+                                        <p className="text-sm text-gray-500">عدد السجلات في السنة المحددة</p>
+                                        <p className="mt-2 text-base font-bold text-gray-900">{selectedYearPayments.length}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
+                            <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-800">سجل الدفعات السنوي</h3>
+                                    <p className="mt-1 text-sm text-gray-500">عرض تفصيلي لسجلات سنة {selectedFinancialYear}.</p>
+                                </div>
+                                <span className="text-sm font-medium text-gray-500">{selectedYearPayments.length} سجل</span>
+                            </div>
+                            {selectedYearPayments.length > 0 ? (
                                 <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
                                     <table className="w-full min-w-[640px] text-right text-sm">
                                         <thead className="bg-gray-50 text-gray-600">
                                             <tr>
-                                                <th className="p-3 rounded-r-lg">التاريخ المستحق</th>
+                                                <th className="rounded-r-lg p-3">الشهر / الاستحقاق</th>
                                                 <th className="p-3">المبلغ</th>
                                                 <th className="p-3">الحالة</th>
                                                 <th className="p-3">تاريخ الدفع</th>
-                                                {hasEditPermission && <th className="p-3 rounded-l-lg w-28">إجراءات</th>}
+                                                <th className="rounded-l-lg p-3">المصدر</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {orphan.payments.map((payment) => (
+                                            {selectedYearPayments.map((payment) => (
                                                 <tr key={payment.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                                                    {editingPaymentId === payment.id ? (
-                                                        <>
-                                                            <td className="p-2 align-middle">
-                                                                <input
-                                                                    type="date"
-                                                                    className="min-h-[44px] w-full rounded border border-gray-200 px-2 py-1 text-xs"
-                                                                    value={paymentEditDraft.dueDate}
-                                                                    onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, dueDate: e.target.value })}
-                                                                />
-                                                            </td>
-                                                            <td className="p-2 align-middle">
-                                                                <input
-                                                                    type="number"
-                                                                    step="0.01"
-                                                                    min={0}
-                                                                    className="min-h-[44px] w-full rounded border border-gray-200 px-2 py-1 text-xs"
-                                                                    value={paymentEditDraft.amount}
-                                                                    onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, amount: e.target.value })}
-                                                                />
-                                                            </td>
-                                                            <td className="p-2 align-middle">
-                                                                <select
-                                                                    className="min-h-[44px] w-full rounded border border-gray-200 bg-white px-2 py-1 text-xs"
-                                                                    value={paymentEditDraft.status}
-                                                                    onChange={(e) =>
-                                                                        setPaymentEditDraft({
-                                                                            ...paymentEditDraft,
-                                                                            status: e.target.value as PaymentStatus,
-                                                                        })
-                                                                    }
-                                                                >
-                                                                    {Object.values(PaymentStatus).map((s) => (
-                                                                        <option key={s} value={s}>{s}</option>
-                                                                    ))}
-                                                                </select>
-                                                            </td>
-                                                            <td className="p-2 align-middle">
-                                                                <input
-                                                                    type="date"
-                                                                    className="min-h-[44px] w-full rounded border border-gray-200 px-2 py-1 text-xs"
-                                                                    value={paymentEditDraft.paidDate}
-                                                                    onChange={(e) => setPaymentEditDraft({ ...paymentEditDraft, paidDate: e.target.value })}
-                                                                />
-                                                            </td>
-                                                            {hasEditPermission && (
-                                                                <td className="p-2 align-middle whitespace-nowrap">
-                                                                    <button
-                                                                        type="button"
-                                                                    className="me-2 text-xs font-semibold text-primary hover:underline"
-                                                                        onClick={async () => {
-                                                                            try {
-                                                                                const amt = parseFloat(paymentEditDraft.amount);
-                                                                                if (Number.isNaN(amt)) {
-                                                                                    alert('مبلغ غير صالح');
-                                                                                    return;
-                                                                                }
-                                                                                await updatePaymentRow(payment.id, {
-                                                                                    amount: amt,
-                                                                                    due_date: paymentEditDraft.dueDate,
-                                                                                    paid_date: paymentEditDraft.paidDate.trim()
-                                                                                        ? paymentEditDraft.paidDate
-                                                                                        : null,
-                                                                                    status: paymentEditDraft.status,
-                                                                                });
-                                                                                setEditingPaymentId(null);
-                                                                            } catch (e) {
-                                                                                console.error(e);
-                                                                                alert('تعذر حفظ الدفعة');
-                                                                            }
-                                                                        }}
-                                                                    >
-                                                                        حفظ
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        className="text-xs text-gray-600 hover:underline"
-                                                                        onClick={() => setEditingPaymentId(null)}
-                                                                    >
-                                                                        إلغاء
-                                                                    </button>
-                                                                </td>
-                                                            )}
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <td className="p-3">{formatDateArEG(payment.dueDate)}</td>
-                                                            <td className="p-3 font-bold">${payment.amount}</td>
-                                                            <td className="p-3">
-                                                                <span
-                                                                    className={`px-2 py-1 rounded text-xs font-semibold ${
-                                                                        payment.status === PaymentStatus.Paid
-                                                                            ? 'bg-green-100 text-green-700'
-                                                                            : payment.status === PaymentStatus.Overdue
-                                                                              ? 'bg-red-100 text-red-700'
-                                                                              : payment.status === PaymentStatus.Processing
-                                                                                ? 'bg-blue-100 text-blue-700'
-                                                                                : 'bg-yellow-100 text-yellow-700'
-                                                                    }`}
-                                                                >
-                                                                    {payment.status}
-                                                                </span>
-                                                            </td>
-                                                            <td className="p-3 text-gray-500">
-                                                                {payment.paidDate ? formatDateArEG(payment.paidDate) : '-'}
-                                                            </td>
-                                                            {hasEditPermission && (
-                                                                <td className="p-3">
-                                                                    <button
-                                                                        type="button"
-                                                                        className="text-xs font-semibold text-primary hover:underline"
-                                                                        onClick={() => {
-                                                                            setEditingPaymentId(payment.id);
-                                                                            setPaymentEditDraft({
-                                                                                amount: String(payment.amount),
-                                                                                dueDate: toDateInputString(payment.dueDate),
-                                                                                paidDate: payment.paidDate
-                                                                                    ? toDateInputString(payment.paidDate)
-                                                                                    : '',
-                                                                                status: payment.status,
-                                                                            });
-                                                                        }}
-                                                                    >
-                                                                        تعديل
-                                                                    </button>
-                                                                </td>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </tr>
-                                            ))}
-                                            {orphan.payments.length === 0 && (
-                                                <tr>
-                                                    <td colSpan={hasEditPermission ? 5 : 4} className="p-6 text-center text-gray-400">
-                                                        لا توجد دفعات مسجلة
+                                                    <td className="p-3">
+                                                        <div className="font-semibold text-gray-800">{formatDateArShort(payment.dueDate)}</div>
+                                                        <div className="mt-1 text-xs text-gray-500">
+                                                            {coerceToDate(payment.dueDate)?.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' })}
+                                                        </div>
+                                                    </td>
+                                                    <td className="p-3 font-bold text-gray-900">${payment.amount.toLocaleString()}</td>
+                                                    <td className="p-3"><PaymentStatusBadge status={payment.status} /></td>
+                                                    <td className="p-3 text-gray-500">{payment.paidDate ? formatDateArEG(payment.paidDate) : '—'}</td>
+                                                    <td className="p-3 text-sm text-gray-600">
+                                                        {payment.status === PaymentStatus.Paid
+                                                            ? payment.paidTransactionId
+                                                                ? 'مرتبطة بحركة مالية'
+                                                                : 'سجل مدفوع'
+                                                            : payment.status === PaymentStatus.Processing
+                                                                ? 'بانتظار الإكمال'
+                                                                : 'حالة شهرية'}
                                                     </td>
                                                 </tr>
-                                            )}
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
-
-                            {/* Financial Summary Card */}
-                            <div className="relative order-first flex flex-col justify-between overflow-hidden rounded-xl bg-primary p-5 text-white shadow-lg md:order-none md:p-6">
-                                <div className="absolute end-0 top-0 h-24 w-24 -me-8 -mt-8 rounded-full bg-white opacity-10 md:h-32 md:w-32 md:-me-10 md:-mt-10"></div>
-                                <div>
-                                    <p className="text-white/80 text-sm mb-1">الرصيد المستحق</p>
-                                    <h3 className="mb-5 text-3xl font-bold md:mb-6 md:text-4xl">
-                                        ${orphan.payments.filter(p => p.status !== PaymentStatus.Paid).reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
-                                    </h3>
-                                    <p className="text-white/80 text-sm mb-1">إجمالي المدفوعات</p>
-                                    <h3 className="text-2xl font-bold">
-                                        ${orphan.payments.filter(p => p.status === PaymentStatus.Paid).reduce((sum, p) => sum + p.amount, 0).toLocaleString()}
-                                    </h3>
+                            ) : (
+                                <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-500">
+                                    لا توجد سجلات دفع لعرضها في سنة {selectedFinancialYear}.
                                 </div>
-                            </div>
+                            )}
                         </div>
 
-                        {/* Yearly Payment Summary */}
-                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
-                            <h3 className="font-bold text-lg text-gray-800 mb-4">ملخص الدفعات الشهري</h3>
-                            <YearlyPaymentSummary payments={orphan.payments} />
-                        </div>
+                        <FinancialRecordCard
+                            orphanId={orphan.id}
+                            showOpenInFinancialSystem={canOpenFinancialSystem}
+                        />
 
-                        {/* Financial Record from transactions */}
-                        <FinancialRecordCard orphanId={orphan.id} />
-
-                        {/* AI Analytics */}
                         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm md:p-6">
                             <h3 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-                                تحليلات الذكاء الاصطناعي
+                                تقارير مساندة
                             </h3>
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <h4 className="font-bold text-gray-800">موجز سريع للحالة</h4>
-                                    <p className="text-sm my-2 text-gray-600">احصل على تقرير فوري يلخص الوضع الأكاديمي والمالي لليتيم مع توصية سريعة.</p>
+                                    <p className="text-sm my-2 text-gray-600">ملخص سريع يربط بين الوضع المالي والأكاديمي ويعطي صورة عامة عن الحالة.</p>
                                     <button onClick={handleGenerateSummaryReport} className="text-sm font-semibold py-2 px-4 bg-primary-light text-primary rounded-lg hover:bg-primary hover:text-white transition-colors w-full">
                                         إنشاء موجز
                                     </button>
                                 </div>
                                 <div className="bg-gray-50 p-4 rounded-lg">
                                     <h4 className="font-bold text-gray-800">تقرير تقييم الاحتياجات</h4>
-                                    <p className="text-sm my-2 text-gray-600">تحليل شامل لبيانات اليتيم لتحديد نقاط القوة والجوانب التي تحتاج إلى دعم.</p>
+                                    <p className="text-sm my-2 text-gray-600">تحليل أوسع لبيانات اليتيم يساعد الفريق على فهم الأولويات القادمة.</p>
                                     <button onClick={handleGenerateNeedsReport} className="text-sm font-semibold py-2 px-4 bg-primary-light text-primary rounded-lg hover:bg-primary hover:text-white transition-colors w-full">
                                         إنشاء تقرير احتياجات
                                     </button>

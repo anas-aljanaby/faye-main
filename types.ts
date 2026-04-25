@@ -17,6 +17,10 @@ export interface Payment {
   reminderSentAt?: Date;
   overdueNotifiedAt?: Date;
   notes?: string;
+  paidTransactionId?: string;
+  createdByTransactionId?: string;
+  previousStatusBeforePaid?: PaymentStatus;
+  previousAmountBeforePaid?: number;
 }
 
 export interface PaymentStatusHistory {
@@ -201,6 +205,8 @@ export interface FinancialTransaction {
   type: TransactionType;
   orphanId?: number;
   receipt?: {
+    sponsorId?: number;
+    sponsorUuid?: string;
     sponsorName: string;
     donationCategory: string;
     amount: number;

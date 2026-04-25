@@ -518,13 +518,14 @@ const SponsorPage: React.FC = () => {
                     <div className="rounded-2xl bg-bg-card p-4 shadow-md md:rounded-xl md:p-6">
                         <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
                             <button onClick={() => navigate(-1)} className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:bg-gray-100 hover:text-primary md:self-start">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                             </button>
 
-                            <div className="flex flex-col items-center gap-3 text-center md:flex-row md:items-center md:text-start">
+                            <div className="flex flex-col items-start gap-3 text-start md:flex-row md:items-center">
                                 {sponsor.uuid ? (
                                     <AvatarUpload
                                         currentAvatarUrl={sponsor.avatarUrl}
+                                        name={sponsor.name}
                                         userId={sponsor.uuid}
                                         type="sponsor"
                                         onUploadComplete={() => {
@@ -533,9 +534,7 @@ const SponsorPage: React.FC = () => {
                                         size="md"
                                     />
                                 ) : (
-                                    <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full bg-primary-light text-3xl font-bold text-primary-text md:h-24 md:w-24 md:text-4xl">
-                                        {sponsor.name.charAt(0)}
-                                    </div>
+                                    <Avatar src={undefined} name={sponsor.name} size="xl" className="!h-20 !w-20 !text-3xl md:!h-24 md:!w-24 md:!text-4xl" />
                                 )}
 
                                 <div className="space-y-2">

@@ -547,9 +547,7 @@ const MobileTeamMemberCard: React.FC<{
 }> = ({ member, roleLabel, showAdminDetails, accountsLoading, accountStatus, canQuickCreate, onQuickCreate }) => (
     <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-sm">
         <div className="flex items-start gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary-light text-lg font-bold text-primary">
-                {member.name.charAt(0)}
-            </div>
+            <Avatar src={member.avatar_url} name={member.name} size="lg" />
             <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                     <h3 className="truncate text-base font-bold text-gray-800">{member.name}</h3>
@@ -941,9 +939,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
                                             isSysAdmin && member.uuid && acc?.status === 'no_login';
                                         return (
                                             <div key={member.id} className="group bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate(`/team/${member.id}`)}>
-                                                <div className="w-16 h-16 bg-primary-light text-primary rounded-full flex items-center justify-center text-2xl font-bold mb-3">
-                                                    {member.name.charAt(0)}
-                                                </div>
+                                                <Avatar src={member.avatar_url} name={member.name} size="xl" className="mb-3 !h-16 !w-16 !text-2xl" />
                                                 <h4 className="font-bold text-gray-800">{member.name}</h4>
                                                 <div className="mb-2 flex items-center gap-2">
                                                     <p className="text-xs text-gray-500">{role}</p>
@@ -1016,7 +1012,7 @@ const TeamList: React.FC<TeamListProps> = ({ embedded = false }) => {
         {selectedIds.size === 0 && (
                 <div className="hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] items-center justify-around bg-white/80 p-2 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-sm z-30">
                 <button onClick={() => navigate(-1)} className="flex min-h-[44px] min-w-[44px] flex-col items-center justify-center text-gray-600 transition-colors hover:text-primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                     <span className="text-xs">رجوع</span>
                 </button>
                 <button onClick={() => searchInputRef.current?.focus()} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">

@@ -66,3 +66,10 @@ export const canAccessFinancialSystem = (context: AccessContext) => {
   );
 };
 
+export const canAccessOrphanFinancials = (context: AccessContext) => {
+  if (isSponsor(context.role)) {
+    return true;
+  }
+
+  return canAccessFinancialSystem(context);
+};

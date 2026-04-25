@@ -24,6 +24,7 @@ import TeamMemberRoute from './components/TeamMemberRoute';
 import AccessRoute from './components/AccessRoute';
 import ResponsiveState from './components/ResponsiveState';
 import { useNetworkStatus } from './hooks/useNetworkStatus';
+import { APP_MAIN_SCROLL_ROOT_ID } from './hooks/useBodyScrollLock';
 import { useOrganization } from './contexts/OrganizationContext';
 
 function App() {
@@ -78,7 +79,7 @@ function App() {
                 <PoliciesNavProvider>
                 <div className="relative flex min-h-[100dvh] overflow-hidden bg-bg-page text-text-primary md:h-screen">
                   <Sidebar />
-                  <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+                  <main id={APP_MAIN_SCROLL_ROOT_ID} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                     <Header />
                     {!isOnline ? <OfflineBanner /> : null}
                     <div className="flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:pt-6 md:p-8">

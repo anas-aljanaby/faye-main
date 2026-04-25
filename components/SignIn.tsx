@@ -51,10 +51,9 @@ const SignIn: React.FC = () => {
         {/* Logo/Header */}
         <div className="w-full">
           <div className="mb-6 text-center md:mb-8">
-            <div className="mb-3 inline-flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-white/95 p-1 shadow-lg ring-1 ring-black/5 md:mb-4 md:h-20 md:w-20 md:p-1.5">
+            <div className="mb-3 inline-flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-white/95 p-2 shadow-lg ring-1 ring-black/5 md:mb-4 md:h-32 md:w-32 md:p-2.5">
               <img src={organization.assets.logo} alt={`${organization.name} logo`} className="h-full w-full rounded-full object-contain" />
             </div>
-            <h1 className="mb-1 text-2xl font-bold text-gray-800 md:mb-2 md:text-3xl">{organization.name}</h1>
             <p className="mx-auto max-w-xs text-sm text-text-secondary md:text-base">{organization.subtitle}</p>
           </div>
 

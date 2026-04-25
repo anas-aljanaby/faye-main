@@ -1,23 +1,60 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useSponsorsBasic } from '../hooks/useSponsors';
 import { useOrphansBasic } from '../hooks/useOrphans';
 import { useFinancialTransactions, FinancialTransactionWithApproval } from '../hooks/useFinancialTransactions';
 import { FinancialTransaction, TransactionStatus, TransactionType, Sponsor, Orphan, PaymentStatus, Payment } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { supabase } from '../lib/supabase';
+import {
+    FINANCIAL_SYSTEM_ORPHAN_PARAM,
+    filterTransactionsByOrphan,
+    parseFinancialSystemOrphanId,
+} from '../lib/orphanFinancials';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
 import { Bar, Pie } from 'react-chartjs-2';
 import 'chartjs-adapter-date-fns';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import Avatar from './Avatar';
+import PaymentStatusBadge from './PaymentStatusBadge';
 
 /** Normalize date from API (may be Date or ISO string) to Date; return null if invalid. */
 function ensureDate(d: Date | string | undefined | null): Date | null {
     if (d == null) return null;
     const date = d instanceof Date ? d : new Date(d);
     return isNaN(date.getTime()) ? null : date;
+}
+
+const ARABIC_MONTH_NAMES = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+const MANUAL_PAYMENT_STATUSES = [PaymentStatus.Due, PaymentStatus.Overdue, PaymentStatus.Processing] as const;
+
+type ManualPaymentStatus = (typeof MANUAL_PAYMENT_STATUSES)[number];
+type PaymentCoverageInfo = { month?: number; year: number; isYear: boolean };
+
+function getPaymentCoverageLabel(paymentInfo: PaymentCoverageInfo) {
+    if (paymentInfo.isYear) {
+        return `سنة ${paymentInfo.year} كاملة`;
+    }
+
+    if (paymentInfo.month !== undefined) {
+        return `${ARABIC_MONTH_NAMES[paymentInfo.month]} ${paymentInfo.year}`;
+    }
+
+    return `${paymentInfo.year}`;
+}
+
+function getCoveredMonths(paymentInfo: PaymentCoverageInfo) {
+    if (paymentInfo.isYear) {
+        return Array.from({ length: 12 }, (_, month) => ({ month, year: paymentInfo.year }));
+    }
+
+    if (paymentInfo.month !== undefined) {
+        return [{ month: paymentInfo.month, year: paymentInfo.year }];
+    }
+
+    return [];
 }
 
 // Approve Transaction Modal
@@ -29,8 +66,6 @@ const ApproveTransactionModal: React.FC<{
     orphans: Orphan[];
 }> = ({ isOpen, onClose, onApprove, transaction, orphans }) => {
     if (!isOpen || !transaction) return null;
-
-    const monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
 
     return (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/70 p-0 md:items-center md:p-4" onClick={onClose}>
@@ -131,7 +166,7 @@ const ApproveTransactionModal: React.FC<{
                                                 if (paymentInfo.isYear) {
                                                     paymentText = `سنة ${paymentInfo.year} كاملة`;
                                                 } else if (paymentInfo.month !== undefined) {
-                                                    paymentText = `${monthNames[paymentInfo.month]} ${paymentInfo.year}`;
+                                                    paymentText = `${ARABIC_MONTH_NAMES[paymentInfo.month]} ${paymentInfo.year}`;
                                                 }
                                                 
                                                 return (
@@ -351,6 +386,41 @@ const AddTransactionModal: React.FC<{
     const [sponsorSearchQuery, setSponsorSearchQuery] = useState('');
     const [orphanSearchQuery, setOrphanSearchQuery] = useState('');
 
+    useBodyScrollLock(isOpen);
+
+    const paidSelectionConflicts = useMemo(() => {
+        if (type !== TransactionType.Income || donationCategory !== 'كفالة يتيم') {
+            return {};
+        }
+
+        return selectedOrphans.reduce<Record<number, string[]>>((acc, orphanId) => {
+            const orphan = sponsoredOrphans.find((item) => item.id === orphanId);
+            const paymentInfo = orphanPaymentInfo[orphanId];
+
+            if (!orphan || !paymentInfo || paymentInfo.paymentType == null) {
+                return acc;
+            }
+
+            const conflicts = getCoveredMonths({
+                month: paymentInfo.paymentType === 'month' ? paymentInfo.month : undefined,
+                year: paymentInfo.year,
+                isYear: paymentInfo.paymentType === 'year',
+            })
+                .filter(({ month, year }) => orphan.payments.some((payment) =>
+                    payment.status === PaymentStatus.Paid &&
+                    payment.dueDate.getFullYear() === year &&
+                    payment.dueDate.getMonth() === month
+                ))
+                .map(({ month, year }) => `${ARABIC_MONTH_NAMES[month]} ${year}`);
+
+            if (conflicts.length > 0) {
+                acc[orphanId] = conflicts;
+            }
+
+            return acc;
+        }, {});
+    }, [donationCategory, orphanPaymentInfo, selectedOrphans, sponsoredOrphans, type]);
+
     useEffect(() => {
         if (type === TransactionType.Income && selectedSponsorId) {
             const sponsorId = parseInt(selectedSponsorId, 10);
@@ -394,6 +464,10 @@ const AddTransactionModal: React.FC<{
             }
             
             if (donationCategory === 'كفالة يتيم') {
+                if (Object.keys(paidSelectionConflicts).length > 0) {
+                    return false;
+                }
+
                 // Check if at least one orphan has valid amount and payment type
                 const hasValidOrphan = Object.values(orphanPaymentInfo).some(info => {
                     const amount = parseFloat(info.amount);
@@ -412,7 +486,7 @@ const AddTransactionModal: React.FC<{
         }
         
         return true;
-    }, [amount, type, selectedSponsorId, donationCategory, orphanPaymentInfo]);
+    }, [amount, type, selectedSponsorId, donationCategory, orphanPaymentInfo, paidSelectionConflicts]);
 
     const sortedSponsors = useMemo(
         () => [...sponsors].sort((a, b) => a.name.localeCompare(b.name, 'ar')),
@@ -487,6 +561,11 @@ const AddTransactionModal: React.FC<{
                 return;
             }
             if (donationCategory === 'كفالة يتيم') {
+                if (Object.keys(paidSelectionConflicts).length > 0) {
+                    alert('بعض الأشهر المحددة مدفوعة بالفعل. احذف الحركة السابقة أولاً ثم أضف الحركة الصحيحة.');
+                    return;
+                }
+
                 const hasValidOrphanInfo = Object.keys(orphanPaymentInfo).some((orphanIdStr) => {
                     const info = orphanPaymentInfo[parseInt(orphanIdStr, 10)];
                     const rowAmount = parseFloat(info.amount);
@@ -512,7 +591,8 @@ const AddTransactionModal: React.FC<{
 
         try {
             if (type === TransactionType.Income) {
-                const sponsorName = sponsors.find(s => s.id === parseInt(selectedSponsorId, 10))?.name || 'كافل غير محدد';
+                const selectedSponsor = sponsors.find(s => s.id === parseInt(selectedSponsorId, 10));
+                const sponsorName = selectedSponsor?.name || 'كافل غير محدد';
                 const trimmedNote = description.trim();
                 const finalDescription = trimmedNote
                     ? `[${donationCategory}] - ${trimmedNote}`
@@ -541,6 +621,8 @@ const AddTransactionModal: React.FC<{
                     type,
                     createdBy: 'خالد الغامدي', // Hardcoded team member name as requested
                     receipt: {
+                        sponsorId: selectedSponsor?.id,
+                        sponsorUuid: selectedSponsor?.uuid,
                         sponsorName,
                         donationCategory,
                         amount: parseFloat(amount),
@@ -576,16 +658,19 @@ const AddTransactionModal: React.FC<{
 
     return (
         <>
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 md:items-center md:p-4" onClick={resetForm}>
-            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+        <div
+            className="fixed inset-0 z-50 flex items-end justify-center overscroll-y-contain bg-black/50 p-0 md:items-center md:p-4"
+            onClick={resetForm}
+        >
+            <div className="flex h-[calc(100dvh-1rem)] min-h-0 w-full flex-col overflow-hidden overscroll-y-contain rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
                     <h3 className="text-lg font-bold text-gray-900 md:text-xl">إضافة حركة مالية جديدة</h3>
                     <button type="button" onClick={resetForm} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
-                <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-                    <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
+                <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+                    <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overflow-x-hidden overscroll-y-contain p-4 md:p-6">
                     <div className="grid grid-cols-2 gap-3">
                         <button
                             type="button"
@@ -667,6 +752,12 @@ const AddTransactionModal: React.FC<{
                             </div>
                             {donationCategory === 'كفالة يتيم' && selectedSponsorId && (
                                 <div className="border-t pt-4 mt-4 space-y-4">
+                                    <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                                        <p className="font-semibold">تسجيل دفعة الكفالة يعلّم الشهر كمدفوع تلقائياً.</p>
+                                        <p className="mt-1 text-blue-700">
+                                            اختر اليتيم ثم حدّد الشهر أو السنة والمبلغ. إذا كان الشهر مدفوعاً بالفعل فاحذف الحركة السابقة أولاً ثم أضف الحركة الصحيحة.
+                                        </p>
+                                    </div>
                                     <div>
                                         <label className="text-sm font-medium text-gray-700 mb-2 block">اختر الأيتام</label>
                                         {sponsoredOrphans.length > 0 ? (
@@ -732,6 +823,14 @@ const AddTransactionModal: React.FC<{
                                                     paymentType: null,
                                                     year: new Date().getFullYear()
                                                 };
+                                                const selectedCoverageLabel = paymentInfo.paymentType
+                                                    ? getPaymentCoverageLabel({
+                                                        month: paymentInfo.paymentType === 'month' ? paymentInfo.month : undefined,
+                                                        year: paymentInfo.year,
+                                                        isYear: paymentInfo.paymentType === 'year',
+                                                    })
+                                                    : null;
+                                                const paidConflicts = paidSelectionConflicts[orphanId] ?? [];
 
                                                 return (
                                                     <div key={orphanId} className="rounded-2xl border border-gray-200 bg-gray-50 p-3">
@@ -774,6 +873,18 @@ const AddTransactionModal: React.FC<{
                                                                 className="min-h-[40px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                                                             />
                                                         </div>
+
+                                                        {selectedCoverageLabel && (
+                                                            <div className="mb-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                                                                <span className="font-semibold">سيتم تسجيل الدفعة على:</span> {selectedCoverageLabel}
+                                                            </div>
+                                                        )}
+
+                                                        {paidConflicts.length > 0 && (
+                                                            <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                                                                <span className="font-semibold">هذا الشهر مدفوع بالفعل:</span> {paidConflicts.join('، ')}
+                                                            </div>
+                                                        )}
 
                                                         {/* Payment Type Section */}
                                                         <div className="space-y-2">
@@ -939,7 +1050,7 @@ const AddTransactionModal: React.FC<{
                         />
                     )}
                     </div>
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                    <div className="flex shrink-0 flex-col-reverse gap-3 border-t border-gray-100 bg-white px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
                         <button type="button" onClick={resetForm} className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2 font-semibold text-text-secondary hover:bg-gray-200">إلغاء</button>
                         <button 
                             type="submit" 
@@ -950,13 +1061,142 @@ const AddTransactionModal: React.FC<{
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }`}
                         >
-                            {isSubmitting ? 'جاري الحفظ...' : (type === TransactionType.Income ? 'اصدار إيصال تبرع' : 'حفظ')}
+                            {isSubmitting ? 'جاري الحفظ...' : (type === TransactionType.Income ? 'تسجيل الدفعة وإصدار إيصال' : 'حفظ')}
                         </button>
                     </div>
                 </form>
             </div>
         </div>
         </>
+    );
+};
+
+type EditingPaymentState = {
+    orphanId: string;
+    orphanName: string;
+    month: number;
+    year: number;
+    amount: number;
+    selectedStatus: ManualPaymentStatus;
+    currentStatus?: PaymentStatus;
+    hasExistingPayment: boolean;
+    isPaidLocked: boolean;
+};
+
+const PaymentMonthEditorModal: React.FC<{
+    editingPayment: EditingPaymentState | null;
+    onClose: () => void;
+    onChange: (next: EditingPaymentState) => void;
+    onSave: () => void;
+}> = ({ editingPayment, onClose, onChange, onSave }) => {
+    const isOpen = !!editingPayment;
+    useBodyScrollLock(isOpen);
+
+    if (!editingPayment) return null;
+
+    const canEditAmount =
+        editingPayment.selectedStatus === PaymentStatus.Due ||
+        editingPayment.selectedStatus === PaymentStatus.Overdue;
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-0 md:items-center md:p-4" onClick={onClose}>
+            <div className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-xl md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+                <div className="border-b border-gray-100 px-4 py-4 md:px-6">
+                    <div className="flex items-start justify-between gap-3">
+                        <div>
+                            <p className="text-sm font-medium text-primary">{editingPayment.orphanName}</p>
+                            <h3 className="mt-1 text-lg font-bold text-gray-900 md:text-xl">
+                                تعديل حالة {ARABIC_MONTH_NAMES[editingPayment.month]} {editingPayment.year}
+                            </h3>
+                        </div>
+                        <button type="button" onClick={onClose} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-800" aria-label="إغلاق">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex-1 space-y-4 overflow-y-auto p-4 md:p-6">
+                    {editingPayment.currentStatus && (
+                        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                            <p className="text-sm text-gray-600">الحالة الحالية</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-3">
+                                <PaymentStatusBadge status={editingPayment.currentStatus} />
+                                <span className="text-sm font-semibold text-gray-700">
+                                    {editingPayment.amount > 0 ? `$${editingPayment.amount.toLocaleString()}` : 'بدون مبلغ محدد'}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                        <p className="font-semibold">تنبيه للفريق</p>
+                        <p className="mt-1">
+                            تغيير الحالة هنا ينعكس عند الكافل وقد يرسل له إشعاراً. حالة <span className="font-semibold">مدفوع</span> لا تُضبط من هنا، بل من خلال إضافة حركة مالية فقط.
+                        </p>
+                    </div>
+
+                    {editingPayment.isPaidLocked ? (
+                        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                            <p className="font-semibold">هذا الشهر مدفوع بالفعل.</p>
+                            <p className="mt-1">
+                                لتعديل المبلغ أو تصحيح هذا الشهر، احذف الحركة المالية التي سجلته ثم أضف الحركة الصحيحة بدلاً منها.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">الحالة</label>
+                                <select
+                                    value={editingPayment.selectedStatus}
+                                    onChange={(e) => onChange({
+                                        ...editingPayment,
+                                        selectedStatus: e.target.value as ManualPaymentStatus,
+                                    })}
+                                    className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm"
+                                >
+                                    {MANUAL_PAYMENT_STATUSES.map((status) => (
+                                        <option key={status} value={status}>{status}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between gap-3">
+                                    <label className="text-sm font-medium text-gray-700">المبلغ</label>
+                                    <span className="text-xs text-gray-500">قابل للتعديل فقط في مستحق أو متأخر</span>
+                                </div>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={editingPayment.amount}
+                                    disabled={!canEditAmount}
+                                    onChange={(e) => {
+                                        const nextAmount = parseFloat(e.target.value);
+                                        onChange({
+                                            ...editingPayment,
+                                            amount: Number.isNaN(nextAmount) ? 0 : nextAmount,
+                                        });
+                                    }}
+                                    className={`min-h-[48px] w-full rounded-xl border px-4 py-3 text-sm ${canEditAmount ? 'border-gray-300 bg-white' : 'border-gray-200 bg-gray-100 text-gray-500'}`}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-white px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6 md:pb-4">
+                    <button type="button" onClick={onClose} className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2 font-semibold text-text-secondary hover:bg-gray-200">
+                        {editingPayment.isPaidLocked ? 'إغلاق' : 'إلغاء'}
+                    </button>
+                    {!editingPayment.isPaidLocked && (
+                        <button type="button" onClick={onSave} className="min-h-[48px] rounded-xl bg-primary px-5 py-2 font-semibold text-white hover:bg-primary-hover">
+                            حفظ التغييرات
+                        </button>
+                    )}
+                </div>
+            </div>
+        </div>
     );
 };
 
@@ -1173,6 +1413,7 @@ const StatusPill: React.FC<{ status: TransactionStatus }> = ({ status }) => {
 
 const FinancialSystem: React.FC = () => {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const fromDateRef = useRef<HTMLInputElement>(null);
     const toDateRef = useRef<HTMLInputElement>(null);
     const transactionsSectionRef = useRef<HTMLDivElement>(null);
@@ -1211,8 +1452,8 @@ const FinancialSystem: React.FC = () => {
     
     // Orphan payments states
     const [expandedOrphans, setExpandedOrphans] = useState<Set<string>>(new Set());
-    const [selectedYear, setSelectedYear] = useState<number>(2025);
-    const [editingPayment, setEditingPayment] = useState<{ orphanId: string; month: number; year: number; amount: number; status?: PaymentStatus } | null>(null);
+    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+    const [editingPayment, setEditingPayment] = useState<EditingPaymentState | null>(null);
     
     // Navigation state
     const [activeSection, setActiveSection] = useState<'transactions' | 'orphan-payments'>('transactions');
@@ -1223,12 +1464,40 @@ const FinancialSystem: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const initialItemsToShow = 3;
+    const selectedOrphanId = useMemo(
+        () => parseFinancialSystemOrphanId(searchParams.get(FINANCIAL_SYSTEM_ORPHAN_PARAM)),
+        [searchParams]
+    );
+    const selectedOrphan = useMemo(
+        () => orphansData.find((orphan) => orphan.id === selectedOrphanId) ?? null,
+        [orphansData, selectedOrphanId]
+    );
+
+    const updateOrphanFilter = (nextOrphanId: number | null) => {
+        const nextParams = new URLSearchParams(searchParams);
+
+        if (nextOrphanId) {
+            nextParams.set(FINANCIAL_SYSTEM_ORPHAN_PARAM, String(nextOrphanId));
+        } else {
+            nextParams.delete(FINANCIAL_SYSTEM_ORPHAN_PARAM);
+        }
+
+        setSearchParams(nextParams);
+    };
     
     useEffect(() => {
         if (sponsorsData) {
             setSponsorsList(sponsorsData);
         }
     }, [sponsorsData]);
+
+    useEffect(() => {
+        if (!selectedOrphan) {
+            return;
+        }
+
+        setExpandedOrphans(new Set([selectedOrphan.uuid || selectedOrphan.id.toString()]));
+    }, [selectedOrphan]);
 
     // Initialize default month filter on mount
     useEffect(() => {
@@ -1319,6 +1588,53 @@ const FinancialSystem: React.FC = () => {
         
         // Find the transaction to check if it has payment info
         const transaction = transactions.find(tx => tx.id === transactionId);
+        let paymentsToRestore: Array<{
+            id: string;
+            amount: number | string;
+            paid_transaction_id?: string | null;
+            created_by_transaction_id?: string | null;
+            previous_status_before_paid?: PaymentStatus | null;
+            previous_amount_before_paid?: number | string | null;
+        }> = [];
+
+        if (transaction?.type === TransactionType.Income) {
+            const { data: linkedPayments, error: linkedPaymentsError } = await supabase
+                .from('payments')
+                .select('id, amount, paid_transaction_id, created_by_transaction_id, previous_status_before_paid, previous_amount_before_paid')
+                .or(`paid_transaction_id.eq.${transactionId},created_by_transaction_id.eq.${transactionId}`);
+
+            if (linkedPaymentsError) {
+                console.error('Error loading linked payments before delete:', linkedPaymentsError);
+                alert('تعذر تجهيز حذف الحركة لأن حالة الأشهر المرتبطة لم تُحمّل بشكل صحيح.');
+                return;
+            }
+
+            paymentsToRestore = linkedPayments || [];
+
+            if (paymentsToRestore.length === 0 && transaction.receipt?.relatedOrphanIds?.length) {
+                const transactionDate = ensureDate(transaction.date)?.toISOString().split('T')[0] ?? '';
+                const legacyOrphanUuids = transaction.receipt.relatedOrphanIds
+                    .map((orphanId) => orphansData.find((orphan) => orphan.id === orphanId)?.uuid)
+                    .filter((uuid): uuid is string => !!uuid);
+
+                if (transactionDate && legacyOrphanUuids.length > 0) {
+                    const { data: legacyPayments, error: legacyPaymentsError } = await supabase
+                        .from('payments')
+                        .select('id, amount, paid_transaction_id, created_by_transaction_id, previous_status_before_paid, previous_amount_before_paid')
+                        .in('orphan_id', legacyOrphanUuids)
+                        .eq('paid_date', transactionDate)
+                        .eq('status', PaymentStatus.Paid);
+
+                    if (legacyPaymentsError) {
+                        console.error('Error loading legacy linked payments before delete:', legacyPaymentsError);
+                        alert('تعذر تجهيز حذف الحركة لأن حالة الأشهر القديمة المرتبطة لم تُحمّل بشكل صحيح.');
+                        return;
+                    }
+
+                    paymentsToRestore = legacyPayments || [];
+                }
+            }
+        }
         
         const result = await deleteTransaction(transactionId);
         if (!result.success) {
@@ -1330,107 +1646,50 @@ const FinancialSystem: React.FC = () => {
         // Refresh transactions to update the UI
         await refetchTransactions(false);
         
-        // If transaction had payment months, revert those payments
-        if (transaction && 
-            transaction.type === TransactionType.Income && 
-            transaction.receipt?.orphanPaymentMonths && 
-            transaction.receipt?.relatedOrphanIds) {
-            
-            // Use the transaction's date to match payments that were marked as paid by this transaction
-            const transactionDate = ensureDate(transaction.date)?.toISOString().split('T')[0] ?? '';
-            
-            for (const orphanId of transaction.receipt.relatedOrphanIds) {
-                const orphan = orphansData.find(o => o.id === orphanId);
-                if (!orphan || !orphan.uuid) {
-                    console.warn(`Orphan ${orphanId} not found or missing UUID`);
-                    continue;
-                }
-
-                const paymentInfo = transaction.receipt.orphanPaymentMonths[orphanId];
-                if (!paymentInfo) {
-                    console.warn(`No payment info for orphan ${orphanId}`);
-                    continue;
-                }
-
+        // If this income transaction marked orphan months as paid, restore them to
+        // their previous manual state or remove rows that were created from blank.
+        if (transaction?.type === TransactionType.Income && paymentsToRestore.length > 0) {
+            for (const payment of paymentsToRestore) {
                 try {
-                    if (paymentInfo.isYear) {
-                        // Revert all 12 months for the year
-                        for (let month = 0; month < 12; month++) {
-                            const dueDate = new Date(paymentInfo.year, month, 1);
-                            
-                            // Find payment for this month that was marked as paid on the transaction date
-                            // We match by month/year and check if it was paid on the transaction date
-                            const existingPayment = orphan.payments.find(p => {
-                                const pYear = p.dueDate.getFullYear();
-                                const pMonth = p.dueDate.getMonth();
-                                const pPaidDate = p.paidDate ? new Date(p.paidDate).toISOString().split('T')[0] : null;
-                                
-                                return pYear === paymentInfo.year &&
-                                       pMonth === month &&
-                                       p.status === PaymentStatus.Paid &&
-                                       pPaidDate === transactionDate;
-                            });
+                    if (payment.created_by_transaction_id === transactionId) {
+                        const { error } = await supabase
+                            .from('payments')
+                            .delete()
+                            .eq('id', payment.id);
 
-                            if (existingPayment) {
-                                // Revert to Due status and clear paid_date
-                                const { error } = await supabase
-                                    .from('payments')
-                                    .update({
-                                        status: PaymentStatus.Due,
-                                        paid_date: null,
-                                    })
-                                    .eq('id', existingPayment.id);
-                                
-                                if (error) {
-                                    console.error(`Error reverting payment for orphan ${orphanId}, month ${month}:`, error);
-                                } else {
-                                    console.log(`Reverted payment for orphan ${orphanId}, month ${month} to Due`);
-                                }
-                            }
+                        if (error) {
+                            console.error(`Error deleting payment row ${payment.id}:`, error);
                         }
-                    } else if (paymentInfo.month !== undefined) {
-                        // Revert single month payment
-                        const dueDate = new Date(paymentInfo.year, paymentInfo.month, 1);
-                        
-                        // Find payment for this month that was marked as paid on the transaction date
-                        const existingPayment = orphan.payments.find(p => {
-                            const pYear = p.dueDate.getFullYear();
-                            const pMonth = p.dueDate.getMonth();
-                            const pPaidDate = p.paidDate ? new Date(p.paidDate).toISOString().split('T')[0] : null;
-                            
-                            return pYear === paymentInfo.year &&
-                                   pMonth === paymentInfo.month &&
-                                   p.status === PaymentStatus.Paid &&
-                                   pPaidDate === transactionDate;
-                        });
 
-                        if (existingPayment) {
-                            // Revert to Due status and clear paid_date
-                            const { error } = await supabase
-                                .from('payments')
-                                .update({
-                                    status: PaymentStatus.Due,
-                                    paid_date: null,
-                                })
-                                .eq('id', existingPayment.id);
-                            
-                            if (error) {
-                                console.error(`Error reverting payment for orphan ${orphanId}, month ${paymentInfo.month}:`, error);
-                            } else {
-                                console.log(`Reverted payment for orphan ${orphanId}, month ${paymentInfo.month} to Due`);
-                            }
-                        } else {
-                            console.warn(`No matching payment found for orphan ${orphanId}, month ${paymentInfo.month}, transaction date ${transactionDate}`);
-                        }
+                        continue;
+                    }
+
+                    const restoredAmount = payment.previous_amount_before_paid !== null && payment.previous_amount_before_paid !== undefined
+                        ? parseFloat(payment.previous_amount_before_paid.toString())
+                        : parseFloat(payment.amount.toString());
+
+                    const { error } = await supabase
+                        .from('payments')
+                        .update({
+                            status: payment.previous_status_before_paid || PaymentStatus.Due,
+                            amount: restoredAmount,
+                            paid_date: null,
+                            paid_transaction_id: null,
+                            created_by_transaction_id: null,
+                            previous_status_before_paid: null,
+                            previous_amount_before_paid: null,
+                        })
+                        .eq('id', payment.id);
+
+                    if (error) {
+                        console.error(`Error restoring payment row ${payment.id}:`, error);
                     }
                 } catch (error) {
-                    console.error(`Error reverting payments for orphan ${orphanId}:`, error);
+                    console.error(`Error restoring payment row ${payment.id}:`, error);
                 }
             }
-            
-            // Refresh orphans to get updated payments (this will also update sponsor view)
+
             await refetchOrphans();
-            console.log('Orphan payments refreshed after transaction deletion');
         }
         
         setActionMenuOpen(null);
@@ -1467,9 +1726,14 @@ const FinancialSystem: React.FC = () => {
         setToDate(to.toISOString().split('T')[0]);
     };
 
+    const scopedTransactions = useMemo(
+        () => filterTransactionsByOrphan(transactions, selectedOrphanId),
+        [transactions, selectedOrphanId]
+    );
+
     // Filter transactions based on filter criteria
     const filteredTransactions = useMemo(() => {
-        return transactions.filter(tx => {
+        return scopedTransactions.filter(tx => {
             // Date filter
             if (fromDate) {
                 const txDate = new Date(tx.date);
@@ -1502,13 +1766,13 @@ const FinancialSystem: React.FC = () => {
             
             return true;
         });
-    }, [transactions, fromDate, toDate, typeFilter, statusFilter]);
+    }, [scopedTransactions, fromDate, toDate, typeFilter, statusFilter]);
 
     // Reset pagination when filters change
     useEffect(() => {
         setCurrentPage(1);
         setShowMoreClicked(false);
-    }, [fromDate, toDate, typeFilter, statusFilter, activeMonthFilter]);
+    }, [fromDate, toDate, typeFilter, statusFilter, activeMonthFilter, selectedOrphanId]);
 
     // Calculate paginated transactions
     const paginatedTransactions = useMemo(() => {
@@ -1527,15 +1791,15 @@ const FinancialSystem: React.FC = () => {
     const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
     const { totalIncome, totalExpenses, balance, pendingCount } = useMemo(() => {
-        const income = transactions
+        const income = scopedTransactions
             .filter(tx => tx.type === TransactionType.Income && tx.status === TransactionStatus.Completed)
             .reduce((sum, tx) => sum + tx.amount, 0);
         
-        const expenses = transactions
+        const expenses = scopedTransactions
             .filter(tx => tx.type === TransactionType.Expense && tx.status === TransactionStatus.Completed)
             .reduce((sum, tx) => sum + tx.amount, 0);
             
-        const pending = transactions.filter(tx => tx.status === TransactionStatus.Pending).length;
+        const pending = scopedTransactions.filter(tx => tx.status === TransactionStatus.Pending).length;
 
         return {
             totalIncome: income,
@@ -1543,7 +1807,7 @@ const FinancialSystem: React.FC = () => {
             balance: income - expenses,
             pendingCount: pending,
         };
-    }, [transactions]);
+    }, [scopedTransactions]);
 
     const handleAddSponsor = async (name: string): Promise<Sponsor> => {
         try {
@@ -1599,8 +1863,9 @@ const FinancialSystem: React.FC = () => {
                 data.receipt?.relatedOrphanIds && 
                 data.receipt.relatedOrphanIds.length > 0) {
                 
-                // Use the receipt date (transaction date) for paid_date to match when deleting
                 const paidDate = ensureDate(data.receipt.date)?.toISOString().split('T')[0] ?? '';
+                const sponsorUuid = data.receipt.sponsorUuid;
+                let paymentMutationErrors = false;
                 
                 // Update payment status for each related orphan
                 for (const orphanId of data.receipt.relatedOrphanIds) {
@@ -1618,95 +1883,79 @@ const FinancialSystem: React.FC = () => {
 
                     const orphanAmount = data.receipt.orphanAmounts?.[orphanId] || 50.00;
 
-                    if (paymentInfo.isYear) {
-                        // Split amount across 12 months for the year
-                        const monthlyAmount = orphanAmount / 12;
-                        
-                        for (let month = 0; month < 12; month++) {
-                            const dueDate = new Date(paymentInfo.year, month, 1);
-                            const dueDateStr = dueDate.toISOString().split('T')[0];
-                            
-                            // Find existing payment for this month
-                            const existingPayment = orphan.payments.find(p => 
-                                p.dueDate.getFullYear() === paymentInfo.year &&
-                                p.dueDate.getMonth() === month
-                            );
+                    const coveredMonths = getCoveredMonths(paymentInfo);
+                    const monthAmount = paymentInfo.isYear && coveredMonths.length > 0
+                        ? orphanAmount / coveredMonths.length
+                        : orphanAmount;
 
-                            if (existingPayment) {
-                                // Update existing payment to paid
-                                const { error } = await supabase
-                                    .from('payments')
-                                    .update({
-                                        status: PaymentStatus.Paid,
-                                        amount: monthlyAmount,
-                                        paid_date: paidDate,
-                                    })
-                                    .eq('id', existingPayment.id);
-                                if (error) {
-                                    console.error(`Error updating payment for month ${month}:`, error);
-                                }
-                            } else {
-                                // Create new payment as paid
-                                const { error } = await supabase
-                                    .from('payments')
-                                    .insert({
-                                        orphan_id: orphan.uuid,
-                                        amount: monthlyAmount,
-                                        due_date: dueDateStr,
-                                        status: PaymentStatus.Paid,
-                                        paid_date: paidDate,
-                                    });
-                                if (error) {
-                                    console.error(`Error creating payment for month ${month}:`, error);
-                                }
-                            }
-                        }
-                    } else if (paymentInfo.month !== undefined) {
-                        // Single month payment
-                        const dueDate = new Date(paymentInfo.year, paymentInfo.month, 1);
+                    if (coveredMonths.length === 0) {
+                        console.warn(`No payment info for orphan ${orphanId} - paymentType not set`);
+                        continue;
+                    }
+
+                    for (const coveredMonth of coveredMonths) {
+                        const dueDate = new Date(coveredMonth.year, coveredMonth.month, 1);
                         const dueDateStr = dueDate.toISOString().split('T')[0];
-                        
-                        // Find existing payment for this month
-                        const existingPayment = orphan.payments.find(p => 
-                            p.dueDate.getFullYear() === paymentInfo.year &&
-                            p.dueDate.getMonth() === paymentInfo.month
+                        const existingPayment = orphan.payments.find(p =>
+                            p.dueDate.getFullYear() === coveredMonth.year &&
+                            p.dueDate.getMonth() === coveredMonth.month
                         );
 
+                        if (existingPayment?.status === PaymentStatus.Paid) {
+                            paymentMutationErrors = true;
+                            console.error(`Refusing to overwrite paid month for orphan ${orphanId}, month ${coveredMonth.month}, year ${coveredMonth.year}`);
+                            continue;
+                        }
+
                         if (existingPayment) {
-                            // Update existing payment to paid
                             const { error } = await supabase
                                 .from('payments')
                                 .update({
                                     status: PaymentStatus.Paid,
-                                    amount: orphanAmount,
+                                    amount: monthAmount,
                                     paid_date: paidDate,
+                                    sponsor_id: existingPayment.sponsorId ?? sponsorUuid ?? null,
+                                    paid_transaction_id: transactionId,
+                                    created_by_transaction_id: null,
+                                    previous_status_before_paid: existingPayment.status,
+                                    previous_amount_before_paid: existingPayment.amount,
                                 })
                                 .eq('id', existingPayment.id);
+
                             if (error) {
-                                console.error('Error updating payment:', error);
+                                paymentMutationErrors = true;
+                                console.error(`Error updating payment for orphan ${orphanId}, month ${coveredMonth.month}:`, error);
                             }
                         } else {
-                            // Create new payment as paid
                             const { error } = await supabase
                                 .from('payments')
                                 .insert({
                                     orphan_id: orphan.uuid,
-                                    amount: orphanAmount,
+                                    sponsor_id: sponsorUuid ?? null,
+                                    amount: monthAmount,
                                     due_date: dueDateStr,
-                                    status: PaymentStatus.Paid,
                                     paid_date: paidDate,
+                                    status: PaymentStatus.Paid,
+                                    month: coveredMonth.month + 1,
+                                    year: coveredMonth.year,
+                                    paid_transaction_id: transactionId,
+                                    created_by_transaction_id: transactionId,
                                 });
+
                             if (error) {
-                                console.error('Error creating payment:', error);
+                                paymentMutationErrors = true;
+                                console.error(`Error creating payment for orphan ${orphanId}, month ${coveredMonth.month}:`, error);
                             }
                         }
-                    } else {
-                        console.warn(`No payment info for orphan ${orphanId} - paymentType not set`);
                     }
                 }
                 
                 // Refresh orphans to get updated payments
                 await refetchOrphans();
+
+                if (paymentMutationErrors) {
+                    alert('تم تسجيل الحركة، لكن بعض الأشهر لم يتم تحديثها كما هو متوقع. راجع الأشهر المرتبطة قبل المتابعة.');
+                }
             }
 
             // Refresh transactions to get the new one with receipt
@@ -1764,11 +2013,28 @@ const FinancialSystem: React.FC = () => {
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
         link.href = url;
-        link.setAttribute('download', 'fay-financials.csv');
+        link.setAttribute(
+            'download',
+            selectedOrphanId ? `faye-financials-orphan-${selectedOrphanId}.csv` : 'fay-financials.csv'
+        );
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };
+
+    const visibleOrphans = useMemo(() => {
+        if (selectedOrphanId == null) {
+            return orphansData;
+        }
+
+        return orphansData.filter((orphan) => orphan.id === selectedOrphanId);
+    }, [orphansData, selectedOrphanId]);
+
+    const transactionsEmptyStateMessage = selectedOrphanId
+        ? 'لا توجد حركات مالية مرتبطة بهذا اليتيم ضمن الفلاتر الحالية'
+        : transactions.length === 0
+            ? 'لا توجد حركات مالية'
+            : 'لا توجد نتائج تطابق الفلاتر المحددة';
 
     const toggleOrphanExpansion = (orphanId: string) => {
         setExpandedOrphans(prev => {
@@ -1782,9 +2048,47 @@ const FinancialSystem: React.FC = () => {
         });
     };
 
-    const updatePaymentStatus = async (orphanId: string, month: number, year: number, newStatus: PaymentStatus, newAmount?: number) => {
+    const openPaymentEditor = (orphan: Orphan, month: number, year: number, paymentForMonth?: Payment) => {
+        const currentStatus = paymentForMonth?.status;
+        const selectedStatus = currentStatus === PaymentStatus.Overdue
+            ? PaymentStatus.Overdue
+            : currentStatus === PaymentStatus.Processing
+                ? PaymentStatus.Processing
+                : PaymentStatus.Due;
+
+        setEditingPayment({
+            orphanId: orphan.uuid || orphan.id.toString(),
+            orphanName: orphan.name,
+            month,
+            year,
+            amount: paymentForMonth?.amount || 50.00,
+            selectedStatus,
+            currentStatus,
+            hasExistingPayment: !!paymentForMonth,
+            isPaidLocked: currentStatus === PaymentStatus.Paid,
+        });
+    };
+
+    const handleSaveEditingPayment = async () => {
+        if (!editingPayment) return;
+
+        await updatePaymentStatus(
+            editingPayment.orphanId,
+            editingPayment.month,
+            editingPayment.year,
+            editingPayment.selectedStatus,
+            editingPayment.amount
+        );
+    };
+
+    const updatePaymentStatus = async (orphanId: string, month: number, year: number, newStatus: ManualPaymentStatus, newAmount?: number) => {
         if (!userProfile || !canViewFinancials()) {
             alert('ليس لديك صلاحية لتعديل حالة الدفعات');
+            return;
+        }
+
+        if (!MANUAL_PAYMENT_STATUSES.includes(newStatus)) {
+            alert('لا يمكن تعيين الحالة إلى مدفوع من هنا. استخدم إضافة حركة مالية.');
             return;
         }
 
@@ -1804,17 +2108,38 @@ const FinancialSystem: React.FC = () => {
                 p.dueDate.getMonth() === month
             );
 
+            if (existingPayment?.status === PaymentStatus.Paid) {
+                alert('هذا الشهر مدفوع بالفعل. احذف الحركة المالية ثم أضف الحركة الصحيحة إذا أردت التعديل.');
+                return;
+            }
+
+            const canUpdateAmount = newStatus === PaymentStatus.Due || newStatus === PaymentStatus.Overdue;
             const amountToUse = newAmount !== undefined ? newAmount : (existingPayment?.amount || 50.00);
+            const { data: sponsorLink, error: sponsorLinkError } = await supabase
+                .from('sponsor_orphans')
+                .select('sponsor_id')
+                .eq('orphan_id', orphan.uuid)
+                .limit(1)
+                .maybeSingle();
+
+            if (sponsorLinkError) {
+                throw sponsorLinkError;
+            }
 
             if (existingPayment) {
                 // Update existing payment
                 const updateData: any = {
                     status: newStatus,
-                    paid_date: newStatus === PaymentStatus.Paid ? new Date().toISOString().split('T')[0] : null,
+                    paid_date: null,
+                    sponsor_id: existingPayment.sponsorId ?? sponsorLink?.sponsor_id ?? null,
+                    paid_transaction_id: null,
+                    created_by_transaction_id: null,
+                    previous_status_before_paid: null,
+                    previous_amount_before_paid: null,
                 };
                 
-                // Only update amount if it was provided
-                if (newAmount !== undefined) {
+                // Only due/overdue amounts are manually editable.
+                if (canUpdateAmount && newAmount !== undefined) {
                     updateData.amount = amountToUse;
                 }
 
@@ -1832,8 +2157,11 @@ const FinancialSystem: React.FC = () => {
                         orphan_id: orphan.uuid,
                         amount: amountToUse,
                         due_date: dueDateStr,
+                        sponsor_id: sponsorLink?.sponsor_id ?? null,
                         status: newStatus,
-                        paid_date: newStatus === PaymentStatus.Paid ? new Date().toISOString().split('T')[0] : null,
+                        paid_date: null,
+                        month: month + 1,
+                        year,
                     });
 
                 if (error) throw error;
@@ -1882,6 +2210,38 @@ const FinancialSystem: React.FC = () => {
                 <h1 className="text-2xl font-bold md:text-3xl">النظام المالي</h1>
                 <p className="text-sm text-text-secondary md:text-base">عرض وإدارة جميع الحركات المالية.</p>
             </div>
+
+            {selectedOrphanId && (
+                <div className={`rounded-2xl border p-4 shadow-sm ${selectedOrphan ? 'border-primary/20 bg-primary-light/40' : 'border-yellow-200 bg-yellow-50'}`}>
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div className="space-y-1">
+                            <p className="text-xs font-semibold text-text-secondary">عرض مرتبط من ملف اليتيم</p>
+                            {selectedOrphan ? (
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <span className="text-base font-bold text-gray-900 md:text-lg">{selectedOrphan.name}</span>
+                                    <Link
+                                        to={`/orphan/${selectedOrphan.id}`}
+                                        className="text-sm font-semibold text-primary hover:text-primary-hover"
+                                    >
+                                        فتح ملف اليتيم
+                                    </Link>
+                                </div>
+                            ) : (
+                                <p className="text-sm font-semibold text-yellow-800">
+                                    تعذر العثور على اليتيم المطلوب. يمكنك إزالة الربط والمتابعة.
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => updateOrphanFilter(null)}
+                            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                        >
+                            إزالة الربط
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Sticky Navigation Bar */}
             <div className="sticky top-16 z-30 -mx-4 border-b border-gray-200 bg-white px-4 shadow-sm md:mx-0 md:px-0">
@@ -1975,7 +2335,23 @@ const FinancialSystem: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="mb-4 grid grid-cols-1 gap-3 border-b pb-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr),minmax(0,1fr),180px,180px,auto]">
+                <div className="mb-4 grid grid-cols-1 gap-3 border-b pb-4 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr),minmax(0,1fr),minmax(0,1fr),180px,180px,auto]">
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="orphan-filter" className="text-sm font-medium text-gray-700">اليتيم</label>
+                        <select
+                            id="orphan-filter"
+                            value={selectedOrphanId?.toString() ?? ''}
+                            onChange={(e) => updateOrphanFilter(e.target.value ? parseInt(e.target.value, 10) : null)}
+                            className="min-h-[48px] rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary"
+                        >
+                            <option value="">كل الأيتام</option>
+                            {orphansData.map((orphan) => (
+                                <option key={orphan.id} value={orphan.id}>
+                                    {orphan.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                     <div className="flex flex-col gap-2">
                         <label htmlFor="from-date" className="text-sm font-medium text-gray-700">من</label>
                         <input 
@@ -2036,7 +2412,7 @@ const FinancialSystem: React.FC = () => {
                         </div>
                     ) : filteredTransactions.length === 0 ? (
                         <div className="rounded-2xl border border-dashed border-gray-200 bg-white px-4 py-10 text-center text-sm text-text-secondary">
-                            {transactions.length === 0 ? 'لا توجد حركات مالية' : 'لا توجد نتائج تطابق الفلاتر المحددة'}
+                            {transactionsEmptyStateMessage}
                         </div>
                     ) : (
                         paginatedTransactions.map(tx => {
@@ -2163,7 +2539,7 @@ const FinancialSystem: React.FC = () => {
                             ) : filteredTransactions.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="p-8 text-center text-text-secondary">
-                                        {transactions.length === 0 ? 'لا توجد حركات مالية' : 'لا توجد نتائج تطابق الفلاتر المحددة'}
+                                        {transactionsEmptyStateMessage}
                                     </td>
                                 </tr>
                             ) : (
@@ -2366,14 +2742,20 @@ const FinancialSystem: React.FC = () => {
             {/* Orphan Payments Section */}
             <div ref={orphanPaymentsSectionRef} className="rounded-2xl bg-bg-card p-4 shadow-sm md:p-6">
                 <h2 className="mb-4 text-lg font-bold md:text-xl">دفعات الأيتام</h2>
+                <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                    <p className="font-semibold">قاعدة العمل على الدفعات الشهرية</p>
+                    <p className="mt-1">
+                        من هنا يمكن تعديل الحالات التشغيلية فقط: مستحق، متأخر، قيد المعالجة. حالة مدفوع تُسجل فقط من نافذة إضافة حركة مالية، وأي تعديل هنا ينعكس عند الكافل وقد يرسل له إشعاراً.
+                    </p>
+                </div>
                 
-                {orphansData.length === 0 ? (
+                {visibleOrphans.length === 0 ? (
                     <div className="py-8 text-center text-text-secondary">
-                        لا توجد أيتام مسجلة
+                        {selectedOrphanId ? 'لا يوجد يتيم مطابق لهذا الربط' : 'لا توجد أيتام مسجلة'}
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {orphansData.map(orphan => {
+                        {visibleOrphans.map(orphan => {
                             const isExpanded = expandedOrphans.has(orphan.uuid || orphan.id.toString());
                             const orphanPayments = orphan.payments;
                             const paidCount = orphanPayments.filter(p => p.status === PaymentStatus.Paid).length;
@@ -2455,207 +2837,129 @@ const FinancialSystem: React.FC = () => {
                                     {/* 12-Month Calendar View */}
                                     {isExpanded && (
                                         <div className="border-t border-gray-200 bg-gray-50 p-3 md:p-4">
-                                            {orphanPayments.length === 0 ? (
-                                                <div className="p-3 text-center text-sm text-text-secondary">
-                                                    لا توجد دفعات مسجلة
-                                                </div>
-                                            ) : (
-                                                <div className="max-w-4xl mx-auto">
-                                                    <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                                        <h4 className="text-base font-bold text-gray-800 md:text-lg">
-                                                            تقويم الدفعات
-                                                        </h4>
-                                                        <select
-                                                            value={selectedYear}
-                                                            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                                            className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-primary md:w-auto md:min-w-[180px]"
-                                                        >
-                                                            {Array.from({ length: 10 }, (_, i) => {
-                                                                const year = 2020 + i;
-                                                                return (
-                                                                    <option key={year} value={year}>
-                                                                        {year}
-                                                                    </option>
-                                                                );
-                                                            })}
-                                                        </select>
+                                            <div className="max-w-4xl mx-auto">
+                                                {orphanPayments.length === 0 && (
+                                                    <div className="mb-4 rounded-2xl border border-dashed border-gray-300 bg-white p-4 text-sm text-gray-600">
+                                                        لا توجد دفعات مسجلة بعد لهذا اليتيم. ابدأ من أحد الأشهر أدناه لتحديد الحالة الأولية قبل إضافة أي حركة مالية.
                                                     </div>
-                                                    <div className="-mx-1 overflow-x-auto px-1 pb-2 md:mx-0 md:px-0 md:pb-0">
-                                                    <div className="flex gap-3 md:grid md:grid-cols-4">
-                                                        {Array.from({ length: 12 }, (_, i) => {
-                                                            const month = new Date(selectedYear, i, 1);
-                                                            const paymentForMonth = orphanPayments.find(p => 
-                                                                p.dueDate.getFullYear() === month.getFullYear() &&
-                                                                p.dueDate.getMonth() === month.getMonth()
+                                                )}
+                                                <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                                    <h4 className="text-base font-bold text-gray-800 md:text-lg">
+                                                        تقويم الدفعات
+                                                    </h4>
+                                                    <select
+                                                        value={selectedYear}
+                                                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                                        className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-primary md:w-auto md:min-w-[180px]"
+                                                    >
+                                                        {Array.from({ length: 10 }, (_, i) => {
+                                                            const year = 2020 + i;
+                                                            return (
+                                                                <option key={year} value={year}>
+                                                                    {year}
+                                                                </option>
                                                             );
+                                                        })}
+                                                    </select>
+                                                </div>
+                                                <div className="-mx-1 overflow-x-auto px-1 pb-2 md:mx-0 md:px-0 md:pb-0">
+                                                <div className="flex gap-3 md:grid md:grid-cols-4">
+                                                    {Array.from({ length: 12 }, (_, i) => {
+                                                        const month = new Date(selectedYear, i, 1);
+                                                        const paymentForMonth = orphanPayments.find(p => 
+                                                            p.dueDate.getFullYear() === month.getFullYear() &&
+                                                            p.dueDate.getMonth() === month.getMonth()
+                                                        );
 
-                                                            const isEditing = editingPayment?.orphanId === orphan.uuid && 
-                                                                              editingPayment?.month === month.getMonth() &&
-                                                                              editingPayment?.year === selectedYear;
+                                                        const getStatusForMonth = () => {
+                                                            if (!paymentForMonth) {
+                                                                return { 
+                                                                    status: 'فارغ', 
+                                                                    textColor: 'text-gray-500',
+                                                                    bgColor: 'bg-white',
+                                                                    amount: null
+                                                                };
+                                                            }
 
-                                                            const getStatusForMonth = () => {
-                                                                if (!paymentForMonth) {
+                                                            switch (paymentForMonth.status) {
+                                                                case PaymentStatus.Paid:
                                                                     return { 
-                                                                        status: 'لا يوجد', 
+                                                                        status: 'مدفوع', 
+                                                                        textColor: 'text-green-700',
+                                                                        bgColor: 'bg-green-100',
+                                                                        amount: paymentForMonth.amount
+                                                                    };
+                                                                case PaymentStatus.Due:
+                                                                    return { 
+                                                                        status: 'مستحق', 
+                                                                        textColor: 'text-yellow-700',
+                                                                        bgColor: 'bg-yellow-100',
+                                                                        amount: paymentForMonth.amount
+                                                                    };
+                                                                case PaymentStatus.Overdue:
+                                                                    return { 
+                                                                        status: 'متأخر', 
+                                                                        textColor: 'text-red-700',
+                                                                        bgColor: 'bg-red-100',
+                                                                        amount: paymentForMonth.amount
+                                                                    };
+                                                                case PaymentStatus.Processing:
+                                                                    return { 
+                                                                        status: 'قيد المعالجة', 
+                                                                        textColor: 'text-blue-700',
+                                                                        bgColor: 'bg-blue-100',
+                                                                        amount: paymentForMonth.amount
+                                                                    };
+                                                                default:
+                                                                    return { 
+                                                                        status: 'غير معروف', 
                                                                         textColor: 'text-gray-500',
                                                                         bgColor: 'bg-white',
                                                                         amount: null
                                                                     };
-                                                                }
+                                                            }
+                                                        };
 
-                                                                switch (paymentForMonth.status) {
-                                                                    case PaymentStatus.Paid:
-                                                                        return { 
-                                                                            status: 'مدفوع', 
-                                                                            textColor: 'text-green-700',
-                                                                            bgColor: 'bg-green-100',
-                                                                            amount: paymentForMonth.amount
-                                                                        };
-                                                                    case PaymentStatus.Due:
-                                                                        return { 
-                                                                            status: 'مستحق', 
-                                                                            textColor: 'text-yellow-700',
-                                                                            bgColor: 'bg-yellow-100',
-                                                                            amount: paymentForMonth.amount
-                                                                        };
-                                                                    case PaymentStatus.Overdue:
-                                                                        return { 
-                                                                            status: 'متأخر', 
-                                                                            textColor: 'text-red-700',
-                                                                            bgColor: 'bg-red-100',
-                                                                            amount: paymentForMonth.amount
-                                                                        };
-                                                                    case PaymentStatus.Processing:
-                                                                        return { 
-                                                                            status: 'قيد المعالجة', 
-                                                                            textColor: 'text-blue-700',
-                                                                            bgColor: 'bg-blue-100',
-                                                                            amount: paymentForMonth.amount
-                                                                        };
-                                                                    default:
-                                                                        return { 
-                                                                            status: 'غير معروف', 
-                                                                            textColor: 'text-gray-500',
-                                                                            bgColor: 'bg-white',
-                                                                            amount: null
-                                                                        };
-                                                                }
-                                                            };
+                                                        const { status, textColor, bgColor, amount } = getStatusForMonth();
 
-                                                            const { status, textColor, bgColor, amount } = getStatusForMonth();
-
-                                                            return (
-                                                                <div 
-                                                                    key={month.getMonth()} 
-                                                                    className={`relative min-w-[140px] rounded-2xl p-3 text-center shadow-sm transition-all duration-200 md:min-w-0 ${
-                                                                        bgColor
-                                                                    } ${
-                                                                        canViewFinancials() ? 'cursor-pointer hover:shadow-lg hover:scale-105' : ''
-                                                                    }`}
-                                                                    onClick={() => {
-                                                                        if (canViewFinancials() && !isEditing) {
-                                                                            setEditingPayment({
-                                                                                orphanId: orphan.uuid || orphan.id.toString(),
-                                                                                month: month.getMonth(),
-                                                                                year: selectedYear,
-                                                                                amount: paymentForMonth?.amount || 50.00,
-                                                                                status: paymentForMonth?.status || PaymentStatus.Due
-                                                                            });
-                                                                        }
-                                                                    }}
-                                                                >
-                                                                    {isEditing ? (
-                                                                        <div className="space-y-2">
-                                                                            <p className="mb-1 text-sm font-semibold text-gray-800">
-                                                                                {month.toLocaleDateString('ar-EG', { month: 'long' })}
-                                                                            </p>
-                                                                            <input
-                                                                                type="number"
-                                                                                step="0.01"
-                                                                                min="0"
-                                                                                className="min-h-[40px] w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-center text-xs"
-                                                                                value={editingPayment.amount}
-                                                                                onChange={(e) => {
-                                                                                    const newAmount = parseFloat(e.target.value) || 0;
-                                                                                    setEditingPayment({
-                                                                                        ...editingPayment,
-                                                                                        amount: newAmount
-                                                                                    });
-                                                                                }}
-                                                                                onClick={(e) => e.stopPropagation()}
-                                                                                placeholder="المبلغ"
-                                                                                autoFocus
-                                                                            />
-                                                                            <select
-                                                                                className="min-h-[40px] w-full rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs"
-                                                                                value={editingPayment.status || paymentForMonth?.status || PaymentStatus.Due}
-                                                                                onChange={(e) => {
-                                                                                    const newStatus = e.target.value as PaymentStatus;
-                                                                                    setEditingPayment({
-                                                                                        ...editingPayment,
-                                                                                        status: newStatus
-                                                                                    });
-                                                                                }}
-                                                                                onClick={(e) => e.stopPropagation()}
-                                                                            >
-                                                                                <option value={PaymentStatus.Paid}>مدفوع</option>
-                                                                                <option value={PaymentStatus.Due}>مستحق</option>
-                                                                                <option value={PaymentStatus.Overdue}>متأخر</option>
-                                                                                <option value={PaymentStatus.Processing}>قيد المعالجة</option>
-                                                                            </select>
-                                                                            <div className="grid grid-cols-2 gap-1">
-                                                                                <button
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        const statusToSave = editingPayment.status || paymentForMonth?.status || PaymentStatus.Due;
-                                                                                        updatePaymentStatus(
-                                                                                            orphan.uuid || orphan.id.toString(),
-                                                                                            month.getMonth(),
-                                                                                            selectedYear,
-                                                                                            statusToSave,
-                                                                                            editingPayment.amount
-                                                                                        );
-                                                                                    }}
-                                                                                    className="min-h-[40px] rounded-lg bg-primary px-2 py-1 text-xs text-white hover:bg-primary-hover"
-                                                                                >
-                                                                                    حفظ
-                                                                                </button>
-                                                                                <button
-                                                                                    onClick={(e) => {
-                                                                                        e.stopPropagation();
-                                                                                        setEditingPayment(null);
-                                                                                    }}
-                                                                                    className="min-h-[40px] rounded-lg bg-gray-200 px-2 py-1 text-xs text-gray-700 hover:bg-gray-300"
-                                                                                >
-                                                                                    إلغاء
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <>
-                                                                            <p className="font-semibold text-gray-800 mb-1 text-sm">
-                                                                                {month.toLocaleDateString('ar-EG', { month: 'long' })}
-                                                                            </p>
-                                                                            <p className={`text-sm font-medium ${textColor} mb-1`}>
-                                                                                {status}
-                                                                            </p>
-                                                                            {amount !== null && (
-                                                                                <p className={`text-xs font-semibold ${textColor}`}>
-                                                                                    ${amount.toLocaleString()}
-                                                                                </p>
-                                                                            )}
-                                                                            {canViewFinancials() && (
-                                                                                <p className="text-xs text-gray-400 mt-1">انقر للتعديل</p>
-                                                                            )}
-                                                                        </>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                    </div>
+                                                        return (
+                                                            <div 
+                                                                key={month.getMonth()} 
+                                                                className={`relative min-w-[140px] rounded-2xl border p-3 text-center shadow-sm transition-all duration-200 md:min-w-0 ${
+                                                                    paymentForMonth ? 'border-transparent' : 'border-dashed border-gray-300'
+                                                                } ${
+                                                                    bgColor
+                                                                } ${
+                                                                    canViewFinancials() ? 'cursor-pointer hover:shadow-lg hover:scale-105' : ''
+                                                                }`}
+                                                                onClick={() => {
+                                                                    if (canViewFinancials()) {
+                                                                        openPaymentEditor(orphan, month.getMonth(), selectedYear, paymentForMonth);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <p className="font-semibold text-gray-800 mb-1 text-sm">
+                                                                    {month.toLocaleDateString('ar-EG', { month: 'long' })}
+                                                                </p>
+                                                                <p className={`text-sm font-medium ${textColor} mb-1`}>
+                                                                    {status}
+                                                                </p>
+                                                                {amount !== null && (
+                                                                    <p className={`text-xs font-semibold ${textColor}`}>
+                                                                        ${amount.toLocaleString()}
+                                                                    </p>
+                                                                )}
+                                                                {canViewFinancials() && (
+                                                                    <p className="text-xs text-gray-400 mt-1">
+                                                                        {paymentForMonth?.status === PaymentStatus.Paid ? 'انقر لعرض التفاصيل' : paymentForMonth ? 'انقر للتعديل' : 'انقر للبدء'}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
-                                            )}
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -2667,7 +2971,7 @@ const FinancialSystem: React.FC = () => {
         </div>
         <div className="hidden sm:hidden fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] items-center justify-around bg-white/80 p-2 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-sm z-30">
             <button onClick={() => navigate(-1)} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 <span className="text-xs">رجوع</span>
             </button>
             <button onClick={() => fromDateRef.current?.focus()} className="flex flex-col items-center text-gray-600 hover:text-primary transition-colors">
@@ -2683,6 +2987,12 @@ const FinancialSystem: React.FC = () => {
                 <span className="text-xs">إضافة</span>
             </button>
         </div>
+        <PaymentMonthEditorModal
+            editingPayment={editingPayment}
+            onClose={() => setEditingPayment(null)}
+            onChange={setEditingPayment}
+            onSave={handleSaveEditingPayment}
+        />
         <AddTransactionModal
             isOpen={isAddModalOpen}
             onClose={() => setIsAddModalOpen(false)}

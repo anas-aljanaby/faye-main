@@ -1,9 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { uploadAvatar, AvatarType } from '../utils/avatarUpload';
 import { supabase } from '../lib/supabase';
+import Avatar from './Avatar';
 
 interface AvatarUploadProps {
-  currentAvatarUrl: string;
+  currentAvatarUrl?: string | null;
+  name: string;
   userId: string; // UUID for database operations
   type: AvatarType;
   onUploadComplete: (newUrl: string) => void;
@@ -13,6 +15,7 @@ interface AvatarUploadProps {
 
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   currentAvatarUrl,
+  name,
   userId,
   type,
   onUploadComplete,
@@ -24,10 +27,12 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const sizeClasses = {
-    sm: 'w-16 h-16',
-    md: 'w-24 h-24',
-    lg: 'w-32 h-32',
+    sm: '!h-16 !w-16 !text-lg',
+    md: '!h-24 !w-24 !text-2xl',
+    lg: '!h-32 !w-32 !text-3xl',
   };
+
+  const isInteractive = !disabled && !uploading;
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -74,16 +79,26 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   return (
     <div className="relative inline-block">
       <div className="relative group">
-        <img
-          src={currentAvatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent('User')}&background=random`}
-          alt="Avatar"
-          className={`${sizeClasses[size]} rounded-full object-cover ring-4 ring-primary-light cursor-pointer hover:ring-primary transition-all`}
-          onClick={() => !disabled && !uploading && fileInputRef.current?.click()}
-          onError={(e) => {
-            // Fallback to placeholder if image fails to load
-            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent('User')}&background=random`;
+        <div
+          role={isInteractive ? 'button' : undefined}
+          tabIndex={isInteractive ? 0 : -1}
+          onClick={() => isInteractive && fileInputRef.current?.click()}
+          onKeyDown={(e) => {
+            if (isInteractive && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
           }}
-        />
+          className={isInteractive ? 'cursor-pointer' : ''}
+          aria-label={isInteractive ? `تغيير صورة ${name}` : undefined}
+        >
+          <Avatar
+            src={currentAvatarUrl}
+            name={name}
+            size="xl"
+            className={`${sizeClasses[size]} ring-4 ring-primary-light transition-all ${isInteractive ? 'cursor-pointer hover:ring-primary' : ''}`}
+          />
+        </div>
         {!disabled && !uploading && (
           <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-full flex items-center justify-center transition-all cursor-pointer">
             <svg
@@ -148,4 +163,3 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     </div>
   );
 };
-

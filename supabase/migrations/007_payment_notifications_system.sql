@@ -32,6 +32,23 @@ ALTER TABLE payments
     ALTER COLUMN month SET NOT NULL,
     ALTER COLUMN year SET NOT NULL;
 
+-- Remove legacy duplicate monthly rows so the unique index can be created safely.
+-- Keep the most recent record per (orphan_id, sponsor_id, month, year) group.
+WITH ranked_payments AS (
+    SELECT
+        id,
+        ROW_NUMBER() OVER (
+            PARTITION BY orphan_id, sponsor_id, month, year
+            ORDER BY paid_date DESC NULLS LAST, due_date DESC, created_at DESC, id DESC
+        ) AS rn
+    FROM payments
+    WHERE sponsor_id IS NOT NULL
+)
+DELETE FROM payments p
+USING ranked_payments rp
+WHERE p.id = rp.id
+  AND rp.rn > 1;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_unique_monthly
     ON payments(orphan_id, sponsor_id, month, year)
     WHERE sponsor_id IS NOT NULL;
@@ -499,13 +516,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DO $$
+DO $do$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'generate_monthly_payments') THEN
         PERFORM cron.schedule(
             'generate_monthly_payments',
             '0 0 1 * *',
-            $$SELECT generate_monthly_payments();$$
+            'SELECT generate_monthly_payments();'
         );
     END IF;
 
@@ -513,7 +530,7 @@ BEGIN
         PERFORM cron.schedule(
             'mark_overdue_payments',
             '0 8 * * *',
-            $$SELECT mark_overdue_payments();$$
+            'SELECT mark_overdue_payments();'
         );
     END IF;
 
@@ -521,8 +538,8 @@ BEGIN
         PERFORM cron.schedule(
             'send_payment_reminders',
             '0 9 * * *',
-            $$SELECT send_payment_reminders();$$
+            'SELECT send_payment_reminders();'
         );
     END IF;
 END
-$$;
+$do$;
