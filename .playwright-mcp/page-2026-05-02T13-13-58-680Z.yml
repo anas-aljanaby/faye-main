@@ -1,0 +1,200 @@
+- generic [ref=e54]:
+  - banner [ref=e55]:
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - link "العودة للصفحة الرئيسية" [ref=e58] [cursor=pointer]:
+          - /url: "#/"
+          - img "OTED logo" [ref=e60]
+          - generic [ref=e62]: منصة يتيم
+        - button "الإشعارات" [ref=e65] [cursor=pointer]:
+          - img [ref=e66]
+      - button "قائمة المستخدم" [ref=e71] [cursor=pointer]:
+        - generic "Sys Admin" [ref=e72]:
+          - img [ref=e73]
+  - main [ref=e78]:
+    - generic [ref=e80]:
+      - generic [ref=e84]:
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - paragraph [ref=e87]: مساء الخير 👋
+            - heading "Sys Admin" [level=1] [ref=e88]
+            - paragraph [ref=e89]: لوحة التحكم الرئيسية - نظرة شاملة على أنشطة المنظمة
+          - generic [ref=e90]:
+            - link "عرض الأيتام" [ref=e91] [cursor=pointer]:
+              - /url: "#/orphans"
+              - img [ref=e92]
+              - text: عرض الأيتام
+            - link "الرسائل" [ref=e97] [cursor=pointer]:
+              - /url: "#/messages"
+              - img [ref=e98]
+              - text: الرسائل
+        - generic [ref=e100]:
+          - generic [ref=e102]:
+            - img [ref=e104]
+            - paragraph [ref=e111]: يتيم
+          - generic [ref=e113]:
+            - img [ref=e115]
+            - paragraph [ref=e120]: كافل
+          - generic [ref=e122]:
+            - img [ref=e124]
+            - generic [ref=e127]:
+              - paragraph [ref=e129]: دفعة مستحقة
+              - paragraph [ref=e130]: ($1,000)
+          - generic [ref=e132]:
+            - img [ref=e134]
+            - generic [ref=e136]:
+              - paragraph [ref=e138]: دفعة متأخرة
+              - paragraph [ref=e139]: ($0)
+        - paragraph [ref=e140]: "دفعات تم استلامها خلال آخر 30 يوماً: 0"
+      - generic [ref=e141]:
+        - generic [ref=e143]:
+          - heading "نظرة سريعة على المؤشرات" [level=2] [ref=e144]
+          - paragraph [ref=e145]: ملخص حيّ يعتمد على بيانات النظام الحالية.
+        - generic [ref=e146]:
+          - generic [ref=e148]:
+            - generic [ref=e149]:
+              - generic [ref=e150]:
+                - paragraph [ref=e151]: إجمالي الأيتام
+                - heading "8" [level=3] [ref=e152]
+              - img [ref=e154]
+            - paragraph [ref=e159]: عدد السجلات النشطة في النظام حالياً
+          - generic [ref=e161]:
+            - generic [ref=e162]:
+              - generic [ref=e163]:
+                - paragraph [ref=e164]: إجمالي الكفلاء
+                - heading "0" [level=3] [ref=e165]
+              - img [ref=e167]
+            - paragraph [ref=e170]: عدد الكفلاء المرتبطين بالمنظمة
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - generic [ref=e174]:
+                - paragraph [ref=e175]: إجمالي التبرعات
+                - heading "0" [level=3] [ref=e176]
+              - img [ref=e178]
+            - paragraph [ref=e180]: قيمة الإيرادات المكتملة والمسجلة فعلياً
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e184]:
+              - heading "رؤى ذكية" [level=3] [ref=e185]:
+                - img [ref=e186]
+                - text: رؤى ذكية
+              - paragraph [ref=e188]: اضغط على الزر للحصول على تحليل فوري للأداء العام للجمعية.
+            - button "تحديث التحليل" [ref=e189] [cursor=pointer]
+          - generic [ref=e190]:
+            - heading "آخر الأنشطة" [level=3] [ref=e191]
+            - paragraph [ref=e193]: لا توجد أنشطة حديثة لعرضها الآن.
+      - generic [ref=e195]:
+        - generic [ref=e196]:
+          - generic [ref=e197]:
+            - img [ref=e199]
+            - heading "المناسبات القادمة" [level=3] [ref=e204]
+          - generic [ref=e206]:
+            - paragraph [ref=e207]: لا توجد مناسبات قادمة.
+            - button "عرض جميع المناسبات" [ref=e208] [cursor=pointer]
+        - generic [ref=e209]:
+          - generic [ref=e210]:
+            - img [ref=e212]
+            - heading "الموافقات المالية المعلقة" [level=3] [ref=e215]
+          - paragraph [ref=e217]: لا توجد موافقات معلقة.
+        - generic [ref=e218]:
+          - generic [ref=e219]:
+            - img [ref=e221]
+            - heading "أحدث الإنجازات" [level=3] [ref=e227]
+          - paragraph [ref=e229]: لا توجد إنجازات حديثة.
+      - generic [ref=e230]:
+        - generic [ref=e231]:
+          - heading "الأيتام" [level=2] [ref=e232]
+          - link "عرض الكل (10)" [ref=e233] [cursor=pointer]:
+            - /url: "#/orphans"
+            - text: عرض الكل (10)
+            - img [ref=e234]
+        - generic [ref=e236]:
+          - link "صمیم الحق محمد اسماعيل 56 سنوات" [ref=e237] [cursor=pointer]:
+            - /url: "#/orphan/716376"
+            - generic "صمیم الحق محمد اسماعيل" [ref=e238]:
+              - img [ref=e239]
+            - heading "صمیم الحق محمد اسماعيل" [level=3] [ref=e243]
+            - paragraph [ref=e244]: 56 سنوات
+          - link "أحمد أمين عبدالغفور 56 سنوات" [ref=e245] [cursor=pointer]:
+            - /url: "#/orphan/680155"
+            - generic "أحمد أمين عبدالغفور" [ref=e246]:
+              - img [ref=e247]
+            - heading "أحمد أمين عبدالغفور" [level=3] [ref=e251]
+            - paragraph [ref=e252]: 56 سنوات
+          - link "محمد فضل الرحمن عبدالوهاب 56 سنوات" [ref=e253] [cursor=pointer]:
+            - /url: "#/orphan/486123"
+            - generic "محمد فضل الرحمن عبدالوهاب" [ref=e254]:
+              - img [ref=e255]
+            - heading "محمد فضل الرحمن عبدالوهاب" [level=3] [ref=e259]
+            - paragraph [ref=e260]: 56 سنوات
+          - link "ايمن قاري محمد 56 سنوات" [ref=e261] [cursor=pointer]:
+            - /url: "#/orphan/814120"
+            - generic "ايمن قاري محمد" [ref=e262]:
+              - img [ref=e263]
+            - heading "ايمن قاري محمد" [level=3] [ref=e267]
+            - paragraph [ref=e268]: 56 سنوات
+      - heading "الكفلاء" [level=2] [ref=e271]
+      - generic [ref=e272]:
+        - heading "فريق العمل" [level=2] [ref=e274]
+        - generic [ref=e275]:
+          - link "نور هاشم عضو فريق" [ref=e276] [cursor=pointer]:
+            - /url: "#/team/982987"
+            - generic "نور هاشم" [ref=e277]:
+              - img [ref=e278]
+            - generic [ref=e282]:
+              - heading "نور هاشم" [level=3] [ref=e283]
+              - paragraph [ref=e284]: عضو فريق
+          - link "عبدالله الحلبي عضو فريق" [ref=e285] [cursor=pointer]:
+            - /url: "#/team/546419"
+            - generic "عبدالله الحلبي" [ref=e286]:
+              - img [ref=e287]
+            - generic [ref=e291]:
+              - heading "عبدالله الحلبي" [level=3] [ref=e292]
+              - paragraph [ref=e293]: عضو فريق
+  - navigation "التنقل السفلي" [ref=e295]:
+    - link "لوحة التحكم" [ref=e296] [cursor=pointer]:
+      - /url: "#/"
+      - img [ref=e297]
+      - generic [ref=e300]: لوحة التحكم
+    - link "الأيتام" [ref=e301] [cursor=pointer]:
+      - /url: "#/orphans"
+      - img [ref=e302]
+      - generic [ref=e307]: الأيتام
+    - link "المراسلات" [ref=e308] [cursor=pointer]:
+      - /url: "#/messages"
+      - img [ref=e309]
+      - generic [ref=e311]: المراسلات
+    - link "النظام المالي" [ref=e312] [cursor=pointer]:
+      - /url: "#/financial-system"
+      - img [ref=e313]
+      - generic [ref=e316]: النظام المالي
+    - button "المزيد" [ref=e317] [cursor=pointer]:
+      - img [ref=e318]
+      - generic [ref=e322]: المزيد
+  - dialog "قائمة المزيد":
+    - generic:
+      - generic:
+        - generic:
+          - paragraph: روابط إضافية
+          - heading "المزيد" [level=2]
+        - button "إغلاق":
+          - img
+      - generic:
+        - link "الكفلاء":
+          - /url: "#/sponsors"
+          - img
+          - generic: الكفلاء
+          - img
+        - link "الموارد البشرية":
+          - /url: "#/human-resources"
+          - img
+          - generic: الموارد البشرية
+          - img
+        - link "سياسات يتيم":
+          - /url: "#/policies"
+          - img
+          - generic: سياسات يتيم
+          - img
+        - button "تسجيل الخروج":
+          - img
+          - generic: تسجيل الخروج

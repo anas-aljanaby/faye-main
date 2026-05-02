@@ -1,0 +1,182 @@
+- generic [ref=e24]:
+  - banner [ref=e25]:
+    - generic [ref=e26]:
+      - generic [ref=e27]:
+        - link "العودة للصفحة الرئيسية" [ref=e28] [cursor=pointer]:
+          - /url: "#/"
+          - img "OTED logo" [ref=e30]
+          - generic [ref=e32]: منصة يتيم
+        - button "الإشعارات" [ref=e35] [cursor=pointer]:
+          - img [ref=e36]
+      - button "قائمة المستخدم" [ref=e41] [cursor=pointer]:
+        - generic "Sys Admin" [ref=e42]:
+          - img [ref=e43]
+  - main [ref=e48]:
+    - generic [ref=e1196]:
+      - generic [ref=e1197]:
+        - generic [ref=e1199]:
+          - button "رجوع" [ref=e1200] [cursor=pointer]:
+            - img [ref=e1201]
+            - text: رجوع
+          - generic [ref=e1203]:
+            - button "طباعة" [ref=e1204] [cursor=pointer]:
+              - img [ref=e1205]
+            - button [ref=e1209] [cursor=pointer]:
+              - img [ref=e1210]
+        - generic [ref=e1212]:
+          - generic [ref=e1215]:
+            - button "تغيير صورة أحمد أمين عبدالغفور" [ref=e1216] [cursor=pointer]:
+              - generic "أحمد أمين عبدالغفور" [ref=e1217]:
+                - img [ref=e1218]
+            - img [ref=e1223] [cursor=pointer]
+          - generic [ref=e1227]:
+            - heading "أحمد أمين عبدالغفور" [level=1] [ref=e1228]
+            - paragraph [ref=e1229]: — • 56 سنوات
+      - generic [ref=e1230]:
+        - generic [ref=e1231]:
+          - generic [ref=e1232]: ملف اليتيم
+          - button "تعديل الملف" [ref=e1234] [cursor=pointer]
+        - generic [ref=e1235]:
+          - button "نظرة عامة" [ref=e1236] [cursor=pointer]:
+            - img [ref=e1237]
+            - text: نظرة عامة
+          - button "التعليم" [ref=e1243] [cursor=pointer]:
+            - img [ref=e1244]
+            - text: التعليم
+          - button "الجدول الزمني" [ref=e1246] [cursor=pointer]:
+            - img [ref=e1247]
+            - text: الجدول الزمني
+          - button "المعرض" [ref=e1249] [cursor=pointer]:
+            - img [ref=e1250]
+            - text: المعرض
+          - button "المالية" [ref=e1254] [cursor=pointer]:
+            - img [ref=e1255]
+            - text: المالية
+        - generic [ref=e1258]:
+          - generic [ref=e1259]:
+            - heading "البيانات الشخصية" [level=3] [ref=e1261]
+            - generic [ref=e1262]:
+              - generic [ref=e1264]:
+                - generic [ref=e1265]: الحالة الصحية
+                - paragraph [ref=e1266]: —
+              - generic [ref=e1267]:
+                - generic [ref=e1268]: تاريخ الميلاد
+                - paragraph [ref=e1269]: ١‏/١‏/١٩٧٠
+              - generic [ref=e1270]:
+                - generic [ref=e1271]: الجنس
+                - paragraph [ref=e1272]: ذكر
+              - generic [ref=e1273]:
+                - generic [ref=e1274]: الدولة
+                - paragraph [ref=e1275]: أفغانستان
+              - generic [ref=e1276]:
+                - generic [ref=e1277]: المحافظة
+                - paragraph [ref=e1278]: —
+              - generic [ref=e1280]:
+                - generic [ref=e1281]: القائم بالرعاية
+                - paragraph [ref=e1282]: —
+          - generic [ref=e1283]:
+            - heading "تفاصيل الكفالة" [level=3] [ref=e1284]
+            - generic [ref=e1285]:
+              - generic [ref=e1286]:
+                - img [ref=e1288]
+                - generic [ref=e1291]:
+                  - paragraph [ref=e1292]: الكافل
+                  - link "عبدالرحمن الصباغ" [ref=e1293] [cursor=pointer]:
+                    - /url: "#/sponsor/24250"
+              - generic [ref=e1294]:
+                - img [ref=e1296]
+                - generic [ref=e1298]:
+                  - paragraph [ref=e1299]: نوع الكفالة
+                  - paragraph [ref=e1300]: كفالة يتيم
+          - generic [ref=e1301]:
+            - heading "الحالة الاجتماعية والسكن" [level=3] [ref=e1302]
+            - generic [ref=e1303]:
+              - generic [ref=e1304]:
+                - generic [ref=e1305]: العائلة
+                - paragraph [ref=e1306]: —
+              - generic [ref=e1307]:
+                - generic [ref=e1308]: السكن
+                - paragraph [ref=e1309]: —
+            - generic [ref=e1310]:
+              - heading "أفراد الأسرة" [level=4] [ref=e1311]
+              - paragraph [ref=e1313]: لا يوجد أفراد مسجلون
+          - generic [ref=e1315]:
+            - generic [ref=e1316]:
+              - heading "الهوايات والاهتمامات" [level=4] [ref=e1317]:
+                - img [ref=e1318]
+                - text: الهوايات والاهتمامات
+              - generic [ref=e1321]: لا توجد بيانات
+            - generic [ref=e1322]:
+              - heading "الاحتياجات والأمنيات" [level=4] [ref=e1323]:
+                - img [ref=e1324]
+                - text: الاحتياجات والأمنيات
+              - list [ref=e1326]:
+                - listitem [ref=e1327]: لا توجد بيانات
+          - generic [ref=e1328]:
+            - heading "برامج يتيم" [level=3] [ref=e1329]
+            - generic [ref=e1330]:
+              - generic [ref=e1331]:
+                - heading "البرنامج التربوي" [level=4] [ref=e1332]
+                - generic [ref=e1333]:
+                  - generic [ref=e1334]: غير ملتحق
+                  - paragraph [ref=e1335]: —
+              - generic [ref=e1336]:
+                - heading "الدعم النفسي" [level=4] [ref=e1337]
+                - generic [ref=e1338]:
+                  - generic [ref=e1339]:
+                    - paragraph [ref=e1340]: للطفل (أحمد أمين عبدالغفور)
+                    - generic [ref=e1342]:
+                      - generic [ref=e1343]: غير ملتحق
+                      - paragraph [ref=e1344]: —
+                  - generic [ref=e1345]:
+                    - paragraph [ref=e1346]: للقائم بالرعاية ()
+                    - generic [ref=e1348]:
+                      - generic [ref=e1349]: غير ملتحق
+                      - paragraph [ref=e1350]: —
+  - navigation "التنقل السفلي" [ref=e358]:
+    - link "لوحة التحكم" [ref=e359] [cursor=pointer]:
+      - /url: "#/"
+      - img [ref=e360]
+      - generic [ref=e363]: لوحة التحكم
+    - link "الأيتام" [ref=e364] [cursor=pointer]:
+      - /url: "#/orphans"
+      - img [ref=e365]
+      - generic [ref=e370]: الأيتام
+    - link "المراسلات" [ref=e371] [cursor=pointer]:
+      - /url: "#/messages"
+      - img [ref=e372]
+      - generic [ref=e374]: المراسلات
+    - link "النظام المالي" [ref=e375] [cursor=pointer]:
+      - /url: "#/financial-system"
+      - img [ref=e376]
+      - generic [ref=e379]: النظام المالي
+    - button "المزيد" [ref=e380] [cursor=pointer]:
+      - img [ref=e381]
+      - generic [ref=e385]: المزيد
+  - dialog "قائمة المزيد":
+    - generic:
+      - generic:
+        - generic:
+          - paragraph: روابط إضافية
+          - heading "المزيد" [level=2]
+        - button "إغلاق":
+          - img
+      - generic:
+        - link "الكفلاء":
+          - /url: "#/sponsors"
+          - img
+          - generic: الكفلاء
+          - img
+        - link "الموارد البشرية":
+          - /url: "#/human-resources"
+          - img
+          - generic: الموارد البشرية
+          - img
+        - link "سياسات يتيم":
+          - /url: "#/policies"
+          - img
+          - generic: سياسات يتيم
+          - img
+        - button "تسجيل الخروج":
+          - img
+          - generic: تسجيل الخروج

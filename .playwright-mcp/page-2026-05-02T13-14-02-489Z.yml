@@ -1,0 +1,88 @@
+- generic [ref=e54]:
+  - banner [ref=e55]:
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - link "العودة للصفحة الرئيسية" [ref=e58] [cursor=pointer]:
+          - /url: "#/"
+          - img "OTED logo" [ref=e60]
+          - generic [ref=e62]: منصة يتيم
+        - button "الإشعارات" [ref=e65] [cursor=pointer]:
+          - img [ref=e66]
+      - button "قائمة المستخدم" [ref=e71] [cursor=pointer]:
+        - generic "Sys Admin" [ref=e72]:
+          - img [ref=e73]
+  - main [ref=e78]:
+    - generic [ref=e323]:
+      - generic [ref=e324]:
+        - generic [ref=e325]:
+          - generic [ref=e326]:
+            - heading "سجل الأيتام المركزي" [level=1] [ref=e327]
+            - paragraph [ref=e328]: عرض وإدارة بيانات الأيتام بتنسيق متقدم
+          - button "إجراءات الصفحة" [ref=e331] [cursor=pointer]:
+            - img [ref=e332]
+        - generic [ref=e337]:
+          - generic:
+            - img
+          - textbox "ابحث باسم اليتيم أو الموقع..." [ref=e338]
+      - generic [ref=e339]:
+        - generic [ref=e341]:
+          - generic [ref=e342]:
+            - generic [ref=e343]:
+              - button "عرض قائمة" [ref=e344] [cursor=pointer]:
+                - img [ref=e345]
+              - button "عرض شبكي" [ref=e346] [cursor=pointer]:
+                - img [ref=e347]
+            - button "الفرز والتصفية" [ref=e353] [cursor=pointer]:
+              - img [ref=e354]
+            - generic [ref=e355] [cursor=pointer]:
+              - checkbox "تحديد الكل" [disabled] [ref=e356]
+              - generic [ref=e357]: تحديد الكل
+          - generic [ref=e358]: تم العثور على 0 يتيم
+        - paragraph [ref=e361]: جاري تحميل بيانات الأيتام...
+  - navigation "التنقل السفلي" [ref=e295]:
+    - link "لوحة التحكم" [ref=e296] [cursor=pointer]:
+      - /url: "#/"
+      - img [ref=e297]
+      - generic [ref=e300]: لوحة التحكم
+    - link "الأيتام" [ref=e301] [cursor=pointer]:
+      - /url: "#/orphans"
+      - img [ref=e302]
+      - generic [ref=e307]: الأيتام
+    - link "المراسلات" [ref=e308] [cursor=pointer]:
+      - /url: "#/messages"
+      - img [ref=e309]
+      - generic [ref=e311]: المراسلات
+    - link "النظام المالي" [ref=e312] [cursor=pointer]:
+      - /url: "#/financial-system"
+      - img [ref=e313]
+      - generic [ref=e316]: النظام المالي
+    - button "المزيد" [ref=e317] [cursor=pointer]:
+      - img [ref=e318]
+      - generic [ref=e322]: المزيد
+  - dialog "قائمة المزيد":
+    - generic:
+      - generic:
+        - generic:
+          - paragraph: روابط إضافية
+          - heading "المزيد" [level=2]
+        - button "إغلاق":
+          - img
+      - generic:
+        - link "الكفلاء":
+          - /url: "#/sponsors"
+          - img
+          - generic: الكفلاء
+          - img
+        - link "الموارد البشرية":
+          - /url: "#/human-resources"
+          - img
+          - generic: الموارد البشرية
+          - img
+        - link "سياسات يتيم":
+          - /url: "#/policies"
+          - img
+          - generic: سياسات يتيم
+          - img
+        - button "تسجيل الخروج":
+          - img
+          - generic: تسجيل الخروج

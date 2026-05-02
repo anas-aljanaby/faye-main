@@ -11,6 +11,7 @@ interface AvatarUploadProps {
   onUploadComplete: (newUrl: string) => void;
   disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  showHint?: boolean;
 }
 
 export const AvatarUpload: React.FC<AvatarUploadProps> = ({
@@ -21,6 +22,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   onUploadComplete,
   disabled = false,
   size = 'lg',
+  showHint = true,
 }) => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const sizeClasses = {
     sm: '!h-16 !w-16 !text-lg',
     md: '!h-24 !w-24 !text-2xl',
-    lg: '!h-32 !w-32 !text-3xl',
+    lg: '!h-24 !w-24 !text-2xl md:!h-32 md:!w-32 md:!text-3xl',
   };
 
   const isInteractive = !disabled && !uploading;
@@ -155,7 +157,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       {error && (
         <div className="mt-2 text-sm text-red-600 text-center">{error}</div>
       )}
-      {!disabled && (
+      {!disabled && showHint && (
         <p className="mt-2 text-xs text-gray-500 text-center">
           انقر على الصورة لتغييرها
         </p>

@@ -1,0 +1,316 @@
+- generic [ref=e54]:
+  - banner [ref=e55]:
+    - generic [ref=e56]:
+      - generic [ref=e57]:
+        - link "العودة للصفحة الرئيسية" [ref=e58] [cursor=pointer]:
+          - /url: "#/"
+          - img "OTED logo" [ref=e60]
+          - generic [ref=e62]: منصة يتيم
+        - button "الإشعارات" [ref=e65] [cursor=pointer]:
+          - img [ref=e66]
+      - button "قائمة المستخدم" [ref=e71] [cursor=pointer]:
+        - generic "Sys Admin" [ref=e72]:
+          - img [ref=e73]
+  - main [ref=e78]:
+    - generic [ref=e79]:
+      - generic [ref=e323]:
+        - generic [ref=e324]:
+          - generic [ref=e325]:
+            - generic [ref=e326]:
+              - heading "سجل الأيتام المركزي" [level=1] [ref=e327]
+              - paragraph [ref=e328]: عرض وإدارة بيانات الأيتام بتنسيق متقدم
+            - button "إجراءات الصفحة" [ref=e331] [cursor=pointer]:
+              - img [ref=e332]
+          - generic [ref=e337]:
+            - generic:
+              - img
+            - textbox "ابحث باسم اليتيم أو الموقع..." [ref=e338]
+        - generic [ref=e339]:
+          - generic [ref=e341]:
+            - generic [ref=e342]:
+              - generic [ref=e343]:
+                - button "عرض قائمة" [ref=e344] [cursor=pointer]:
+                  - img [ref=e345]
+                - button "عرض شبكي" [ref=e346] [cursor=pointer]:
+                  - img [ref=e347]
+              - button "الفرز والتصفية" [ref=e353] [cursor=pointer]:
+                - img [ref=e354]
+              - generic [ref=e355] [cursor=pointer]:
+                - checkbox "تحديد الكل" [ref=e356]
+                - generic [ref=e357]: تحديد الكل
+            - generic [ref=e358]: تم العثور على 10 يتيم
+          - generic [ref=e676]:
+            - generic [ref=e677] [cursor=pointer]:
+              - checkbox "تحديد أحمد أمين" [checked] [active] [ref=e679]
+              - generic [ref=e680]:
+                - generic "أحمد أمين عبدالغفور" [ref=e682]:
+                  - img [ref=e683]
+                - generic [ref=e687]:
+                  - heading "أحمد أمين" [level=3] [ref=e688]
+                  - paragraph [ref=e689]: 56 سنوات • ذكر
+              - generic [ref=e690]:
+                - generic [ref=e691]:
+                  - generic [ref=e692]: "المرحلة:"
+                  - generic [ref=e693]: غير محدد
+                - generic [ref=e694]:
+                  - generic [ref=e695]: "الأداء:"
+                  - generic [ref=e696]: غير متوفر
+                - generic [ref=e697]:
+                  - generic [ref=e698]: "الحضور:"
+                  - generic [ref=e699]: غير متوفر
+                - generic [ref=e700]:
+                  - img [ref=e701]
+                  - generic [ref=e704]: أفغانستان
+              - button "عرض الملف" [ref=e706]
+            - generic [ref=e707] [cursor=pointer]:
+              - checkbox "تحديد أسماء شاه" [ref=e709]
+              - generic [ref=e710]:
+                - generic "أسماء شاه محمد" [ref=e712]:
+                  - img [ref=e713]
+                - generic [ref=e717]:
+                  - heading "أسماء شاه" [level=3] [ref=e718]
+                  - paragraph [ref=e719]: 56 سنوات • ذكر
+              - generic [ref=e720]:
+                - generic [ref=e721]:
+                  - generic [ref=e722]: "المرحلة:"
+                  - generic [ref=e723]: غير محدد
+                - generic [ref=e724]:
+                  - generic [ref=e725]: "الأداء:"
+                  - generic [ref=e726]: غير متوفر
+                - generic [ref=e727]:
+                  - generic [ref=e728]: "الحضور:"
+                  - generic [ref=e729]: غير متوفر
+                - generic [ref=e730]:
+                  - img [ref=e731]
+                  - generic [ref=e734]: أفغانستان
+              - button "عرض الملف" [ref=e736]
+            - generic [ref=e737] [cursor=pointer]:
+              - checkbox "تحديد ايمن قاري" [ref=e739]
+              - generic [ref=e740]:
+                - generic "ايمن قاري محمد" [ref=e742]:
+                  - img [ref=e743]
+                - generic [ref=e747]:
+                  - heading "ايمن قاري" [level=3] [ref=e748]
+                  - paragraph [ref=e749]: 56 سنوات • ذكر
+              - generic [ref=e750]:
+                - generic [ref=e751]:
+                  - generic [ref=e752]: "المرحلة:"
+                  - generic [ref=e753]: غير محدد
+                - generic [ref=e754]:
+                  - generic [ref=e755]: "الأداء:"
+                  - generic [ref=e756]: غير متوفر
+                - generic [ref=e757]:
+                  - generic [ref=e758]: "الحضور:"
+                  - generic [ref=e759]: غير متوفر
+                - generic [ref=e760]:
+                  - img [ref=e761]
+                  - generic [ref=e764]: أفغانستان
+              - button "عرض الملف" [ref=e766]
+            - generic [ref=e767] [cursor=pointer]:
+              - checkbox "تحديد حماد عبدالكريم" [ref=e769]
+              - generic [ref=e770]:
+                - generic "حماد عبدالكريم" [ref=e772]:
+                  - img [ref=e773]
+                - generic [ref=e777]:
+                  - heading "حماد عبدالكريم" [level=3] [ref=e778]
+                  - paragraph [ref=e779]: 56 سنوات • ذكر
+              - generic [ref=e780]:
+                - generic [ref=e781]:
+                  - generic [ref=e782]: "المرحلة:"
+                  - generic [ref=e783]: غير محدد
+                - generic [ref=e784]:
+                  - generic [ref=e785]: "الأداء:"
+                  - generic [ref=e786]: غير متوفر
+                - generic [ref=e787]:
+                  - generic [ref=e788]: "الحضور:"
+                  - generic [ref=e789]: غير متوفر
+                - generic [ref=e790]:
+                  - img [ref=e791]
+                  - generic [ref=e794]: أفغانستان
+              - button "عرض الملف" [ref=e796]
+            - generic [ref=e797] [cursor=pointer]:
+              - checkbox "تحديد خديجة رفيع" [ref=e799]
+              - generic [ref=e800]:
+                - generic "خديجة رفيع الله" [ref=e802]:
+                  - img [ref=e803]
+                - generic [ref=e807]:
+                  - heading "خديجة رفيع" [level=3] [ref=e808]
+                  - paragraph [ref=e809]: 56 سنوات • ذكر
+              - generic [ref=e810]:
+                - generic [ref=e811]:
+                  - generic [ref=e812]: "المرحلة:"
+                  - generic [ref=e813]: غير محدد
+                - generic [ref=e814]:
+                  - generic [ref=e815]: "الأداء:"
+                  - generic [ref=e816]: غير متوفر
+                - generic [ref=e817]:
+                  - generic [ref=e818]: "الحضور:"
+                  - generic [ref=e819]: غير متوفر
+                - generic [ref=e820]:
+                  - img [ref=e821]
+                  - generic [ref=e824]: أفغانستان
+              - button "عرض الملف" [ref=e826]
+            - generic [ref=e827] [cursor=pointer]:
+              - checkbox "تحديد زينب ذبيح" [ref=e829]
+              - generic [ref=e830]:
+                - generic "زينب ذبيح الله" [ref=e832]:
+                  - img [ref=e833]
+                - generic [ref=e837]:
+                  - heading "زينب ذبيح" [level=3] [ref=e838]
+                  - paragraph [ref=e839]: 56 سنوات • ذكر
+              - generic [ref=e840]:
+                - generic [ref=e841]:
+                  - generic [ref=e842]: "المرحلة:"
+                  - generic [ref=e843]: غير محدد
+                - generic [ref=e844]:
+                  - generic [ref=e845]: "الأداء:"
+                  - generic [ref=e846]: غير متوفر
+                - generic [ref=e847]:
+                  - generic [ref=e848]: "الحضور:"
+                  - generic [ref=e849]: غير متوفر
+                - generic [ref=e850]:
+                  - img [ref=e851]
+                  - generic [ref=e854]: أفغانستان
+              - button "عرض الملف" [ref=e856]
+            - generic [ref=e857] [cursor=pointer]:
+              - checkbox "تحديد صمیم الحق" [ref=e859]
+              - generic [ref=e860]:
+                - generic "صمیم الحق محمد اسماعيل" [ref=e862]:
+                  - img [ref=e863]
+                - generic [ref=e867]:
+                  - heading "صمیم الحق" [level=3] [ref=e868]
+                  - paragraph [ref=e869]: 56 سنوات • ذكر
+              - generic [ref=e870]:
+                - generic [ref=e871]:
+                  - generic [ref=e872]: "المرحلة:"
+                  - generic [ref=e873]: غير محدد
+                - generic [ref=e874]:
+                  - generic [ref=e875]: "الأداء:"
+                  - generic [ref=e876]: غير متوفر
+                - generic [ref=e877]:
+                  - generic [ref=e878]: "الحضور:"
+                  - generic [ref=e879]: غير متوفر
+                - generic [ref=e880]:
+                  - img [ref=e881]
+                  - generic [ref=e884]: أفغانستان
+              - button "عرض الملف" [ref=e886]
+            - generic [ref=e887] [cursor=pointer]:
+              - checkbox "تحديد محمد ذاكر" [ref=e889]
+              - generic [ref=e890]:
+                - generic "محمد ذاكر محمد صابر" [ref=e892]:
+                  - img [ref=e893]
+                - generic [ref=e897]:
+                  - heading "محمد ذاكر" [level=3] [ref=e898]
+                  - paragraph [ref=e899]: 56 سنوات • ذكر
+              - generic [ref=e900]:
+                - generic [ref=e901]:
+                  - generic [ref=e902]: "المرحلة:"
+                  - generic [ref=e903]: غير محدد
+                - generic [ref=e904]:
+                  - generic [ref=e905]: "الأداء:"
+                  - generic [ref=e906]: غير متوفر
+                - generic [ref=e907]:
+                  - generic [ref=e908]: "الحضور:"
+                  - generic [ref=e909]: غير متوفر
+                - generic [ref=e910]:
+                  - img [ref=e911]
+                  - generic [ref=e914]: أفغانستان
+              - button "عرض الملف" [ref=e916]
+            - generic [ref=e917] [cursor=pointer]:
+              - checkbox "تحديد محمد فضل" [ref=e919]
+              - generic [ref=e920]:
+                - generic "محمد فضل الرحمن عبدالوهاب" [ref=e922]:
+                  - img [ref=e923]
+                - generic [ref=e927]:
+                  - heading "محمد فضل" [level=3] [ref=e928]
+                  - paragraph [ref=e929]: 56 سنوات • ذكر
+              - generic [ref=e930]:
+                - generic [ref=e931]:
+                  - generic [ref=e932]: "المرحلة:"
+                  - generic [ref=e933]: غير محدد
+                - generic [ref=e934]:
+                  - generic [ref=e935]: "الأداء:"
+                  - generic [ref=e936]: غير متوفر
+                - generic [ref=e937]:
+                  - generic [ref=e938]: "الحضور:"
+                  - generic [ref=e939]: غير متوفر
+                - generic [ref=e940]:
+                  - img [ref=e941]
+                  - generic [ref=e944]: أفغانستان
+              - button "عرض الملف" [ref=e946]
+            - generic [ref=e947] [cursor=pointer]:
+              - checkbox "تحديد محمد يوسف" [ref=e949]
+              - generic [ref=e950]:
+                - generic "محمد يوسف محمد ظاهر" [ref=e952]:
+                  - img [ref=e953]
+                - generic [ref=e957]:
+                  - heading "محمد يوسف" [level=3] [ref=e958]
+                  - paragraph [ref=e959]: 56 سنوات • ذكر
+              - generic [ref=e960]:
+                - generic [ref=e961]:
+                  - generic [ref=e962]: "المرحلة:"
+                  - generic [ref=e963]: غير محدد
+                - generic [ref=e964]:
+                  - generic [ref=e965]: "الأداء:"
+                  - generic [ref=e966]: غير متوفر
+                - generic [ref=e967]:
+                  - generic [ref=e968]: "الحضور:"
+                  - generic [ref=e969]: غير متوفر
+                - generic [ref=e970]:
+                  - img [ref=e971]
+                  - generic [ref=e974]: أفغانستان
+              - button "عرض الملف" [ref=e976]
+      - generic [ref=e979]:
+        - generic [ref=e980]:
+          - generic [ref=e981]: 1 تم تحديده
+          - button "إلغاء التحديد" [ref=e982] [cursor=pointer]
+        - button "إرسال رسالة" [ref=e983] [cursor=pointer]:
+          - img [ref=e984]
+          - generic [ref=e986]: إرسال رسالة
+  - navigation "التنقل السفلي" [ref=e295]:
+    - link "لوحة التحكم" [ref=e296] [cursor=pointer]:
+      - /url: "#/"
+      - img [ref=e297]
+      - generic [ref=e300]: لوحة التحكم
+    - link "الأيتام" [ref=e301] [cursor=pointer]:
+      - /url: "#/orphans"
+      - img [ref=e302]
+      - generic [ref=e307]: الأيتام
+    - link "المراسلات" [ref=e308] [cursor=pointer]:
+      - /url: "#/messages"
+      - img [ref=e309]
+      - generic [ref=e311]: المراسلات
+    - link "النظام المالي" [ref=e312] [cursor=pointer]:
+      - /url: "#/financial-system"
+      - img [ref=e313]
+      - generic [ref=e316]: النظام المالي
+    - button "المزيد" [ref=e317] [cursor=pointer]:
+      - img [ref=e318]
+      - generic [ref=e322]: المزيد
+  - dialog "قائمة المزيد":
+    - generic:
+      - generic:
+        - generic:
+          - paragraph: روابط إضافية
+          - heading "المزيد" [level=2]
+        - button "إغلاق":
+          - img
+      - generic:
+        - link "الكفلاء":
+          - /url: "#/sponsors"
+          - img
+          - generic: الكفلاء
+          - img
+        - link "الموارد البشرية":
+          - /url: "#/human-resources"
+          - img
+          - generic: الموارد البشرية
+          - img
+        - link "سياسات يتيم":
+          - /url: "#/policies"
+          - img
+          - generic: سياسات يتيم
+          - img
+        - button "تسجيل الخروج":
+          - img
+          - generic: تسجيل الخروج

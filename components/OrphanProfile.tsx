@@ -1661,7 +1661,7 @@ const OrphanProfile: React.FC = () => {
 
     <div ref={profileRef} className="min-h-screen bg-bg-page pb-24 md:pb-20">
         {/* Header / Cover */}
-        <div className="relative mb-16 h-40 rounded-b-[2.5rem] bg-gradient-to-r from-primary to-primary-hover shadow-lg sm:h-44 md:mb-16 md:h-48">
+        <div className="relative mb-4 h-56 overflow-hidden rounded-b-[2rem] bg-gradient-to-r from-primary to-primary-hover shadow-lg sm:h-60 md:mb-16 md:h-48 md:overflow-visible md:rounded-b-[2.5rem]">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_top,_white,_transparent_60%)]" />
             
             {/* Actions Toolbar — edit/save primary control is sticky bar below header */}
@@ -1689,8 +1689,8 @@ const OrphanProfile: React.FC = () => {
             </div>
 
             {/* Avatar + Name */}
-            <div className="absolute -bottom-12 start-4 end-4 flex flex-col items-start gap-4 text-start md:-bottom-14 md:start-auto md:end-16 md:flex-row md:items-center md:gap-6">
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-full border-4 border-white bg-white shadow-md md:h-40 md:w-40">
+            <div className="absolute bottom-5 start-4 end-4 flex items-end gap-3 text-start md:-bottom-14 md:start-auto md:end-16 md:flex-row md:items-center md:gap-6">
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="flex-shrink-0 overflow-hidden rounded-full border-4 border-white bg-white shadow-md">
                     {orphan.uuid ? (
                         <AvatarUpload
                             currentAvatarUrl={orphan.photoUrl}
@@ -1699,17 +1699,18 @@ const OrphanProfile: React.FC = () => {
                             type="orphan"
                             onUploadComplete={() => window.location.reload()}
                             size="lg"
+                            showHint={false}
                         />
                     ) : (
                         <Avatar
                             src={orphan.photoUrl}
                             name={orphan.name}
                             size="xl"
-                            className="!h-full !w-full !text-3xl md:!text-4xl"
+                            className="!h-24 !w-24 !text-2xl md:!h-32 md:!w-32 md:!text-4xl"
                         />
                     )}
                 </motion.div>
-                <div className="max-w-full text-white drop-shadow-md md:-translate-y-12">
+                <div className="min-w-0 flex-1 pb-1 text-white drop-shadow-md md:max-w-full md:flex-none md:pb-0 md:-translate-y-12">
                     {isEditMode ? (
                         <input
                             type="text"
@@ -1718,7 +1719,7 @@ const OrphanProfile: React.FC = () => {
                             className="w-full max-w-xs rounded-lg border-2 border-primary bg-white/90 px-4 py-2 text-start text-xl font-bold text-gray-900 md:text-4xl"
                         />
                     ) : (
-                        <h1 className="text-2xl font-bold md:text-4xl">{orphan.name}</h1>
+                        <h1 className="line-clamp-2 text-xl font-bold leading-tight md:text-4xl">{orphan.name}</h1>
                     )}
                     <p className="opacity-90 text-sm md:text-base font-medium">{(isEditMode ? editFormData.grade : orphan.grade) || '—'} • {orphan.age} سنوات</p>
                 </div>
