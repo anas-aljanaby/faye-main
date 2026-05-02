@@ -63,7 +63,7 @@ const ResponsiveModalShell: React.FC<ResponsiveModalShellProps> = ({
     >
       <div
         className={joinClasses(
-          'flex h-[calc(100dvh-0.5rem)] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-bg-card shadow-2xl md:h-auto md:max-h-[90vh] md:rounded-[1.75rem]',
+          'flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-bg-card shadow-2xl md:h-auto md:max-h-[90vh] md:rounded-[1.75rem]',
           maxWidthClassName,
           panelClassName
         )}
@@ -72,14 +72,17 @@ const ResponsiveModalShell: React.FC<ResponsiveModalShellProps> = ({
         aria-modal="true"
         aria-labelledby={resolvedTitleId}
       >
+        <div className="flex justify-center pt-2 md:hidden">
+          <span className="h-1 w-10 rounded-full bg-gray-300" />
+        </div>
         <div
           className={joinClasses(
-            'flex items-start justify-between gap-3 border-b border-gray-100 bg-bg-card px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] md:px-6 md:py-5',
+            'flex items-start justify-between gap-3 border-b border-gray-100 bg-bg-card px-4 py-3 md:px-6 md:py-5',
             headerClassName
           )}
         >
           <div className="min-w-0 flex-1">
-            <h2 id={resolvedTitleId} className="text-xl font-bold text-text-primary md:text-2xl">
+            <h2 id={resolvedTitleId} className="text-lg font-bold leading-7 text-text-primary md:text-2xl">
               {title}
             </h2>
             {description ? (
@@ -91,7 +94,7 @@ const ResponsiveModalShell: React.FC<ResponsiveModalShellProps> = ({
             onClick={handleClose}
             disabled={closeDisabled}
             aria-label="إغلاق النافذة"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 md:h-11 md:w-11"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -117,7 +120,7 @@ const ResponsiveModalShell: React.FC<ResponsiveModalShellProps> = ({
         {footer ? (
           <div
             className={joinClasses(
-              'shrink-0 border-t border-gray-100 bg-bg-card px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:px-6 md:pb-5',
+              'shrink-0 border-t border-gray-100 bg-bg-card px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:px-6 md:py-4 md:pb-5',
               footerClassName
             )}
           >

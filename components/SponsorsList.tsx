@@ -15,6 +15,7 @@ import { CreateLoginModal } from './account/CreateLoginModal';
 import { useQueryClient } from '@tanstack/react-query';
 import AddProfileWithLoginModal from './account/AddProfileWithLoginModal';
 import { formatListDisplayName } from '../utils/displayNames';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 const EditSponsorModal: React.FC<{
     sponsor: Sponsor;
@@ -22,6 +23,7 @@ const EditSponsorModal: React.FC<{
     onSave: (updatedSponsor: Sponsor) => void;
 }> = ({ sponsor, onClose, onSave }) => {
     const [name, setName] = useState(sponsor.name);
+    useBodyScrollLock(true);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,15 +33,18 @@ const EditSponsorModal: React.FC<{
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={onClose}>
             <div
-                className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl"
+                className="flex max-h-[70dvh] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
-                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">تعديل بيانات الكافل</h3>
+                <div className="flex justify-center pt-2 md:hidden">
+                    <span className="h-1 w-10 rounded-full bg-gray-300" />
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:px-6 md:py-4">
+                    <h3 className="text-base font-bold text-gray-900 md:text-xl">تعديل بيانات الكافل</h3>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:h-11 md:w-11"
                         aria-label="إغلاق"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -57,9 +62,9 @@ const EditSponsorModal: React.FC<{
                             />
                         </div>
                     </div>
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6">
-                        <button type="button" onClick={onClose} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
-                        <button type="submit" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover">حفظ التغييرات</button>
+                    <div className="grid grid-cols-2 gap-3 border-t border-gray-100 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex md:justify-end md:px-6 md:py-4 md:pb-4">
+                        <button type="button" onClick={onClose} className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover">حفظ التغييرات</button>
                     </div>
                 </form>
             </div>
@@ -74,6 +79,7 @@ const SendMessageModal: React.FC<{
     title: string;
 }> = ({ isOpen, onClose, onSend, title }) => {
     const [message, setMessage] = useState('');
+    useBodyScrollLock(isOpen);
 
     if (!isOpen) return null;
 
@@ -87,15 +93,18 @@ const SendMessageModal: React.FC<{
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={onClose}>
             <div
-                className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl"
+                className="flex max-h-[75dvh] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
-                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">{title}</h3>
+                <div className="flex justify-center pt-2 md:hidden">
+                    <span className="h-1 w-10 rounded-full bg-gray-300" />
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:px-6 md:py-4">
+                    <h3 className="text-base font-bold text-gray-900 md:text-xl">{title}</h3>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:h-11 md:w-11"
                         aria-label="إغلاق"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -107,13 +116,13 @@ const SendMessageModal: React.FC<{
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder="اكتب رسالتك هنا..."
-                            className="h-full min-h-[240px] w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 md:min-h-[200px]"
+                            className="h-36 w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 md:h-auto md:min-h-[200px]"
                             autoFocus
                         />
                     </div>
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6">
-                        <button type="button" onClick={onClose} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
-                        <button onClick={handleSend} disabled={!message.trim()} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-gray-400">إرسال</button>
+                    <div className="grid grid-cols-2 gap-3 border-t border-gray-100 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex md:justify-end md:px-6 md:py-4 md:pb-4">
+                        <button type="button" onClick={onClose} className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button onClick={handleSend} disabled={!message.trim()} className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-gray-400">إرسال</button>
                     </div>
                 </div>
             </div>
@@ -225,6 +234,169 @@ const ResponsivePagination: React.FC<{
     );
 };
 
+type SponsorAccountStatus = 'no_login' | 'pending_first_login' | 'active' | undefined;
+
+const getAccountStatusLabel = (status: SponsorAccountStatus, loading: boolean) => {
+    if (loading) return '...';
+    if (status === 'active') return 'حساب فعال';
+    if (status === 'pending_first_login') return 'بانتظار الدخول';
+    if (status === 'no_login') return 'بدون حساب';
+    return 'غير محدد';
+};
+
+const getAccountStatusClass = (status: SponsorAccountStatus) => {
+    if (status === 'active') return 'bg-emerald-100 text-emerald-800';
+    if (status === 'pending_first_login') return 'bg-amber-100 text-amber-800';
+    if (status === 'no_login') return 'bg-gray-100 text-gray-700';
+    return 'bg-gray-50 text-gray-500';
+};
+
+const MobileSelectControl: React.FC<{
+    title: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    className?: string;
+}> = ({ title, checked, onChange, className = '' }) => (
+    <span
+        role="checkbox"
+        tabIndex={0}
+        onClick={(event) => {
+            event.stopPropagation();
+            onChange(!checked);
+        }}
+        onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                event.stopPropagation();
+                onChange(!checked);
+            }
+        }}
+        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white shadow-sm transition-colors ${
+            checked ? 'border-primary bg-primary-light text-primary' : 'border-gray-200 text-gray-500'
+        } ${className}`}
+        aria-label={`تحديد ${title}`}
+        aria-checked={checked}
+    >
+        {checked ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+        ) : (
+            <span className="h-4 w-4 rounded border border-current" />
+        )}
+    </span>
+);
+
+const MobileSponsorListRow: React.FC<{
+    sponsor: Sponsor;
+    displayName: string;
+    selected: boolean;
+    onSelect: () => void;
+    onOpen: () => void;
+    accountStatus?: SponsorAccountStatus;
+    accountsLoading: boolean;
+    showAccountStatus: boolean;
+    canQuickCreate: boolean;
+    onCreateLogin: () => void;
+}> = ({
+    sponsor,
+    displayName,
+    selected,
+    onSelect,
+    onOpen,
+    accountStatus,
+    accountsLoading,
+    showAccountStatus,
+    canQuickCreate,
+    onCreateLogin,
+}) => (
+    <div
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onOpen();
+            }
+        }}
+        className={`flex min-h-[86px] items-center gap-3 rounded-2xl border bg-white px-3 py-2.5 shadow-sm transition-colors ${
+            selected ? 'border-primary ring-2 ring-primary/20' : 'border-gray-100 active:bg-gray-50'
+        }`}
+    >
+        <MobileSelectControl title={displayName} checked={selected} onChange={onSelect} />
+        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-primary-light">
+            <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" className="!h-full !w-full !text-sm" />
+        </div>
+        <div className="min-w-0 flex-1">
+            <div className="line-clamp-1 break-words text-sm font-bold leading-5 text-gray-900">{displayName}</div>
+            <div className="mt-0.5 truncate text-xs text-gray-500">
+                يكفل {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}
+            </div>
+            <div className="mt-1 flex min-w-0 items-center gap-2">
+                {showAccountStatus ? (
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${getAccountStatusClass(accountStatus)}`}>
+                        {getAccountStatusLabel(accountStatus, accountsLoading)}
+                    </span>
+                ) : null}
+                {canQuickCreate ? (
+                    <button
+                        type="button"
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onCreateLogin();
+                        }}
+                        className="rounded-full bg-primary-light px-2 py-0.5 text-[11px] font-bold text-primary"
+                    >
+                        إنشاء حساب
+                    </button>
+                ) : null}
+            </div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </div>
+);
+
+const MobileSponsorGridTile: React.FC<{
+    sponsor: Sponsor;
+    displayName: string;
+    selected: boolean;
+    onSelect: () => void;
+    onOpen: () => void;
+    accountStatus?: SponsorAccountStatus;
+    accountsLoading: boolean;
+    showAccountStatus: boolean;
+}> = ({ sponsor, displayName, selected, onSelect, onOpen, accountStatus, accountsLoading, showAccountStatus }) => (
+    <div
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onOpen();
+            }
+        }}
+        className={`relative min-h-[158px] rounded-2xl border bg-white p-3 shadow-sm transition-colors ${
+            selected ? 'border-primary ring-2 ring-primary/20' : 'border-gray-100 active:bg-gray-50'
+        }`}
+    >
+        <MobileSelectControl title={displayName} checked={selected} onChange={onSelect} className="absolute end-2 top-2" />
+        <div className="flex flex-col items-center text-center">
+            <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-primary-light">
+                <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" className="!h-full !w-full !text-sm" />
+            </div>
+            <h3 className="mt-2 line-clamp-2 min-h-[40px] break-words text-sm font-bold leading-5 text-gray-900">{displayName}</h3>
+            <p className="mt-0.5 text-xs text-gray-500">
+                {sponsor.sponsoredOrphanIds.length} {sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}
+            </p>
+            {showAccountStatus ? (
+                <span className={`mt-2 max-w-full truncate rounded-full px-2 py-1 text-[11px] font-semibold ${getAccountStatusClass(accountStatus)}`}>
+                    {getAccountStatusLabel(accountStatus, accountsLoading)}
+                </span>
+            ) : null}
+        </div>
+    </div>
+);
+
 const ITEMS_PER_PAGE = 12;
 
 interface SponsorsListProps {
@@ -263,6 +435,7 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
     const [assignmentSponsorSearchQuery, setAssignmentSponsorSearchQuery] = useState('');
     const [assignmentOrphanSearchQuery, setAssignmentOrphanSearchQuery] = useState('');
     const displayNameParts = isSidebarCollapsed ? 3 : 2;
+    useBodyScrollLock(showAssignOrphansModal);
 
     useEffect(() => {
         if (!loading && sponsorsData) {
@@ -587,12 +760,12 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
 
     return (
         <>
-            <div className={`space-y-6 ${selectedIds.size > 0 ? 'pb-40' : 'pb-24'}`}>
-                <header className="space-y-4">
+            <div className={`space-y-4 sm:space-y-6 ${selectedIds.size > 0 ? 'pb-40' : 'pb-24'}`}>
+                <header className="space-y-3 sm:space-y-4">
                     <div className="flex items-start justify-between gap-3 sm:items-center">
                         <div className="min-w-0">
-                            <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">قائمة الكفلاء</h1>
-                            <p className="mt-1 text-sm text-text-secondary">
+                            <h1 className="text-[1.65rem] font-bold leading-tight text-gray-800 sm:text-3xl">قائمة الكفلاء</h1>
+                            <p className="mt-0.5 text-sm text-text-secondary sm:mt-1">
                                 عرض وإدارة بيانات الكفلاء بتنسيق متقدم
                             </p>
                         </div>
@@ -671,7 +844,7 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+                    <div className="rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm sm:p-4">
                         <div className="relative w-full">
                             <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -681,14 +854,75 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                                 placeholder="ابحث باسم الكافل..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary"
+                                className="min-h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary sm:min-h-[48px]"
                             />
+                        </div>
+                        <div className="mt-2 flex items-center gap-2 sm:hidden">
+                            <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}
+                                    aria-label="عرض قائمة"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}
+                                    aria-label="عرض شبكي"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                                </button>
+                            </div>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsPopoverOpen(prev => !prev)}
+                                    className={`relative inline-flex h-11 w-11 items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${isPopoverOpen || activeFiltersCount > 0 ? 'border-primary/30 bg-primary-light text-primary' : 'border-gray-200 text-gray-600'}`}
+                                    aria-label="الفرز والتصفية"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                                    {activeFiltersCount > 0 && (
+                                        <span className="absolute -end-1 -top-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">
+                                            {activeFiltersCount}
+                                        </span>
+                                    )}
+                                </button>
+                                {isPopoverOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-20 bg-black/30 md:hidden" onClick={() => setIsPopoverOpen(false)} />
+                                        <SortPopover
+                                            onClose={() => setIsPopoverOpen(false)}
+                                            sortBy={sortBy}
+                                            setSortBy={setSortBy}
+                                            filterOnlyNoAccount={filterOnlyNoAccount}
+                                            setFilterOnlyNoAccount={setFilterOnlyNoAccount}
+                                            isSysAdmin={isSysAdmin}
+                                            onReset={handleResetFilters}
+                                        />
+                                    </>
+                                )}
+                            </div>
+                            <label htmlFor="mobileSponsorSelectAllCheckbox" className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700">
+                                <input
+                                    type="checkbox"
+                                    id="mobileSponsorSelectAllCheckbox"
+                                    checked={paginatedSponsors.length > 0 && selectedIds.size === paginatedSponsors.length}
+                                    onChange={handleSelectAll}
+                                    className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary"
+                                    disabled={paginatedSponsors.length === 0}
+                                    aria-label="تحديد الكل"
+                                />
+                                <span>الكل</span>
+                            </label>
+                            <span className="ms-auto inline-flex h-11 min-w-11 items-center justify-center rounded-xl bg-gray-100 px-2 text-xs font-semibold text-text-secondary">
+                                {filteredSponsors.length}
+                            </span>
                         </div>
                     </div>
                 </header>
 
                 <div>
-                    <div className="mb-4 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+                    <div className="mb-4 hidden rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:block sm:p-4">
                         <div className="flex flex-col items-start gap-3 lg:flex-row lg:items-center lg:justify-between">
                             <div className="-mx-1 flex w-full items-center gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 lg:w-auto">
                                 <div className="flex shrink-0 items-center gap-1 rounded-xl bg-gray-100 p-1">
@@ -778,63 +1012,25 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                                         const displayName = formatListDisplayName(sponsor.name, displayNameParts);
                                         const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
                                         const canQuickCreate = isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
-                                        const cardFields: EntityCardField[] = [
-                                            {
-                                                label: 'عدد الأيتام:',
-                                                value: `${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`
-                                            },
-                                        ];
-
-                                        if (isSysAdmin && sponsor.uuid) {
-                                            const statusLabel =
-                                                accountsLoading
-                                                    ? '…'
-                                                    : acc?.status === 'no_login'
-                                                      ? 'لا يوجد حساب دخول'
-                                                      : acc?.status === 'pending_first_login'
-                                                        ? 'بانتظار أول دخول'
-                                                        : acc?.status === 'active'
-                                                          ? 'حساب فعّال'
-                                                          : '—';
-                                            cardFields.push({
-                                                label: 'حساب المنصة:',
-                                                value: statusLabel,
-                                                type: 'pill',
-                                                pillClass:
-                                                    acc?.status === 'active'
-                                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                                        : acc?.status === 'pending_first_login'
-                                                          ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                                          : 'bg-gray-100 text-gray-700 border-gray-200',
-                                            });
-                                        }
 
                                         return (
-                                            <EntityCard
+                                            <MobileSponsorListRow
                                                 key={sponsor.id}
-                                                variant="card"
-                                                title={displayName}
-                                                subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
-                                                imageUrl={sponsor.avatarUrl}
-                                                imageAlt={sponsor.name}
-                                                fields={cardFields}
-                                                actionLabel="عرض الملف"
-                                                onClick={() => navigate(`/sponsor/${sponsor.id}`)}
-                                                secondaryAction={
-                                                    canQuickCreate
-                                                        ? {
-                                                              label: 'إنشاء حساب دخول',
-                                                              onClick: () =>
-                                                                  setCreateLoginTarget({
-                                                                      profileId: sponsor.uuid!,
-                                                                      name: sponsor.name,
-                                                                  }),
-                                                          }
-                                                        : undefined
-                                                }
+                                                sponsor={sponsor}
+                                                displayName={displayName}
                                                 selected={isSelected}
                                                 onSelect={() => handleSelect(sponsor.id)}
-                                                showCheckbox={true}
+                                                onOpen={() => navigate(`/sponsor/${sponsor.id}`)}
+                                                accountStatus={acc?.status}
+                                                accountsLoading={accountsLoading}
+                                                showAccountStatus={isSysAdmin && Boolean(sponsor.uuid)}
+                                                canQuickCreate={Boolean(canQuickCreate)}
+                                                onCreateLogin={() =>
+                                                    setCreateLoginTarget({
+                                                        profileId: sponsor.uuid!,
+                                                        name: sponsor.name,
+                                                    })
+                                                }
                                             />
                                         );
                                     })
@@ -862,73 +1058,86 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                     ) : (
                         <>
                             {paginatedSponsors.length > 0 ? (
-                                <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-                                    {paginatedSponsors.map((sponsor) => {
-                                        const isSelected = selectedIds.has(sponsor.id);
-                                        const displayName = formatListDisplayName(sponsor.name, displayNameParts);
-                                        const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
-                                        const canQuickCreate = isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
-                                        const cardFields: EntityCardField[] = [
-                                            {
-                                                label: 'عدد الأيتام:',
-                                                value: `${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`
-                                            },
-                                        ];
+                                <>
+                                    <section className="grid grid-cols-2 gap-3 md:hidden">
+                                        {paginatedSponsors.map((sponsor) => {
+                                            const isSelected = selectedIds.has(sponsor.id);
+                                            const displayName = formatListDisplayName(sponsor.name, displayNameParts);
+                                            const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
+                                            return (
+                                                <MobileSponsorGridTile
+                                                    key={sponsor.id}
+                                                    sponsor={sponsor}
+                                                    displayName={displayName}
+                                                    selected={isSelected}
+                                                    onSelect={() => handleSelect(sponsor.id)}
+                                                    onOpen={() => navigate(`/sponsor/${sponsor.id}`)}
+                                                    accountStatus={acc?.status}
+                                                    accountsLoading={accountsLoading}
+                                                    showAccountStatus={isSysAdmin && Boolean(sponsor.uuid)}
+                                                />
+                                            );
+                                        })}
+                                    </section>
+                                    <section className="hidden grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:grid lg:grid-cols-3 xl:grid-cols-4">
+                                        {paginatedSponsors.map((sponsor) => {
+                                            const isSelected = selectedIds.has(sponsor.id);
+                                            const displayName = formatListDisplayName(sponsor.name, displayNameParts);
+                                            const acc = sponsor.uuid ? accountsMap[sponsor.uuid] : undefined;
+                                            const canQuickCreate = isSysAdmin && sponsor.uuid && acc?.status === 'no_login';
+                                            const cardFields: EntityCardField[] = [
+                                                {
+                                                    label: 'عدد الأيتام:',
+                                                    value: `${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`
+                                                },
+                                            ];
 
-                                        if (isSysAdmin && sponsor.uuid) {
-                                            const statusLabel =
-                                                accountsLoading
-                                                    ? '…'
-                                                    : acc?.status === 'no_login'
-                                                      ? 'لا يوجد حساب دخول'
-                                                      : acc?.status === 'pending_first_login'
-                                                        ? 'بانتظار أول دخول'
-                                                        : acc?.status === 'active'
-                                                          ? 'حساب فعّال'
-                                                          : '—';
-                                            cardFields.push({
-                                                label: 'حساب المنصة:',
-                                                value: statusLabel,
-                                                type: 'pill',
-                                                pillClass:
-                                                    acc?.status === 'active'
-                                                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                                                        : acc?.status === 'pending_first_login'
-                                                          ? 'bg-amber-100 text-amber-800 border-amber-300'
-                                                          : 'bg-gray-100 text-gray-700 border-gray-200',
-                                            });
-                                        }
+                                            if (isSysAdmin && sponsor.uuid) {
+                                                const statusLabel = getAccountStatusLabel(acc?.status, accountsLoading);
+                                                cardFields.push({
+                                                    label: 'حساب المنصة:',
+                                                    value: statusLabel,
+                                                    type: 'pill',
+                                                    pillClass:
+                                                        acc?.status === 'active'
+                                                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                                            : acc?.status === 'pending_first_login'
+                                                              ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                                              : 'bg-gray-100 text-gray-700 border-gray-200',
+                                                });
+                                            }
 
-                                        return (
-                                            <EntityCard
-                                                key={sponsor.id}
-                                                variant="card"
-                                                title={displayName}
-                                                subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
-                                                imageUrl={sponsor.avatarUrl}
-                                                imageAlt={sponsor.name}
-                                                fields={cardFields}
-                                                actionLabel="عرض الملف الكامل"
-                                                onClick={() => navigate(`/sponsor/${sponsor.id}`)}
-                                                secondaryAction={
-                                                    canQuickCreate
-                                                        ? {
-                                                              label: 'إنشاء حساب دخول',
-                                                              onClick: () =>
-                                                                  setCreateLoginTarget({
-                                                                      profileId: sponsor.uuid!,
-                                                                      name: sponsor.name,
-                                                                  }),
-                                                          }
-                                                        : undefined
-                                                }
-                                                selected={isSelected}
-                                                onSelect={() => handleSelect(sponsor.id)}
-                                                showCheckbox={true}
-                                            />
-                                        );
-                                    })}
-                                </section>
+                                            return (
+                                                <EntityCard
+                                                    key={sponsor.id}
+                                                    variant="card"
+                                                    title={displayName}
+                                                    subtitle={`يكفل ${sponsor.sponsoredOrphanIds.length} ${sponsor.sponsoredOrphanIds.length === 1 ? 'يتيم' : 'أيتام'}`}
+                                                    imageUrl={sponsor.avatarUrl}
+                                                    imageAlt={sponsor.name}
+                                                    fields={cardFields}
+                                                    actionLabel="عرض الملف الكامل"
+                                                    onClick={() => navigate(`/sponsor/${sponsor.id}`)}
+                                                    secondaryAction={
+                                                        canQuickCreate
+                                                            ? {
+                                                                  label: 'إنشاء حساب دخول',
+                                                                  onClick: () =>
+                                                                      setCreateLoginTarget({
+                                                                          profileId: sponsor.uuid!,
+                                                                          name: sponsor.name,
+                                                                      }),
+                                                              }
+                                                            : undefined
+                                                    }
+                                                    selected={isSelected}
+                                                    onSelect={() => handleSelect(sponsor.id)}
+                                                    showCheckbox={true}
+                                                />
+                                            );
+                                        })}
+                                    </section>
+                                </>
                             ) : (
                                 <EmptyState title="لا توجد نتائج مطابقة" description="جرّب تعديل البحث أو إعادة تعيين التصفية لعرض مزيد من الكفلاء." />
                             )}
@@ -1007,24 +1216,27 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
             {showAssignOrphansModal && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={closeAssignOrphansModal}>
                     <div
-                        className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl"
+                        className="flex max-h-[88dvh] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-2xl md:rounded-2xl"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        <div className="flex justify-center pt-2 md:hidden">
+                            <span className="h-1 w-10 rounded-full bg-gray-300" />
+                        </div>
                         {!selectedSponsorForAssignment ? (
                             <>
-                                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
-                                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">اختر كافل</h3>
+                                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:px-6 md:py-4">
+                                    <h3 className="text-base font-bold text-gray-900 md:text-xl">اختر كافل</h3>
                                     <button
                                         type="button"
                                         onClick={closeAssignOrphansModal}
-                                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:h-11 md:w-11"
                                         aria-label="إغلاق"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                                     </button>
                                 </div>
                                 <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-6">
-                                    <div className="sticky top-0 z-10 -mx-4 space-y-3 border-b border-gray-100 bg-white/95 px-4 pb-3 backdrop-blur md:-mx-6 md:px-6">
+                                    <div className="sticky top-0 z-10 -mx-4 space-y-2 border-b border-gray-100 bg-white/95 px-4 pb-3 backdrop-blur md:-mx-6 md:space-y-3 md:px-6">
                                         <div className="relative">
                                             <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1034,7 +1246,7 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                                                 value={assignmentSponsorSearchQuery}
                                                 onChange={(e) => setAssignmentSponsorSearchQuery(e.target.value)}
                                                 placeholder="ابحث عن كافل للتعيين..."
-                                                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary"
+                                                className="min-h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary md:min-h-[48px]"
                                             />
                                         </div>
                                         <p className="text-xs font-medium text-gray-500">
@@ -1047,7 +1259,7 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                                             <button
                                                 key={sponsor.id}
                                                 onClick={() => setSelectedSponsorForAssignment(sponsor)}
-                                                className="flex min-h-[72px] w-full items-center justify-between gap-3 rounded-2xl border border-gray-200 px-4 py-3 text-right transition-colors hover:bg-gray-50"
+                                                className="flex min-h-[68px] w-full items-center justify-between gap-3 rounded-2xl border border-gray-200 px-3 py-2.5 text-right transition-colors hover:bg-gray-50 md:min-h-[72px] md:px-4 md:py-3"
                                             >
                                                 <div className="flex min-w-0 items-center gap-3">
                                                     <Avatar src={sponsor.avatarUrl} name={sponsor.name} size="md" />
@@ -1068,31 +1280,31 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                             </>
                         ) : (
                             <>
-                                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
+                                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:px-6 md:py-4">
                                     <div className="flex min-w-0 items-center gap-3">
                                         <button
                                             onClick={() => setSelectedSponsorForAssignment(null)}
-                                            className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:h-11 md:w-11"
                                             title="رجوع"
                                         >
                                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                                         </button>
                                         <div className="min-w-0">
-                                            <h3 className="truncate text-lg font-bold text-gray-900 md:text-xl">تعيين أيتام لـ {selectedSponsorForAssignment.name}</h3>
-                                            <p className="text-xs text-gray-500">يمكنك البحث داخل قائمة الأيتام قبل التعيين</p>
+                                            <h3 className="truncate text-base font-bold text-gray-900 md:text-xl">تعيين أيتام لـ {selectedSponsorForAssignment.name}</h3>
+                                            <p className="truncate text-xs text-gray-500">يمكنك البحث داخل قائمة الأيتام قبل التعيين</p>
                                         </div>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={closeAssignOrphansModal}
-                                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:h-11 md:w-11"
                                         aria-label="إغلاق"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                                     </button>
                                 </div>
                                 <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-6">
-                                    <div className="sticky top-0 z-10 -mx-4 space-y-3 border-b border-gray-100 bg-white/95 px-4 pb-3 backdrop-blur md:-mx-6 md:px-6">
+                                    <div className="sticky top-0 z-10 -mx-4 space-y-2 border-b border-gray-100 bg-white/95 px-4 pb-3 backdrop-blur md:-mx-6 md:space-y-3 md:px-6">
                                         <div className="relative">
                                             <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1102,7 +1314,7 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                                                 value={assignmentOrphanSearchQuery}
                                                 onChange={(e) => setAssignmentOrphanSearchQuery(e.target.value)}
                                                 placeholder="ابحث باسم اليتيم..."
-                                                className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary"
+                                                className="min-h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary md:min-h-[48px]"
                                             />
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-gray-500">
@@ -1119,7 +1331,7 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                                         return (
                                             <div
                                                 key={orphan.id}
-                                                className="flex flex-col gap-3 rounded-2xl border border-gray-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                                                className="flex flex-row items-center justify-between gap-3 rounded-2xl border border-gray-200 px-3 py-3 sm:px-4 sm:py-4"
                                             >
                                                 <div className="flex min-w-0 items-center gap-3">
                                                     <Avatar src={orphan.photoUrl} name={orphan.name} size="md" />
@@ -1161,7 +1373,7 @@ const SponsorsList: React.FC<SponsorsListProps> = ({ isSidebarCollapsed = false 
                                                             console.error('Error updating orphan-to-sponsor assignment:', err);
                                                         }
                                                     }}
-                                                    className={`inline-flex min-h-[44px] items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                                                    className={`inline-flex min-h-[40px] shrink-0 items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold transition-colors sm:min-h-[44px] sm:px-4 sm:text-sm ${
                                                         isAssigned
                                                             ? 'bg-red-100 text-red-700 hover:bg-red-200'
                                                             : 'bg-primary text-white hover:bg-primary-hover'

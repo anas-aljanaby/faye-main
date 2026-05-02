@@ -10,6 +10,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import Avatar from './Avatar';
 import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import { formatListDisplayName } from '../utils/displayNames';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 
 const AddOrphanModal: React.FC<{
     isOpen: boolean;
@@ -20,6 +21,7 @@ const AddOrphanModal: React.FC<{
     const [age, setAge] = useState('');
     const [grade, setGrade] = useState('');
     const [country, setCountry] = useState('');
+    useBodyScrollLock(isOpen);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -34,30 +36,33 @@ const AddOrphanModal: React.FC<{
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={onClose}>
             <div
-                className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl"
+                className="flex max-h-[85dvh] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
-                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">إضافة يتيم جديد</h3>
+                <div className="flex justify-center pt-2 md:hidden">
+                    <span className="h-1 w-10 rounded-full bg-gray-300" />
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:px-6 md:py-4">
+                    <h3 className="text-base font-bold text-gray-900 md:text-xl">إضافة يتيم جديد</h3>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:h-11 md:w-11"
                         aria-label="إغلاق"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                     </button>
                 </div>
                 <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-                    <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 md:px-6">
+                    <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 md:space-y-4 md:px-6">
                         <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="الاسم" className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20" required />
                         <input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="العمر" className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20" required />
                         <input type="text" value={grade} onChange={(e) => setGrade(e.target.value)} placeholder="المرحلة الدراسية" className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20" required />
                         <input type="text" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="الدولة" className="min-h-[48px] w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20" required />
                     </div>
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6">
-                        <button type="button" onClick={onClose} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
-                        <button type="submit" className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover">إضافة</button>
+                    <div className="grid grid-cols-2 gap-3 border-t border-gray-100 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex md:justify-end md:px-6 md:py-4 md:pb-4">
+                        <button type="button" onClick={onClose} className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button type="submit" className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover">إضافة</button>
                     </div>
                 </form>
             </div>
@@ -72,6 +77,7 @@ const SendMessageModal: React.FC<{
     title: string;
 }> = ({ isOpen, onClose, onSend, title }) => {
     const [message, setMessage] = useState('');
+    useBodyScrollLock(isOpen);
 
     if (!isOpen) return null;
 
@@ -85,15 +91,18 @@ const SendMessageModal: React.FC<{
     return (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-0 md:items-center md:p-4" onClick={onClose}>
             <div
-                className="flex h-[calc(100dvh-1rem)] w-full flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl"
+                className="flex max-h-[75dvh] w-full flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:max-w-lg md:rounded-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 md:px-6">
-                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">{title}</h3>
+                <div className="flex justify-center pt-2 md:hidden">
+                    <span className="h-1 w-10 rounded-full bg-gray-300" />
+                </div>
+                <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 md:px-6 md:py-4">
+                    <h3 className="text-base font-bold text-gray-900 md:text-xl">{title}</h3>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 md:h-11 md:w-11"
                         aria-label="إغلاق"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -105,13 +114,13 @@ const SendMessageModal: React.FC<{
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             placeholder="اكتب رسالتك هنا..."
-                            className="h-full min-h-[240px] w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 md:min-h-[200px]"
+                            className="h-36 w-full resize-none rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 md:h-auto md:min-h-[200px]"
                             autoFocus
                         ></textarea>
                     </div>
-                    <div className="flex flex-col-reverse gap-3 border-t border-gray-100 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:flex-row md:justify-end md:px-6">
-                        <button type="button" onClick={onClose} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
-                        <button onClick={handleSend} disabled={!message.trim()} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-gray-400">إرسال</button>
+                    <div className="grid grid-cols-2 gap-3 border-t border-gray-100 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex md:justify-end md:px-6 md:py-4 md:pb-4">
+                        <button type="button" onClick={onClose} className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-gray-100 px-5 py-3 font-semibold text-text-secondary transition-colors hover:bg-gray-200">إلغاء</button>
+                        <button onClick={handleSend} disabled={!message.trim()} className="inline-flex min-h-[46px] items-center justify-center rounded-xl bg-primary px-5 py-3 font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-gray-400">إرسال</button>
                     </div>
                 </div>
             </div>
@@ -218,6 +227,117 @@ const ResponsivePagination: React.FC<{
         </div>
     );
 };
+
+const MobileSelectControl: React.FC<{
+    title: string;
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    className?: string;
+}> = ({ title, checked, onChange, className = '' }) => (
+    <span
+        role="checkbox"
+        tabIndex={0}
+        onClick={(event) => {
+            event.stopPropagation();
+            onChange(!checked);
+        }}
+        onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                event.stopPropagation();
+                onChange(!checked);
+            }
+        }}
+        className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white shadow-sm transition-colors ${
+            checked ? 'border-primary bg-primary-light text-primary' : 'border-gray-200 text-gray-500'
+        } ${className}`}
+        aria-label={`تحديد ${title}`}
+        aria-checked={checked}
+    >
+        {checked ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m20 6-11 11-5-5"/></svg>
+        ) : (
+            <span className="h-4 w-4 rounded border border-current" />
+        )}
+    </span>
+);
+
+const MobileOrphanListRow: React.FC<{
+    orphan: Orphan;
+    displayName: string;
+    selected: boolean;
+    onSelect: () => void;
+    onOpen: () => void;
+}> = ({ orphan, displayName, selected, onSelect, onOpen }) => (
+    <div
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onOpen();
+            }
+        }}
+        className={`flex min-h-[86px] items-center gap-3 rounded-2xl border bg-white px-3 py-2.5 shadow-sm transition-colors ${
+            selected ? 'border-primary ring-2 ring-primary/20' : 'border-gray-100 active:bg-gray-50'
+        }`}
+    >
+        <MobileSelectControl title={displayName} checked={selected} onChange={onSelect} />
+        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-primary-light">
+            <Avatar src={orphan.photoUrl} name={orphan.name} size="md" className="!h-full !w-full !text-sm" />
+        </div>
+        <div className="min-w-0 flex-1">
+            <div className="line-clamp-1 break-words text-sm font-bold leading-5 text-gray-900">{displayName}</div>
+            <div className="mt-0.5 truncate text-xs text-gray-500">
+                {orphan.age} سنوات{orphan.gender ? ` • ${orphan.gender}` : ''}{orphan.grade ? ` • ${orphan.grade}` : ''}
+            </div>
+            <div className="mt-1 flex min-w-0 items-center gap-2 text-[11px] text-gray-500">
+                <span className="truncate">{[orphan.country, orphan.governorate].filter(Boolean).join('، ') || 'غير محدد'}</span>
+                {orphan.performance ? (
+                    <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 font-semibold text-gray-600">{orphan.performance}</span>
+                ) : null}
+            </div>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </div>
+);
+
+const MobileOrphanGridTile: React.FC<{
+    orphan: Orphan;
+    displayName: string;
+    selected: boolean;
+    onSelect: () => void;
+    onOpen: () => void;
+}> = ({ orphan, displayName, selected, onSelect, onOpen }) => (
+    <div
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onOpen();
+            }
+        }}
+        className={`relative min-h-[158px] rounded-2xl border bg-white p-3 shadow-sm transition-colors ${
+            selected ? 'border-primary ring-2 ring-primary/20' : 'border-gray-100 active:bg-gray-50'
+        }`}
+    >
+        <MobileSelectControl title={displayName} checked={selected} onChange={onSelect} className="absolute end-2 top-2" />
+        <div className="flex flex-col items-center text-center">
+            <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-primary-light">
+                <Avatar src={orphan.photoUrl} name={orphan.name} size="md" className="!h-full !w-full !text-sm" />
+            </div>
+            <h3 className="mt-2 line-clamp-2 min-h-[40px] break-words text-sm font-bold leading-5 text-gray-900">{displayName}</h3>
+            <p className="mt-0.5 text-xs text-gray-500">{orphan.age} سنوات</p>
+            <div className="mt-2 flex max-w-full items-center gap-1 rounded-full bg-gray-50 px-2 py-1 text-[11px] text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                <span className="truncate">{orphan.country || 'غير محدد'}</span>
+            </div>
+        </div>
+    </div>
+);
 
 
 const ITEMS_PER_PAGE = 12;
@@ -467,17 +587,17 @@ const OrphansList: React.FC<OrphansListProps> = ({ isSidebarCollapsed = false })
 
     return (
         <>
-        <div className={`space-y-6 ${selectedIds.size > 0 ? 'pb-40' : 'pb-24'}`}>
+        <div className={`space-y-4 sm:space-y-6 ${selectedIds.size > 0 ? 'pb-40' : 'pb-24'}`}>
             {!isOnline ? (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                     لا يمكن تنفيذ عمليات الإضافة أثناء عدم الاتصال بالإنترنت.
                 </div>
             ) : null}
-            <header className="space-y-4">
+            <header className="space-y-3 sm:space-y-4">
                 <div className="flex items-start justify-between gap-3 sm:items-center">
                     <div className="min-w-0">
-                        <h1 className="text-2xl font-bold text-gray-800 sm:text-3xl">سجل الأيتام المركزي</h1>
-                        <p className="mt-1 text-sm text-text-secondary">
+                        <h1 className="text-[1.65rem] font-bold leading-tight text-gray-800 sm:text-3xl">سجل الأيتام المركزي</h1>
+                        <p className="mt-0.5 text-sm text-text-secondary sm:mt-1">
                             عرض وإدارة بيانات الأيتام بتنسيق متقدم
                         </p>
                     </div>
@@ -541,7 +661,7 @@ const OrphansList: React.FC<OrphansListProps> = ({ isSidebarCollapsed = false })
                         </div>
                     </div>
                 </div>
-                <div className="rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+                <div className="rounded-2xl border border-gray-100 bg-white p-2.5 shadow-sm sm:p-4">
                     <div className="relative w-full">
                         <div className="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -551,14 +671,74 @@ const OrphansList: React.FC<OrphansListProps> = ({ isSidebarCollapsed = false })
                             placeholder="ابحث باسم اليتيم أو الموقع..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="min-h-[48px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary"
+                            className="min-h-[46px] w-full rounded-xl border border-gray-200 bg-gray-50 pe-10 ps-4 text-sm outline-none transition-colors focus:border-transparent focus:bg-white focus:ring-2 focus:ring-primary sm:min-h-[48px]"
                         />
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 sm:hidden">
+                        <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${viewMode === 'list' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}
+                                aria-label="عرض قائمة"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+                            </button>
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`inline-flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}
+                                aria-label="عرض شبكي"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+                            </button>
+                        </div>
+                        <div className="relative">
+                            <button
+                                onClick={() => setIsPopoverOpen(prev => !prev)}
+                                className={`relative inline-flex h-11 w-11 items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${isPopoverOpen || activeFiltersCount > 0 ? 'border-primary/30 bg-primary-light text-primary' : 'border-gray-200 text-gray-600'}`}
+                                aria-label="الفرز والتصفية"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+                                {activeFiltersCount > 0 && (
+                                    <span className="absolute -end-1 -top-1 inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-white">
+                                        {activeFiltersCount}
+                                    </span>
+                                )}
+                            </button>
+                            {isPopoverOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-20 bg-black/30 md:hidden" onClick={() => setIsPopoverOpen(false)} />
+                                    <FilterSortPopover
+                                        onClose={() => setIsPopoverOpen(false)}
+                                        sortBy={sortBy}
+                                        setSortBy={setSortBy}
+                                        performanceFilter={performanceFilter}
+                                        setPerformanceFilter={setPerformanceFilter}
+                                        onReset={handleResetFilters}
+                                    />
+                                </>
+                            )}
+                        </div>
+                        <label htmlFor="mobileSelectAllCheckbox" className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700">
+                            <input
+                                type="checkbox"
+                                id="mobileSelectAllCheckbox"
+                                checked={orphanList.length > 0 && selectedIds.size === orphanList.length}
+                                onChange={handleSelectAll}
+                                className="h-4 w-4 cursor-pointer rounded border-gray-300 text-primary focus:ring-primary"
+                                disabled={orphanList.length === 0}
+                                aria-label="تحديد الكل"
+                            />
+                            <span>الكل</span>
+                        </label>
+                        <span className="ms-auto inline-flex h-11 min-w-11 items-center justify-center rounded-xl bg-gray-100 px-2 text-xs font-semibold text-text-secondary">
+                            {totalCount}
+                        </span>
                     </div>
                 </div>
             </header>
             
             <div>
-                <div className="mb-4 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:p-4">
+                <div className="mb-4 hidden rounded-2xl border border-gray-100 bg-white p-3 shadow-sm sm:block sm:p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex flex-wrap items-center gap-2">
                             <div className="flex items-center gap-1 rounded-xl bg-gray-100 p-1">
@@ -638,27 +818,15 @@ const OrphansList: React.FC<OrphansListProps> = ({ isSidebarCollapsed = false })
                                 paginatedOrphans.map(orphan => {
                                     const isSelected = selectedIds.has(orphan.id);
                                     const displayName = formatListDisplayName(orphan.name, displayNameParts);
-                                    const cardFields: EntityCardField[] = [
-                                        { label: 'المرحلة:', value: orphan.grade || 'غير محدد' },
-                                        { label: 'الأداء:', value: orphan.performance || 'غير متوفر', type: orphan.performance ? 'pill' : 'text' },
-                                        { label: 'الحضور:', value: orphan.attendance || 'غير متوفر' },
-                                    ];
 
                                     return (
-                                        <EntityCard
+                                        <MobileOrphanListRow
                                             key={orphan.id}
-                                            variant="card"
-                                            title={displayName}
-                                            subtitle={`${orphan.age} سنوات${orphan.gender ? ` • ${orphan.gender}` : ''}`}
-                                            imageUrl={orphan.photoUrl}
-                                            imageAlt={orphan.name}
-                                            fields={cardFields}
-                                            location={[orphan.country, orphan.governorate].filter(Boolean).join('، ')}
-                                            actionLabel="عرض الملف"
-                                            onClick={() => navigate(`/orphan/${orphan.id}`)}
+                                            orphan={orphan}
+                                            displayName={displayName}
                                             selected={isSelected}
                                             onSelect={() => handleSelect(orphan.id)}
-                                            showCheckbox={true}
+                                            onOpen={() => navigate(`/orphan/${orphan.id}`)}
                                         />
                                     );
                                 })
@@ -687,33 +855,51 @@ const OrphansList: React.FC<OrphansListProps> = ({ isSidebarCollapsed = false })
                 ) : (
                     <>
                         {paginatedOrphans.length > 0 ? (
-                            <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
-                                {paginatedOrphans.map(orphan => {
-                                    const isSelected = selectedIds.has(orphan.id);
-                                    const displayName = formatListDisplayName(orphan.name, displayNameParts);
-                                    const cardFields: EntityCardField[] = [
-                                        { label: 'المرحلة:', value: orphan.grade || 'غير محدد' },
-                                        { label: 'الأداء:', value: orphan.performance || 'غير متوفر', type: orphan.performance ? 'pill' : 'text' },
-                                    ];
-                                    return (
-                                        <EntityCard
-                                            key={orphan.id}
-                                            variant="card"
-                                            title={displayName}
-                                            subtitle={`${orphan.age} سنوات${orphan.gender ? ` • ${orphan.gender}` : ''}`}
-                                            imageUrl={orphan.photoUrl}
-                                            imageAlt={orphan.name}
-                                            fields={cardFields}
-                                            location={[orphan.country, orphan.governorate].filter(Boolean).join('، ')}
-                                            actionLabel="عرض الملف الكامل"
-                                            onClick={() => navigate(`/orphan/${orphan.id}`)}
-                                            selected={isSelected}
-                                            onSelect={() => handleSelect(orphan.id)}
-                                            showCheckbox={true}
-                                        />
-                                    );
-                                })}
-                            </section>
+                            <>
+                                <section className="grid grid-cols-2 gap-3 md:hidden">
+                                    {paginatedOrphans.map(orphan => {
+                                        const isSelected = selectedIds.has(orphan.id);
+                                        const displayName = formatListDisplayName(orphan.name, displayNameParts);
+                                        return (
+                                            <MobileOrphanGridTile
+                                                key={orphan.id}
+                                                orphan={orphan}
+                                                displayName={displayName}
+                                                selected={isSelected}
+                                                onSelect={() => handleSelect(orphan.id)}
+                                                onOpen={() => navigate(`/orphan/${orphan.id}`)}
+                                            />
+                                        );
+                                    })}
+                                </section>
+                                <section className="hidden grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 md:grid lg:grid-cols-3 xl:grid-cols-4">
+                                    {paginatedOrphans.map(orphan => {
+                                        const isSelected = selectedIds.has(orphan.id);
+                                        const displayName = formatListDisplayName(orphan.name, displayNameParts);
+                                        const cardFields: EntityCardField[] = [
+                                            { label: 'المرحلة:', value: orphan.grade || 'غير محدد' },
+                                            { label: 'الأداء:', value: orphan.performance || 'غير متوفر', type: orphan.performance ? 'pill' : 'text' },
+                                        ];
+                                        return (
+                                            <EntityCard
+                                                key={orphan.id}
+                                                variant="card"
+                                                title={displayName}
+                                                subtitle={`${orphan.age} سنوات${orphan.gender ? ` • ${orphan.gender}` : ''}`}
+                                                imageUrl={orphan.photoUrl}
+                                                imageAlt={orphan.name}
+                                                fields={cardFields}
+                                                location={[orphan.country, orphan.governorate].filter(Boolean).join('، ')}
+                                                actionLabel="عرض الملف الكامل"
+                                                onClick={() => navigate(`/orphan/${orphan.id}`)}
+                                                selected={isSelected}
+                                                onSelect={() => handleSelect(orphan.id)}
+                                                showCheckbox={true}
+                                            />
+                                        );
+                                    })}
+                                </section>
+                            </>
                         ) : (
                             <EmptyState title="لا توجد نتائج مطابقة" description="جرّب تعديل البحث أو إعادة تعيين التصفية لعرض مزيد من الأيتام." />
                         )}

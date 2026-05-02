@@ -148,12 +148,12 @@ const AddProfileWithLoginModal: React.FC<AddProfileWithLoginModalProps> = ({
         description="سيتم إنشاء الملف وحساب الدخول في خطوة واحدة."
         maxWidthClassName="md:max-w-lg"
         footer={
-          <div className="flex flex-col-reverse gap-3 md:flex-row md:justify-end">
+          <div className="grid grid-cols-2 gap-3 md:flex md:justify-end">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
               disabled={submitting}
-              className="min-h-[48px] rounded-xl bg-gray-100 px-5 py-2.5 font-semibold text-text-secondary transition-colors hover:bg-gray-200 disabled:opacity-50"
+              className="min-h-[46px] rounded-xl bg-gray-100 px-5 py-2.5 font-semibold text-text-secondary transition-colors hover:bg-gray-200 disabled:opacity-50 md:min-h-[48px]"
             >
               إلغاء
             </button>
@@ -161,7 +161,7 @@ const AddProfileWithLoginModal: React.FC<AddProfileWithLoginModalProps> = ({
               type="submit"
               form="add-profile-with-login-form"
               disabled={submitting}
-              className="min-h-[48px] rounded-xl bg-primary px-5 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50"
+              className="min-h-[46px] rounded-xl bg-primary px-5 py-2.5 font-semibold text-white transition-colors hover:bg-primary-hover disabled:opacity-50 md:min-h-[48px]"
             >
               {submitting ? 'جاري الإنشاء...' : labels.submitLabel}
             </button>
